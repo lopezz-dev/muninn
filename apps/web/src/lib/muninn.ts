@@ -3,6 +3,8 @@ import { useLoaderData, useRouteContext } from '@tanstack/react-router'
 import { connectAppearance } from './appearance'
 import type { AuthState } from './auth'
 import { loadSupabase } from './auth'
+import { keys } from './queries'
+import { queryClient } from './query-client'
 
 let instance: { key: string; muninn: Promise<Muninn> } | undefined
 
@@ -11,7 +13,9 @@ async function create(auth: Exclude<AuthState, { kind: 'anonymous' }>): Promise<
   if (auth.kind === 'demo') {
     const { createMemoryStore, createMuninn } = await import('@muninn/core')
     connectAppearance(null)
-    return createMuninn(createMemoryStore(), { timeZone })
+    const demo = createMuninn(createMemoryStore(), { timeZone })
+    queryClient.setQueryData(keys.settings, await demo.settings.get())
+    return demo
   }
   const [{ createMuninn }, { createSupabaseStore }, client] = await Promise.all([
     import('@muninn/core'),
@@ -21,6 +25,8 @@ async function create(auth: Exclude<AuthState, { kind: 'anonymous' }>): Promise<
   const m = createMuninn(createSupabaseStore(client, auth.account.id), { timeZone })
   // La apariencia de la cuenta manda sobre la caché local; si falla la red, seguimos con la caché.
   const settings = await m.settings.get().catch(() => null)
+  // Los módulos activos mandan en el menú desde el primer pintado: sin esto, parpadearía.
+  if (settings) queryClient.setQueryData(keys.settings, settings)
   connectAppearance(
     (appearance) => m.settings.update({ preferences: { appearance: { ...appearance } } }),
     settings?.preferences.appearance,

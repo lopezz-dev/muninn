@@ -2,8 +2,9 @@ import { Avatar, Card, Icon, type IconName, icons } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { Page, PageHeader } from '../components/Page'
+import { useEnabledModules } from '../lib/modules'
 import { useAuth } from '../lib/muninn'
-import { SECTIONS, type SectionId } from '../shell/nav'
+import { SECTIONS, type SectionId, sectionEnabled } from '../shell/nav'
 import { useShell } from '../shell/shell-context'
 
 const MODULES: { id: SectionId; text: string; tile: string }[] = [
@@ -42,6 +43,7 @@ function RowContent({
 export function Mas() {
   const shell = useShell()
   const auth = useAuth()
+  const modules = useEnabledModules()
   return (
     <Page className="gap-6">
       <PageHeader title="Más" />
@@ -54,7 +56,7 @@ export function Mas() {
           Módulos
         </h2>
         <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-          {MODULES.map((mod) => {
+          {MODULES.filter((mod) => sectionEnabled(mod.id, modules)).map((mod) => {
             const s = SECTIONS[mod.id]
             return (
               <Card key={mod.id} className="transition-colors hover:border-border-strong">

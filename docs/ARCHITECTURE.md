@@ -77,7 +77,8 @@ generan la misma clave, el core rebalancea la columna.
 
 ## Módulos
 
-Muninn se organiza en módulos activables (`user_settings.enabled_modules`):
+Muninn se organiza en módulos activables (`user_settings.enabled_modules`). Desactivar un módulo lo oculta del menú, del
+dock y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md)):
 
 | Módulo | Estado |
 |---|---|

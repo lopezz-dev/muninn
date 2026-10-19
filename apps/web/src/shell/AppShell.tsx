@@ -1,14 +1,19 @@
 import { cn } from '@muninn/ui'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CommandPalette } from './CommandPalette'
+import { useEnabledModules } from '../lib/modules'
 import { Dock } from './Dock'
 import { NewProjectDialog } from './NewProjectDialog'
-import { sectionOf } from './nav'
+import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
 
-// Diferido: el diálogo (y todo lo que arrastra) no viaja con el shell hasta que se abre.
+// Diferidos: los diálogos y la pantalla de «módulo desactivado» no viajan con el shell.
+// El buscador se pide nada más pintar el shell (fuera del JS del arranque) y casi siempre está listo al abrirlo.
+const CommandPalette = lazy(() =>
+  import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
+)
+const ModuleOff = lazy(() => import('./ModuleOff').then((m) => ({ default: m.ModuleOff })))
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
 )
@@ -36,6 +41,8 @@ export function AppShell() {
     },
   )
   const mainRef = useRef<HTMLElement>(null)
+  const modules = useEnabledModules()
+  const tasksOn = sectionEnabled('projects', modules)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
   const openNewProject = useCallback(() => setNewProject(true), [])
@@ -59,7 +66,8 @@ export function AppShell() {
         !e.metaKey &&
         !e.ctrlKey &&
         !e.altKey &&
-        !typingIn(e.target)
+        !typingIn(e.target) &&
+        tasksOn
       ) {
         // N: tarea nueva, como en el diseño.
         e.preventDefault()
@@ -68,7 +76,7 @@ export function AppShell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [openNewTask])
+  }, [openNewTask, tasksOn])
 
   // Al cambiar de sección, el foco va al contenido: quien navega con teclado o lector de
   // pantalla empieza por la pantalla nueva y no por el principio de la barra lateral.
@@ -79,6 +87,9 @@ export function AppShell() {
     prevSection.current = section
     mainRef.current?.focus({ preventScroll: true })
   }, [section])
+
+  // Una sección cuyo módulo está desactivado no se pinta: en su lugar, cómo activarlo.
+  const off = section && !sectionEnabled(section, modules) ? section : null
 
   // El detalle de una tarea en móvil ocupa toda la pantalla y trae su propia barra de acciones.
   const immersive = useRouterState({
@@ -106,15 +117,23 @@ export function AppShell() {
               : 'pb-[calc(env(safe-area-inset-bottom)+148px)]',
           )}
         >
-          <Outlet />
+          {off ? (
+            <Suspense fallback={null}>
+              <ModuleOff section={off} />
+            </Suspense>
+          ) : (
+            <Outlet />
+          )}
         </main>
         {immersive ? null : <Dock className="md:hidden" />}
       </div>
-      <CommandPalette
-        open={palette.open}
-        initialQuery={palette.query}
-        onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
-      />
+      <Suspense fallback={null}>
+        <CommandPalette
+          open={palette.open}
+          initialQuery={palette.query}
+          onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
+        />
+      </Suspense>
       <NewProjectDialog open={newProject} onOpenChange={setNewProject} />
       {newTask.loaded ? (
         <Suspense fallback={null}>

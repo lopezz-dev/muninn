@@ -16,6 +16,21 @@
 - Solo funcionan si la PWA está **añadida a la pantalla de inicio** (iOS 16.4 o superior) y tras pedir permiso
   con un gesto del usuario (un clic). En Safari, sin instalar, no hay push.
 
+### Módulos desactivados: qué mira cada pieza del shell
+
+- **Síntoma:** un módulo desactivado sigue saliendo en el dock, el buscador o un atajo; o el menú parpadea al cargar.
+- **Causa:** cada pieza decide por su cuenta. Todas usan `useEnabledModules()` (`lib/modules.ts`) y `sectionEnabled()`
+  (`shell/nav.ts`): barra lateral, dock (`dockFor`), «Más», buscador y la tecla **N**. Los ajustes llegan por la caché de
+  react-query (`keys.settings`), que rellena el loader de `_app` antes de pintar; mientras valgan `null` se enseña todo.
+- **Solución:** una sección nueva con módulo se declara en `SECTION_MODULE`; no compruebes `enabledModules` a mano. El dock
+  cuenta sus pestañas (`slotWidth(width, count)`): no asumas cinco.
+- **Ref:** [ADR-0028](../adr/0028-modulos-activables-solo-en-la-interfaz.md)
+
+### El buscador ⌘K es un chunk diferido que se pide al pintar el shell
+
+- `CommandPalette` no viaja en el JS del arranque: `AppShell` lo monta dentro de `<Suspense>` y el navegador lo pide en cuanto
+  se pinta el shell. Si pulsas ⌘K antes de que llegue, se abre al terminar de cargar. No lo importes de forma estática desde el shell.
+
 ### `@muninn/core` se importa como TypeScript fuente
 
 - Vite lo transpila sin problema, pero no importes `@muninn/core/file-store` (usa `node:fs`).

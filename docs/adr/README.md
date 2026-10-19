@@ -80,6 +80,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0023](0023-drag-and-drop-con-dnd-kit.md) — Drag & drop del tablero con dnd-kit
 - [ADR-0024](0024-detalle-de-tarea-como-ruta.md) — Detalle de tarea como ruta, con panel en escritorio y pantalla en móvil
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
+- [ADR-0028](0028-modulos-activables-solo-en-la-interfaz.md) — Los módulos activables ocultan la interfaz; los datos y el MCP no cambian
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

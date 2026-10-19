@@ -7,6 +7,7 @@ import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appeara
 import { useAuth } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { Modulos } from './Modulos'
 import { settingsSection } from './sections'
 
 const route = getRouteApi('/_app/ajustes/$seccion')
@@ -229,6 +230,8 @@ export function Seccion() {
         <Cuenta />
       ) : section.id === 'datos' ? (
         <Datos />
+      ) : section.id === 'modulos' ? (
+        <Modulos />
       ) : section.id === 'apariencia' ? (
         <Apariencia />
       ) : section.id === 'atajos' ? (

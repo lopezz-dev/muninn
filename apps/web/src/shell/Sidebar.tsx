@@ -1,10 +1,11 @@
 import { Avatar, ColorDot, cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
 import { overviewQuery, projectsQuery } from '../lib/queries'
 import { Logo } from './Logo'
-import { SECTIONS, type SectionId, SIDEBAR_FOOTER, SIDEBAR_MAIN } from './nav'
+import { SECTIONS, type SectionId, SIDEBAR_FOOTER, SIDEBAR_MAIN, sectionEnabled } from './nav'
 import { PALETTE_SHORTCUT, useShell } from './shell-context'
 
 const navItem =
@@ -29,6 +30,7 @@ export function Sidebar({ className }: { className?: string }) {
   const m = useMuninn()
   const auth = useAuth()
   const shell = useShell()
+  const modules = useEnabledModules()
   const projects = useQuery(projectsQuery(m)).data ?? []
   const overview = useQuery(overviewQuery(m)).data
   const openCount = new Map(overview?.projects.map((p) => [p.id, p.open]))
@@ -59,58 +61,62 @@ export function Sidebar({ className }: { className?: string }) {
       </button>
 
       <nav aria-label="Principal" className="flex flex-col gap-0.5">
-        {SIDEBAR_MAIN.map((id) => (
+        {SIDEBAR_MAIN.filter((id) => sectionEnabled(id, modules)).map((id) => (
           <NavItem key={id} id={id} count={id === 'projects' ? projects.length : undefined} />
         ))}
       </nav>
 
-      <section aria-labelledby="sidebar-projects" className="flex flex-col gap-0.5">
-        <div className="flex items-center pr-1 pb-1.5 pl-2.5">
-          <h2
-            id="sidebar-projects"
-            className="text-[11.5px] font-medium tracking-wider text-fg-faint uppercase"
-          >
-            Proyectos
-          </h2>
-          <Tooltip content="Nuevo proyecto">
-            <button
-              type="button"
-              aria-label="Nuevo proyecto"
-              onClick={shell.openNewProject}
-              className="ml-auto grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
+      {sectionEnabled('projects', modules) ? (
+        <section aria-labelledby="sidebar-projects" className="flex flex-col gap-0.5">
+          <div className="flex items-center pr-1 pb-1.5 pl-2.5">
+            <h2
+              id="sidebar-projects"
+              className="text-[11.5px] font-medium tracking-wider text-fg-faint uppercase"
             >
-              <icons.plus size={14} />
-            </button>
-          </Tooltip>
-        </div>
-        {projects.length === 0 ? (
-          <p className="px-2.5 text-xs text-fg-faint">
-            Aún no hay proyectos.{' '}
-            <button
-              type="button"
-              onClick={shell.openNewProject}
-              className="cursor-pointer text-accent hover:text-accent-hover"
-            >
-              Crea el primero
-            </button>
-          </p>
-        ) : (
-          projects.map((p) => (
-            <Link
-              key={p.id}
-              to="/proyectos/$projectId"
-              params={{ projectId: p.id }}
-              className="flex h-[30px] items-center gap-2.5 rounded-md px-2.5 text-sm text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-raised data-[status=active]:text-fg"
-            >
-              <ColorDot color={p.color} />
-              <span className="truncate">{p.name}</span>
-              {openCount.get(p.id) ? (
-                <span className="ml-auto text-xs text-fg-faint tabular">{openCount.get(p.id)}</span>
-              ) : null}
-            </Link>
-          ))
-        )}
-      </section>
+              Proyectos
+            </h2>
+            <Tooltip content="Nuevo proyecto">
+              <button
+                type="button"
+                aria-label="Nuevo proyecto"
+                onClick={shell.openNewProject}
+                className="ml-auto grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
+              >
+                <icons.plus size={14} />
+              </button>
+            </Tooltip>
+          </div>
+          {projects.length === 0 ? (
+            <p className="px-2.5 text-xs text-fg-faint">
+              Aún no hay proyectos.{' '}
+              <button
+                type="button"
+                onClick={shell.openNewProject}
+                className="cursor-pointer text-accent hover:text-accent-hover"
+              >
+                Crea el primero
+              </button>
+            </p>
+          ) : (
+            projects.map((p) => (
+              <Link
+                key={p.id}
+                to="/proyectos/$projectId"
+                params={{ projectId: p.id }}
+                className="flex h-[30px] items-center gap-2.5 rounded-md px-2.5 text-sm text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-raised data-[status=active]:text-fg"
+              >
+                <ColorDot color={p.color} />
+                <span className="truncate">{p.name}</span>
+                {openCount.get(p.id) ? (
+                  <span className="ml-auto text-xs text-fg-faint tabular">
+                    {openCount.get(p.id)}
+                  </span>
+                ) : null}
+              </Link>
+            ))
+          )}
+        </section>
+      ) : null}
 
       <div className="flex-1" />
 
