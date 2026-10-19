@@ -1,5 +1,6 @@
 export * from './appearance'
 export * from './cn'
+export * from './components/amount-field'
 export * from './components/button'
 export * from './components/card'
 export * from './components/display'
