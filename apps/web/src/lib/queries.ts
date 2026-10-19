@@ -1,14 +1,19 @@
 import type { CreateProjectInput, Muninn } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
+import type { BoardData } from './board'
 
 /** Claves de react-query en un solo sitio: invalidar es predecible. */
 export const keys = {
   projects: ['projects'] as const,
   project: (id: string) => ['projects', id] as const,
-  columns: (projectId: string) => ['projects', projectId, 'columns'] as const,
-  tasks: (projectId: string) => ['projects', projectId, 'tasks'] as const,
+  /** Columnas, tareas y subtareas hechas de un proyecto, en una sola entrada (ver `BoardData`). */
+  board: (projectId: string) => ['projects', projectId, 'board'] as const,
   overview: ['overview'] as const,
+  checklist: (taskId: string) => ['tasks', taskId, 'checklist'] as const,
+  taskActivity: (taskId: string) => ['tasks', taskId, 'activity'] as const,
+  taskNotes: (taskId: string) => ['tasks', taskId, 'notes'] as const,
+  checklistCounts: (ids: string[]) => ['checklist-counts', ids] as const,
 }
 
 export const projectsQuery = (m: Muninn) =>
@@ -17,14 +22,41 @@ export const projectsQuery = (m: Muninn) =>
 export const projectQuery = (m: Muninn, id: string) =>
   queryOptions({ queryKey: keys.project(id), queryFn: () => m.projects.get(id), retry: false })
 
-export const columnsQuery = (m: Muninn, projectId: string) =>
-  queryOptions({ queryKey: keys.columns(projectId), queryFn: () => m.columns.list(projectId) })
-
-export const tasksQuery = (m: Muninn, projectId: string) =>
-  queryOptions({ queryKey: keys.tasks(projectId), queryFn: () => m.tasks.list({ projectId }) })
+/** Todo lo que pinta el tablero. Las acciones lo actualizan en la caché antes de confirmar (optimista). */
+export const boardQuery = (m: Muninn, projectId: string) =>
+  queryOptions({
+    queryKey: keys.board(projectId),
+    queryFn: async (): Promise<BoardData> => {
+      const [columns, tasks] = await Promise.all([
+        m.columns.list(projectId),
+        m.tasks.list({ projectId }),
+      ])
+      return { columns, tasks, counts: await m.checklist.counts(tasks.map((t) => t.id)) }
+    },
+  })
 
 export const overviewQuery = (m: Muninn) =>
   queryOptions({ queryKey: keys.overview, queryFn: () => m.overview() })
+
+export const checklistQuery = (m: Muninn, taskId: string) =>
+  queryOptions({ queryKey: keys.checklist(taskId), queryFn: () => m.checklist.list(taskId) })
+
+export const taskActivityQuery = (m: Muninn, taskId: string) =>
+  queryOptions({
+    queryKey: keys.taskActivity(taskId),
+    queryFn: () => m.recentActivity({ entityId: taskId, limit: 20 }),
+  })
+
+export const taskNotesQuery = (m: Muninn, taskId: string) =>
+  queryOptions({ queryKey: keys.taskNotes(taskId), queryFn: () => m.notes.list({ taskId }) })
+
+/** Subtareas hechas/total de unas tareas (Inicio las muestra junto a cada fila). */
+export const checklistCountsQuery = (m: Muninn, ids: string[]) =>
+  queryOptions({
+    queryKey: keys.checklistCounts(ids),
+    queryFn: () => m.checklist.counts(ids),
+    enabled: ids.length > 0,
+  })
 
 /** Los proyectos afectan a la barra lateral, a Inicio y a Proyectos: se invalidan juntos. */
 export const invalidateProjects = (qc: QueryClient) =>
