@@ -119,8 +119,9 @@ describe('tareas', () => {
     const cols = await app.columns.list(p.id)
     const backlog = cols.find((c) => c.kind === 'backlog')
     await expect(app.columns.delete(t.columnId)).rejects.toThrow(ValidationError)
-    await app.columns.delete(t.columnId, { moveTasksTo: backlog?.id })
+    const { movedTaskIds } = await app.columns.delete(t.columnId, { moveTasksTo: backlog?.id })
     expect((await app.tasks.get(t.id)).columnId).toBe(backlog?.id)
+    expect(movedTaskIds).toEqual([t.id])
   })
 
   it('cambiar una columna a tipo "done" completa sus tareas', async () => {
@@ -161,6 +162,86 @@ describe('informes', () => {
     expect(o.inProgress.map((x) => x.title)).toEqual(['y'])
     await app.tasks.complete(t.id)
     expect((await app.overview()).completedToday).toBe(1)
+  })
+
+  it('overview: próximos días, hechas hoy y gráfica de 7 días', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    await app.tasks.create({ projectId: p.id, title: 'mañana', dueDate: '2026-10-20' })
+    await app.tasks.create({ projectId: p.id, title: 'en 9 días', dueDate: '2026-10-28' })
+    const ayer = await app.tasks.create({ projectId: p.id, title: 'ayer' })
+    clock = new Date('2026-10-18T10:00:00Z')
+    await app.tasks.complete(ayer.id)
+    clock = new Date('2026-10-19T10:00:00Z')
+    const hoy = await app.tasks.create({ projectId: p.id, title: 'hoy', dueDate: '2026-10-19' })
+    await app.tasks.complete(hoy.id)
+    // Archivar una tarea hecha no la quita de las estadísticas.
+    await app.tasks.archive(hoy.id)
+
+    const o = await app.overview()
+    expect(o.upcoming.map((t) => t.title)).toEqual(['mañana'])
+    expect(o.completedTodayTasks.map((t) => t.title)).toEqual(['hoy'])
+    expect(o.completedToday).toBe(1)
+    expect(o.completedByDay).toHaveLength(7)
+    expect(o.completedByDay.at(-1)).toEqual({ date: '2026-10-19', count: 1 })
+    expect(o.completedByDay.at(-2)).toEqual({ date: '2026-10-18', count: 1 })
+    expect(o.projects[0]?.done).toBe(1)
+  })
+})
+
+describe('tareas: deshacer', () => {
+  it('restaurar una tarea archivada la devuelve a su sitio', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't' })
+    await app.tasks.archive(t.id)
+    expect(await app.tasks.list({ projectId: p.id })).toHaveLength(0)
+    const restored = await app.tasks.restore(t.id)
+    expect(restored.archivedAt).toBeNull()
+    expect((await app.tasks.list({ projectId: p.id })).map((x) => x.id)).toEqual([t.id])
+    expect((await app.recentActivity({ entityId: t.id })).map((a) => a.action)).toEqual([
+      'restored',
+      'archived',
+      'created',
+    ])
+  })
+
+  it('la actividad se puede pedir por entidad', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const a = await app.tasks.create({ projectId: p.id, title: 'a' })
+    await app.tasks.create({ projectId: p.id, title: 'b' })
+    await app.tasks.complete(a.id)
+    const acts = await app.recentActivity({ entityId: a.id })
+    expect(acts.map((x) => x.action)).toEqual(['completed', 'created'])
+  })
+})
+
+describe('checklist', () => {
+  it('cuenta hechos y total por tarea', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const a = await app.tasks.create({ projectId: p.id, title: 'a' })
+    const b = await app.tasks.create({ projectId: p.id, title: 'b' })
+    const one = await app.checklist.add(a.id, 'uno')
+    await app.checklist.add(a.id, 'dos')
+    await app.checklist.update(one.id, { done: true })
+    expect(await app.checklist.counts([a.id, b.id])).toEqual({ [a.id]: { done: 1, total: 2 } })
+    expect(await app.checklist.counts([])).toEqual({})
+  })
+
+  it('recrea un elemento borrado en su posición y con su estado', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't' })
+    await app.checklist.add(t.id, 'uno')
+    const dos = await app.checklist.add(t.id, 'dos')
+    await app.checklist.add(t.id, 'tres')
+    await app.checklist.delete(dos.id)
+    await app.checklist.add(t.id, 'dos', { index: 1, done: true })
+    const items = await app.checklist.list(t.id)
+    expect(items.map((i) => i.title)).toEqual(['uno', 'dos', 'tres'])
+    expect(items[1]?.done).toBe(true)
   })
 })
 
