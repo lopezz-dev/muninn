@@ -13,6 +13,7 @@ import {
   ColorDot,
   colors,
   columnKinds,
+  copyText,
   DEFAULT_APPEARANCE,
   Dialog,
   DialogClose,
@@ -29,6 +30,7 @@ import {
   MenuLabel,
   MenuSeparator,
   MenuTrigger,
+  notify,
   ProgressBar,
   SegmentedControl,
   SheetContent,
@@ -66,8 +68,53 @@ export function Fundamentos() {
   const [view, setView] = useState<'board' | 'list' | 'calendar'>('board')
   const [kind, setKind] = useState<'expense' | 'income' | 'saving' | 'investment'>('expense')
   const [done, setDone] = useState(false)
-  const [notify, setNotify] = useState(true)
+  const [pushOn, setPushOn] = useState(true)
   const [amount, setAmount] = useState<number | null>(2490)
+  const [column, setColumn] = useState<keyof typeof columnKinds>('in_progress')
+  const [projectOpen, setProjectOpen] = useState(false)
+  const [projectName, setProjectName] = useState('')
+  const [projectError, setProjectError] = useState<string>()
+
+  /** Acción con «Deshacer»: el patrón para todo lo que cambia o destruye datos. */
+  const withUndo = (done: string, undone: string, description?: string) =>
+    notify.success(done, {
+      description,
+      action: { label: 'Deshacer', onClick: () => notify.info(undone, { description }) },
+    })
+
+  const copyLink = async () => {
+    const ok = await copyText(`${location.origin}/t/MUN-23`)
+    if (ok) notify.success('Enlace copiado', { description: 'MUN-23' })
+    else notify.error('No se pudo copiar el enlace')
+  }
+
+  const moveTo = (k: keyof typeof columnKinds) => {
+    if (k === column) return notify.info(`Ya está en ${KIND_LABEL[k]}`)
+    const prev = column
+    setColumn(k)
+    notify.success(`Movida a ${KIND_LABEL[k]}`, {
+      description: 'Definir sistema de diseño',
+      action: {
+        label: 'Deshacer',
+        onClick: () => {
+          setColumn(prev)
+          notify.info(`Devuelta a ${KIND_LABEL[prev]}`)
+        },
+      },
+    })
+  }
+
+  const createProject = () => {
+    const name = projectName.trim()
+    if (!name) {
+      setProjectError('Ponle un nombre al proyecto')
+      return
+    }
+    setProjectOpen(false)
+    setProjectName('')
+    notify.success(`Proyecto «${name}» creado`, { description: 'con 5 columnas' })
+  }
+
   useEffect(() => applyAppearance(appearance), [appearance])
 
   return (
@@ -296,7 +343,7 @@ export function Fundamentos() {
                   Grande (móvil)
                 </label>
                 <label htmlFor="sw-notify" className="flex items-center gap-2.5">
-                  <Switch id="sw-notify" checked={notify} onCheckedChange={setNotify} />
+                  <Switch id="sw-notify" checked={pushOn} onCheckedChange={setPushOn} />
                   Notificaciones
                 </label>
               </div>
@@ -314,16 +361,38 @@ export function Fundamentos() {
                   </MenuTrigger>
                   <MenuContent>
                     <MenuLabel>Tarea</MenuLabel>
-                    <MenuItem icon={<Icon name="link" />} shortcut="L">
+                    <MenuItem icon={<Icon name="link" />} shortcut="L" onSelect={copyLink}>
                       Copiar enlace
                     </MenuItem>
-                    <MenuItem icon={<Icon name="pin" />}>Fijar</MenuItem>
-                    <MenuItem icon={<Icon name="assistant" />}>Preguntar a Muninn</MenuItem>
+                    <MenuItem
+                      icon={<Icon name="pin" />}
+                      onSelect={() =>
+                        notify.success('Tarea fijada', {
+                          description: 'Aparecerá arriba en Inicio',
+                        })
+                      }
+                    >
+                      Fijar
+                    </MenuItem>
+                    <MenuItem
+                      icon={<Icon name="assistant" />}
+                      onSelect={() => notify.info('Abriendo el asistente…')}
+                    >
+                      Preguntar a Muninn
+                    </MenuItem>
                     <MenuSeparator />
-                    <MenuItem icon={<Icon name="archive" />} shortcut="E">
+                    <MenuItem
+                      icon={<Icon name="archive" />}
+                      shortcut="E"
+                      onSelect={() => withUndo('Tarea archivada', 'Tarea restaurada')}
+                    >
                       Archivar
                     </MenuItem>
-                    <MenuItem danger icon={<Icon name="trash" />}>
+                    <MenuItem
+                      danger
+                      icon={<Icon name="trash" />}
+                      onSelect={() => withUndo('Tarea borrada', 'Tarea recuperada')}
+                    >
                       Borrar
                     </MenuItem>
                   </MenuContent>
@@ -331,7 +400,16 @@ export function Fundamentos() {
               }
             />
             <div className="flex flex-wrap gap-2.5 px-4 pb-4">
-              <Dialog>
+              <Dialog
+                open={projectOpen}
+                onOpenChange={(open) => {
+                  setProjectOpen(open)
+                  if (!open) {
+                    setProjectName('')
+                    setProjectError(undefined)
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button variant="primary">Nuevo proyecto</Button>
                 </DialogTrigger>
@@ -343,11 +421,26 @@ export function Fundamentos() {
                       <DialogClose asChild>
                         <Button variant="ghost">Cancelar</Button>
                       </DialogClose>
-                      <Button variant="primary">Crear proyecto</Button>
+                      <Button variant="primary" onClick={createProject}>
+                        Crear proyecto
+                      </Button>
                     </>
                   }
                 >
-                  <TextField label="Nombre" placeholder="Muninn" autoFocus />
+                  <TextField
+                    label="Nombre"
+                    placeholder="Muninn"
+                    autoFocus
+                    value={projectName}
+                    error={projectError}
+                    onChange={(e) => {
+                      setProjectName(e.target.value)
+                      setProjectError(undefined)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') createProject()
+                    }}
+                  />
                   <TextField
                     label="Repositorio de GitHub"
                     placeholder="owner/repo"
@@ -361,7 +454,15 @@ export function Fundamentos() {
                 </DialogTrigger>
                 <SheetContent
                   title="Muninn › En curso"
-                  toolbar={<IconButton aria-label="Copiar enlace" icon={<Icon name="link" />} />}
+                  toolbar={
+                    <Tooltip content="Copiar enlace">
+                      <IconButton
+                        aria-label="Copiar enlace"
+                        icon={<Icon name="link" />}
+                        onClick={copyLink}
+                      />
+                    </Tooltip>
+                  }
                   footer={
                     <>
                       <TextField
@@ -371,7 +472,20 @@ export function Fundamentos() {
                         placeholder="Pide algo a Muninn sobre esta tarea…"
                         leading={<Icon name="assistant" size={14} className="text-accent" />}
                       />
-                      <Button variant="primary">Completar</Button>
+                      <DialogClose asChild>
+                        <Button
+                          variant="primary"
+                          onClick={() =>
+                            withUndo(
+                              'Tarea completada',
+                              'Tarea reabierta',
+                              'Definir sistema de diseño',
+                            )
+                          }
+                        >
+                          Completar
+                        </Button>
+                      </DialogClose>
                     </>
                   }
                 >
@@ -400,15 +514,73 @@ export function Fundamentos() {
                   <div className="flex flex-col gap-1">
                     {(Object.keys(columnKinds) as (keyof typeof columnKinds)[]).map((k) => (
                       <DialogClose asChild key={k}>
-                        <Button variant="ghost" size="lg" className="justify-start">
+                        <Button
+                          variant="ghost"
+                          size="lg"
+                          className="justify-start"
+                          onClick={() => moveTo(k)}
+                        >
                           <ColorDot color={columnKinds[k]} />
                           {KIND_LABEL[k]}
+                          {k === column ? (
+                            <Icon name="check" className="ml-auto text-accent" />
+                          ) : null}
                         </Button>
                       </DialogClose>
                     ))}
                   </div>
                 </SheetContent>
               </Dialog>
+            </div>
+          </Card>
+
+          <Card className="p-5 xl:col-span-2">
+            <h2 className={sectionTitle}>Notificaciones</h2>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button onClick={() => notify.success('Enlace copiado', { description: 'MUN-23' })}>
+                <Icon name="check" className="text-success" />
+                Éxito
+              </Button>
+              <Button
+                onClick={() =>
+                  notify.error('No se pudo sincronizar', {
+                    description: 'Sin conexión con Supabase',
+                  })
+                }
+              >
+                <Icon name="warning" className="text-danger" />
+                Error
+              </Button>
+              <Button onClick={() => notify.info('Hay 6 noticias nuevas')}>
+                <Icon name="info" className="text-accent" />
+                Información
+              </Button>
+              <Button
+                onClick={() =>
+                  withUndo('Movimiento guardado', 'Movimiento eliminado', '24,90 € · Ocio')
+                }
+              >
+                <Icon name="recurring" />
+                Con deshacer
+              </Button>
+              <Button
+                onClick={() =>
+                  notify
+                    .promise(new Promise<string>((r) => setTimeout(() => r('huginndb'), 1600)), {
+                      loading: 'Sincronizando con GitHub…',
+                      success: (repo) => `${repo}: 3 issues nuevas`,
+                      error: 'No se pudo sincronizar',
+                    })
+                    .catch(() => {})
+                }
+              >
+                <Icon name="sync" />
+                Promesa
+              </Button>
+              <p className="text-xs text-fg-subtle">
+                Aparecen arriba en el centro. Pasa el ratón para verlas apiladas; desliza para
+                descartarlas.
+              </p>
             </div>
           </Card>
         </div>
