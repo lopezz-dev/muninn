@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.turbo/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# Tauri
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# Datos locales del FileStore (MCP sin Supabase)
+.muninn/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
