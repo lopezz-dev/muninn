@@ -1,6 +1,6 @@
 # Pruebas en un iPhone real
 
-Lista corta para pasar **a mano** antes de dar por cerrada la F1. El navegador de desarrollo simula clics, no gestos
+Lista corta para pasar **a mano** antes de dar por cerrada la F1. Es la primera parte de la pila [Pruebas finales](ROADMAP.md#pruebas-finales) del ROADMAP. El navegador de desarrollo simula clics, no gestos
 táctiles ni el teclado de iOS, así que esto no se puede verificar desde el ordenador. Necesitas un iPhone con iOS 16.4 o
 superior, la app publicada o un servidor de desarrollo accesible desde el móvil, y una cuenta (no el modo demo).
 
