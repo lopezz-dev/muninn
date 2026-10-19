@@ -28,3 +28,16 @@
     );
   }
 }
+
+/*
+ * iPhone: Safari amplía la página al enfocar un campo con letra menor de 16 px y no vuelve. En pantallas
+ * táctiles, los campos de texto usan 16 px. Va fuera de `@layer` a propósito: así gana a las clases de
+ * Tailwind (`text-sm`, `text-xs`…), que sí están en capa. Ver docs/gotchas/web.md.
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
