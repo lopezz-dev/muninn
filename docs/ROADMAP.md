@@ -71,7 +71,6 @@ más o menos en este orden:
 - Tablero: filtros (texto, prioridad, etiquetas, origen, fecha) y vistas Lista y Calendario del diseño
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Borrado definitivo de tareas desde la app (hoy solo se archivan)
-- Descripción de tarea en Markdown
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
