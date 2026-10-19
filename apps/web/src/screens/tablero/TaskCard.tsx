@@ -51,7 +51,7 @@ function CardBody({ task, progress, today }: CardBodyProps) {
               {progress.done}/{progress.total}
             </span>
           ) : null}
-          <SourceBadge source={task.source} />
+          <SourceBadge source={task.source} externalId={task.externalId} />
           {done ? null : <PriorityFlag priority={task.priority} className="ml-auto" />}
         </span>
       ) : null}

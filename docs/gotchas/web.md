@@ -299,3 +299,11 @@
 
 - «Nueva tarea» y «Nuevo proyecto» son `lazy` en `AppShell`: su código no viaja en el arranque. La primera vez que se abren
   hay una petición pequeña (el resto, ya en caché). Si añades otro diálogo global, haz lo mismo y mide con `size`.
+
+### La insignia de GitHub solo es enlace fuera de las tarjetas
+
+- **Síntoma:** la insignia «GitHub #42» de una tarjeta no abre la issue.
+- **Causa:** la tarjeta entera es un `<a>` (y elemento ordenable de dnd-kit): un enlace dentro de otro es HTML no válido y rompe el clic y el
+  teclado.
+- **Solución:** en las tarjetas, `SourceBadge` sin `link`; en el detalle de la tarea (y donde no haya un enlace alrededor), con `link` y
+  `externalUrl`. El título y la descripción de una tarea de GitHub son de solo lectura en el detalle (`fromGithub` en `TaskBody.tsx`).

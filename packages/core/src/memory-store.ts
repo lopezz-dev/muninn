@@ -14,6 +14,7 @@ import {
   type NewRow,
   type NoteStoreQuery,
   NotFoundError,
+  type OutboxEntry,
   type ProjectStoreQuery,
   type Store,
   type TaskStoreQuery,
@@ -27,6 +28,7 @@ export interface MemorySnapshot {
   notes: Note[]
   activity: Activity[]
   settings: UserSettings | null
+  githubOutbox: (OutboxEntry & { processedAt: string | null })[]
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -37,6 +39,7 @@ export const emptySnapshot = (): MemorySnapshot => ({
   notes: [],
   activity: [],
   settings: null,
+  githubOutbox: [],
 })
 
 /** Lo que tiene un usuario sin fila en `user_settings` (los defaults de la tabla). */
@@ -116,6 +119,9 @@ export function createMemoryStore(
   const activity = [...initial.activity]
   let nextActivityId = activity.reduce((max, a) => Math.max(max, a.id), 0) + 1
   let settings = initial.settings ?? null
+  // Un FileStore de antes de la cola no trae `githubOutbox`.
+  const outbox = [...(initial.githubOutbox ?? [])]
+  let nextOutboxId = outbox.reduce((max, e) => Math.max(max, e.id), 0) + 1
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -126,6 +132,7 @@ export function createMemoryStore(
       notes: [...notes.values()],
       activity,
       settings,
+      githubOutbox: outbox,
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -153,6 +160,39 @@ export function createMemoryStore(
   return {
     snapshot,
     activity: activityLog,
+    githubOutbox: {
+      async enqueue(taskId) {
+        outbox.push({
+          id: nextOutboxId++,
+          taskId,
+          attempts: 0,
+          lastError: null,
+          createdAt: now(),
+          processedAt: null,
+        })
+        changed()
+      },
+      async pending({ maxAttempts, limit = 100, taskId }) {
+        return outbox
+          .filter(
+            (e) => !e.processedAt && e.attempts < maxAttempts && (!taskId || e.taskId === taskId),
+          )
+          .slice(0, limit)
+          .map(({ processedAt: _, ...e }) => structuredClone(e))
+      },
+      async settle(entries, error) {
+        const ids = new Set(entries.map((e) => e.id))
+        for (const e of outbox) {
+          if (!ids.has(e.id)) continue
+          if (error === undefined) e.processedAt = now()
+          else {
+            e.attempts += 1
+            e.lastError = error
+          }
+        }
+        changed()
+      },
+    },
     settings: {
       async get() {
         return settings ? structuredClone(settings) : null

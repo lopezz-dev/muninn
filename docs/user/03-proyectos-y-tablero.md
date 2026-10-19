@@ -18,8 +18,8 @@ Un proyecto agrupa las tareas y notas de algo en lo que estás trabajando: una a
 Cada proyecto tiene:
 - **Nombre, descripción, color e icono.**
 - **Estado:** activo, pausado o archivado. Los archivados desaparecen de las listas, pero no se borran.
-- **Repositorio de GitHub** (opcional, en formato `usuario/repositorio`): las issues de ese repo
-  aparecerán como tareas del proyecto *(próximamente)*.
+- **Repositorio de GitHub** (opcional, en formato `usuario/repositorio`, desde **Ajustes › Integraciones**): las issues
+  de ese repo aparecerán como tareas del proyecto cuando la sincronización esté en marcha (ver [GitHub](09-github.md)).
 
 ## El tablero
 

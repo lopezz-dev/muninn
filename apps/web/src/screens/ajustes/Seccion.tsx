@@ -7,6 +7,7 @@ import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appeara
 import { useAuth } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
 import { settingsSection } from './sections'
 
@@ -242,6 +243,8 @@ export function Seccion() {
         <Apariencia />
       ) : section.id === 'atajos' ? (
         <Atajos />
+      ) : section.id === 'integraciones' ? (
+        <Integraciones />
       ) : section.soon ? (
         <EmptyState icon={section.icon} title={section.label} soon={section.soon.phase}>
           {section.soon.text}

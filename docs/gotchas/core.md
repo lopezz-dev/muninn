@@ -72,3 +72,21 @@
   mucho una cada 10 minutos por actor (`NOTE_EDIT_WINDOW_MS`); fijar/desfijar tienen sus propias acciones (`pinned`,
   `unpinned`) y vincular se anota siempre. Sin esto, el autoguardado del editor escribiría un evento por pausa al teclear.
 - **Ref:** [ADR-0007](../adr/0007-registro-de-actividad.md), [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)
+
+### GitHub: el estado de una tarea con envío pendiente no lo cambia GitHub
+
+- **Síntoma:** completas una tarea de GitHub y, al editar alguien la issue en GitHub, la tarea no se reabre; o una tarea «no hace caso» a
+  una issue reabierta durante unos minutos.
+- **Causa:** es intencionado ([ADR-0031](../adr/0031-sync-github-issues-tareas.md)). Mientras haya una entrada sin procesar en
+  `githubOutbox` para la tarea, `m.github.applyIssue` solo actualiza título y descripción: el estado de la issue aún no refleja lo de Muninn.
+- **Solución:** nada. Si en tests o en otro cliente necesitas el comportamiento de GitHub, vacía la cola antes (`drainGithubOutbox`).
+- **Ojo:** la cola solo la llena un actor que no sea `github`. La Edge Function crea el core con `actor: 'github'`: si lo cambiaras, cada
+  cambio que llega de GitHub volvería a GitHub.
+
+### La Edge Function lleva el core empaquetado
+
+- **Síntoma:** un cambio del core (reglas de GitHub, el store) no se nota en la sincronización.
+- **Causa:** como el MCP, la función usa una copia empaquetada (`supabase/functions/github/_core/muninn.js`, fuera de git), porque Deno no
+  resuelve los imports sin extensión del TS fuente.
+- **Solución:** `pnpm --filter @muninn/core build:edge` y vuelve a desplegar la función. `@muninn/core/github` solo usa `fetch` y
+  `crypto.subtle`: no importes `node:*` desde ahí ni desde lo que importa.

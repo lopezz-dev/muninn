@@ -26,6 +26,28 @@ export interface Store {
   notes: Collection<Note, NoteStoreQuery>
   activity: ActivityLog
   settings: SettingsStore
+  githubOutbox: GithubOutbox
+}
+
+export interface OutboxEntry {
+  id: number
+  taskId: string
+  attempts: number
+  lastError: string | null
+  createdAt: string
+}
+
+/**
+ * Cola de salida hacia GitHub: tareas con issue cuyo estado (abierta o cerrada) hay que llevar a
+ * GitHub. La llena el servicio al completar o reabrir una tarea de GitHub; la vacía la
+ * sincronización (`drainOutbox`, en la Edge Function), que relee la tarea al procesarla.
+ */
+export interface GithubOutbox {
+  enqueue(taskId: string): Promise<void>
+  /** Sin procesar y con menos de `maxAttempts` intentos, de la más antigua a la más nueva. */
+  pending(query: { maxAttempts: number; limit?: number; taskId?: string }): Promise<OutboxEntry[]>
+  /** Sin `error`, quedan procesadas. Con `error`, siguen pendientes con un intento más. */
+  settle(entries: OutboxEntry[], error?: string): Promise<void>
 }
 
 /** Fila única de ajustes del usuario del store. */

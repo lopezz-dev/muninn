@@ -3,9 +3,11 @@ import type { Activity, UserSettings } from './schemas'
 import {
   type ActivityLog,
   type Collection,
+  type GithubOutbox,
   type NewRow,
   type NoteStoreQuery,
   NotFoundError,
+  type OutboxEntry,
   type ProjectStoreQuery,
   type SettingsStore,
   type Store,
@@ -32,6 +34,9 @@ function fromRow<T>(row: Row): T {
   for (const [k, v] of Object.entries(row)) if (k !== 'owner_id') out[toCamel(k)] = v
   return out as T
 }
+
+/** Un valor literal para `ilike`: `_` y `%` no hacen de comodín (`mi_repo` no casa con `miXrepo`). */
+export const ilikeExact = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
 /** Quita los caracteres con significado en los filtros `or()` de PostgREST y en LIKE. */
 const likeTerm = (s: string) => `%${s.replace(/[,()*"\\%_]/g, ' ').trim()}%`
@@ -149,12 +154,58 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Tabla `github_outbox` (migración 20261020000000_github_outbox). Solo la usan las tareas de GitHub.
+  const githubOutbox: GithubOutbox = {
+    async enqueue(taskId) {
+      const { error } = await client
+        .from('github_outbox')
+        .insert({ task_id: taskId, owner_id: ownerId })
+      if (error) throw error
+    },
+    async pending({ maxAttempts, limit = 100, taskId }) {
+      let qb = client
+        .from('github_outbox')
+        .select('id, task_id, attempts, last_error, created_at')
+        .eq('owner_id', ownerId)
+        .is('processed_at', null)
+        .lt('attempts', maxAttempts)
+      if (taskId) qb = qb.eq('task_id', taskId)
+      const { data, error } = await qb.order('id').limit(limit)
+      if (error) throw error
+      return (data as Row[]).map((r) => fromRow<OutboxEntry>(r))
+    },
+    async settle(entries, failure) {
+      if (entries.length === 0) return
+      const table = () => client.from('github_outbox')
+      if (failure === undefined) {
+        const { error } = await table()
+          .update({ processed_at: new Date().toISOString() })
+          .eq('owner_id', ownerId)
+          .in(
+            'id',
+            entries.map((e) => e.id),
+          )
+        if (error) throw error
+        return
+      }
+      // PostgREST no sabe sumar: cada entrada con su contador (son pocas).
+      for (const e of entries) {
+        const { error } = await table()
+          .update({ attempts: e.attempts + 1, last_error: failure.slice(0, 1000) })
+          .eq('owner_id', ownerId)
+          .eq('id', e.id)
+        if (error) throw error
+      }
+    },
+  }
+
   return {
     activity,
     settings,
+    githubOutbox,
     projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
       if (q.statuses) qb = qb.in('status', q.statuses)
-      if (q.githubRepo) qb = qb.ilike('github_repo', q.githubRepo)
+      if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))
       return qb.order('position')
     }),
     columns: col('board_columns', 'Columna', (qb, q: { projectId: string }) =>
