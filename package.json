@@ -1,0 +1,25 @@
+{
+  "name": "muninn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Muninn — sistema operativo personal: proyectos, tareas, notas, finanzas y un asistente con memoria.",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@muninn/web",
+    "dev:desktop": "pnpm --filter @muninn/desktop tauri dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "mcp": "pnpm --filter @muninn/mcp start"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "turbo": "2.11.9",
+    "typescript": "7.0.2"
+  }
+}
