@@ -80,9 +80,9 @@ export function AppShell() {
     mainRef.current?.focus({ preventScroll: true })
   }, [section])
 
-  // El detalle de una tarea en móvil ocupa toda la pantalla y trae su propia barra de acciones.
+  // El detalle de una tarea y una nota abierta ocupan toda la pantalla en móvil y traen sus propias barras.
   const immersive = useRouterState({
-    select: (s) => /^\/proyectos\/[^/]+\/tareas\//.test(s.location.pathname),
+    select: (s) => /^\/(?:proyectos\/[^/]+\/tareas|notas)\/./.test(s.location.pathname),
   })
 
   return (

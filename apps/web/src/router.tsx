@@ -109,6 +109,16 @@ const notesRoute = createRoute({
   component: screen(() => import('./screens/Notas'), 'Notas'),
 })
 
+/**
+ * Una nota abierta: ruta propia con enlace compartible. Cuelga de la lista, como el detalle de tarea del
+ * tablero (ADR-0024): editor a la derecha en escritorio, pantalla completa en móvil.
+ */
+const noteRoute = createRoute({
+  getParentRoute: () => notesRoute,
+  path: '$noteId',
+  component: screen(() => import('./screens/NotaDetalle'), 'NotaDetalle'),
+})
+
 const financeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'finanzas',
@@ -193,7 +203,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     projectsRoute,
     boardRoute.addChildren([taskRoute]),
-    notesRoute,
+    notesRoute.addChildren([noteRoute]),
     financeRoute,
     assistantRoute,
     newsRoute,
