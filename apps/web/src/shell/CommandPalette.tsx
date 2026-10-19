@@ -3,10 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useId, useMemo, useState } from 'react'
 import { changeAppearance, useAppearance } from '../lib/appearance'
+import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
 import { projectsQuery } from '../lib/queries'
 import { useEndSession } from '../lib/session'
-import { SECTIONS, type SectionId } from './nav'
+import { SECTIONS, type SectionId, sectionEnabled } from './nav'
 import {
   bestMatch,
   filterItems,
@@ -64,6 +65,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
   const auth = useAuth()
   const endSession = useEndSession()
   const appearance = useAppearance()
+  const modules = useEnabledModules()
   const projects = useQuery({ ...projectsQuery(m), enabled: open }).data ?? []
   const [query, setQuery] = useState(initialQuery)
   /** `null`: la mejor coincidencia (bestMatch). Un número: lo que eligió el usuario con flechas o ratón. */
@@ -91,6 +93,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       })
     }
     for (const id of NAV_ORDER) {
+      if (!sectionEnabled(id, modules)) continue
       const s = SECTIONS[id]
       all.push({
         id: `nav-${id}`,
@@ -101,7 +104,8 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         run: () => navigate({ to: s.to }),
       })
     }
-    for (const p of projects) {
+    const tasksOn = sectionEnabled('projects', modules)
+    for (const p of tasksOn ? projects : []) {
       all.push({
         id: `project-${p.id}`,
         group: 'projects',
@@ -112,15 +116,17 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         run: () => navigate({ to: '/proyectos/$projectId', params: { projectId: p.id } }),
       })
     }
-    all.push(
-      {
+    if (tasksOn) {
+      all.push({
         id: 'new-project',
         group: 'actions',
         label: 'Nuevo proyecto…',
         icon: 'plus',
         keywords: 'crear anadir',
         run: shell.openNewProject,
-      },
+      })
+    }
+    all.push(
       {
         id: 'toggle-glass',
         group: 'actions',
@@ -147,7 +153,16 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       },
     )
     return filterItems(all, q)
-  }, [query, projects, appearance.glass, navigate, shell.openNewProject, auth.kind, endSession])
+  }, [
+    query,
+    projects,
+    modules,
+    appearance.glass,
+    navigate,
+    shell.openNewProject,
+    auth.kind,
+    endSession,
+  ])
 
   const groups = groupItems(items)
   const optionId = (i: number) => `${listId}-opt-${i}`

@@ -11,15 +11,7 @@ export interface SettingsSection {
 /** Secciones de Ajustes en el orden del diseño (Ajustes.dc.html). */
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: 'cuenta', label: 'Cuenta', icon: 'user' },
-  {
-    id: 'modulos',
-    label: 'Módulos',
-    icon: 'more',
-    soon: {
-      phase: 'Fase 1',
-      text: 'Podrás activar solo lo que uses: lo desactivado desaparecerá del menú y del asistente.',
-    },
-  },
+  { id: 'modulos', label: 'Módulos', icon: 'more' },
   { id: 'apariencia', label: 'Apariencia', icon: 'palette' },
   {
     id: 'asistente',

@@ -29,6 +29,8 @@ status: disponible | parcial | proximamente
 ---
 ```
 
+- **Enlaces entre páginas:** `[Notas](05-notas.md)` o `[Archivar](05-notas.md#archivar)`. La app los convierte en
+  enlaces dentro de la sección Documentación. No pongas HTML ni imágenes: no se muestran.
 - **Tono:** de tú, frases cortas, sin jerga técnica salvo en las secciones avanzadas (marcadas como tales).
 - **Estado honesto:** si una función aún no tiene interfaz, se marca con un aviso `> **Próximamente:** …`.
   No se documenta como disponible algo que no lo está.

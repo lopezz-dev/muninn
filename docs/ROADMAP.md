@@ -20,15 +20,18 @@
 - [x] Correos de acceso con SMTP propio (Resend) y plantillas con la marca de Muninn
   ([gotchas/db](gotchas/db.md))
 - [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs)
-- [ ] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos)
+- [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, el dock y el buscador solo enseñan lo activo
+  ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md))
 - [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
   personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
   y «Deshacer» en cada acción ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md))
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
-- [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
-- [ ] Sincronización en tiempo real entre dispositivos + caché offline
+- [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
+  estado, índice de la página; [ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md))
+- [x] Sincronización en tiempo real entre dispositivos (Realtime por tabla, invalidando la caché) y caché de lectura sin conexión
+  en IndexedDB ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
 
 ## F2 · Claude y GitHub
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
@@ -38,6 +41,9 @@
 - [ ] Sync GitHub: issues → tareas (insignia GitHub, proyecto por `github_repo`), cerrar issue ↔ completar
 - [ ] Columna "Para el agente": etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai
+- [ ] **Escribir sin conexión:** cola de mutaciones persistente que se reproduce al volver la red (orden con fractional
+  indexing frente a cambios de otros dispositivos, conflictos, «Deshacer» sobre lo pendiente, ids provisionales). Pide su ADR;
+  hoy sin red solo se puede leer ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
 
 ## F3 · Móvil y finanzas
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)

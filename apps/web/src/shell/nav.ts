@@ -1,3 +1,4 @@
+import type { ModuleName } from '@muninn/core'
 import type { IconName } from '@muninn/ui'
 
 /** Secciones de la app. El orden de `SIDEBAR_*` y `DOCK` sigue el diseño. */
@@ -39,8 +40,30 @@ export function sectionOf(pathname: string): SectionId | null {
   return null
 }
 
+/** Módulo que da acceso a cada sección. Las que no aparecen aquí (Inicio, Asistente, Documentación…) siempre están. */
+export const SECTION_MODULE: Partial<Record<SectionId, ModuleName>> = {
+  projects: 'tasks',
+  notes: 'notes',
+  finance: 'finance',
+  news: 'news',
+  github: 'github',
+}
+
+/** Módulos activos (`user_settings.enabled_modules`), o `null` mientras no se sepa. */
+export type EnabledModules = ReadonlySet<ModuleName> | null
+
+/** Con `null` (aún sin saber) cuenta como activa: mejor enseñar de más que esconder lo que existe. */
+export function sectionEnabled(id: SectionId, modules: EnabledModules): boolean {
+  const m = SECTION_MODULE[id]
+  return !m || !modules || modules.has(m)
+}
+
+/** Las pestañas del dock que quedan con los módulos activos. */
+export const dockFor = (modules: EnabledModules): SectionId[] =>
+  DOCK.filter((id) => sectionEnabled(id, modules))
+
 /** Pestaña activa del dock: lo que no tiene pestaña propia vive bajo «Más». */
-export function dockIndexOf(section: SectionId | null): number {
-  const i = section ? DOCK.indexOf(section) : -1
-  return i >= 0 ? i : DOCK.indexOf('more')
+export function dockIndexOf(section: SectionId | null, dock: readonly SectionId[] = DOCK): number {
+  const i = section ? dock.indexOf(section) : -1
+  return i >= 0 ? i : dock.indexOf('more')
 }

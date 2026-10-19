@@ -2,6 +2,8 @@
 import { cn } from '@muninn/ui'
 import { Lexer, type Token, type Tokens } from 'marked'
 import { Fragment, type ReactNode, useMemo } from 'react'
+import { makeSlugger } from './outline'
+import { plainText } from './plain'
 import { countTasks } from './tasks'
 
 /**
@@ -26,6 +28,15 @@ export interface MarkdownProps {
    * Sin esto, las casillas son de solo lectura.
    */
   onToggleTask?: (index: number) => void
+  /** Pone un `id` a cada título (`#iniciar-sesion`), para enlazar a un apartado. */
+  headingIds?: boolean
+  /** Una cita que empieza en negrita (`> **Estado:** …`) se pinta como aviso destacado. */
+  callouts?: boolean
+  /**
+   * Enlaces propios (entre guías): devuelve el elemento para ese destino, o `undefined` para el
+   * tratamiento normal (que solo admite `http(s)`, `mailto` y `tel`).
+   */
+  renderLink?: (href: string, children: ReactNode) => ReactNode | undefined
   className?: string
 }
 
@@ -33,6 +44,10 @@ interface Ctx {
   /** Contador de casillas de tarea, en el orden en que se pintan. */
   tasks: number
   onToggleTask?: (index: number) => void
+  /** Reparte los `id` de los títulos (solo con `headingIds`). */
+  slug?: (text: string) => string
+  callouts?: boolean
+  renderLink?: MarkdownProps['renderLink']
 }
 
 const NAMED: Record<string, string> = {
@@ -92,6 +107,8 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
       const tk = t as Tokens.Link
       const href = safeHref(decodeEntities(tk.href))
       const label = inline(tk.tokens, ctx)
+      const custom = ctx.renderLink?.(decodeEntities(tk.href), label)
+      if (custom !== undefined) return custom
       return href ? (
         <a
           href={href}
@@ -187,8 +204,14 @@ function block(t: Token, ctx: Ctx): ReactNode {
     case 'heading': {
       const tk = t as Tokens.Heading
       const Tag = `h${tk.depth}` as 'h1'
+      const id = ctx.slug?.(plainText(tk.text, 200))
       return (
-        <Tag className={HEADINGS[tk.depth as 1 | 2 | 3 | 4 | 5 | 6]}>{inline(tk.tokens, ctx)}</Tag>
+        <Tag
+          id={id}
+          className={cn(HEADINGS[tk.depth as 1 | 2 | 3 | 4 | 5 | 6], id && 'scroll-mt-6')}
+        >
+          {inline(tk.tokens, ctx)}
+        </Tag>
       )
     }
     case 'paragraph':
@@ -198,12 +221,24 @@ function block(t: Token, ctx: Ctx): ReactNode {
       const tk = t as Tokens.Text
       return <p>{tk.tokens ? inline(tk.tokens, ctx) : decodeEntities(tk.text)}</p>
     }
-    case 'blockquote':
-      return (
+    case 'blockquote': {
+      const tk = t as Tokens.Blockquote
+      const first = tk.tokens[0]
+      const callout =
+        ctx.callouts && first?.type === 'paragraph' && first.tokens?.[0]?.type === 'strong'
+      return callout ? (
+        <div
+          role="note"
+          className="flex flex-col gap-2 rounded-md border border-accent/30 bg-accent-soft px-3.5 py-3 text-base leading-relaxed text-fg-muted"
+        >
+          {blocks(tk.tokens, ctx)}
+        </div>
+      ) : (
         <blockquote className="flex flex-col gap-3 border-l-2 border-border-strong pl-4 text-fg-subtle">
-          {blocks((t as Tokens.Blockquote).tokens, ctx)}
+          {blocks(tk.tokens, ctx)}
         </blockquote>
       )
+    }
     case 'list': {
       const tk = t as Tokens.List
       const Tag = tk.ordered ? 'ol' : 'ul'
@@ -264,20 +299,34 @@ function block(t: Token, ctx: Ctx): ReactNode {
 }
 
 /** Vista de un texto en Markdown (GFM: tablas, tachado, listas de tareas). */
-export function Markdown({ source, onToggleTask, className }: MarkdownProps) {
+export function Markdown({
+  source,
+  onToggleTask,
+  headingIds,
+  callouts,
+  renderLink,
+  className,
+}: MarkdownProps) {
   const tokens = useMemo(() => Lexer.lex(source, { gfm: true }), [source])
-  let ctx: Ctx = { tasks: 0, onToggleTask }
+  const start = (toggle?: MarkdownProps['onToggleTask']): Ctx => ({
+    tasks: 0,
+    onToggleTask: toggle,
+    slug: headingIds ? makeSlugger() : undefined,
+    callouts,
+    renderLink,
+  })
+  let ctx = start(onToggleTask)
   let body = blocks(tokens, ctx)
   // Marcar una casilla reescribe el texto por su número: si la vista y el texto no cuentan las
   // mismas casillas, mejor que sean de solo lectura que tocar otra.
   if (onToggleTask && ctx.tasks !== countTasks(source)) {
-    ctx = { tasks: 0 }
+    ctx = start()
     body = blocks(tokens, ctx)
   }
   return (
     <div
       className={cn(
-        'flex flex-col gap-3.5 text-md leading-[1.7] text-fg-muted [overflow-wrap:anywhere]',
+        'flex flex-col gap-3.5 text-md leading-[1.7] text-fg-muted [overflow-wrap:break-word]',
         className,
       )}
     >
