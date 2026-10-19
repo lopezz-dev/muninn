@@ -1,11 +1,6 @@
-import { backendLabel } from './lib/muninn'
+import { Fundamentos } from './dev/Fundamentos'
 
-/** Pantalla provisional: la UI real llega con el sistema de diseño. */
+/** Provisional: hasta montar el router y las pantallas, mostramos los fundamentos en vivo. */
 export function App() {
-  return (
-    <main>
-      <h1>Muninn</h1>
-      <p>Base lista. Datos: {backendLabel}.</p>
-    </main>
-  )
+  return <Fundamentos />
 }
