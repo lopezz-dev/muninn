@@ -8,7 +8,7 @@ status: parcial
 # Proyectos y tablero
 
 > **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas y personalizar las columnas desde la app.
-> Las vistas de lista y calendario, los filtros y el color de las columnas llegarán más adelante. En modo demo,
+> Las vistas de lista y calendario y el color de las columnas llegarán más adelante. En modo demo,
 > sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
@@ -54,6 +54,22 @@ y lo cuenta así en los resúmenes.
 
 Si la columna tiene tareas, eliges a qué columna pasan (**Borrar y mover sus tareas a…**). Un proyecto siempre necesita
 al menos una columna. No hay diálogo de confirmación: pulsa **Deshacer** en el aviso y la columna vuelve, con sus tareas.
+
+## Filtrar el tablero
+
+En el ordenador, sobre las columnas hay una barra de filtros: un campo de texto («Filtrar tareas…») y los menús **Prioridad**,
+**Etiquetas**, **Origen** (manual, asistente, GitHub o agente) y **Vence** (vencidas, hoy, próximos 7 días, más adelante o sin
+fecha). En el móvil, el botón del embudo de arriba abre una hoja con lo mismo.
+
+- El texto busca en el título, la descripción y las etiquetas, sin importar mayúsculas ni tildes; si escribes varias palabras,
+  la tarea debe tenerlas todas.
+- En cada menú puedes marcar **varias opciones**: vale cualquiera de ellas. Entre menús distintos se piden todos: «Prioridad: alta»
+  y «Vence: hoy» enseña las tareas altas **y** de hoy.
+- Arriba verás cuántas tareas se ven, por ejemplo «2 de 9 tareas», y **Quitar filtros** las vuelve a mostrar todas.
+- Los contadores y los límites de las columnas siguen contando **todas** las tareas, también las ocultas.
+- **Puedes arrastrar con un filtro puesto.** La tarjeta se coloca justo debajo de la que tienes encima; las tareas ocultas
+  conservan su sitio.
+- Los filtros se quedan al abrir y cerrar una tarea, pero no al recargar la página.
 
 ## Mover tarjetas
 
