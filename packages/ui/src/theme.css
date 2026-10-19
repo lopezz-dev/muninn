@@ -85,6 +85,38 @@
   --ease-out: var(--mn-motion-ease-out);
 }
 
+/* Entradas de overlays (diálogo, panel, menú). Se anulan con prefers-reduced-motion (abajo). */
+@theme {
+  --animate-fade-in: mn-fade-in 160ms var(--mn-motion-ease-out);
+  --animate-pop-in: mn-pop-in 180ms var(--mn-motion-ease-out);
+  --animate-slide-in-right: mn-slide-in-right 280ms var(--mn-motion-ease-out);
+  --animate-slide-in-up: mn-slide-in-up 300ms var(--mn-motion-ease-out);
+
+  @keyframes mn-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes mn-pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+  }
+  @keyframes mn-slide-in-right {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+  @keyframes mn-slide-in-up {
+    from {
+      transform: translateY(32px);
+      opacity: 0;
+    }
+  }
+}
+
 /* Superficies que se vuelven cristal cuando data-glass="on". */
 @utility glass {
   background-color: var(--mn-color-surface);
@@ -114,10 +146,14 @@
     background-attachment: fixed;
     color: var(--mn-color-fg);
     font-family: var(--mn-font-sans);
-    font-size: var(--mn-text-base);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* El tamaño base va en body, NO en html: en html cambiaría el rem y encogería todo el espaciado de Tailwind. */
+  body {
+    font-size: var(--mn-text-base);
   }
 
   ::selection {
@@ -142,6 +178,218 @@
       transition-duration: 0.01ms !important;
       /* biome-ignore lint/complexity/noImportantStyles: idem para animaciones. */
       animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+/*
+ * Icono animado de las notificaciones (NotificationPill).
+ * Coreografía de éxito con acción: la insignia entra → el icono de la acción hace su gesto
+ * → se desvanece con un leve blur → se dibuja el check → un anillo se expande una vez.
+ * Cada tramo dura menos de 300 ms. Se usan translate/rotate/scale como propiedades sueltas para
+ * que el gesto y la salida no se pisen en `transform`.
+ */
+@layer components {
+  .mn-badge {
+    --check-delay: 120ms;
+    --ring-delay: 340ms;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    animation: mn-badge-in 240ms var(--mn-motion-ease-strong) both;
+  }
+  .mn-badge > * {
+    grid-area: 1 / 1;
+  }
+  .mn-badge[data-action] {
+    --check-delay: 400ms;
+    --ring-delay: 620ms;
+  }
+  /* Sustituye a una notificación de carga (notify.promise): la insignia ya estaba, solo se dibuja el check. */
+  .mn-badge[data-continued] {
+    --check-delay: 0ms;
+    --ring-delay: 220ms;
+    animation: none;
+  }
+
+  .mn-badge::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 1.5px currentColor;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mn-badge[data-tone="success"]::after {
+    /* forwards, no both: con both el anillo se vería quieto durante el retardo. */
+    animation: mn-badge-ring 460ms var(--mn-motion-ease-strong) var(--ring-delay) forwards;
+  }
+
+  .mn-badge-check {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mn-badge-check path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: mn-draw 280ms var(--mn-motion-ease-strong) var(--check-delay) both;
+  }
+
+  .mn-badge-action {
+    display: grid;
+    animation:
+      var(--action-motion, mn-act-pulse 300ms var(--mn-motion-ease-in-out) 60ms both),
+      mn-action-out 150ms var(--mn-motion-ease-strong) 360ms both;
+  }
+  .mn-badge[data-motion="lift"] {
+    --action-motion: mn-act-lift 300ms var(--mn-motion-ease-in-out) 60ms both;
+  }
+  .mn-badge[data-motion="slide"] {
+    --action-motion: mn-act-slide 300ms var(--mn-motion-ease-in-out) 60ms both;
+  }
+  .mn-badge[data-motion="drop"] {
+    --action-motion: mn-act-drop 320ms var(--mn-motion-ease-strong) 40ms both;
+  }
+  .mn-badge[data-motion="spin"] {
+    --action-motion: mn-act-spin 340ms var(--mn-motion-ease-in-out) 20ms both;
+  }
+  .mn-badge[data-motion="turn"] {
+    --action-motion: mn-act-turn 300ms var(--mn-motion-ease-in-out) 60ms both;
+  }
+  .mn-badge[data-motion="shake"] {
+    --action-motion: mn-act-shake 320ms ease-in-out 40ms both;
+  }
+
+  /* Error: un «no» con la cabeza. Info: el icono cae suavemente. */
+  .mn-badge[data-tone="error"] {
+    animation:
+      mn-badge-in 240ms var(--mn-motion-ease-strong) both,
+      mn-shake-x 360ms ease-in-out 180ms both;
+  }
+  .mn-badge[data-tone="info"] > svg {
+    animation: mn-info-in 260ms var(--mn-motion-ease-strong) 80ms both;
+  }
+
+  /* Un spinner rápido hace que la espera se perciba más corta. */
+  .mn-spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    border: 2px solid var(--mn-color-border-strong);
+    border-top-color: var(--mn-color-accent);
+    animation: mn-spin 650ms linear infinite;
+  }
+
+  @keyframes mn-badge-in {
+    from {
+      opacity: 0;
+      scale: 0.8;
+    }
+  }
+  @keyframes mn-badge-ring {
+    0% {
+      opacity: 0.45;
+      scale: 1;
+    }
+    100% {
+      opacity: 0;
+      scale: 1.8;
+    }
+  }
+  @keyframes mn-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes mn-action-out {
+    to {
+      opacity: 0;
+      scale: 0.7;
+      filter: blur(2px);
+    }
+  }
+  @keyframes mn-act-pulse {
+    50% {
+      scale: 1.18;
+    }
+  }
+  @keyframes mn-act-lift {
+    50% {
+      translate: 0 -3px;
+    }
+  }
+  @keyframes mn-act-slide {
+    50% {
+      translate: 3px 0;
+    }
+  }
+  @keyframes mn-act-drop {
+    0% {
+      translate: 0 -5px;
+      opacity: 0;
+    }
+    65% {
+      translate: 0 1px;
+      opacity: 1;
+    }
+  }
+  @keyframes mn-act-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+  @keyframes mn-act-turn {
+    to {
+      rotate: 90deg;
+    }
+  }
+  @keyframes mn-act-shake {
+    20% {
+      rotate: -14deg;
+    }
+    40% {
+      rotate: 11deg;
+    }
+    60% {
+      rotate: -7deg;
+    }
+    80% {
+      rotate: 3deg;
+    }
+  }
+  @keyframes mn-shake-x {
+    20% {
+      translate: -2px 0;
+    }
+    40% {
+      translate: 2px 0;
+    }
+    60% {
+      translate: -1.5px 0;
+    }
+    80% {
+      translate: 1px 0;
+    }
+  }
+  @keyframes mn-info-in {
+    from {
+      opacity: 0;
+      translate: 0 -4px;
+    }
+  }
+  @keyframes mn-spin {
+    to {
+      rotate: 360deg;
     }
   }
 }

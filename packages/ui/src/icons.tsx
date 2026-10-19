@@ -1,6 +1,7 @@
 import {
   Archive,
   ArrowDown,
+  ArrowRight,
   ArrowsClockwise,
   ArrowUp,
   ArrowUpRight,
@@ -22,6 +23,7 @@ import {
   House,
   IconContext,
   type IconProps,
+  Info,
   Kanban,
   LinkSimple,
   MagnifyingGlass,
@@ -39,6 +41,7 @@ import {
   Trash,
   User,
   Wallet,
+  WarningCircle,
   X,
 } from '@phosphor-icons/react'
 import type { ComponentType, ReactNode } from 'react'
@@ -78,6 +81,7 @@ export const icons = {
   filter: FunnelSimple,
   sync: ArrowsClockwise,
   external: ArrowUpRight,
+  move: ArrowRight,
   income: ArrowUp,
   expense: ArrowDown,
   recurring: Repeat,
@@ -87,6 +91,8 @@ export const icons = {
   trash: Trash,
   download: DownloadSimple,
   glass: Drop,
+  info: Info,
+  warning: WarningCircle,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons

@@ -57,6 +57,8 @@
   --mn-shadow-drag: 0 18px 40px rgba(0, 0, 0, 0.55);
   --mn-shadow-panel: -24px 0 60px rgba(0, 0, 0, 0.45);
   --mn-motion-ease-out: cubic-bezier(0.3, 0.7, 0.2, 1);
+  --mn-motion-ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --mn-motion-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --mn-motion-fast: 120ms;
   --mn-motion-base: 200ms;
   --mn-motion-slow: 450ms;
