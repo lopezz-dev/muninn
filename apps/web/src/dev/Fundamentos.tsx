@@ -60,6 +60,17 @@ const KIND_LABEL: Record<keyof typeof columnKinds, string> = {
   done: 'Hecho',
 }
 
+const ACTION_DEMOS: { icon: IconName; title: string; motion: string }[] = [
+  { icon: 'link', title: 'Enlace copiado', motion: 'se eleva' },
+  { icon: 'move', title: 'Tarea movida', motion: 'avanza' },
+  { icon: 'archive', title: 'Tarea archivada', motion: 'cae a la caja' },
+  { icon: 'trash', title: 'Tarea borrada', motion: 'tiembla' },
+  { icon: 'plus', title: 'Proyecto creado', motion: 'gira' },
+  { icon: 'sync', title: 'Sincronizado', motion: 'da una vuelta' },
+  { icon: 'pin', title: 'Nota fijada', motion: 'se clava' },
+  { icon: 'finance', title: 'Gasto guardado', motion: 'late' },
+]
+
 const sectionTitle = 'mb-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle'
 
 /** Página de desarrollo: tokens y componentes de @muninn/ui con el tema real. */
@@ -76,15 +87,16 @@ export function Fundamentos() {
   const [projectError, setProjectError] = useState<string>()
 
   /** Acción con «Deshacer»: el patrón para todo lo que cambia o destruye datos. */
-  const withUndo = (done: string, undone: string, description?: string) =>
+  const withUndo = (done: string, undone: string, description?: string, icon?: IconName) =>
     notify.success(done, {
       description,
+      icon,
       action: { label: 'Deshacer', onClick: () => notify.info(undone, { description }) },
     })
 
   const copyLink = async () => {
     const ok = await copyText(`${location.origin}/t/MUN-23`)
-    if (ok) notify.success('Enlace copiado', { description: 'MUN-23' })
+    if (ok) notify.success('Enlace copiado', { description: 'MUN-23', icon: 'link' })
     else notify.error('No se pudo copiar el enlace')
   }
 
@@ -93,6 +105,7 @@ export function Fundamentos() {
     const prev = column
     setColumn(k)
     notify.success(`Movida a ${KIND_LABEL[k]}`, {
+      icon: 'move',
       description: 'Definir sistema de diseño',
       action: {
         label: 'Deshacer',
@@ -112,7 +125,7 @@ export function Fundamentos() {
     }
     setProjectOpen(false)
     setProjectName('')
-    notify.success(`Proyecto «${name}» creado`, { description: 'con 5 columnas' })
+    notify.success(`Proyecto «${name}» creado`, { description: 'con 5 columnas', icon: 'plus' })
   }
 
   useEffect(() => applyAppearance(appearance), [appearance])
@@ -368,6 +381,7 @@ export function Fundamentos() {
                       icon={<Icon name="pin" />}
                       onSelect={() =>
                         notify.success('Tarea fijada', {
+                          icon: 'pin',
                           description: 'Aparecerá arriba en Inicio',
                         })
                       }
@@ -376,7 +390,7 @@ export function Fundamentos() {
                     </MenuItem>
                     <MenuItem
                       icon={<Icon name="assistant" />}
-                      onSelect={() => notify.info('Abriendo el asistente…')}
+                      onSelect={() => notify.info('Abriendo el asistente…', { icon: 'assistant' })}
                     >
                       Preguntar a Muninn
                     </MenuItem>
@@ -384,14 +398,18 @@ export function Fundamentos() {
                     <MenuItem
                       icon={<Icon name="archive" />}
                       shortcut="E"
-                      onSelect={() => withUndo('Tarea archivada', 'Tarea restaurada')}
+                      onSelect={() =>
+                        withUndo('Tarea archivada', 'Tarea restaurada', undefined, 'archive')
+                      }
                     >
                       Archivar
                     </MenuItem>
                     <MenuItem
                       danger
                       icon={<Icon name="trash" />}
-                      onSelect={() => withUndo('Tarea borrada', 'Tarea recuperada')}
+                      onSelect={() =>
+                        withUndo('Tarea borrada', 'Tarea recuperada', undefined, 'trash')
+                      }
                     >
                       Borrar
                     </MenuItem>
@@ -537,7 +555,7 @@ export function Fundamentos() {
           <Card className="p-5 xl:col-span-2">
             <h2 className={sectionTitle}>Notificaciones</h2>
             <div className="flex flex-wrap items-center gap-2.5">
-              <Button onClick={() => notify.success('Enlace copiado', { description: 'MUN-23' })}>
+              <Button onClick={() => notify.success('Cambios guardados')}>
                 <Icon name="check" className="text-success" />
                 Éxito
               </Button>
@@ -557,7 +575,12 @@ export function Fundamentos() {
               </Button>
               <Button
                 onClick={() =>
-                  withUndo('Movimiento guardado', 'Movimiento eliminado', '24,90 € · Ocio')
+                  withUndo(
+                    'Movimiento guardado',
+                    'Movimiento eliminado',
+                    '24,90 € · Ocio',
+                    'finance',
+                  )
                 }
               >
                 <Icon name="recurring" />
@@ -581,6 +604,22 @@ export function Fundamentos() {
                 Aparecen arriba en el centro. Pasa el ratón para verlas apiladas; desliza para
                 descartarlas.
               </p>
+            </div>
+            <h3 className="mt-5 mb-3 text-xs font-medium text-fg-subtle">
+              Gesto de cada acción antes de confirmar
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {ACTION_DEMOS.map((d) => (
+                <Button
+                  key={d.icon}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => notify.success(d.title, { icon: d.icon, description: d.motion })}
+                >
+                  <Icon name={d.icon} />
+                  {d.title}
+                </Button>
+              ))}
             </div>
           </Card>
         </div>
