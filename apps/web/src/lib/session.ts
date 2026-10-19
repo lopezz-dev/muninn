@@ -1,14 +1,16 @@
 import { notify } from '@muninn/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
+import { connectAppearance } from './appearance'
 import { leaveDemo, signOut } from './auth'
 import { resetMuninn } from './muninn'
 import { queryClient } from './query-client'
 
-/** Olvida todo lo del usuario anterior (instancia del core y caché de react-query). */
+/** Olvida todo lo del usuario anterior (instancia del core, caché de react-query y su apariencia). */
 export function forgetUserData() {
   resetMuninn()
   queryClient.clear()
+  connectAppearance(null)
 }
 
 /**

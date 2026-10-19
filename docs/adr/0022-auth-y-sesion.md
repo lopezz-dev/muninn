@@ -51,8 +51,8 @@ RLS ([ADR-0004](0004-multiusuario-con-rls.md)) hace falta saber quién es el usu
   localStorage sigue como caché para aplicarla antes del primer render. Al entrar, la de la cuenta gana; si
   la cuenta no tiene, se sube la del dispositivo. Cada cambio se guarda en los dos sitios.
 
-Medido con `pnpm --filter @muninn/web size`: el JS inicial pasa de 619,0 kB (187,6 kB gzip) a 624,6 kB
-(189,5 kB gzip). Son la sesión, el router y el pie de la barra lateral; las acciones del formulario
+Medido con `pnpm --filter @muninn/web size`: el JS inicial pasa de 619,0 kB (187,6 kB gzip) a 624,7 kB
+(189,6 kB gzip). Son la sesión, el router y el pie de la barra lateral; las acciones del formulario
 (`login-actions.ts`) van en el chunk del login. supabase-js (214 kB) y el core (114 kB) siguen en diferido.
 
 ## Alternativas consideradas
