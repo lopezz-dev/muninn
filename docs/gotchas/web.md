@@ -77,6 +77,17 @@
   antes y después con `pnpm --filter @muninn/web size`. Para ver qué paquete pesa, compila con `--sourcemap`
   y suma `sourcesContent` por paquete.
 
+### Filtros del tablero y arrastre: el índice es el de la columna entera
+
+- **Síntoma:** con un filtro puesto, al soltar una tarjeta cae en un sitio distinto del que se veía, o desaparece de donde estaba.
+- **Causa:** la columna que se pinta es la lista filtrada, pero `tasks.move` cuenta la columna entera (índice «sin contar la
+  propia tarea», [ADR-0025](../adr/0025-escrituras-optimistas-y-deshacer.md)). Pasar el índice visible tal cual coloca la tarjeta
+  entre tareas ocultas.
+- **Solución:** `BoardDesktop` y `BoardMobile` convierten con `fullIndex(columnaEntera, listaVisible, id)` (`lib/board-filter.ts`, con tests):
+  arriba del todo, delante de la primera visible; en otro sitio, justo debajo de la visible que queda encima; sin visibles, al final.
+  Los contadores y el límite de la columna usan el total (`total` en `Column`), no las visibles. Si añades otra forma de mover
+  tarjetas, usa `fullIndex`; «Deshacer» ya usa la columna entera y no depende del filtro.
+
 ### Tiempo real: una tabla o un dato sincronizable nuevo
 
 - **Síntoma:** lo que cambias en otro dispositivo no aparece, o aparece solo al recargar.

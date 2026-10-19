@@ -35,6 +35,9 @@
 
 ## F2 · Claude y GitHub
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
+- [ ] Tablero: vistas **Lista** y **Calendario** del diseño. No entran en F1: el diseño de móvil no las contempla, y el
+  calendario necesita elegir cómo se arrastra una fecha y qué hacer con las tareas sin fecha. Con los filtros ya hechos, la
+  Lista es la más barata (misma fuente de datos, sin arrastre entre columnas)
 - [ ] Sync GitHub: issues → tareas (insignia GitHub, proyecto por `github_repo`), cerrar issue ↔ completar
 - [ ] Columna "Para el agente": etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai
@@ -74,7 +77,6 @@ más o menos en este orden:
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
 
 ## Backlog
-- Tablero: filtros (texto, prioridad, etiquetas, origen, fecha) y vistas Lista y Calendario del diseño
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Borrado definitivo de tareas desde la app (hoy solo se archivan)
 - Descripción de tarea en Markdown
