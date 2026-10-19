@@ -157,6 +157,13 @@ const docsRoute = createRoute({
   component: screen(() => import('./screens/Documentacion'), 'Documentacion'),
 })
 
+/** Una guía: ruta propia, con enlace compartible; cuelga de la lista como el detalle de tarea del tablero. */
+const docPageRoute = createRoute({
+  getParentRoute: () => docsRoute,
+  path: '$pagina',
+  component: screen(() => import('./screens/DocPagina'), 'DocPagina'),
+})
+
 const moreRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'mas',
@@ -208,7 +215,7 @@ const routeTree = rootRoute.addChildren([
     assistantRoute,
     newsRoute,
     githubRoute,
-    docsRoute,
+    docsRoute.addChildren([docPageRoute]),
     moreRoute,
     settingsRoute.addChildren([settingsIndexRoute, settingsSectionRoute]),
     devFundamentosRoute,

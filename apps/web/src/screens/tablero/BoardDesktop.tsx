@@ -27,6 +27,7 @@ import {
   isColKey,
   moveAcross,
 } from '../../lib/board'
+import { type BoardFilter, filterTasks, fullIndex } from '../../lib/board-filter'
 import { moveColumn } from '../../lib/column-actions'
 import { useMuninn } from '../../lib/muninn'
 import { moveTask } from '../../lib/task-actions'
@@ -58,18 +59,30 @@ export function BoardDesktop({
   projectId,
   board,
   today,
+  filter,
 }: {
   projectId: string
   board: BoardData
   today: string
+  filter: BoardFilter
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
   const [drag, setDrag] = useState<DragState | null>(null)
   const [editing, setEditing] = useState<BoardColumn | 'new' | null>(null)
 
-  const groups = useMemo(() => groupByColumn(board.columns, board.tasks), [board])
+  // Con un filtro puesto solo se ven (y se arrastran) las tareas que lo cumplen; el índice que se manda al
+  // servidor sigue siendo el de la columna entera (`fullIndex`).
+  const visible = useMemo(
+    () => filterTasks(board.tasks, filter, today),
+    [board.tasks, filter, today],
+  )
+  const groups = useMemo(() => groupByColumn(board.columns, visible), [board.columns, visible])
   const idle = useMemo(() => idsByColumn(groups), [groups])
+  const allIds = useMemo(
+    () => idsByColumn(groupByColumn(board.columns, board.tasks)),
+    [board.columns, board.tasks],
+  )
   const items = drag?.items ?? idle
   const colOrder = drag?.cols ?? board.columns.map((c) => c.id)
   const columnById = useMemo(() => new Map(board.columns.map((c) => [c.id, c])), [board.columns])
@@ -173,10 +186,10 @@ export function BoardDesktop({
       const [from, to] = [list.indexOf(activeId), list.indexOf(overId)]
       if (from !== to) next = { ...next, [column]: arrayMove(list, from, to) }
     }
-    const index = (next[column] ?? []).indexOf(activeId)
     const originColumn = findColumn(idle, activeId)
     const originIndex = originColumn ? (idle[originColumn] ?? []).indexOf(activeId) : -1
-    if (column === originColumn && index === originIndex) return
+    if (column === originColumn && (next[column] ?? []).indexOf(activeId) === originIndex) return
+    const index = fullIndex(allIds[column] ?? [], next[column] ?? [], activeId)
     void moveTask(m, qc, { projectId, taskId: activeId, columnId: column, index })
   }
 
@@ -211,6 +224,10 @@ export function BoardDesktop({
                   column={column}
                   columns={board.columns}
                   tasks={(items[id] ?? []).flatMap((t) => taskById.get(t) ?? [])}
+                  // Cuenta la columna entera (para el límite), también con un filtro puesto y arrastrando.
+                  total={
+                    (allIds[id]?.length ?? 0) + (items[id]?.length ?? 0) - (idle[id]?.length ?? 0)
+                  }
                   counts={board.counts}
                   today={today}
                   projectId={projectId}
@@ -237,7 +254,14 @@ export function BoardDesktop({
               today={today}
             />
           ) : activeColumn ? (
-            <ColumnOverlay column={activeColumn} count={(items[activeColumn.id] ?? []).length} />
+            <ColumnOverlay
+              column={activeColumn}
+              count={
+                (allIds[activeColumn.id]?.length ?? 0) +
+                (items[activeColumn.id]?.length ?? 0) -
+                (idle[activeColumn.id]?.length ?? 0)
+              }
+            />
           ) : null}
         </DragOverlay>
       </DndContext>

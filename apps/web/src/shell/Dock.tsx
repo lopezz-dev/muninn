@@ -1,6 +1,7 @@
 import { cn, Icon } from '@muninn/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEnabledModules } from '../lib/modules'
 import {
   DOCK_DURATION,
   DOCK_EASE,
@@ -9,7 +10,7 @@ import {
   slotCenter,
   slotWidth,
 } from './dock-geometry'
-import { DOCK, dockIndexOf, SECTIONS, sectionOf } from './nav'
+import { dockFor, dockIndexOf, SECTIONS, sectionOf } from './nav'
 
 const reducedMotion = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -21,7 +22,11 @@ const reducedMotion = () =>
  */
 export function Dock({ className }: { className?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const active = dockIndexOf(sectionOf(pathname))
+  const modules = useEnabledModules()
+  // Con un módulo desactivado, su pestaña desaparece y las demás se reparten el ancho.
+  const dock = useMemo(() => dockFor(modules), [modules])
+  const count = dock.length
+  const active = dockIndexOf(sectionOf(pathname), dock)
 
   const boxRef = useRef<HTMLDivElement>(null)
   const strokeRef = useRef<SVGPathElement>(null)
@@ -55,7 +60,7 @@ export function Dock({ className }: { className?: string }) {
       if (beadRef.current) beadRef.current.style.translate = `${cx - G.bead / 2}px 0`
       if (glowRef.current) glowRef.current.style.translate = `${cx - 90}px 0`
     }
-    const target = slotCenter(width, active)
+    const target = slotCenter(width, active, count)
     const from = cxRef.current
     const resized = widthRef.current !== width
     widthRef.current = width
@@ -84,10 +89,10 @@ export function Dock({ className }: { className?: string }) {
       cancelAnimationFrame(raf)
       clearTimeout(settle)
     }
-  }, [active, width])
+  }, [active, width, count])
 
-  const slot = slotWidth(width || 350)
-  const activeId = DOCK[active] ?? 'more'
+  const slot = slotWidth(width || 350, count)
+  const activeId = dock[active] ?? 'more'
 
   return (
     <div className={cn('pointer-events-none fixed inset-x-0 bottom-0 z-30', className)}>
@@ -121,7 +126,7 @@ export function Dock({ className }: { className?: string }) {
         </svg>
 
         <nav aria-label="Navegación principal" className="pointer-events-auto absolute inset-0">
-          {DOCK.map((id, i) => {
+          {dock.map((id, i) => {
             const s = SECTIONS[id]
             const isActive = i === active
             return (

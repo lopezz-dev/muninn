@@ -16,6 +16,21 @@
 - Solo funcionan si la PWA está **añadida a la pantalla de inicio** (iOS 16.4 o superior) y tras pedir permiso
   con un gesto del usuario (un clic). En Safari, sin instalar, no hay push.
 
+### Módulos desactivados: qué mira cada pieza del shell
+
+- **Síntoma:** un módulo desactivado sigue saliendo en el dock, el buscador o un atajo; o el menú parpadea al cargar.
+- **Causa:** cada pieza decide por su cuenta. Todas usan `useEnabledModules()` (`lib/modules.ts`) y `sectionEnabled()`
+  (`shell/nav.ts`): barra lateral, dock (`dockFor`), «Más», buscador y la tecla **N**. Los ajustes llegan por la caché de
+  react-query (`keys.settings`), que rellena el loader de `_app` antes de pintar; mientras valgan `null` se enseña todo.
+- **Solución:** una sección nueva con módulo se declara en `SECTION_MODULE`; no compruebes `enabledModules` a mano. El dock
+  cuenta sus pestañas (`slotWidth(width, count)`): no asumas cinco.
+- **Ref:** [ADR-0028](../adr/0028-modulos-activables-solo-en-la-interfaz.md)
+
+### El buscador ⌘K es un chunk diferido que se pide al pintar el shell
+
+- `CommandPalette` no viaja en el JS del arranque: `AppShell` lo monta dentro de `<Suspense>` y el navegador lo pide en cuanto
+  se pinta el shell. Si pulsas ⌘K antes de que llegue, se abre al terminar de cargar. No lo importes de forma estática desde el shell.
+
 ### `@muninn/core` se importa como TypeScript fuente
 
 - Vite lo transpila sin problema, pero no importes `@muninn/core/file-store` (usa `node:fs`).
@@ -69,6 +84,51 @@
   sin formato como respaldo. Es intencionado: el panel de la tarea es de las pantallas más abiertas.
 - **Solución:** no importes `markdown/Markdown` de forma estática en el detalle de tarea. Lo que no necesita `marked`
   (`markdown/tasks`, para marcar casillas) sí se puede importar directamente.
+
+### Filtros del tablero y arrastre: el índice es el de la columna entera
+
+- **Síntoma:** con un filtro puesto, al soltar una tarjeta cae en un sitio distinto del que se veía, o desaparece de donde estaba.
+- **Causa:** la columna que se pinta es la lista filtrada, pero `tasks.move` cuenta la columna entera (índice «sin contar la
+  propia tarea», [ADR-0025](../adr/0025-escrituras-optimistas-y-deshacer.md)). Pasar el índice visible tal cual coloca la tarjeta
+  entre tareas ocultas.
+- **Solución:** `BoardDesktop` y `BoardMobile` convierten con `fullIndex(columnaEntera, listaVisible, id)` (`lib/board-filter.ts`, con tests):
+  arriba del todo, delante de la primera visible; en otro sitio, justo debajo de la visible que queda encima; sin visibles, al final.
+  Los contadores y el límite de la columna usan el total (`total` en `Column`), no las visibles. Si añades otra forma de mover
+  tarjetas, usa `fullIndex`; «Deshacer» ya usa la columna entera y no depende del filtro.
+
+### Tiempo real: una tabla o un dato sincronizable nuevo
+
+- **Síntoma:** lo que cambias en otro dispositivo no aparece, o aparece solo al recargar.
+- **Causa:** `lib/sync.ts` solo escucha las tablas de `SYNC_TABLES` (las de la publicación `supabase_realtime`) y traduce cada
+  una a lo que refresca (`scopesOf`). Una tabla nueva no entra sola.
+- **Solución:** añádela a la publicación (migración, [gotchas/db](db.md)), a `SYNC_TABLES` y a `scopesOf`, con su caso en
+  `test/sync.test.ts`. Una clave de caché nueva debe colgar de un prefijo que ya se invalida (`['projects', …]`, `['tasks', …]`,
+  `['notes', …]`, `['settings']`) o tener su propio ámbito.
+- **Ojo:** un borrado solo trae la clave primaria; sin `project_id`, `scopesOf` refresca todos los tableros.
+- **Ref:** [ADR-0029](../adr/0029-tiempo-real-y-cache-sin-conexion.md)
+
+### Los eventos de tus propios cambios no pisan lo optimista
+
+- **Síntoma:** una tarjeta o un interruptor «salta» atrás un instante justo después de soltarlo, cuando hay Realtime.
+- **Causa:** tu propio cambio también genera un evento; si se refrescara la caché mientras tu escritura sigue en cola, la lectura
+  traería el estado anterior.
+- **Solución:** `createSync` nunca refresca un ámbito con escrituras en cola (`isBusy(clave)`, de `mutations.ts`) y espera a que se
+  vacíe. Toda escritura optimista nueva debe pasar por `serial(clave, …)` con la clave de lo que cambia (el proyecto, `note:<id>`,
+  `settings`…) para quedar protegida. Probado en `test/sync.test.ts`.
+
+### Caché sin conexión: cambia `CACHE_VERSION` si cambia la forma de los datos
+
+- **Síntoma:** tras actualizar la app, una pantalla falla o enseña datos raros hasta recargar dos veces.
+- **Causa:** la caché de react-query de la versión anterior se recupera de IndexedDB (`lib/offline.ts`) antes del primer pintado.
+- **Solución:** sube `CACHE_VERSION` cuando cambie lo que guarda una consulta (el tipo de `BoardData`, un campo del core…): lo
+  guardado con otra versión se descarta. Caduca sola a los 7 días. Se borra al cerrar sesión (`forgetUserData`).
+- **Verificar:** DevTools › Application › IndexedDB › `muninn-cache` (hay una clave `queries:<id de usuario>`).
+
+### Probar el tiempo real con dos pestañas
+
+- En el navegador integrado, abre la misma cuenta en dos pestañas (`tabs_create`) y cambia algo en una: la otra se actualiza sola
+  (hasta ~1 s por los 400 ms de agrupación). Una pestaña en segundo plano también recibe los eventos. Para probar el modo sin
+  conexión no sirve `navigator.onLine`: usa el test de `test/offline.test.ts` (IndexedDB simulado) o corta la red del sistema.
 
 ### Rutas profundas y recargas: hace falta *fallback* a `index.html`
 
@@ -220,3 +280,20 @@
 - En iOS el teclado no cambia el alto de la página (no hay `interactive-widget`), así que una barra pegada abajo quedaría tapada.
   La del editor de notas es `sticky` arriba. Sus botones llevan `onMouseDown={e => e.preventDefault()}`: así no le quitan el
   foco al `textarea` ni cierran el teclado al tocarlos.
+
+### Escribir una guía de `docs/user` para la app
+
+- **Síntoma:** una guía no sale en el menú, un enlace no funciona o un aviso no se destaca.
+- **Causa:** la sección Documentación solo importa `NN-nombre.md` (dos cifras, guion y minúsculas) y solo entiende cuatro
+  claves planas de metadatos: `title` (obligatorio), `description`, `order` y `status` (`disponible`, `parcial`,
+  `proximamente`; otro valor cuenta como disponible).
+- **Solución:** el `# Título` con que empieza el texto se quita (el título sale de los metadatos). Una cita que empieza
+  en negrita (`> **Estado:** …`) se pinta como aviso. Los enlaces entre guías van como `05-notas.md#archivar` (las anclas
+  se comparan sin tildes: `#iniciar-sesión` e `#iniciar-sesion` son lo mismo); cualquier otro fichero relativo se ve como texto.
+  Nada de HTML ni imágenes ([ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)).
+- **Ref:** [ADR-0027](../adr/0027-documentacion-en-la-app-desde-docs-user.md)
+
+### Los diálogos del shell se cargan al abrirse la primera vez
+
+- «Nueva tarea» y «Nuevo proyecto» son `lazy` en `AppShell`: su código no viaja en el arranque. La primera vez que se abren
+  hay una petición pequeña (el resto, ya en caché). Si añades otro diálogo global, haz lo mismo y mide con `size`.
