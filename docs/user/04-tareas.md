@@ -27,6 +27,7 @@ enlace propio, así que puedes copiarlo o recargar la página. Desde ahí cambia
 - **Estado** (la columna), **prioridad** (ninguna, baja, media, alta o urgente) y **fecha límite**.
 - **Etiquetas** libres: escribe y pulsa **Intro**.
 - **Subtareas** (checklist): márcalas, quítalas o añade más; la tarjeta muestra el progreso, por ejemplo 2/3.
+- **Notas vinculadas:** las notas de esa tarea, y **Añadir nota** para crear otra ya vinculada (ver [Notas](05-notas.md)).
 - Ves la **actividad** de la tarea: quién la creó, movió o cambió, y cuándo.
 
 Cada cambio avisa y se puede deshacer.
