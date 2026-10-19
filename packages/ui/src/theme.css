@@ -1,0 +1,147 @@
+/*
+ * Tema de Tailwind v4 para Muninn. Uso en una app:
+ *   @import "tailwindcss";
+ *   @import "@muninn/ui/theme.css";
+ *   @source "<ruta a>/packages/ui/src";
+ * La paleta por defecto de Tailwind está desactivada: solo existen los colores de Muninn.
+ */
+@import "./tokens.css";
+
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --text-*: initial;
+}
+
+@theme inline {
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #fff;
+  --color-black: #000;
+
+  --color-bg: var(--mn-color-bg);
+  --color-sidebar: var(--mn-color-sidebar);
+  --color-surface: var(--mn-color-surface);
+  --color-surface-raised: var(--mn-color-surface-raised);
+  --color-surface-hover: var(--mn-color-surface-hover);
+  --color-surface-sunken: var(--mn-color-surface-sunken);
+  --color-border: var(--mn-color-border);
+  --color-border-strong: var(--mn-color-border-strong);
+  --color-border-subtle: var(--mn-color-border-subtle);
+  --color-fg: var(--mn-color-fg);
+  --color-fg-muted: var(--mn-color-fg-muted);
+  --color-fg-subtle: var(--mn-color-fg-subtle);
+  --color-fg-faint: var(--mn-color-fg-faint);
+  --color-accent: var(--mn-color-accent);
+  --color-accent-hover: var(--mn-color-accent-hover);
+  --color-accent-fg: var(--mn-color-accent-fg);
+  --color-accent-soft: var(--mn-color-accent-soft);
+  --color-success: var(--mn-color-success);
+  --color-success-soft: var(--mn-color-success-soft);
+  --color-danger: var(--mn-color-danger);
+  --color-danger-soft: var(--mn-color-danger-soft);
+  --color-overlay: var(--mn-color-overlay);
+
+  --color-project-blue: var(--mn-project-blue);
+  --color-project-violet: var(--mn-project-violet);
+  --color-project-teal: var(--mn-project-teal);
+  --color-project-pink: var(--mn-project-pink);
+  --color-project-green: var(--mn-project-green);
+  --color-project-amber: var(--mn-project-amber);
+  --color-project-gray: var(--mn-project-gray);
+
+  --color-kind-backlog: var(--mn-kind-backlog);
+  --color-kind-todo: var(--mn-kind-todo);
+  --color-kind-in-progress: var(--mn-kind-in_progress);
+  --color-kind-review: var(--mn-kind-review);
+  --color-kind-done: var(--mn-kind-done);
+
+  --font-sans: var(--mn-font-sans);
+  --font-mono: var(--mn-font-mono);
+
+  --text-2xs: var(--mn-text-2xs);
+  --text-xs: var(--mn-text-xs);
+  --text-sm: var(--mn-text-sm);
+  --text-base: var(--mn-text-base);
+  --text-md: var(--mn-text-md);
+  --text-lg: var(--mn-text-lg);
+  --text-xl: var(--mn-text-xl);
+  --text-2xl: var(--mn-text-2xl);
+  --text-3xl: var(--mn-text-3xl);
+
+  --radius-xs: var(--mn-radius-xs);
+  --radius-sm: var(--mn-radius-sm);
+  --radius-md: var(--mn-radius-md);
+  --radius-lg: var(--mn-radius-lg);
+  --radius-xl: var(--mn-radius-xl);
+  --radius-dock: var(--mn-radius-dock);
+
+  --shadow-popover: var(--mn-shadow-popover);
+  --shadow-drag: var(--mn-shadow-drag);
+  --shadow-panel: var(--mn-shadow-panel);
+
+  --ease-out: var(--mn-motion-ease-out);
+}
+
+/* Superficies que se vuelven cristal cuando data-glass="on". */
+@utility glass {
+  background-color: var(--mn-color-surface);
+  -webkit-backdrop-filter: var(--mn-backdrop);
+  backdrop-filter: var(--mn-backdrop);
+}
+@utility glass-raised {
+  background-color: var(--mn-color-surface-raised);
+  -webkit-backdrop-filter: var(--mn-backdrop);
+  backdrop-filter: var(--mn-backdrop);
+}
+@utility glass-sidebar {
+  background-color: var(--mn-color-sidebar);
+  -webkit-backdrop-filter: var(--mn-backdrop);
+  backdrop-filter: var(--mn-backdrop);
+}
+
+/* Cifras alineadas (dinero, contadores). */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  html {
+    background-color: var(--mn-color-bg);
+    background-image: var(--mn-wallpaper);
+    background-attachment: fixed;
+    color: var(--mn-color-fg);
+    font-family: var(--mn-font-sans);
+    font-size: var(--mn-text-base);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--mn-color-accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--mn-color-accent);
+    outline-offset: 2px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--mn-color-border-strong) transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      /* biome-ignore lint/complexity/noImportantStyles: la preferencia del sistema debe ganar a cualquier transición. */
+      transition-duration: 0.01ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: idem para animaciones. */
+      animation-duration: 0.01ms !important;
+    }
+  }
+}

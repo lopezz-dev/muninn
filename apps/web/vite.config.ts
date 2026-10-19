@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -8,6 +9,7 @@ const isTauri = Boolean(process.env.TAURI_ENV_PLATFORM)
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       disable: isTauri,
       registerType: 'autoUpdate',
@@ -16,8 +18,8 @@ export default defineConfig({
         short_name: 'Muninn',
         description: 'Tu sistema operativo personal',
         lang: 'es',
-        theme_color: '#0b0c0e',
-        background_color: '#0b0c0e',
+        theme_color: '#0C0D10',
+        background_color: '#0C0D10',
         display: 'standalone',
         start_url: '/',
         icons: [

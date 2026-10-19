@@ -30,6 +30,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 | `core` | `packages/core`: API de dominio, stores, validación |
 | `db` | `supabase/`: esquema, RLS, migraciones, Realtime |
 | `mcp` | `packages/mcp`: servidor MCP |
+| `ui` | `packages/ui`: tokens de diseño, tema de Tailwind, iconos, apariencia |
 | `web` | `apps/web`: PWA y frontend compartido |
 | `desktop` | `apps/desktop`: Tauri |
 | `ci` | GitHub Actions, ramas, releases |
@@ -56,8 +57,14 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
 - [ADR-0012](0012-paquetes-internos-como-fuente.md) — Paquetes internos como TS fuente; el MCP se empaqueta
 
+### ui
+- [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
+- [ADR-0015](0015-modo-cristal.md) — Modo cristal (blur) global, activable
+- [ADR-0016](0016-iconos-phosphor-y-geist.md) — Iconos Phosphor y fuente Geist autoalojada
+
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
+- [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

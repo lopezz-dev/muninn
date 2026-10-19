@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@muninn/ui/theme.css";
+
+/* Las clases usadas dentro de @muninn/ui también deben generarse. */
+@source "../../../packages/ui/src";

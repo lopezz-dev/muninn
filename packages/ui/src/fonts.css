@@ -1,0 +1,3 @@
+/* Geist autoalojada: funciona sin red (Tauri, PWA offline) y sin abrir la CSP a Google Fonts. */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";

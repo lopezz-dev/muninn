@@ -8,4 +8,4 @@
 | [gotchas/](gotchas/README.md) | Desarrollo y agentes | **Trampas** no obvias por área: síntoma, causa y solución |
 | [user/](user/README.md) | Quien usa la app | Guías de uso; fuente de la sección Documentación de la app |
 
-Áreas (entidades) comunes a ADRs y gotchas: `core` · `db` · `mcp` · `web` · `desktop` · `ci` · `tooling` · `docs`.
+Áreas (entidades) comunes a ADRs y gotchas: `core` · `db` · `mcp` · `ui` · `web` · `desktop` · `ci` · `tooling` · `docs`.

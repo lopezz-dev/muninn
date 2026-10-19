@@ -15,6 +15,7 @@ apps/
   web/         React + Vite — PWA instalable (iPhone) y frontend del escritorio
 packages/
   core/        API de dominio (createMuninn) + stores (Supabase, fichero, memoria)
+  ui/          Tokens de diseño, tema de Tailwind v4, iconos (Phosphor), apariencia (cristal, acento)
   mcp/         Servidor MCP para Claude / Codex / Jarvis
 supabase/
   migrations/  Esquema SQL con RLS

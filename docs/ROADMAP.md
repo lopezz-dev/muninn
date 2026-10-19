@@ -8,7 +8,10 @@
 - [x] CI (lint, typecheck, test, build) y releases (release-please + tauri-action: Win/Linux/macOS)
 - [x] Esqueleto de Tauri 2 y de la PWA
 - [x] Sistema de documentación: ADRs, gotchas por área y docs de usuario
-- [ ] **Sistema de diseño** ← siguiente paso, con el enfoque propio que quiere Alex
+- [x] Diseño de todas las pantallas (escritorio + móvil): [lienzo «Muninn — Pantallas»](https://claude.ai/artifact/BdNFHNmB8E3dxV2u7o27xB)
+- [x] `@muninn/ui`: tokens → CSS vars, tema Tailwind v4, iconos Phosphor, Geist autoalojada, modo cristal y acento
+- [ ] Componentes base (botón, chip, campo, interruptor, tarjeta, diálogo, menú) ← siguiente paso
+- [ ] Shell de la app: barra lateral (escritorio) + dock menisco (móvil) + router
 - [ ] Login (Supabase Auth) y sesión en la UI
 - [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas
 - [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
@@ -34,6 +37,9 @@
 - [ ] Agentes programados que informan del estado de las tareas
 
 ## Backlog
+- Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
+- Logo definitivo (lo diseña Alex; el actual es provisional)
+- Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")
 - Auto-updater de escritorio (requiere publicar binarios en un repo público o endpoint propio)
 - Migración a servidor propio (Supabase self-hosted)
