@@ -212,3 +212,69 @@
 
 - `overview()` cuenta las tareas completadas hoy y en los últimos 7 días **también si se archivaron después**. Si archivas
   una hecha, desaparece del tablero pero no de Inicio. Es intencionado: archivar no es deshacer.
+
+### Un icono que solo usa una pantalla no va en `icons`
+
+- **Síntoma:** al añadir un icono nuevo, el JS inicial sube unos 3 kB por icono aunque solo lo use una pantalla diferida.
+- **Causa:** Phosphor trae los seis grosores de cada icono, todo lo de `icons` viaja en el arranque, y además el grupo
+  `ui-vendor` de `vite.config.ts` carga en el arranque todo módulo de `@phosphor-icons` que alguien use.
+- **Solución:** iconos de una sola pantalla en `screenIcons` (`packages/ui/src/screen-icons.tsx`, fichero aparte para que
+  no compartan chunk con `icons`) y su nombre en `SCREEN_ICONS` de `vite.config.ts`, que los saca del grupo. Hoy:
+  `list` y `checklist` (barra de formato de Notas). Si el shell pasa a usarlos, vuelven a `icons`.
+- **Ref:** [ADR-0020](../adr/0020-tanstack-router-carga-diferida.md)
+
+### Un chunk compartido `dist-*.js` (Radix) suma ~0,6 kB al arranque
+
+- **Síntoma:** al añadir una pantalla, `pnpm --filter @muninn/web size` muestra un chunk nuevo `dist-…js` de ~8 kB (el
+  `Primitive` de Radix) y el total sube ~0,6 kB, aunque la pantalla no cargue nada nuevo en el arranque.
+- **Causa:** Rolldown saca a un chunk propio los módulos que importan varios chunks diferidos a la vez, y a veces los
+  deja en el arranque envueltos en su `import`/`export`. No es código nuevo, es el envoltorio.
+- **Solución:** nada que arreglar; solo no confundirlo con una dependencia nueva. Compara el nombre de los chunks
+  antes y después.
+
+### Notas: un editor por nota y autoguardado sin pérdidas
+
+- **Síntoma:** texto escrito que «desaparece» al cambiar de nota o al volver atrás, o un guardado antiguo que pisa a uno nuevo.
+- **Causa:** el editor guarda el texto 700 ms después de la última pulsación; si se reutilizara el mismo componente al
+  cambiar de nota, el texto pendiente iría a la nota equivocada.
+- **Solución:** `NotaDetalle` monta `<NoteEditor key={noteId}>`: cada nota tiene su propio editor, que guarda lo pendiente
+  al desmontarse (`useNoteDraft`), al ocultarse la pestaña y al salir del campo. Todas las escrituras de una nota van en
+  cola (`serial('note:<id>')`, `lib/note-actions.ts`). El autoguardado **no** usa `notify`: el estado «Guardado» está en la barra.
+- **Ref:** [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)
+
+### Editar un `textarea` por código sin perder el deshacer
+
+- **Síntoma:** tras pulsar **B** (negrita) o continuar una lista con Enter, Ctrl/⌘ Z no deshace, o deshace de golpe todo lo anterior.
+- **Causa:** asignar `textarea.value` o usar `setRangeText` borra el historial de deshacer del campo.
+- **Solución:** `applyEdit` (`markdown/edit.ts`) selecciona el tramo y usa `document.execCommand('insertText')`, que
+  lo conserva y dispara el `input` que espera React. Solo si no existe, cae a `setRangeText` más un evento `input` a mano.
+
+### iPhone: los campos con letra menor de 16 px hacen zoom al enfocarlos
+
+- **Síntoma:** al tocar un campo en el iPhone, Safari amplía la página y no vuelve.
+- **Causa:** iOS hace zoom en cualquier `input` o `textarea` con `font-size` < 16 px (y el viewport no desactiva el zoom, a propósito).
+- **Solución:** el título y el texto del editor de notas usan 16 px en móvil (`text-[16px]`). El resto de campos del
+  app todavía no (14–15 px): se revisan con la lista de comprobación del iPhone antes de cerrar la fase 1.
+
+### Las barras de formato van arriba, no sobre el teclado
+
+- En iOS el teclado no cambia el alto de la página (no hay `interactive-widget`), así que una barra pegada abajo quedaría tapada.
+  La del editor de notas es `sticky` arriba. Sus botones llevan `onMouseDown={e => e.preventDefault()}`: así no le quitan el
+  foco al `textarea` ni cierran el teclado al tocarlos.
+
+### Escribir una guía de `docs/user` para la app
+
+- **Síntoma:** una guía no sale en el menú, un enlace no funciona o un aviso no se destaca.
+- **Causa:** la sección Documentación solo importa `NN-nombre.md` (dos cifras, guion y minúsculas) y solo entiende cuatro
+  claves planas de metadatos: `title` (obligatorio), `description`, `order` y `status` (`disponible`, `parcial`,
+  `proximamente`; otro valor cuenta como disponible).
+- **Solución:** el `# Título` con que empieza el texto se quita (el título sale de los metadatos). Una cita que empieza
+  en negrita (`> **Estado:** …`) se pinta como aviso. Los enlaces entre guías van como `05-notas.md#archivar` (las anclas
+  se comparan sin tildes: `#iniciar-sesión` e `#iniciar-sesion` son lo mismo); cualquier otro fichero relativo se ve como texto.
+  Nada de HTML ni imágenes ([ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)).
+- **Ref:** [ADR-0027](../adr/0027-documentacion-en-la-app-desde-docs-user.md)
+
+### Los diálogos del shell se cargan al abrirse la primera vez
+
+- «Nueva tarea» y «Nuevo proyecto» son `lazy` en `AppShell`: su código no viaja en el arranque. La primera vez que se abren
+  hay una petición pequeña (el resto, ya en caché). Si añades otro diálogo global, haz lo mismo y mide con `size`.

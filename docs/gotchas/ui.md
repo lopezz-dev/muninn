@@ -191,3 +191,16 @@
 - La cabecera de una columna mide 264 px: asa, color, nombre, contador, «+» y «⋯». Con una etiqueta «Excedido» al lado, el
   nombre se quedaba en tres letras. `ColumnCount` pinta `3 / 2` en ámbar (límite alcanzado) o rojo (superado), con
   `title` y texto para lectores de pantalla.
+
+### Abrir un menú de Radix desde un script (verificación en el navegador)
+
+- **Síntoma:** `button.click()` en la consola no abre un `Menu`, y sin él no se llega a sus elementos.
+- **Causa:** `DropdownMenu` se abre con `pointerdown`, no con `click`.
+- **Solución:** `button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse', isPrimary: true }))`,
+  espera ~600 ms y haz `click()` en el `[role=menuitem]`. Los avisos duran 4–6 s: pulsa su «Deshacer» en el mismo script,
+  sin esperar entre llamadas, o habrá desaparecido.
+
+### Iconos de una sola pantalla: `screenIcons`
+
+- Ver [gotchas/web](web.md#un-icono-que-solo-usa-una-pantalla-no-va-en-icons): están en `packages/ui/src/screen-icons.tsx`,
+  fuera de `icons`, para no engordar el arranque.

@@ -11,7 +11,7 @@ se renderizan tal cual, así que se escriben pensando en la persona usuaria, no 
 | 2 | [Instalación](02-instalacion.md) | parcial |
 | 3 | [Proyectos y tablero](03-proyectos-y-tablero.md) | parcial |
 | 4 | [Tareas](04-tareas.md) | parcial |
-| 5 | [Notas](05-notas.md) | parcial |
+| 5 | [Notas](05-notas.md) | disponible |
 | 6 | [Asistentes de IA (Claude, Codex…)](06-asistentes-ia.md) | disponible |
 | 7 | [Tus datos y privacidad](07-datos-y-privacidad.md) | disponible |
 | 8 | [Moverte por Muninn](08-moverte-por-muninn.md) | parcial |
@@ -29,6 +29,8 @@ status: disponible | parcial | proximamente
 ---
 ```
 
+- **Enlaces entre páginas:** `[Notas](05-notas.md)` o `[Archivar](05-notas.md#archivar)`. La app los convierte en
+  enlaces dentro de la sección Documentación. No pongas HTML ni imágenes: no se muestran.
 - **Tono:** de tú, frases cortas, sin jerga técnica salvo en las secciones avanzadas (marcadas como tales).
 - **Estado honesto:** si una función aún no tiene interfaz, se marca con un aviso `> **Próximamente:** …`.
   No se documenta como disponible algo que no lo está.
