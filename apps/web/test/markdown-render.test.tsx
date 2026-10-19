@@ -108,3 +108,33 @@ describe('Markdown: saneado', () => {
     expect(safeHref('javascript:1')).toBeNull()
   })
 })
+
+describe('Markdown: guías', () => {
+  const doc = (source: string, props: Partial<Parameters<typeof Markdown>[0]> = {}) =>
+    renderToStaticMarkup(<Markdown source={source} {...props} />)
+
+  it('ids en los títulos, con la misma cuenta que el índice', () => {
+    const out = doc('## Iniciar sesión\n\n### Otro\n\n## Iniciar sesión', { headingIds: true })
+    expect(out).toContain('id="iniciar-sesion"')
+    expect(out).toContain('id="otro"')
+    expect(out).toContain('id="iniciar-sesion-2"')
+    expect(doc('## Sin ids')).not.toContain('id=')
+  })
+
+  it('una cita que empieza en negrita es un aviso; una normal, no', () => {
+    expect(doc('> **Estado:** parcial', { callouts: true })).toContain('role="note"')
+    expect(doc('> cita normal', { callouts: true })).toContain('<blockquote')
+    expect(doc('> **Estado:** parcial')).toContain('<blockquote')
+  })
+
+  it('los enlaces propios los resuelve quien llama; los demás, el filtro de siempre', () => {
+    const renderLink = (href: string, children: React.ReactNode) =>
+      href.endsWith('.md') ? <b data-doc={href}>{children}</b> : undefined
+    const out = doc('[otra](05-notas.md) y [web](https://a.b) y [mala](javascript:x)', {
+      renderLink,
+    })
+    expect(out).toContain('data-doc="05-notas.md"')
+    expect(out).toContain('href="https://a.b"')
+    expect(out).not.toContain('javascript:')
+  })
+})

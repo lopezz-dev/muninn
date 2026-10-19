@@ -37,6 +37,13 @@ tarea para completarla; púlsala de nuevo para reabrirla. Si algo no aplica, ver
 
 Si aún no tienes proyectos o tareas, Inicio te lo dice y te ofrece crear el primero.
 
+## Documentación
+
+En **Documentación** (abajo en la barra lateral, o en **Más** en el móvil) están estas mismas guías dentro de la app. A la
+izquierda ves el menú, con una marca **Parcial** o **Próximamente** en las que aún no están completas; arriba, un buscador
+que mira en los títulos y en el texto de todas. Cada guía tiene su enlace, un índice **En esta página** (en pantallas
+anchas) y los botones **Anterior** y **Siguiente**.
+
 ## Buscar o ir a cualquier sitio
 
 Pulsa **⌘K** en Mac o **Ctrl K** en Windows y Linux (o el botón **Buscar o preguntar…** de la barra
