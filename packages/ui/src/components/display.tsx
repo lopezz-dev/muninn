@@ -76,8 +76,9 @@ export function Avatar({
   className?: string
 }) {
   const [failed, setFailed] = useState<string | null>(null)
-  const initials = name
-    .split(/[\s@._-]+/)
+  // Si el nombre es un correo, las iniciales salen de lo que va antes de la @.
+  const initials = (name.includes('@') ? (name.split('@')[0] ?? name) : name)
+    .split(/[\s._-]+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
