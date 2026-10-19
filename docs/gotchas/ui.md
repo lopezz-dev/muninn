@@ -174,3 +174,20 @@
 
 - En Tailwind v4 incluye `outline-color`: el anillo de foco entra con un fundido de 150 ms. Si un test lee
   `outlineColor` justo después de enfocar, verá el color anterior; espera o desactiva la transición.
+
+### `IconButton` con `asChild` no admite hijos
+
+- **Síntoma:** `Property 'children' does not exist on type 'IconButtonProps'` al envolver un `<Link>`.
+- **Causa:** el icono va en la prop `icon`, y `Slot` necesita un único hijo.
+- **Solución:** para un enlace con solo un icono, `<Button asChild variant="secondary" className="size-11 px-0"><Link aria-label="…"><icons.x/></Link></Button>`.
+
+### Submenús: `MenuSub` + `MenuSubTrigger` + `MenuSubContent`
+
+- Están en `menu.tsx` (con el resto del menú, para que Radix no viaje a otros chunks). Un `MenuItem` dentro de un
+  `MenuSubContent` se selecciona igual que uno normal. El disparador lleva su chevron.
+
+### Cabeceras estrechas: el límite WIP se pinta en el contador, no con una etiqueta
+
+- La cabecera de una columna mide 264 px: asa, color, nombre, contador, «+» y «⋯». Con una etiqueta «Excedido» al lado, el
+  nombre se quedaba en tres letras. `ColumnCount` pinta `3 / 2` en ámbar (límite alcanzado) o rojo (superado), con
+  `title` y texto para lectores de pantalla.
