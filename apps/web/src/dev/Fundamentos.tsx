@@ -1,6 +1,7 @@
 import {
   ACCENTS,
   type AccentName,
+  AmountField,
   type Appearance,
   Avatar,
   applyAppearance,
@@ -66,6 +67,7 @@ export function Fundamentos() {
   const [kind, setKind] = useState<'expense' | 'income' | 'saving' | 'investment'>('expense')
   const [done, setDone] = useState(false)
   const [notify, setNotify] = useState(true)
+  const [amount, setAmount] = useState<number | null>(2490)
   useEffect(() => applyAppearance(appearance), [appearance])
 
   return (
@@ -250,19 +252,27 @@ export function Fundamentos() {
                   { value: 'investment', label: 'Inversión' },
                 ]}
               />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <TextField
+                label="Buscar"
+                hideLabel
+                placeholder="Filtrar tareas…"
+                leading={<Icon name="search" size={14} />}
+              />
+              {/* Campos con etiqueta visible en la misma fila: las cajas quedan alineadas. */}
+              <div className="grid items-start gap-3 sm:grid-cols-2">
                 <TextField
                   label="Concepto"
                   placeholder="Cine + palomitas"
                   hint="Lo verás en la lista"
                 />
-                <TextField label="Importe" defaultValue="24,90" trailing="€" className="tabular" />
-                <TextField
-                  label="Buscar"
-                  hideLabel
-                  placeholder="Filtrar tareas…"
-                  leading={<Icon name="search" size={14} />}
+                <AmountField
+                  label="Importe"
+                  valueCents={amount}
+                  onValueChange={setAmount}
+                  hint={amount === null ? 'Sin importe' : `${amount} céntimos`}
+                  className="tabular"
                 />
+                <TextField label="Proyecto" defaultValue="Muninn" />
                 <TextField
                   label="Repositorio"
                   defaultValue="huginndb"
