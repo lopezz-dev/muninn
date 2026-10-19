@@ -1,9 +1,8 @@
-import { DropdownMenu, Dialog as RDialog, Tooltip as RTooltip } from 'radix-ui'
+import { Dialog as RDialog } from 'radix-ui'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../cn'
 import { icons } from '../icons'
 import { IconButton } from './button'
-import { Kbd } from './display'
 
 // ─── Diálogo ─────────────────────────────────────────────────────────────────
 
@@ -20,6 +19,13 @@ export interface DialogContentProps extends Omit<ComponentProps<typeof RDialog.C
   description?: ReactNode
   /** Botones al pie, alineados a la derecha. */
   footer?: ReactNode
+  /** `md` 480 px (formularios), `lg` 660 px (buscador ⌘K). */
+  size?: 'md' | 'lg'
+  /**
+   * Sin cabecera, sin relleno y sin botón de cerrar: el contenido lo pone todo (buscador ⌘K).
+   * El título sigue existiendo para los lectores de pantalla. Escape cierra.
+   */
+  bare?: boolean
 }
 
 /**
@@ -27,23 +33,27 @@ export interface DialogContentProps extends Omit<ComponentProps<typeof RDialog.C
  * medios píxeles y, al repintar (hover), el texto «salta» al encajar en la rejilla. Se ancla arriba
  * (12vh) para que no se mueva si el contenido crece.
  */
-const dialogPosition = {
-  width: 'min(480px, calc(100vw - 32px))',
-  left: 'round(down, max(16px, calc((100vw - 480px) / 2)), 1px)',
-  top: 'round(down, max(16px, 12vh), 1px)',
-  maxHeight: 'calc(100vh - max(16px, 12vh) - 16px)',
-} as const
+const DIALOG_WIDTH = { md: 480, lg: 660 } as const
+
+const dialogPosition = (w: number) =>
+  ({
+    width: `min(${w}px, calc(100vw - 32px))`,
+    left: `round(down, max(16px, calc((100vw - ${w}px) / 2)), 1px)`,
+    top: 'round(down, max(16px, 12vh), 1px)',
+    maxHeight: 'calc(100vh - max(16px, 12vh) - 16px)',
+  }) as const
 
 export function DialogContent({
   title,
   description,
   footer,
+  size = 'md',
+  bare,
   className,
   style,
   children,
   ...props
 }: DialogContentProps) {
-  const Close = icons.close
   return (
     <RDialog.Portal>
       <RDialog.Overlay className={overlay} />
@@ -51,34 +61,47 @@ export function DialogContent({
         // Sin descripción, Radix exige `aria-describedby={undefined}` explícito para no avisar.
         {...(description ? {} : { 'aria-describedby': undefined })}
         className={cn(
-          'glass-raised fixed z-50 flex flex-col gap-4 overflow-y-auto rounded-xl border border-border-strong p-5 shadow-popover outline-none data-[state=open]:animate-pop-in',
+          'glass-raised fixed z-50 flex flex-col overflow-y-auto rounded-xl border border-border-strong shadow-popover outline-none data-[state=open]:animate-pop-in',
+          bare ? 'overflow-hidden' : 'gap-4 p-5',
           className,
         )}
-        style={{ ...dialogPosition, ...style }}
+        style={{ ...dialogPosition(DIALOG_WIDTH[size]), ...style }}
         {...props}
       >
-        <div className="flex items-start gap-3">
-          <div className="flex min-w-0 flex-col gap-1">
-            <RDialog.Title className="text-lg font-semibold">{title}</RDialog.Title>
-            {description ? (
-              <RDialog.Description className="text-sm text-fg-muted">
-                {description}
-              </RDialog.Description>
-            ) : null}
-          </div>
-          <RDialog.Close asChild>
-            <IconButton
-              aria-label="Cerrar"
-              icon={<Close />}
-              size="sm"
-              className="-mt-1 -mr-1 ml-auto"
-            />
-          </RDialog.Close>
-        </div>
+        {bare ? (
+          <RDialog.Title className="sr-only">{title}</RDialog.Title>
+        ) : (
+          <DialogHeader title={title} description={description} />
+        )}
+        {bare && description ? (
+          <RDialog.Description className="sr-only">{description}</RDialog.Description>
+        ) : null}
         {children}
         {footer ? <div className="flex justify-end gap-2 pt-1">{footer}</div> : null}
       </RDialog.Content>
     </RDialog.Portal>
+  )
+}
+
+function DialogHeader({ title, description }: { title: ReactNode; description?: ReactNode }) {
+  const Close = icons.close
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex min-w-0 flex-col gap-1">
+        <RDialog.Title className="text-lg font-semibold">{title}</RDialog.Title>
+        {description ? (
+          <RDialog.Description className="text-sm text-fg-muted">{description}</RDialog.Description>
+        ) : null}
+      </div>
+      <RDialog.Close asChild>
+        <IconButton
+          aria-label="Cerrar"
+          icon={<Close />}
+          size="sm"
+          className="-mt-1 -mr-1 ml-auto"
+        />
+      </RDialog.Close>
+    </div>
   )
 }
 
@@ -144,109 +167,5 @@ export function SheetContent({
         ) : null}
       </RDialog.Content>
     </RDialog.Portal>
-  )
-}
-
-// ─── Menú ────────────────────────────────────────────────────────────────────
-
-export const Menu = DropdownMenu.Root
-export const MenuTrigger = DropdownMenu.Trigger
-
-export function MenuContent({
-  className,
-  sideOffset = 6,
-  align = 'end',
-  ...props
-}: ComponentProps<typeof DropdownMenu.Content>) {
-  return (
-    <DropdownMenu.Portal>
-      <DropdownMenu.Content
-        sideOffset={sideOffset}
-        align={align}
-        className={cn(
-          'glass-raised z-50 min-w-[200px] rounded-lg border border-border-strong p-1 shadow-popover outline-none data-[state=open]:animate-pop-in',
-          className,
-        )}
-        {...props}
-      />
-    </DropdownMenu.Portal>
-  )
-}
-
-export interface MenuItemProps extends ComponentProps<typeof DropdownMenu.Item> {
-  icon?: ReactNode
-  /** Atajo de teclado a la derecha. */
-  shortcut?: string
-  danger?: boolean
-}
-
-export function MenuItem({ icon, shortcut, danger, className, children, ...props }: MenuItemProps) {
-  return (
-    <DropdownMenu.Item
-      className={cn(
-        'flex h-8 cursor-pointer select-none items-center gap-2.5 rounded-sm px-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-surface-hover',
-        danger ? 'text-danger' : 'text-fg',
-        className,
-      )}
-      {...props}
-    >
-      {icon ? (
-        <span className={cn('flex', danger ? 'text-danger' : 'text-fg-subtle')}>{icon}</span>
-      ) : null}
-      <span className="flex-1">{children}</span>
-      {shortcut ? <Kbd>{shortcut}</Kbd> : null}
-    </DropdownMenu.Item>
-  )
-}
-
-export function MenuLabel({ className, ...props }: ComponentProps<typeof DropdownMenu.Label>) {
-  return (
-    <DropdownMenu.Label
-      className={cn(
-        'px-2 pt-2 pb-1 text-2xs font-semibold uppercase tracking-wider text-fg-faint',
-        className,
-      )}
-      {...props}
-    />
-  )
-}
-
-export function MenuSeparator({
-  className,
-  ...props
-}: ComponentProps<typeof DropdownMenu.Separator>) {
-  return (
-    <DropdownMenu.Separator className={cn('my-1 h-px bg-border-subtle', className)} {...props} />
-  )
-}
-
-// ─── Tooltip ─────────────────────────────────────────────────────────────────
-
-/** Va una vez en la raíz de la app. */
-export function TooltipProvider({ children }: { children: ReactNode }) {
-  return <RTooltip.Provider delayDuration={400}>{children}</RTooltip.Provider>
-}
-
-export interface TooltipProps {
-  content: ReactNode
-  /** El disparador: un elemento enfocable (botón, enlace). */
-  children: ReactNode
-  side?: 'top' | 'right' | 'bottom' | 'left'
-}
-
-export function Tooltip({ content, children, side = 'top' }: TooltipProps) {
-  return (
-    <RTooltip.Root>
-      <RTooltip.Trigger asChild>{children}</RTooltip.Trigger>
-      <RTooltip.Portal>
-        <RTooltip.Content
-          side={side}
-          sideOffset={6}
-          className="z-50 rounded-sm border border-border-strong bg-surface-raised px-2 py-1 text-xs text-fg shadow-popover data-[state=delayed-open]:animate-fade-in"
-        >
-          {content}
-        </RTooltip.Content>
-      </RTooltip.Portal>
-    </RTooltip.Root>
   )
 }

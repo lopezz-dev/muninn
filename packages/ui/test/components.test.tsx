@@ -144,6 +144,22 @@ describe('overlays', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('Dialog bare conserva el nombre accesible sin cabecera visible ni botón de cerrar', async () => {
+    render(
+      <Dialog defaultOpen>
+        <DialogContent title="Buscar o preguntar" bare size="lg">
+          <input aria-label="Buscar" />
+        </DialogContent>
+      </Dialog>,
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Buscar o preguntar' })
+    expect(dialog.style.width).toContain('660px')
+    expect(screen.getByText('Buscar o preguntar')).toHaveClass('sr-only')
+    expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('Menu se abre con teclado y ejecuta la acción', async () => {
     const onArchive = vi.fn()
     render(

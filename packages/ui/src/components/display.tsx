@@ -52,7 +52,7 @@ export function Kbd({ className, ...props }: HTMLAttributes<HTMLElement>) {
   return (
     <kbd
       className={cn(
-        'inline-flex h-[18px] items-center rounded-xs border border-border-strong px-1.5 font-mono text-2xs text-fg-subtle',
+        'inline-flex h-[18px] items-center whitespace-nowrap rounded-xs border border-border-strong px-1.5 font-mono text-2xs text-fg-subtle',
         className,
       )}
       {...props}
