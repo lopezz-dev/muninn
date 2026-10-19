@@ -106,6 +106,16 @@
   Con SMTP propio, el límite sube a 30 correos por hora (ajustable en **Authentication › Rate Limits**).
 - **Ojo:** sin SMTP propio, el panel tampoco deja guardar las plantillas de correo.
 
+### Realtime: la tabla debe estar en la publicación
+
+- **Síntoma:** una tabla se sincroniza entre dispositivos en unas y en otras no; `user_settings` no lo hacía.
+- **Causa:** Supabase Realtime solo emite los cambios de las tablas de `supabase_realtime`. El esquema inicial añadió cinco; los
+  ajustes se añadieron después (`20261019150000_realtime_user_settings`).
+- **Solución:** `alter publication supabase_realtime add table …` en una migración nueva, con la guarda de la existente
+  (si la tabla ya está, `add table` da error). Comprueba con
+  `select tablename from pg_publication_tables where pubname = 'supabase_realtime'`. Y añádela a `SYNC_TABLES` en la web.
+- **Ojo:** con la identidad de réplica por defecto, un `delete` solo trae la clave primaria; por eso la UI archiva.
+
 ### Site URL y Redirect URLs
 
 - **Síntoma:** al volver de GitHub se acaba en `http://localhost:3000` o en la URL equivocada.

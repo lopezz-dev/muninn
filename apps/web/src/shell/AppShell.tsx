@@ -1,16 +1,26 @@
 import { cn } from '@muninn/ui'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CommandPalette } from './CommandPalette'
+import { useEnabledModules } from '../lib/modules'
 import { Dock } from './Dock'
-import { NewProjectDialog } from './NewProjectDialog'
-import { sectionOf } from './nav'
+import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
 
-// Diferido: el diálogo (y todo lo que arrastra) no viaja con el shell hasta que se abre.
+// Diferidos: los diálogos, la pantalla de «módulo desactivado» y el aviso de «sin conexión» no viajan con el shell.
+// El buscador se pide nada más pintar el shell (fuera del JS del arranque) y casi siempre está listo al abrirlo.
+const CommandPalette = lazy(() =>
+  import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
+)
+const ModuleOff = lazy(() => import('./ModuleOff').then((m) => ({ default: m.ModuleOff })))
+const OfflineNotice = lazy(() =>
+  import('./OfflineNotice').then((m) => ({ default: m.OfflineNotice })),
+)
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
+)
+const NewProjectDialog = lazy(() =>
+  import('./NewProjectDialog').then((m) => ({ default: m.NewProjectDialog })),
 )
 
 /** Dentro de un campo o de un diálogo, las teclas sueltas son para escribir. */
@@ -27,7 +37,7 @@ export function AppShell() {
     open: false,
     query: '',
   })
-  const [newProject, setNewProject] = useState(false)
+  const [newProject, setNewProject] = useState({ open: false, loaded: false })
   const [newTask, setNewTask] = useState<{ open: boolean; preset: NewTaskPreset; loaded: boolean }>(
     {
       open: false,
@@ -36,9 +46,11 @@ export function AppShell() {
     },
   )
   const mainRef = useRef<HTMLElement>(null)
+  const modules = useEnabledModules()
+  const tasksOn = sectionEnabled('projects', modules)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
-  const openNewProject = useCallback(() => setNewProject(true), [])
+  const openNewProject = useCallback(() => setNewProject({ open: true, loaded: true }), [])
   const openNewTask = useCallback(
     (preset: NewTaskPreset = {}) => setNewTask({ open: true, preset, loaded: true }),
     [],
@@ -59,7 +71,8 @@ export function AppShell() {
         !e.metaKey &&
         !e.ctrlKey &&
         !e.altKey &&
-        !typingIn(e.target)
+        !typingIn(e.target) &&
+        tasksOn
       ) {
         // N: tarea nueva, como en el diseño.
         e.preventDefault()
@@ -68,7 +81,7 @@ export function AppShell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [openNewTask])
+  }, [openNewTask, tasksOn])
 
   // Al cambiar de sección, el foco va al contenido: quien navega con teclado o lector de
   // pantalla empieza por la pantalla nueva y no por el principio de la barra lateral.
@@ -80,9 +93,12 @@ export function AppShell() {
     mainRef.current?.focus({ preventScroll: true })
   }, [section])
 
-  // El detalle de una tarea en móvil ocupa toda la pantalla y trae su propia barra de acciones.
+  // Una sección cuyo módulo está desactivado no se pinta: en su lugar, cómo activarlo.
+  const off = section && !sectionEnabled(section, modules) ? section : null
+
+  // El detalle de una tarea y una nota abierta ocupan toda la pantalla en móvil y traen sus propias barras.
   const immersive = useRouterState({
-    select: (s) => /^\/proyectos\/[^/]+\/tareas\//.test(s.location.pathname),
+    select: (s) => /^\/(?:proyectos\/[^/]+\/tareas|notas)\/./.test(s.location.pathname),
   })
 
   return (
@@ -106,16 +122,32 @@ export function AppShell() {
               : 'pb-[calc(env(safe-area-inset-bottom)+148px)]',
           )}
         >
-          <Outlet />
+          {off ? (
+            <Suspense fallback={null}>
+              <ModuleOff section={off} />
+            </Suspense>
+          ) : (
+            <Outlet />
+          )}
         </main>
         {immersive ? null : <Dock className="md:hidden" />}
       </div>
-      <CommandPalette
-        open={palette.open}
-        initialQuery={palette.query}
-        onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
-      />
-      <NewProjectDialog open={newProject} onOpenChange={setNewProject} />
+      <Suspense fallback={null}>
+        <CommandPalette
+          open={palette.open}
+          initialQuery={palette.query}
+          onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
+        />
+        <OfflineNotice />
+      </Suspense>
+      {newProject.loaded ? (
+        <Suspense fallback={null}>
+          <NewProjectDialog
+            open={newProject.open}
+            onOpenChange={(open) => setNewProject((p) => ({ ...p, open }))}
+          />
+        </Suspense>
+      ) : null}
       {newTask.loaded ? (
         <Suspense fallback={null}>
           <NewTaskDialog

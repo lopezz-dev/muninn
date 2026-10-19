@@ -7,6 +7,7 @@ import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appeara
 import { useAuth } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { Modulos } from './Modulos'
 import { settingsSection } from './sections'
 
 const route = getRouteApi('/_app/ajustes/$seccion')
@@ -142,9 +143,15 @@ function Datos() {
       </Row>
       <Row
         title="Entre dispositivos"
-        description="Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al recargar; la actualización al momento llegará más adelante."
+        description="Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al momento, sin recargar."
       >
-        <span className="text-sm text-fg-muted">Al recargar</span>
+        <span className="text-sm text-fg-muted">Al momento</span>
+      </Row>
+      <Row
+        title="Sin conexión"
+        description="La app guarda en este dispositivo lo último que viste: puedes abrirla y consultarlo sin red. Para cambiar algo necesitas conexión. Al cerrar sesión, se borra."
+      >
+        <span className="text-sm text-fg-muted">Solo lectura</span>
       </Row>
     </Card>
   )
@@ -229,6 +236,8 @@ export function Seccion() {
         <Cuenta />
       ) : section.id === 'datos' ? (
         <Datos />
+      ) : section.id === 'modulos' ? (
+        <Modulos />
       ) : section.id === 'apariencia' ? (
         <Apariencia />
       ) : section.id === 'atajos' ? (

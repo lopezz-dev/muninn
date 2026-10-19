@@ -44,6 +44,8 @@ interface ColumnProps {
   columns: BoardColumn[]
   /** Tareas de la columna, en el orden que se está pintando (puede ser el de un arrastre en curso). */
   tasks: TaskWithColumn[]
+  /** Cuántas tareas tiene la columna entera (`tasks` puede ser solo las que pasan el filtro). */
+  total?: number
   counts: Record<string, Progress>
   today: string
   projectId: string
@@ -51,7 +53,16 @@ interface ColumnProps {
 }
 
 /** Columna del tablero de escritorio: ordenable (por su asa) y receptora de tarjetas. */
-export function Column({ column, columns, tasks, counts, today, projectId, onEdit }: ColumnProps) {
+export function Column({
+  column,
+  columns,
+  tasks,
+  total = tasks.length,
+  counts,
+  today,
+  projectId,
+  onEdit,
+}: ColumnProps) {
   const shell = useShell()
   const {
     attributes,
@@ -98,7 +109,7 @@ export function Column({ column, columns, tasks, counts, today, projectId, onEdi
         <h2 className="min-w-0 truncate" title={column.name}>
           {column.name}
         </h2>
-        <ColumnCount count={tasks.length} limit={column.wipLimit} />
+        <ColumnCount count={total} limit={column.wipLimit} />
         <span className="ml-auto flex items-center">
           {column.kind === 'done' ? null : (
             <IconButton
@@ -108,7 +119,7 @@ export function Column({ column, columns, tasks, counts, today, projectId, onEdi
               onClick={() => shell.openNewTask({ projectId, columnId: column.id })}
             />
           )}
-          <ColumnMenu column={column} columns={columns} taskCount={tasks.length} onEdit={onEdit} />
+          <ColumnMenu column={column} columns={columns} taskCount={total} onEdit={onEdit} />
         </span>
       </header>
 
@@ -116,7 +127,7 @@ export function Column({ column, columns, tasks, counts, today, projectId, onEdi
         <div className="flex min-h-10 flex-col gap-2">
           {tasks.length === 0 ? (
             <p className="grid min-h-16 place-items-center rounded-md border border-dashed border-border-strong px-4 text-center text-xs text-fg-faint">
-              Sin tareas. Arrastra una aquí.
+              {total > 0 ? 'Ninguna tarea cumple el filtro.' : 'Sin tareas. Arrastra una aquí.'}
             </p>
           ) : null}
           {tasks.map((t) => (

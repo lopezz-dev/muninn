@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DOCK, dockIndexOf, sectionOf } from '../src/shell/nav'
+import { DOCK, dockFor, dockIndexOf, sectionEnabled, sectionOf } from '../src/shell/nav'
 import {
   bestMatch,
   filterItems,
@@ -24,6 +24,33 @@ describe('navegación', () => {
     expect(dockIndexOf('notes')).toBe(4)
     expect(dockIndexOf('settings')).toBe(4)
     expect(dockIndexOf(null)).toBe(4)
+  })
+})
+
+describe('módulos activos', () => {
+  const only = (...m: ('tasks' | 'notes' | 'finance' | 'github' | 'news' | 'focus')[]) => new Set(m)
+
+  it('una sección sin módulo siempre está; el resto, según los módulos', () => {
+    const m = only('tasks')
+    expect(sectionEnabled('home', m)).toBe(true)
+    expect(sectionEnabled('docs', m)).toBe(true)
+    expect(sectionEnabled('settings', m)).toBe(true)
+    expect(sectionEnabled('projects', m)).toBe(true)
+    expect(sectionEnabled('notes', m)).toBe(false)
+    expect(sectionEnabled('finance', m)).toBe(false)
+  })
+
+  it('mientras no se sepa (null) se enseña todo', () => {
+    expect(sectionEnabled('finance', null)).toBe(true)
+    expect(dockFor(null)).toEqual(DOCK)
+  })
+
+  it('el dock pierde la pestaña de un módulo desactivado y la activa se recalcula', () => {
+    const dock = dockFor(only('tasks', 'notes'))
+    expect(dock).toEqual(['home', 'projects', 'assistant', 'more'])
+    expect(dockIndexOf('projects', dock)).toBe(1)
+    expect(dockIndexOf('notes', dock)).toBe(3)
+    expect(dockIndexOf('finance', dock)).toBe(3)
   })
 })
 

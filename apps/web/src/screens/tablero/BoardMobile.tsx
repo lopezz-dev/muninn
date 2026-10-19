@@ -24,6 +24,7 @@ import { cn, IconButton, icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { type BoardData, groupByColumn, isColKey, isTabKey, tabKey } from '../../lib/board'
+import { type BoardFilter, filterTasks, fullIndex } from '../../lib/board-filter'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, moveTask } from '../../lib/task-actions'
 import { KIND_DOT } from './Column'
@@ -158,14 +159,23 @@ export function BoardMobile({
   projectId,
   board,
   today,
+  filter,
 }: {
   projectId: string
   board: BoardData
   today: string
+  filter: BoardFilter
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
-  const groups = useMemo(() => groupByColumn(board.columns, board.tasks), [board])
+  // Con un filtro puesto solo se ven las tareas que lo cumplen; el índice que se manda al servidor sigue
+  // siendo el de la columna entera (`fullIndex`).
+  const visible = useMemo(
+    () => filterTasks(board.tasks, filter, today),
+    [board.tasks, filter, today],
+  )
+  const groups = useMemo(() => groupByColumn(board.columns, visible), [board.columns, visible])
+  const totals = useMemo(() => groupByColumn(board.columns, board.tasks), [board])
   const initial = board.columns.find((c) => c.kind === 'in_progress') ?? board.columns[0]
   const [picked, setPicked] = useState(initial?.id)
   const column = board.columns.find((c) => c.id === picked) ?? board.columns[0]
@@ -209,8 +219,17 @@ export function BoardMobile({
     const ids = tasks.map((t) => t.id)
     const [from, to] = [ids.indexOf(id), ids.indexOf(overId)]
     if (from < 0 || to < 0 || from === to) return
-    // `to` es el índice final, que es justo lo que cuenta `moveTask` (sin la propia tarjeta).
-    void moveTask(m, qc, { projectId, taskId: id, columnId: column.id, index: to })
+    // `to` es el índice final entre las visibles; `fullIndex` lo lleva a la columna entera.
+    const moved = [...ids]
+    moved.splice(from, 1)
+    moved.splice(to, 0, id)
+    const all = (totals[column.id] ?? []).map((t) => t.id)
+    void moveTask(m, qc, {
+      projectId,
+      taskId: id,
+      columnId: column.id,
+      index: fullIndex(all, moved, id),
+    })
   }
 
   const a11y = {
@@ -225,7 +244,8 @@ export function BoardMobile({
   }
 
   const activeTask = activeId ? taskById.get(activeId) : undefined
-  const full = column?.wipLimit != null && tasks.length >= column.wipLimit
+  const total = column ? (totals[column.id]?.length ?? 0) : 0
+  const full = column?.wipLimit != null && total >= column.wipLimit
 
   return (
     <>
@@ -246,7 +266,7 @@ export function BoardMobile({
             <Tab
               key={c.id}
               column={c}
-              count={groups[c.id]?.length ?? 0}
+              count={totals[c.id]?.length ?? 0}
               selected={c.id === column?.id}
               onSelect={() => setPicked(c.id)}
             />
@@ -268,25 +288,24 @@ export function BoardMobile({
                   <b
                     className={cn(
                       'font-semibold',
-                      tasks.length > (column?.wipLimit ?? 0) ? 'text-danger' : 'text-accent',
+                      total > (column?.wipLimit ?? 0) ? 'text-danger' : 'text-accent',
                     )}
                   >
-                    {tasks.length > (column?.wipLimit ?? 0)
-                      ? 'Límite superado'
-                      : 'Límite alcanzado'}
+                    {total > (column?.wipLimit ?? 0) ? 'Límite superado' : 'Límite alcanzado'}
                   </b>{' '}
                   · termina algo antes de empezar otra
                 </span>
               ) : (
                 <span>
-                  {tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`} en {column.name}
+                  {tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`}
+                  {tasks.length !== total ? ` de ${total}` : ''} en {column.name}
                 </span>
               )}
               <span className="ml-auto">
                 <ColumnMenu
                   column={column}
                   columns={board.columns}
-                  taskCount={tasks.length}
+                  taskCount={total}
                   onEdit={setEditing}
                   size="lg"
                 />
@@ -316,7 +335,7 @@ export function BoardMobile({
 
             {tasks.length === 0 ? (
               <p className="rounded-md border border-dashed border-border-strong px-4 py-8 text-center text-sm text-fg-faint">
-                Sin tareas en {column.name}.
+                {total > 0 ? 'Ninguna tarea cumple el filtro.' : `Sin tareas en ${column.name}.`}
               </p>
             ) : (
               <p className="px-2 text-center text-xs leading-relaxed text-fg-faint">

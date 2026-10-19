@@ -63,3 +63,12 @@
 
 - `completedToday`, `completedTodayTasks` y `completedByDay` salen de **todas** las tareas del proyecto, archivadas o no.
   Lo abierto (`dueToday`, `overdue`, `upcoming`, `inProgress`, `projects[].open/done`) solo cuenta las no archivadas.
+
+### Notas: la tarea manda sobre el proyecto, y el autoguardado no llena la actividad
+
+- **Vínculos:** si una nota tiene `taskId`, su `projectId` es siempre el de esa tarea (`create` lo deduce y falla si
+  le dices otro; `update` lo corrige). Cambiar de proyecto o quitarlo **suelta la tarea** (`taskId: null`).
+- **Actividad:** `notes.update` no escribe nada si no cambia ningún campo. Las ediciones de título o texto se anotan como
+  mucho una cada 10 minutos por actor (`NOTE_EDIT_WINDOW_MS`); fijar/desfijar tienen sus propias acciones (`pinned`,
+  `unpinned`) y vincular se anota siempre. Sin esto, el autoguardado del editor escribiría un evento por pausa al teclear.
+- **Ref:** [ADR-0007](../adr/0007-registro-de-actividad.md), [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)

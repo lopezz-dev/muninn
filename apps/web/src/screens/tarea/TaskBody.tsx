@@ -1,16 +1,18 @@
 import type { TaskWithColumn } from '@muninn/core'
 import { Checkbox, Chip, cn, columnKinds, Icon, icons, TextArea } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { SelectMenu } from '../../components/SelectMenu'
 import { PRIORITY_TEXT, SourceBadge } from '../../components/task-meta'
 import { actorName, describeActivity } from '../../lib/activity'
 import { type BoardData, PRIORITIES } from '../../lib/board'
 import { dueLabel, timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
+import { createNote } from '../../lib/note-actions'
 import { taskActivityQuery, taskNotesQuery } from '../../lib/queries'
 import { completeTask, moveTask, patchTask, reopenTask } from '../../lib/task-actions'
+import { toggleTask } from '../../markdown/tasks'
 import { Checklist } from './Checklist'
 
 const h3 = 'text-xs font-semibold tracking-wider text-fg-subtle uppercase'
@@ -286,44 +288,128 @@ function Properties({ task, board, touch }: BodyProps) {
   )
 }
 
-/** Descripción: texto libre que se guarda al salir del campo. */
+// El renderizador de Markdown (marked) solo se descarga si alguna descripción lo necesita.
+const Markdown = lazy(() =>
+  import('../../markdown/Markdown').then((m) => ({ default: m.Markdown })),
+)
+
+/**
+ * Descripción en Markdown (ADR-0026). Si tiene texto se ve ya con su formato y se edita con «Editar» o
+ * pulsando sobre el texto; las casillas de tarea se marcan sin entrar a editar. Se guarda al salir del campo.
+ */
 function Description({ task }: Pick<BodyProps, 'task'>) {
   const m = useMuninn()
   const qc = useQueryClient()
   const [text, setText] = useState(task.description)
+  const [editing, setEditing] = useState(false)
   useEffect(() => setText(task.description), [task.description])
+  const hasText = task.description.trim().length > 0
+  const showing = hasText && !editing
+
+  const toggleBox = (index: number) => {
+    const next = toggleTask(task.description, index)
+    if (next !== null) {
+      void patchTask(m, qc, task, { description: next }, { message: 'Casilla actualizada' })
+    }
+  }
+
   return (
     <section className="flex flex-col gap-2">
-      <TextArea
-        label="Descripción"
-        hideLabel
-        rows={4}
-        placeholder="Añade una descripción…"
-        value={text}
-        maxLength={20000}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={() => {
-          if (text !== task.description) {
-            void patchTask(m, qc, task, { description: text }, { message: 'Descripción guardada' })
-          }
-        }}
-        className="[&_textarea]:[field-sizing:content] [&_textarea]:min-h-24"
-      />
+      {showing ? (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className={h3}>Descripción</h2>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="-mr-2 h-7 cursor-pointer rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+            >
+              Editar
+            </button>
+          </div>
+          {/* Un clic en el texto (no en un enlace ni en una casilla) pasa a editar. */}
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: el botón «Editar» es la vía de teclado */}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: ver arriba */}
+          <div
+            onClick={(e) => {
+              if (!(e.target as HTMLElement).closest('a, input, button')) setEditing(true)
+            }}
+            className="cursor-text"
+          >
+            <Suspense
+              fallback={
+                <p className="text-base whitespace-pre-wrap text-fg-muted">{task.description}</p>
+              }
+            >
+              <Markdown source={task.description} onToggleTask={toggleBox} className="text-base" />
+            </Suspense>
+          </div>
+        </>
+      ) : (
+        <TextArea
+          label="Descripción"
+          hideLabel
+          rows={4}
+          placeholder="Añade una descripción… (se entiende Markdown)"
+          value={text}
+          maxLength={20000}
+          autoFocus={editing}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={() => {
+            if (text !== task.description) {
+              void patchTask(
+                m,
+                qc,
+                task,
+                { description: text },
+                { message: 'Descripción guardada' },
+              )
+            }
+            setEditing(false)
+          }}
+          className="[&_textarea]:[field-sizing:content] [&_textarea]:min-h-24"
+        />
+      )}
     </section>
   )
 }
 
-function Notes({ task }: Pick<BodyProps, 'task'>) {
+function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const m = useMuninn()
+  const qc = useQueryClient()
+  const navigate = useNavigate()
   const notes = useQuery(taskNotesQuery(m, task.id)).data ?? []
-  if (notes.length === 0) return null
+
+  // La nota nace vinculada a esta tarea (y a su proyecto) y se abre para escribir.
+  const add = async () => {
+    const note = await createNote(m, qc, { taskId: task.id })
+    if (note) navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+  }
+
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className={h3}>Notas vinculadas</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className={h3}>Notas vinculadas</h2>
+        <button
+          type="button"
+          onClick={add}
+          className={cn(
+            '-mr-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg',
+            touch ? 'h-9' : 'h-7',
+          )}
+        >
+          <icons.plus size={13} />
+          Añadir nota
+        </button>
+      </div>
+      {notes.length === 0 ? (
+        <p className="text-sm text-fg-subtle">Apuntes, decisiones o pasos de esta tarea.</p>
+      ) : null}
       {notes.map((n) => (
         <Link
           key={n.id}
-          to="/notas"
+          to="/notas/$noteId"
+          params={{ noteId: n.id }}
           className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-base transition-colors hover:border-border-strong"
         >
           <Icon name="notes" className="text-fg-subtle" />
@@ -376,7 +462,7 @@ export function TaskBody({ task, board, touch }: BodyProps) {
       <Properties task={task} board={board} touch={touch} />
       <Description task={task} />
       <Checklist task={task} touch={touch} />
-      <Notes task={task} />
+      <Notes task={task} touch={touch} />
       <ActivityLog task={task} />
     </div>
   )

@@ -8,7 +8,7 @@ status: parcial
 # Tareas
 
 > **Estado:** ya puedes crear, editar, mover, completar y archivar tareas desde la app, y también a través de los
-> [asistentes de IA](06-asistentes-ia.md). La descripción es texto sencillo por ahora (el Markdown llegará más adelante).
+> [asistentes de IA](06-asistentes-ia.md).
 
 ## Crear una tarea
 
@@ -23,10 +23,13 @@ tablero por defecto). Si te equivocas, **Deshacer** en el aviso la archiva.
 Pulsa una tarjeta para abrirla: en el ordenador sale un panel a la derecha, en el móvil una pantalla completa. Tiene
 enlace propio, así que puedes copiarlo o recargar la página. Desde ahí cambias:
 
-- **Título** y **descripción** (se guardan al salir del campo).
+- **Título** y **descripción** (se guardan al salir del campo). La descripción se escribe en **Markdown** (negrita, listas,
+  enlaces, `código`…, como en las [notas](05-notas.md#qué-markdown-se-entiende)): al salir del campo se ve ya con su formato; pulsa sobre
+  el texto o **Editar** para volver a escribir. Las casillas de una lista de tareas (`- [ ] algo`) se marcan sin entrar a editar.
 - **Estado** (la columna), **prioridad** (ninguna, baja, media, alta o urgente) y **fecha límite**.
 - **Etiquetas** libres: escribe y pulsa **Intro**.
 - **Subtareas** (checklist): márcalas, quítalas o añade más; la tarjeta muestra el progreso, por ejemplo 2/3.
+- **Notas vinculadas:** las notas de esa tarea, y **Añadir nota** para crear otra ya vinculada (ver [Notas](05-notas.md)).
 - Ves la **actividad** de la tarea: quién la creó, movió o cambió, y cuándo.
 
 Cada cambio avisa y se puede deshacer.

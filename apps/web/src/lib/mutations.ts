@@ -29,7 +29,11 @@ export function serial<T>(projectId: string, run: () => Promise<T>): Promise<T> 
   })
 }
 
-const busy = (projectId: string) => (pending.get(projectId)?.count ?? 0) > 0
+/** ¿Hay escrituras en cola? Con clave, las de ese proyecto (o nota…); sin ella, cualquiera. */
+export const isBusy = (key?: string) =>
+  key === undefined ? pending.size > 0 : (pending.get(key)?.count ?? 0) > 0
+
+const busy = isBusy
 
 /** Refresca lo que depende de las tareas, salvo que aún haya escrituras en cola (si no, parpadearía). */
 export function settle(qc: QueryClient, projectId: string, taskId?: string) {
@@ -60,7 +64,12 @@ export function rollback(qc: QueryClient, projectId: string, prev: BoardData | u
   settle(qc, projectId)
 }
 
-export const reason = (err: unknown) => (err instanceof Error ? err.message : undefined)
+export const reason = (err: unknown) =>
+  typeof navigator !== 'undefined' && navigator.onLine === false
+    ? 'Sin conexión: vuelve a intentarlo cuando la recuperes.'
+    : err instanceof Error
+      ? err.message
+      : undefined
 
 export const fail = (title: string, err: unknown) =>
   notify.error(title, { description: reason(err) })

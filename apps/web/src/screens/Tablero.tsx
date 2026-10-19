@@ -1,6 +1,7 @@
 import {
   Button,
   ColorDot,
+  cn,
   copyText,
   Icon,
   IconButton,
@@ -14,14 +15,22 @@ import {
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link, Outlet, useMatch, useNavigate } from '@tanstack/react-router'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
+import {
+  activeGroups,
+  type BoardFilter,
+  filterTasks,
+  labelsOf,
+  NO_FILTER,
+} from '../lib/board-filter'
 import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, boardQuery, projectQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
 import { useShell } from '../shell/shell-context'
 import { BoardDesktop } from './tablero/BoardDesktop'
 import { BoardMobile } from './tablero/BoardMobile'
+import { FilterBar, FilterSheet, FilterSummary } from './tablero/FilterBar'
 
 const route = getRouteApi('/_app/proyectos/$projectId')
 
@@ -33,8 +42,17 @@ export function Tablero() {
   const navigate = useNavigate()
   const shell = useShell()
   const desktop = useIsDesktop()
+  // Los filtros viven aquí, en la ruta padre: sobreviven a abrir y cerrar una tarea.
+  const [filter, setFilter] = useState<BoardFilter>(NO_FILTER)
+  const [sheet, setSheet] = useState(false)
   const project = useQuery(projectQuery(m, projectId))
   const board = useQuery({ ...boardQuery(m, projectId), enabled: project.isSuccess })
+  const tasks = board.data?.tasks
+  const labels = useMemo(() => labelsOf(tasks ?? []), [tasks])
+  const shown = useMemo(
+    () => (tasks ? filterTasks(tasks, filter, m.today()).length : 0),
+    [tasks, filter, m],
+  )
   const openTask = useMatch({
     from: '/_app/proyectos/$projectId/tareas/$taskId',
     shouldThrow: false,
@@ -102,6 +120,18 @@ export function Tablero() {
         description={p.description || undefined}
         actions={
           <>
+            <IconButton
+              aria-label={
+                activeGroups(filter) ? `Filtrar (${activeGroups(filter)} activos)` : 'Filtrar'
+              }
+              icon={<icons.filter />}
+              variant="secondary"
+              onClick={() => setSheet(true)}
+              className={cn(
+                'relative size-11 md:hidden',
+                activeGroups(filter) > 0 && 'text-accent',
+              )}
+            />
             <Button
               variant="primary"
               className="max-md:size-11 max-md:px-0"
@@ -133,11 +163,39 @@ export function Tablero() {
         }
       />
 
+      {board.data && desktop ? (
+        <FilterBar
+          filter={filter}
+          onChange={setFilter}
+          labels={labels}
+          shown={shown}
+          total={board.data.tasks.length}
+        />
+      ) : null}
+      {board.data && !desktop ? (
+        <>
+          <FilterSummary
+            filter={filter}
+            onClear={() => setFilter(NO_FILTER)}
+            shown={shown}
+            total={board.data.tasks.length}
+          />
+          <FilterSheet
+            open={sheet}
+            onOpenChange={setSheet}
+            filter={filter}
+            onChange={setFilter}
+            labels={labels}
+            shown={shown}
+          />
+        </>
+      ) : null}
+
       {board.data ? (
         desktop ? (
-          <BoardDesktop projectId={p.id} board={board.data} today={m.today()} />
+          <BoardDesktop projectId={p.id} board={board.data} today={m.today()} filter={filter} />
         ) : (
-          <BoardMobile projectId={p.id} board={board.data} today={m.today()} />
+          <BoardMobile projectId={p.id} board={board.data} today={m.today()} filter={filter} />
         )
       ) : board.isError ? (
         <EmptyState icon="warning" title="No se pudo cargar el tablero">
