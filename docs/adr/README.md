@@ -45,6 +45,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0005](0005-columnas-con-kind-semantico.md) — Columnas personalizables con `kind` semántico
 - [ADR-0006](0006-orden-con-fractional-indexing.md) — Orden con fractional indexing
 - [ADR-0007](0007-registro-de-actividad.md) — Registro de actividad inmutable con actor
+- [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -52,6 +53,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0005](0005-columnas-con-kind-semantico.md) — Columnas personalizables con `kind` semántico
 - [ADR-0006](0006-orden-con-fractional-indexing.md) — Orden con fractional indexing
 - [ADR-0007](0007-registro-de-actividad.md) — Registro de actividad inmutable con actor
+- [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -62,6 +64,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0015](0015-modo-cristal.md) — Modo cristal (blur) global, activable
 - [ADR-0016](0016-iconos-phosphor-y-geist.md) — Iconos Phosphor y fuente Geist autoalojada
 - [ADR-0017](0017-componentes-radix-cva.md) — Componentes base sobre Radix, con variantes cva y `cn()`
+- [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

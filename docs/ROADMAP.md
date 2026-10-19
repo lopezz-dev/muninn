@@ -10,7 +10,7 @@
 - [x] Sistema de documentación: ADRs, gotchas por área y docs de usuario
 - [x] Diseño de todas las pantallas (escritorio + móvil): [lienzo «Muninn — Pantallas»](https://claude.ai/artifact/BdNFHNmB8E3dxV2u7o27xB)
 - [x] `@muninn/ui`: tokens → CSS vars, tema Tailwind v4, iconos Phosphor, Geist autoalojada, modo cristal y acento
-- [x] Componentes base (`@muninn/ui`): Button, IconButton, Chip, ColorDot, Kbd, Avatar, ProgressBar, Separator, Card, TextField, TextArea, Switch, Checkbox, SegmentedControl, Dialog, Sheet, Menu, Tooltip
+- [x] Componentes base (`@muninn/ui`): Button, IconButton, Chip, ColorDot, Kbd, Avatar, ProgressBar, Separator, Card, TextField, TextArea, Switch, Checkbox, SegmentedControl, AmountField, Dialog, Sheet, Menu, Tooltip
 - [ ] Shell de la app: barra lateral (escritorio) + dock menisco (móvil) + router ← siguiente paso
 - [ ] Login (Supabase Auth) y sesión en la UI
 - [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas
