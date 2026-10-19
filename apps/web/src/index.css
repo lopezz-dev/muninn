@@ -3,3 +3,28 @@
 
 /* Las clases usadas dentro de @muninn/ui también deben generarse. */
 @source "../../../packages/ui/src";
+
+/*
+ * Dock con menisco (móvil). La posición la anima Dock.tsx en JS; aquí solo el aspecto, que sigue
+ * al color de acento elegido en Ajustes › Apariencia.
+ */
+@layer components {
+  .mn-dock-bead {
+    background: radial-gradient(
+      circle at 35% 30%,
+      color-mix(in oklab, var(--mn-color-accent), white 35%),
+      var(--mn-color-accent) 55%,
+      color-mix(in oklab, var(--mn-color-accent), black 14%)
+    );
+    box-shadow:
+      0 8px 20px color-mix(in srgb, var(--mn-color-accent) 35%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  .mn-dock-glow {
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--mn-color-accent) 22%, transparent),
+      transparent
+    );
+  }
+}
