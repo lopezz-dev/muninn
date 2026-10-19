@@ -52,3 +52,33 @@
 
 - **Síntoma:** tras `pnpm format`, el test de sincronización falla porque Biome pasó los hex a minúsculas y partió líneas.
 - **Solución:** `packages/ui/src/tokens.css` está excluido en `biome.json`. Si mueves o renombras el fichero, actualiza la exclusión.
+
+### Combinar clases siempre con `cn()`, que conoce nuestros tokens
+
+- **Síntoma:** al pasar `className` a un componente, una clase propia desaparece o conviven dos que chocan.
+- **Causa:** `tailwind-merge` sin configurar no sabe que `rounded-dock` es un radio ni que `shadow-drag` es una sombra.
+- **Solución:** usa `cn()` de `@muninn/ui`. Si añades un token con nombre nuevo (radio, sombra, tamaño de texto),
+  regístralo también en `src/cn.ts` y añade un caso al test de `cn`.
+
+### Diálogos: título obligatorio y la descripción ausente, explícita
+
+- Radix avisa en la consola si un `Dialog.Content` no tiene `Title`, o si no tiene `Description` sin
+  `aria-describedby={undefined}`. `DialogContent` y `SheetContent` ya lo resuelven: exigen `title` y
+  `hideTitle` lo oculta visualmente sin quitarlo. No uses `RDialog.Content` directamente.
+
+### `Button` con `asChild` no lleva `type`
+
+- Con `asChild`, el estilo se aplica al hijo (`<a>`), y `type="button"` en un enlace sería inválido. El componente
+  ya lo omite. Si haces un wrapper propio, respeta esta regla.
+
+### Tests de componentes: jsdom y stubs
+
+- Radix usa `ResizeObserver`, `scrollIntoView` y la captura de puntero, que jsdom no implementa. `test/setup-dom.ts`
+  añade stubs. Los ficheros de test de componentes empiezan con `// @vitest-environment jsdom` e importan ese setup.
+- jsdom normaliza los colores en línea a `rgb()`: compara con `rgb(…)`, no con el hex.
+- Para abrir un `DropdownMenu` en un test, enfoca el disparador y pulsa `Enter`: el clic simulado no siempre dispara `pointerdown`.
+
+### Las animaciones de entrada desplazan la medición
+
+- Los overlays entran con `animate-slide-in-*` y `animate-pop-in`. Si mides su posición (tests E2E, scripts),
+  espera a que acabe la animación (unos 300 ms) o desactiva el movimiento con `prefers-reduced-motion`.
