@@ -65,6 +65,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0016](0016-iconos-phosphor-y-geist.md) — Iconos Phosphor y fuente Geist autoalojada
 - [ADR-0017](0017-componentes-radix-cva.md) — Componentes base sobre Radix, con variantes cva y `cn()`
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
+- [ADR-0019](0019-feedback-con-notificaciones.md) — Toda acción da feedback: notificaciones en píldora con «Deshacer»
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

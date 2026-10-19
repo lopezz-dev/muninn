@@ -106,3 +106,23 @@
   y entrega **céntimos enteros**. `formatAmount` usa `useGrouping: 'always'`, porque en es-ES Intl no agrupa los
   números de 4 cifras («1284,30» en vez de «1.284,30»).
 - **Ref:** [ADR-0018](../adr/0018-dinero-en-centimos.md)
+
+### Notificaciones: solo con `notify`, y `<Toaster />` una sola vez
+
+- Importa `notify` / `Toaster` de `@muninn/ui`, nunca `sonner`. `<Toaster />` va una vez en la raíz (`apps/web/src/main.tsx`):
+  si se monta dos veces, cada aviso sale duplicado.
+- Toda acción del usuario da feedback, y lo destructivo o reversible lleva «Deshacer»
+  ([ADR-0019](../adr/0019-feedback-con-notificaciones.md)).
+- No llames a una variable de estado `notify`: tapa la función importada y TypeScript se queja de `.success` en un booleano.
+
+### El portapapeles necesita un gesto real del usuario
+
+- **Síntoma:** «No se pudo copiar el enlace» en tests E2E o scripts, pero funciona al hacer clic a mano.
+- **Causa:** `navigator.clipboard.writeText` exige activación del usuario y un documento con foco. Un `.click()`
+  sintético no cuenta.
+- **Solución:** en E2E, usa clics reales del navegador (Playwright `click`), o simula `copyText`.
+
+### Sonner en tests (jsdom)
+
+- Necesita `matchMedia` y `setPointerCapture`, que ya están como stubs en `test/setup-dom.ts`. Envuelve `notify.*` en
+  `act()` y busca con `findByText`, porque el render es asíncrono.

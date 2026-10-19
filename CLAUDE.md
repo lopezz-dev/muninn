@@ -29,6 +29,8 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - UI: solo tokens de `@muninn/ui` (clases `bg-surface`, `text-fg-muted`, `rounded-lg`…; la paleta de Tailwind
   está desactivada). Iconos siempre vía `icons` / `<Icon name>` de `@muninn/ui`. Superficies con `glass*`
   para respetar el modo cristal. Diseño de referencia: lienzo «Muninn — Pantallas» (enlace en docs/ROADMAP.md).
+- UX: toda acción del usuario da feedback con `notify` de `@muninn/ui`. Lo que cambia o destruye datos ofrece
+  «Deshacer» (no diálogos de confirmación). Dinero siempre en céntimos (`AmountField`).
 
 ## Git
 - `main` producción (por defecto), `develop` integración. Ramas `feat/*`, `fix/*`, `docs/*` → PR a `develop`.
