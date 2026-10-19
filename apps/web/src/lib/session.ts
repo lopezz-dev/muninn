@@ -11,6 +11,8 @@ export function forgetUserData() {
   resetMuninn()
   queryClient.clear()
   connectAppearance(null)
+  // Lo guardado para leer sin conexión es privado: se borra del dispositivo (ADR-0029).
+  void import('./offline').then((o) => o.clearOfflineCache())
 }
 
 /**

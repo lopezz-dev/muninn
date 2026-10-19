@@ -77,6 +77,40 @@
   antes y después con `pnpm --filter @muninn/web size`. Para ver qué paquete pesa, compila con `--sourcemap`
   y suma `sourcesContent` por paquete.
 
+### Tiempo real: una tabla o un dato sincronizable nuevo
+
+- **Síntoma:** lo que cambias en otro dispositivo no aparece, o aparece solo al recargar.
+- **Causa:** `lib/sync.ts` solo escucha las tablas de `SYNC_TABLES` (las de la publicación `supabase_realtime`) y traduce cada
+  una a lo que refresca (`scopesOf`). Una tabla nueva no entra sola.
+- **Solución:** añádela a la publicación (migración, [gotchas/db](db.md)), a `SYNC_TABLES` y a `scopesOf`, con su caso en
+  `test/sync.test.ts`. Una clave de caché nueva debe colgar de un prefijo que ya se invalida (`['projects', …]`, `['tasks', …]`,
+  `['notes', …]`, `['settings']`) o tener su propio ámbito.
+- **Ojo:** un borrado solo trae la clave primaria; sin `project_id`, `scopesOf` refresca todos los tableros.
+- **Ref:** [ADR-0029](../adr/0029-tiempo-real-y-cache-sin-conexion.md)
+
+### Los eventos de tus propios cambios no pisan lo optimista
+
+- **Síntoma:** una tarjeta o un interruptor «salta» atrás un instante justo después de soltarlo, cuando hay Realtime.
+- **Causa:** tu propio cambio también genera un evento; si se refrescara la caché mientras tu escritura sigue en cola, la lectura
+  traería el estado anterior.
+- **Solución:** `createSync` nunca refresca un ámbito con escrituras en cola (`isBusy(clave)`, de `mutations.ts`) y espera a que se
+  vacíe. Toda escritura optimista nueva debe pasar por `serial(clave, …)` con la clave de lo que cambia (el proyecto, `note:<id>`,
+  `settings`…) para quedar protegida. Probado en `test/sync.test.ts`.
+
+### Caché sin conexión: cambia `CACHE_VERSION` si cambia la forma de los datos
+
+- **Síntoma:** tras actualizar la app, una pantalla falla o enseña datos raros hasta recargar dos veces.
+- **Causa:** la caché de react-query de la versión anterior se recupera de IndexedDB (`lib/offline.ts`) antes del primer pintado.
+- **Solución:** sube `CACHE_VERSION` cuando cambie lo que guarda una consulta (el tipo de `BoardData`, un campo del core…): lo
+  guardado con otra versión se descarta. Caduca sola a los 7 días. Se borra al cerrar sesión (`forgetUserData`).
+- **Verificar:** DevTools › Application › IndexedDB › `muninn-cache` (hay una clave `queries:<id de usuario>`).
+
+### Probar el tiempo real con dos pestañas
+
+- En el navegador integrado, abre la misma cuenta en dos pestañas (`tabs_create`) y cambia algo en una: la otra se actualiza sola
+  (hasta ~1 s por los 400 ms de agrupación). Una pestaña en segundo plano también recibe los eventos. Para probar el modo sin
+  conexión no sirve `navigator.onLine`: usa el test de `test/offline.test.ts` (IndexedDB simulado) o corta la red del sistema.
+
 ### Rutas profundas y recargas: hace falta *fallback* a `index.html`
 
 - **Síntoma:** recargar `/proyectos/abc` da 404 en el servidor.

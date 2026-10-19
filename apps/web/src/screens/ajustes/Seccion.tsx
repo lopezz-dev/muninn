@@ -143,9 +143,15 @@ function Datos() {
       </Row>
       <Row
         title="Entre dispositivos"
-        description="Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al recargar; la actualización al momento llegará más adelante."
+        description="Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al momento, sin recargar."
       >
-        <span className="text-sm text-fg-muted">Al recargar</span>
+        <span className="text-sm text-fg-muted">Al momento</span>
+      </Row>
+      <Row
+        title="Sin conexión"
+        description="La app guarda en este dispositivo lo último que viste: puedes abrirla y consultarlo sin red. Para cambiar algo necesitas conexión. Al cerrar sesión, se borra."
+      >
+        <span className="text-sm text-fg-muted">Solo lectura</span>
       </Row>
     </Card>
   )
