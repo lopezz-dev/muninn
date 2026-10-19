@@ -77,6 +77,14 @@
   antes y después con `pnpm --filter @muninn/web size`. Para ver qué paquete pesa, compila con `--sourcemap`
   y suma `sourcesContent` por paquete.
 
+### La descripción de tarea carga `marked` solo si hay descripción
+
+- **Síntoma:** abrir una tarea sin descripción descarga ~47 kB que no usa; o, al revés, la descripción sale un instante como texto plano.
+- **Causa:** `Description` (`screens/tarea/TaskBody.tsx`) importa el renderizador con `lazy` y lo envuelve en `Suspense`, con el texto
+  sin formato como respaldo. Es intencionado: el panel de la tarea es de las pantallas más abiertas.
+- **Solución:** no importes `markdown/Markdown` de forma estática en el detalle de tarea. Lo que no necesita `marked`
+  (`markdown/tasks`, para marcar casillas) sí se puede importar directamente.
+
 ### Filtros del tablero y arrastre: el índice es el de la columna entera
 
 - **Síntoma:** con un filtro puesto, al soltar una tarjeta cae en un sitio distinto del que se veía, o desaparece de donde estaba.
