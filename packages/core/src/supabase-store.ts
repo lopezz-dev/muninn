@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Activity } from './schemas'
+import type { Activity, UserSettings } from './schemas'
 import {
   type ActivityLog,
   type Collection,
@@ -7,6 +7,7 @@ import {
   type NoteStoreQuery,
   NotFoundError,
   type ProjectStoreQuery,
+  type SettingsStore,
   type Store,
   type TaskStoreQuery,
 } from './store'
@@ -125,8 +126,31 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  const settings: SettingsStore = {
+    async get() {
+      const { data, error } = await client
+        .from('user_settings')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .maybeSingle()
+      if (error) throw error
+      return data ? fromRow<UserSettings>(data) : null
+    },
+    async upsert(patch) {
+      // Solo las columnas presentes: en una fila nueva, las demás toman el default de la tabla.
+      const { data, error } = await client
+        .from('user_settings')
+        .upsert({ ...toRow(patch), owner_id: ownerId }, { onConflict: 'owner_id' })
+        .select('*')
+        .single()
+      if (error) throw error
+      return fromRow<UserSettings>(data)
+    },
+  }
+
   return {
     activity,
+    settings,
     projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
       if (q.statuses) qb = qb.in('status', q.statuses)
       if (q.githubRepo) qb = qb.ilike('github_repo', q.githubRepo)

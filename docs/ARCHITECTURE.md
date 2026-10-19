@@ -37,15 +37,19 @@
 ## Frontend (`apps/web`)
 
 ```
-main.tsx ── RouterProvider ── rootRoute (loader: loadMuninn → @muninn/core en diferido)
-                                 └─ AppShell: Sidebar (≥ 768 px) · Dock (< 768 px) · ⌘K · diálogos
-                                      └─ <Outlet/>: screens/* (un chunk por pantalla)
+main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | demo | anonymous)
+                                 ├─ /login (pública, chunk propio; supabase-js en diferido)
+                                 └─ _app (sin sesión → /login · loader: loadMuninn → core + store del usuario)
+                                      └─ AppShell: Sidebar (≥ 768 px) · Dock (< 768 px) · ⌘K · diálogos
+                                           └─ <Outlet/>: screens/* (un chunk por pantalla)
 ```
 
 - **Rutas** en `src/router.tsx` (TanStack Router, tipadas): ver [ADR-0020](adr/0020-tanstack-router-carga-diferida.md).
 - **Navegación** compartida por barra lateral, dock y buscador en `src/shell/nav.ts`: ver [ADR-0021](adr/0021-shell-de-la-app.md).
 - **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Las acciones que cambian datos dan feedback con «Deshacer».
-- **Apariencia:** `src/lib/appearance.ts` (localStorage hasta que exista `user_settings`).
+- **Sesión:** `src/lib/auth.ts` (Supabase Auth: código por correo y GitHub; modo demo en memoria). Al cambiar
+  de usuario se vacían el core y react-query: ver [ADR-0022](adr/0022-auth-y-sesion.md).
+- **Apariencia:** `src/lib/appearance.ts` (en `user_settings.preferences`, con localStorage como caché).
 - **Galería de desarrollo:** `/dev/fundamentos` (sin enlace en la navegación).
 
 ## Modelo de datos (F1)

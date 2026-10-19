@@ -10,15 +10,7 @@ export interface SettingsSection {
 
 /** Secciones de Ajustes en el orden del diseño (Ajustes.dc.html). */
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  {
-    id: 'cuenta',
-    label: 'Cuenta',
-    icon: 'user',
-    soon: {
-      phase: 'Fase 1',
-      text: 'Tu perfil y tu sesión aparecerán aquí cuando llegue el inicio de sesión.',
-    },
-  },
+  { id: 'cuenta', label: 'Cuenta', icon: 'user' },
   {
     id: 'modulos',
     label: 'Módulos',
@@ -56,15 +48,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
       text: 'Avisos en el móvil antes de cada cobro y cuando un agente termine su trabajo.',
     },
   },
-  {
-    id: 'datos',
-    label: 'Datos y sincronización',
-    icon: 'sync',
-    soon: {
-      phase: 'Fase 1',
-      text: 'Ahora mismo estás en modo demo: tus datos viven en memoria y se pierden al recargar. Con el inicio de sesión se guardarán y se sincronizarán entre tus dispositivos.',
-    },
-  },
+  { id: 'datos', label: 'Datos y sincronización', icon: 'sync' },
   { id: 'atajos', label: 'Atajos de teclado', icon: 'keyboard' },
 ]
 

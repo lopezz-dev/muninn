@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  Avatar,
   Button,
   Checkbox,
   Chip,
@@ -178,5 +179,19 @@ describe('overlays', () => {
     await userEvent.keyboard('{Enter}')
     await userEvent.click(screen.getByRole('menuitem', { name: /Archivar/ }))
     expect(onArchive).toHaveBeenCalled()
+  })
+})
+
+describe('Avatar', () => {
+  it('saca las iniciales del nombre o de la parte local del correo', () => {
+    const { rerender } = render(<Avatar name="Alex López" />)
+    expect(screen.getByRole('img', { name: 'Alex López' })).toHaveTextContent('AL')
+    rerender(<Avatar name="alex.lopez@gmail.com" />)
+    expect(screen.getByRole('img', { name: 'alex.lopez@gmail.com' })).toHaveTextContent('AL')
+  })
+
+  it('con foto usa la imagen con el nombre como texto alternativo', () => {
+    render(<Avatar name="Alex" src="https://example.com/a.png" />)
+    expect(screen.getByRole('img', { name: 'Alex' }).tagName).toBe('IMG')
   })
 })

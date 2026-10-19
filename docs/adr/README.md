@@ -46,6 +46,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0006](0006-orden-con-fractional-indexing.md) — Orden con fractional indexing
 - [ADR-0007](0007-registro-de-actividad.md) — Registro de actividad inmutable con actor
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
+- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -54,6 +55,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0006](0006-orden-con-fractional-indexing.md) — Orden con fractional indexing
 - [ADR-0007](0007-registro-de-actividad.md) — Registro de actividad inmutable con actor
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
+- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -73,6 +75,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
 - [ADR-0020](0020-tanstack-router-carga-diferida.md) — TanStack Router con rutas en código y una pantalla por chunk
 - [ADR-0021](0021-shell-de-la-app.md) — Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K
+- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

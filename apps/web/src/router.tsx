@@ -4,9 +4,12 @@ import {
   createRouter,
   lazyRouteComponent,
   notFound,
+  Outlet,
   redirect,
 } from '@tanstack/react-router'
+import { getAuth, onAuthChange, safeRedirect } from './lib/auth'
 import { loadMuninn } from './lib/muninn'
+import { forgetUserData } from './lib/session'
 import { settingsSection } from './screens/ajustes/sections'
 import { ErrorScreen } from './screens/ErrorScreen'
 import { NotFound } from './screens/NotFound'
@@ -18,11 +21,9 @@ import { AppShell } from './shell/AppShell'
  * El shell (barra lateral, dock, ⌘K) va en el bundle inicial.
  */
 const rootRoute = createRootRoute({
-  // El core se descarga en paralelo con la pantalla; nada se pinta hasta tener los dos.
-  loader: () => loadMuninn(),
-  // Es la misma instancia siempre: no hay que volver a pedirla en cada navegación.
-  staleTime: Number.POSITIVE_INFINITY,
-  component: AppShell,
+  // Quién usa la app (ADR-0022). Memorizado: solo la primera navegación espera.
+  beforeLoad: async () => ({ auth: await getAuth() }),
+  component: Outlet,
   notFoundComponent: NotFound,
 })
 
@@ -31,32 +32,75 @@ const screen = <T extends Record<string, unknown>>(
   name: keyof T & string,
 ) => lazyRouteComponent(load, name)
 
-const homeRoute = createRoute({
+export interface LoginSearch {
+  /** Ruta interna a la que volver tras entrar. */
+  redirect?: string
+  /** Error que devuelve GitHub (p. ej., si se cancela el permiso). */
+  error_description?: string
+}
+
+/** Pública. Con sesión, vuelve a donde ibas; en modo demo se puede entrar para iniciar sesión. */
+const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
+  path: 'login',
+  validateSearch: (search: Record<string, unknown>): LoginSearch => ({
+    redirect: typeof search.redirect === 'string' ? safeRedirect(search.redirect) : undefined,
+    error_description:
+      typeof search.error_description === 'string'
+        ? search.error_description.slice(0, 300)
+        : undefined,
+  }),
+  beforeLoad: ({ context, search }) => {
+    if (context.auth.kind === 'user')
+      throw redirect({ href: safeRedirect(search.redirect), replace: true })
+  },
+  component: screen(() => import('./screens/Login'), 'Login'),
+})
+
+/** Todo lo que necesita datos: sin sesión ni demo, a /login (y vuelta aquí al entrar). */
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: '_app',
+  beforeLoad: ({ context, location }) => {
+    const { auth } = context
+    if (auth.kind === 'anonymous') {
+      throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+    }
+    return { auth }
+  },
+  // El core se descarga en paralelo con la pantalla; nada se pinta hasta tener los dos.
+  loader: ({ context }) => loadMuninn(context.auth),
+  // Es la misma instancia mientras no cambie el usuario (`router.invalidate()` al cambiar).
+  staleTime: Number.POSITIVE_INFINITY,
+  component: AppShell,
+})
+
+const homeRoute = createRoute({
+  getParentRoute: () => appRoute,
   path: '/',
   component: screen(() => import('./screens/Inicio'), 'Inicio'),
 })
 
 const projectsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'proyectos',
   component: screen(() => import('./screens/Proyectos'), 'Proyectos'),
 })
 
 const boardRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'proyectos/$projectId',
   component: screen(() => import('./screens/Tablero'), 'Tablero'),
 })
 
 const notesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'notas',
   component: screen(() => import('./screens/Notas'), 'Notas'),
 })
 
 const financeRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'finanzas',
   component: screen(() => import('./screens/Finanzas'), 'Finanzas'),
 })
@@ -67,7 +111,7 @@ export interface AssistantSearch {
 }
 
 const assistantRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'asistente',
   validateSearch: (search: Record<string, unknown>): AssistantSearch => ({
     q: typeof search.q === 'string' && search.q.trim() ? search.q.slice(0, 500) : undefined,
@@ -76,25 +120,25 @@ const assistantRoute = createRoute({
 })
 
 const newsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'noticias',
   component: screen(() => import('./screens/Noticias'), 'Noticias'),
 })
 
 const githubRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'github',
   component: screen(() => import('./screens/GitHub'), 'GitHub'),
 })
 
 const docsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'documentacion',
   component: screen(() => import('./screens/Documentacion'), 'Documentacion'),
 })
 
 const moreRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'mas',
   component: screen(() => import('./screens/Mas'), 'Mas'),
 })
@@ -102,7 +146,7 @@ const moreRoute = createRoute({
 // ─── Ajustes ─────────────────────────────────────────────────────────────────
 
 const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'ajustes',
   component: screen(() => import('./screens/ajustes/Ajustes'), 'Ajustes'),
 })
@@ -128,24 +172,27 @@ const settingsSectionRoute = createRoute({
 
 /** Galería de Fundamentos (tokens y componentes). Sin enlace en la navegación. */
 const devFundamentosRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'dev/fundamentos',
   component: screen(() => import('./dev/Fundamentos'), 'Fundamentos'),
 })
 
 const routeTree = rootRoute.addChildren([
-  homeRoute,
-  projectsRoute,
-  boardRoute,
-  notesRoute,
-  financeRoute,
-  assistantRoute,
-  newsRoute,
-  githubRoute,
-  docsRoute,
-  moreRoute,
-  settingsRoute.addChildren([settingsIndexRoute, settingsSectionRoute]),
-  devFundamentosRoute,
+  loginRoute,
+  appRoute.addChildren([
+    homeRoute,
+    projectsRoute,
+    boardRoute,
+    notesRoute,
+    financeRoute,
+    assistantRoute,
+    newsRoute,
+    githubRoute,
+    docsRoute,
+    moreRoute,
+    settingsRoute.addChildren([settingsIndexRoute, settingsSectionRoute]),
+    devFundamentosRoute,
+  ]),
 ])
 
 export const router = createRouter({
@@ -154,6 +201,13 @@ export const router = createRouter({
   defaultErrorComponent: ErrorScreen,
   defaultNotFoundComponent: NotFound,
   scrollRestoration: true,
+})
+
+// Otra pestaña (o este mismo cliente) cambió de usuario: fuera los datos del anterior y a recalcular
+// rutas, que mandan a /login o a la app según toque.
+onAuthChange(() => {
+  forgetUserData()
+  router.invalidate()
 })
 
 declare module '@tanstack/react-router' {

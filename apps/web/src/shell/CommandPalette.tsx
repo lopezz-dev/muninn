@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useId, useMemo, useState } from 'react'
 import { changeAppearance, useAppearance } from '../lib/appearance'
-import { useMuninn } from '../lib/muninn'
+import { useAuth, useMuninn } from '../lib/muninn'
 import { projectsQuery } from '../lib/queries'
+import { useEndSession } from '../lib/session'
 import { SECTIONS, type SectionId } from './nav'
 import {
   bestMatch,
@@ -60,6 +61,8 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
   const m = useMuninn()
   const shell = useShell()
   const navigate = useNavigate()
+  const auth = useAuth()
+  const endSession = useEndSession()
   const appearance = useAppearance()
   const projects = useQuery({ ...projectsQuery(m), enabled: open }).data ?? []
   const [query, setQuery] = useState(initialQuery)
@@ -134,9 +137,17 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         keywords: 'acento color tema',
         run: () => navigate({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' } }),
       },
+      {
+        id: 'sign-out',
+        group: 'actions',
+        label: auth.kind === 'user' ? 'Cerrar sesión' : 'Salir del modo demo',
+        icon: 'user',
+        keywords: 'salir logout desconectar cuenta',
+        run: () => endSession(auth.kind),
+      },
     )
     return filterItems(all, q)
-  }, [query, projects, appearance.glass, navigate, shell.openNewProject])
+  }, [query, projects, appearance.glass, navigate, shell.openNewProject, auth.kind, endSession])
 
   const groups = groupItems(items)
   const optionId = (i: number) => `${listId}-opt-${i}`

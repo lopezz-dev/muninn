@@ -189,3 +189,36 @@ describe('notas', () => {
     expect((await app.notes.list()).map((n) => n.title)).toEqual(['fijada', 'otra', 'normal'])
   })
 })
+
+describe('ajustes', () => {
+  it('sin fila guardada devuelve los valores por defecto y no escribe', async () => {
+    const { app, store } = setup()
+    const s = await app.settings.get()
+    expect(s.enabledModules).toEqual(['tasks', 'notes'])
+    expect(s.preferences).toEqual({})
+    expect(store.snapshot().settings).toBeNull()
+  })
+
+  it('fusiona las preferencias por clave y null borra la clave', async () => {
+    const { app } = setup()
+    await app.settings.update({ preferences: { appearance: { glass: false, accent: 'blue' } } })
+    await app.settings.update({ preferences: { home: { widgets: ['today'] } } })
+    let s = await app.settings.get()
+    expect(s.preferences).toEqual({
+      appearance: { glass: false, accent: 'blue' },
+      home: { widgets: ['today'] },
+    })
+    await app.settings.update({ preferences: { home: null } })
+    s = await app.settings.get()
+    expect(s.preferences).toEqual({ appearance: { glass: false, accent: 'blue' } })
+    expect(s.enabledModules).toEqual(['tasks', 'notes'])
+  })
+
+  it('valida los módulos', async () => {
+    const { app } = setup()
+    // @ts-expect-error módulo inexistente
+    await expect(app.settings.update({ enabledModules: ['nope'] })).rejects.toThrow(ValidationError)
+    const s = await app.settings.update({ enabledModules: ['tasks', 'finance'] })
+    expect(s.enabledModules).toEqual(['tasks', 'finance'])
+  })
+})

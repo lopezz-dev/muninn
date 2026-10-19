@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import type { HTMLAttributes, ReactNode } from 'react'
+import { type HTMLAttributes, type ReactNode, useState } from 'react'
 import { cn } from '../cn'
 import { projectColor } from '../tokens'
 
@@ -62,22 +62,42 @@ export function Kbd({ className, ...props }: HTMLAttributes<HTMLElement>) {
 
 const avatarSizes = { sm: 'size-6 text-2xs', md: 'size-7 text-xs', lg: 'size-12 text-md' } as const
 
-/** Avatar cuadrado con iniciales (radio pequeño, coherente con el resto). */
+/** Avatar cuadrado con iniciales (radio pequeño, coherente con el resto), o la foto si hay `src`. */
 export function Avatar({
   name,
+  src,
   size = 'md',
   className,
 }: {
   name: string
+  /** Foto (p. ej., la de GitHub). Si no carga, se ven las iniciales. */
+  src?: string | null
   size?: keyof typeof avatarSizes
   className?: string
 }) {
-  const initials = name
-    .split(/\s+/)
+  const [failed, setFailed] = useState<string | null>(null)
+  // Si el nombre es un correo, las iniciales salen de lo que va antes de la @.
+  const initials = (name.includes('@') ? (name.split('@')[0] ?? name) : name)
+    .split(/[\s._-]+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
     .join('')
+  if (src && failed !== src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(src)}
+        className={cn(
+          'shrink-0 rounded-md bg-border-strong object-cover',
+          avatarSizes[size],
+          className,
+        )}
+      />
+    )
+  }
   return (
     <span
       role="img"

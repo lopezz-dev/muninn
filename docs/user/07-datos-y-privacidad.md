@@ -15,9 +15,22 @@ status: disponible
   (`~/.muninn/data.json`) y no salen de tu ordenador.
 - **Servidor propio:** Muninn está pensado para poder alojarse en tu propio servidor en el futuro.
 
-> **Ahora mismo, en la app:** hasta que llegue el inicio de sesión, la app funciona en **modo demo**: lo que
-> creas vive en la memoria del navegador y se pierde al recargar. Solo la apariencia (cristal y color de
-> acento) se guarda, en este dispositivo.
+> **Ahora mismo, en la app:**
+>
+> - **Con cuenta:** tus datos se guardan en Supabase, en un servidor de la Unión Europea (París). La
+>   apariencia (cristal y color de acento) también va con tu cuenta. Lo que cambies en un dispositivo
+>   aparece en los demás al recargar; la actualización al momento llegará más adelante.
+> - **En modo demo:** lo que creas vive en la memoria del navegador y se pierde al recargar. Solo la
+>   apariencia se guarda, en este dispositivo.
+
+## Tu sesión
+
+- Entras con un código que te llega al correo, o con GitHub. Muninn no guarda contraseñas.
+- La sesión se guarda en el navegador o en la app de ese dispositivo, para que no tengas que entrar cada
+  vez. **Cerrar sesión** (en Ajustes › Cuenta) la borra de ese dispositivo.
+- Si entras con GitHub, Muninn solo recibe tu nombre, tu correo y tu foto de perfil, para mostrarlos en la app.
+- Al cerrar sesión, la app olvida lo que tenía cargado: nadie que entre después en ese dispositivo con otra
+  cuenta verá tus datos.
 
 ## Quién puede verlos
 

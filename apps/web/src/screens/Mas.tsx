@@ -1,7 +1,8 @@
-import { Card, Icon, type IconName, icons } from '@muninn/ui'
+import { Avatar, Card, Icon, type IconName, icons } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { Page, PageHeader } from '../components/Page'
+import { useAuth } from '../lib/muninn'
 import { SECTIONS, type SectionId } from '../shell/nav'
 import { useShell } from '../shell/shell-context'
 
@@ -40,6 +41,7 @@ function RowContent({
 /** Hub de móvil para lo que no cabe en el dock. Diseño: M-Mas.dc.html. */
 export function Mas() {
   const shell = useShell()
+  const auth = useAuth()
   return (
     <Page className="gap-6">
       <PageHeader title="Más" />
@@ -79,6 +81,19 @@ export function Mas() {
           App
         </h2>
         <Card className="overflow-hidden">
+          <Link to="/ajustes/$seccion" params={{ seccion: 'cuenta' }} className={row}>
+            {auth.kind === 'user' ? (
+              <>
+                <Avatar name={auth.account.name} src={auth.account.avatarUrl} size="sm" />
+                <span className="min-w-0 truncate">{auth.account.name}</span>
+                <icons.chevronRight aria-hidden="true" className="ml-auto text-fg-faint" />
+              </>
+            ) : (
+              <RowContent icon="user" value="Modo demo">
+                Cuenta
+              </RowContent>
+            )}
+          </Link>
           <button type="button" className={row} onClick={() => shell.openPalette()}>
             <RowContent icon="search">Buscar o preguntar</RowContent>
           </button>
@@ -86,7 +101,7 @@ export function Mas() {
             <RowContent icon="palette">Apariencia</RowContent>
           </Link>
           <Link to="/ajustes/$seccion" params={{ seccion: 'datos' }} className={row}>
-            <RowContent icon="sync" value="Modo demo">
+            <RowContent icon="sync" value={auth.kind === 'user' ? 'En tu cuenta' : 'Modo demo'}>
               Datos
             </RowContent>
           </Link>

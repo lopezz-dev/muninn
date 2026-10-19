@@ -8,6 +8,7 @@ import type {
   Task,
   TaskPriority,
   TaskSource,
+  UserSettings,
 } from './schemas'
 
 /**
@@ -24,6 +25,15 @@ export interface Store {
   checklist: Collection<ChecklistItem, { taskIds: string[] }>
   notes: Collection<Note, NoteStoreQuery>
   activity: ActivityLog
+  settings: SettingsStore
+}
+
+/** Fila única de ajustes del usuario del store. */
+export interface SettingsStore {
+  /** `null` si el usuario aún no ha guardado nada. */
+  get(): Promise<UserSettings | null>
+  /** Crea la fila si no existe; los campos que faltan conservan su valor (o el de por defecto). */
+  upsert(patch: Partial<Omit<UserSettings, 'updatedAt'>>): Promise<UserSettings>
 }
 
 type Generated = 'id' | 'createdAt' | 'updatedAt'

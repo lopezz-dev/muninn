@@ -18,7 +18,7 @@ import { EmptyState, Page, PageHeader } from '../components/Page'
 import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, columnsQuery, projectQuery, tasksQuery } from '../lib/queries'
 
-const route = getRouteApi('/proyectos/$projectId')
+const route = getRouteApi('/_app/proyectos/$projectId')
 
 const KIND_BG: Record<ColumnKind, string> = {
   backlog: 'bg-kind-backlog',
@@ -52,7 +52,7 @@ export function Tablero() {
             </Button>
           }
         >
-          Puede que se haya archivado o que el enlace sea de otra sesión. En modo demo los proyectos
+          Puede que se haya archivado o que el enlace sea de otra cuenta. En modo demo los proyectos
           se pierden al recargar.
         </EmptyState>
       </Page>

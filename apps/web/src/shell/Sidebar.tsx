@@ -1,7 +1,7 @@
-import { ColorDot, cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
+import { Avatar, ColorDot, cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMuninn } from '../lib/muninn'
+import { useAuth, useMuninn } from '../lib/muninn'
 import { overviewQuery, projectsQuery } from '../lib/queries'
 import { Logo } from './Logo'
 import { SECTIONS, type SectionId, SIDEBAR_FOOTER, SIDEBAR_MAIN } from './nav'
@@ -27,6 +27,7 @@ function NavItem({ id, count }: { id: SectionId; count?: number }) {
 /** Barra lateral de escritorio (≥ 768 px). Diseño: Sidebar.dc.html. */
 export function Sidebar({ className }: { className?: string }) {
   const m = useMuninn()
+  const auth = useAuth()
   const shell = useShell()
   const projects = useQuery(projectsQuery(m)).data ?? []
   const overview = useQuery(overviewQuery(m)).data
@@ -119,20 +120,39 @@ export function Sidebar({ className }: { className?: string }) {
         ))}
       </nav>
 
-      <div className="flex items-center gap-2.5 border-t border-border-subtle px-2 pt-2.5">
-        <span
-          aria-hidden="true"
-          className="grid size-7 place-items-center rounded-md bg-border-strong text-fg-subtle"
+      <div className="border-t border-border-subtle pt-1.5">
+        <Link
+          to="/ajustes/$seccion"
+          params={{ seccion: 'cuenta' }}
+          aria-label={`Tu cuenta: ${auth.kind === 'user' ? auth.account.name : 'modo demo'}`}
+          className="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-hover"
         >
-          <Icon name="user" />
-        </span>
-        <div className="flex min-w-0 flex-col leading-tight">
-          <span className="text-sm font-medium">Modo demo</span>
-          <span className="flex items-center gap-1.5 text-xs text-fg-faint">
-            <span aria-hidden="true" className="size-1.5 rounded-full bg-fg-faint" />
-            Datos sin guardar
+          {auth.kind === 'user' ? (
+            <Avatar name={auth.account.name} src={auth.account.avatarUrl} />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="grid size-7 place-items-center rounded-md bg-border-strong text-fg-subtle"
+            >
+              <Icon name="user" />
+            </span>
+          )}
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-sm font-medium">
+              {auth.kind === 'user' ? auth.account.name : 'Modo demo'}
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-fg-faint">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'size-1.5 rounded-full',
+                  auth.kind === 'user' ? 'bg-success' : 'bg-fg-faint',
+                )}
+              />
+              {auth.kind === 'user' ? 'Guardado en tu cuenta' : 'Datos sin guardar'}
+            </span>
           </span>
-        </div>
+        </Link>
       </div>
     </aside>
   )
