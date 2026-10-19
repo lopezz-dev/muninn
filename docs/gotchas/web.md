@@ -212,3 +212,20 @@
 - En iOS el teclado no cambia el alto de la página (no hay `interactive-widget`), así que una barra pegada abajo quedaría tapada.
   La del editor de notas es `sticky` arriba. Sus botones llevan `onMouseDown={e => e.preventDefault()}`: así no le quitan el
   foco al `textarea` ni cierran el teclado al tocarlos.
+
+### Escribir una guía de `docs/user` para la app
+
+- **Síntoma:** una guía no sale en el menú, un enlace no funciona o un aviso no se destaca.
+- **Causa:** la sección Documentación solo importa `NN-nombre.md` (dos cifras, guion y minúsculas) y solo entiende cuatro
+  claves planas de metadatos: `title` (obligatorio), `description`, `order` y `status` (`disponible`, `parcial`,
+  `proximamente`; otro valor cuenta como disponible).
+- **Solución:** el `# Título` con que empieza el texto se quita (el título sale de los metadatos). Una cita que empieza
+  en negrita (`> **Estado:** …`) se pinta como aviso. Los enlaces entre guías van como `05-notas.md#archivar` (las anclas
+  se comparan sin tildes: `#iniciar-sesión` e `#iniciar-sesion` son lo mismo); cualquier otro fichero relativo se ve como texto.
+  Nada de HTML ni imágenes ([ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)).
+- **Ref:** [ADR-0027](../adr/0027-documentacion-en-la-app-desde-docs-user.md)
+
+### Los diálogos del shell se cargan al abrirse la primera vez
+
+- «Nueva tarea» y «Nuevo proyecto» son `lazy` en `AppShell`: su código no viaja en el arranque. La primera vez que se abren
+  hay una petición pequeña (el resto, ya en caché). Si añades otro diálogo global, haz lo mismo y mide con `size`.

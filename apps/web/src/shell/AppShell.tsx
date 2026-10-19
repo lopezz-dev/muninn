@@ -3,14 +3,16 @@ import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CommandPalette } from './CommandPalette'
 import { Dock } from './Dock'
-import { NewProjectDialog } from './NewProjectDialog'
 import { sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
 
-// Diferido: el diálogo (y todo lo que arrastra) no viaja con el shell hasta que se abre.
+// Diferidos: los diálogos (y todo lo que arrastran) no viajan con el shell hasta que se abren.
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
+)
+const NewProjectDialog = lazy(() =>
+  import('./NewProjectDialog').then((m) => ({ default: m.NewProjectDialog })),
 )
 
 /** Dentro de un campo o de un diálogo, las teclas sueltas son para escribir. */
@@ -27,7 +29,7 @@ export function AppShell() {
     open: false,
     query: '',
   })
-  const [newProject, setNewProject] = useState(false)
+  const [newProject, setNewProject] = useState({ open: false, loaded: false })
   const [newTask, setNewTask] = useState<{ open: boolean; preset: NewTaskPreset; loaded: boolean }>(
     {
       open: false,
@@ -38,7 +40,7 @@ export function AppShell() {
   const mainRef = useRef<HTMLElement>(null)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
-  const openNewProject = useCallback(() => setNewProject(true), [])
+  const openNewProject = useCallback(() => setNewProject({ open: true, loaded: true }), [])
   const openNewTask = useCallback(
     (preset: NewTaskPreset = {}) => setNewTask({ open: true, preset, loaded: true }),
     [],
@@ -115,7 +117,14 @@ export function AppShell() {
         initialQuery={palette.query}
         onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
       />
-      <NewProjectDialog open={newProject} onOpenChange={setNewProject} />
+      {newProject.loaded ? (
+        <Suspense fallback={null}>
+          <NewProjectDialog
+            open={newProject.open}
+            onOpenChange={(open) => setNewProject((p) => ({ ...p, open }))}
+          />
+        </Suspense>
+      ) : null}
       {newTask.loaded ? (
         <Suspense fallback={null}>
           <NewTaskDialog
