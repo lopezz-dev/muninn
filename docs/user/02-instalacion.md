@@ -38,6 +38,38 @@ Abre la dirección en Chrome y pulsa **Instalar app** en el menú (⋮).
 
 ## Iniciar sesión
 
-Usa la misma cuenta en todos tus dispositivos para que se sincronicen.
+Con una cuenta, tus proyectos, tareas y notas se guardan y los ves en todos tus dispositivos. No hay
+contraseñas: entras con un código que te llega al correo.
 
-> **Próximamente:** inicio de sesión con email.
+1. Abre Muninn. Si no has entrado, verás la pantalla **Entrar en Muninn**.
+2. Escribe tu correo y pulsa **Enviar código**.
+3. Abre el correo de Muninn, copia el código y escríbelo en **Código**. Pulsa **Entrar**.
+
+La primera vez, esto crea tu cuenta. El código caduca en una hora. Si no te llega, mira en la carpeta de
+correo no deseado o pulsa **Reenviar código** (se puede pedir uno por minuto). Si te equivocaste de
+dirección, pulsa **Usar otro correo**.
+
+Usa el mismo correo en el ordenador y en el móvil para ver lo mismo en los dos.
+
+> **Ahora mismo:** Muninn está en pruebas y solo puede enviar códigos a las direcciones autorizadas.
+
+### Con GitHub
+
+En el navegador y en el móvil puedes pulsar **Continuar con GitHub**: te lleva a GitHub para dar permiso y
+vuelve a Muninn con la sesión iniciada. Si el botón no aparece, es que aún no está activado.
+
+> **Próximamente:** GitHub en la app de escritorio. Mientras tanto, entra con el código por correo.
+
+### Probar sin cuenta
+
+En la pantalla de inicio de sesión, pulsa **Modo demo**. Puedes usar toda la app, pero lo que crees vive en
+la memoria del navegador y **se pierde al recargar**. Para salir, ve a **Ajustes › Cuenta** y pulsa
+**Salir del modo demo**.
+
+### Cerrar sesión
+
+Ve a **Ajustes › Cuenta** y pulsa **Cerrar sesión**, o busca «cerrar sesión» con **⌘K** / **Ctrl K**. La
+sesión se cierra solo en ese dispositivo: tus datos siguen en tu cuenta y en los demás dispositivos sigues
+dentro.
+
+Al recargar la página o volver a abrir la app, la sesión se mantiene: no tienes que entrar cada vez.

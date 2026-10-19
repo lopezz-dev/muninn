@@ -13,9 +13,14 @@
 - [x] Componentes base (`@muninn/ui`): Button, IconButton, Chip, ColorDot, Kbd, Avatar, ProgressBar, Separator, Card, TextField, TextArea, Switch, Checkbox, SegmentedControl, AmountField, Dialog, Sheet, Menu, Tooltip, notificaciones (`notify` + `Toaster`)
 - [x] Shell de la app: router con una pantalla por chunk (TanStack Router), barra lateral (escritorio), dock
   con menisco (móvil), buscador ⌘K, pantallas vacías de todas las secciones y Ajustes › Apariencia
-- [ ] Login (Supabase Auth) y sesión en la UI ← siguiente paso (crear el proyecto de Supabase: región y organización)
-- [ ] Apariencia y módulos en `user_settings` (hoy la apariencia vive en localStorage)
-- [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas
+- [x] Proyecto de Supabase (`muninn`, eu-west-3 París) con el esquema y los avisos del asesor resueltos
+- [x] Login con Supabase Auth: código por correo y GitHub (solo web), sesión persistente, rutas protegidas,
+  cerrar sesión y modo demo sin cuenta ([ADR-0022](adr/0022-auth-y-sesion.md))
+- [x] Apariencia en `user_settings.preferences` (localStorage como caché del primer render)
+- [ ] Configurar en el panel de Supabase: plantillas de correo con el código, URLs de redirección y GitHub OAuth
+  ([gotchas/db](gotchas/db.md))
+- [ ] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos)
+- [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas ← siguiente paso
 - [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
 - [ ] Sincronización en tiempo real entre dispositivos + caché offline
 
@@ -39,6 +44,9 @@
 - [ ] Agentes programados que informan del estado de las tareas
 
 ## Backlog
+- SMTP propio para los correos de acceso (el de Supabase solo envía al equipo y con límite por hora)
+- Deep links en Tauri para GitHub OAuth en escritorio (hoy el botón se oculta)
+- Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras

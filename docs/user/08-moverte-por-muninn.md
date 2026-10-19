@@ -7,8 +7,8 @@ status: parcial
 
 # Moverte por Muninn
 
-> **Modo demo:** mientras no llega el inicio de sesión, lo que crees se guarda solo en memoria y
-> desaparece al recargar la página. La apariencia sí se recuerda en este dispositivo.
+> **Modo demo:** si entras sin cuenta, lo que crees se guarda solo en memoria y desaparece al recargar la
+> página. Para guardarlo, [inicia sesión](02-instalacion.md#iniciar-sesión).
 
 ## En el ordenador: la barra lateral
 
@@ -18,12 +18,15 @@ A la izquierda tienes todas las secciones: **Inicio**, **Proyectos**, **Notas**,
 En el apartado **Proyectos** aparecen tus proyectos con su color. Pulsa uno para abrir su tablero, o el
 botón **+** para crear otro.
 
+Al pie de la barra está tu cuenta, con tu nombre y tu foto (o tus iniciales). Púlsala para ir a
+**Ajustes › Cuenta**, donde puedes cerrar sesión.
+
 ## En el móvil: el dock
 
 En pantallas pequeñas la barra lateral se convierte en un dock flotante con cinco pestañas: **Inicio**,
 **Proyectos**, **Asistente** (en el centro), **Finanzas** y **Más**. La burbuja de color marca dónde estás.
 
-En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, el buscador y los ajustes.
+En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, tu cuenta, el buscador y los ajustes.
 
 ## Buscar o ir a cualquier sitio
 
@@ -31,7 +34,7 @@ Pulsa **⌘K** en Mac o **Ctrl K** en Windows y Linux (o el botón **Buscar o pr
 lateral) y escribe:
 
 - El nombre de una sección o de un proyecto, para ir directamente. Da igual que pongas tildes o mayúsculas.
-- Una acción, como «nuevo proyecto» o «cristal».
+- Una acción, como «nuevo proyecto», «cristal» o «cerrar sesión».
 - Cualquier otra cosa, para preguntársela a Muninn.
 
 Muévete con las flechas, abre con **Intro** y cierra con **Esc**.
@@ -61,9 +64,10 @@ En **Ajustes › Apariencia**:
 - **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y la
   burbuja del dock.
 
-Cada cambio se aplica al momento, se guarda en este dispositivo y puedes deshacerlo desde el aviso.
+Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
+sigue a todos tus dispositivos; en modo demo, solo en este.
 
-> **Próximamente:** tema claro, y que la apariencia te siga a todos tus dispositivos cuando inicies sesión.
+> **Próximamente:** tema claro.
 
 ## Atajos de teclado
 

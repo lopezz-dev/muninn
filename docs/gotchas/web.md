@@ -24,16 +24,25 @@
 ### `@muninn/core` solo con `import type` desde la UI
 
 - **Síntoma:** el chunk inicial vuelve a crecer unos 100 KB.
-- **Causa:** el core (y zod con él) se carga en diferido en el loader de la ruta raíz (`loadMuninn()`).
+- **Causa:** el core (y zod con él) se carga en diferido en el loader de la ruta `_app` (`loadMuninn()`).
   Un `import { algo } from '@muninn/core'` de valor en cualquier fichero del shell lo mete en el arranque.
 - **Solución:** en la UI, `import type { … } from '@muninn/core'` y los datos siempre con `useMuninn()`.
-  Lo mismo con `@supabase/supabase-js`: solo a través de `loadSupabase()`.
+  Lo mismo con `@supabase/supabase-js`: solo `import type` y el cliente a través de `loadSupabase()` (`lib/auth.ts`).
 - **Ref:** [ADR-0020](../adr/0020-tanstack-router-carga-diferida.md)
 
-### `useMuninn()` solo funciona dentro del router
+### `useMuninn()` solo funciona dentro de la ruta `_app`
 
-- Lee los datos del loader de la ruta raíz. Fuera de `<RouterProvider>` (por ejemplo, junto a `<Toaster />`
-  en `main.tsx`) lanza un error. Todo lo que use datos va dentro del shell o de una pantalla.
+- Lee los datos del loader de la ruta de layout `_app`. Fuera de ella (en `/login`, o junto a `<Toaster />`
+  en `main.tsx`) lanza un error. Todo lo que use datos va dentro del shell o de una pantalla. `useAuth()`
+  funciona en las mismas rutas.
+
+### Los ids de ruta llevan el prefijo `/_app`
+
+- **Síntoma:** `Argument of type '"/asistente"' is not assignable…` en `getRouteApi`.
+- **Causa:** las pantallas cuelgan de la ruta de layout `_app` (sin path), y su id incluye el del padre.
+- **Solución:** `getRouteApi('/_app/asistente')`. En `<Link to>` y `navigate` se sigue usando la ruta
+  (`/asistente`): el prefijo es solo del id.
+- **Ref:** [ADR-0022](../adr/0022-auth-y-sesion.md)
 
 ### Rutas tipadas: los parámetros van aparte
 
@@ -76,3 +85,33 @@
 - Es un *combobox* propio (`shell/CommandPalette.tsx`) con la lógica pura en `palette-items.ts` (con tests).
   El foco se queda siempre en el campo y la opción activa va por `aria-activedescendant`: no pongas
   `tabIndex={0}` en las opciones ni muevas el foco a la lista.
+
+### Sesión: saber si hay usuario sin descargar supabase-js
+
+- `getAuth()` mira primero si existe la clave `muninn.auth` en localStorage (la `storageKey` del cliente).
+  Si no está y la URL no trae `?code=` (vuelta de GitHub), no hay sesión y no se descarga supabase-js.
+  **Si cambias `storageKey`, cambia también `SESSION_KEY`**, o la app creerá que nunca hay sesión.
+- Las acciones del formulario (`sendEmailCode`, `verifyEmailCode`, GitHub, mensajes de error) están en
+  `lib/login-actions.ts` para que viajen en el chunk del login. No las vuelvas a meter en `auth.ts`: el
+  shell lo importa y acabarían en el arranque.
+
+### `onAuthStateChange` avisa más de lo que parece
+
+- **Síntoma:** la app recarga datos al volver a la pestaña o cada hora.
+- **Causa:** supabase-js emite `SIGNED_IN` al recuperar la sesión al enfocar la pestaña, y `TOKEN_REFRESHED`
+  al renovar el token.
+- **Solución:** `auth.ts` solo reacciona si cambia el **id** del usuario. Al cambiar, `forgetUserData()`
+  descarta la instancia del core y vacía react-query: los datos de un usuario no pueden verse en la
+  sesión de otro.
+
+### `/login` no tiene shell ni datos
+
+- La pantalla de login cuelga de la raíz, no de `_app`: no uses ahí `useMuninn()`, `useAuth()` ni nada del
+  shell. Tras iniciar sesión hay que `router.invalidate()`: el loader de `_app` tiene
+  `staleTime: Infinity` y, sin invalidar, seguiría con la instancia anterior (la de la demo).
+
+### GitHub OAuth no se ofrece en Tauri
+
+- El proveedor redirige a una URL web; sin deep links, la sesión acabaría en el navegador del sistema.
+  `isTauri` (de `TAURI_ENV_PLATFORM`) oculta el botón en escritorio. En la web, el botón solo sale si
+  `GET /auth/v1/settings` dice que GitHub está activado.
