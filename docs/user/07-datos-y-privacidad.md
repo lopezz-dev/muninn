@@ -15,6 +15,10 @@ status: disponible
   (`~/.muninn/data.json`) y no salen de tu ordenador.
 - **Servidor propio:** Muninn está pensado para poder alojarse en tu propio servidor en el futuro.
 
+> **Ahora mismo, en la app:** hasta que llegue el inicio de sesión, la app funciona en **modo demo**: lo que
+> creas vive en la memoria del navegador y se pierde al recargar. Solo la apariencia (cristal y color de
+> acento) se guarda, en este dispositivo.
+
 ## Quién puede verlos
 
 - Cada fila de la base de datos pertenece a un usuario, y la propia base de datos impide que nadie

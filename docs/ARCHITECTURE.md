@@ -34,6 +34,20 @@
 4. **Todo deja rastro.** Cada cambio escribe en `activity` con el actor (`user`, `mcp`, `github`,
    `agent`). De ahí salen los resúmenes ("¿qué he hecho esta semana?") y los insights.
 
+## Frontend (`apps/web`)
+
+```
+main.tsx ── RouterProvider ── rootRoute (loader: loadMuninn → @muninn/core en diferido)
+                                 └─ AppShell: Sidebar (≥ 768 px) · Dock (< 768 px) · ⌘K · diálogos
+                                      └─ <Outlet/>: screens/* (un chunk por pantalla)
+```
+
+- **Rutas** en `src/router.tsx` (TanStack Router, tipadas): ver [ADR-0020](adr/0020-tanstack-router-carga-diferida.md).
+- **Navegación** compartida por barra lateral, dock y buscador en `src/shell/nav.ts`: ver [ADR-0021](adr/0021-shell-de-la-app.md).
+- **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Las acciones que cambian datos dan feedback con «Deshacer».
+- **Apariencia:** `src/lib/appearance.ts` (localStorage hasta que exista `user_settings`).
+- **Galería de desarrollo:** `/dev/fundamentos` (sin enlace en la navegación).
+
 ## Modelo de datos (F1)
 
 | Tabla | Para qué |

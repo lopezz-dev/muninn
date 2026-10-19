@@ -11,8 +11,10 @@
 - [x] Diseño de todas las pantallas (escritorio + móvil): [lienzo «Muninn — Pantallas»](https://claude.ai/artifact/BdNFHNmB8E3dxV2u7o27xB)
 - [x] `@muninn/ui`: tokens → CSS vars, tema Tailwind v4, iconos Phosphor, Geist autoalojada, modo cristal y acento
 - [x] Componentes base (`@muninn/ui`): Button, IconButton, Chip, ColorDot, Kbd, Avatar, ProgressBar, Separator, Card, TextField, TextArea, Switch, Checkbox, SegmentedControl, AmountField, Dialog, Sheet, Menu, Tooltip, notificaciones (`notify` + `Toaster`)
-- [ ] Shell de la app: barra lateral (escritorio) + dock menisco (móvil) + router ← siguiente paso
-- [ ] Login (Supabase Auth) y sesión en la UI
+- [x] Shell de la app: router con una pantalla por chunk (TanStack Router), barra lateral (escritorio), dock
+  con menisco (móvil), buscador ⌘K, pantallas vacías de todas las secciones y Ajustes › Apariencia
+- [ ] Login (Supabase Auth) y sesión en la UI ← siguiente paso (crear el proyecto de Supabase: región y organización)
+- [ ] Apariencia y módulos en `user_settings` (hoy la apariencia vive en localStorage)
 - [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas
 - [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
 - [ ] Sincronización en tiempo real entre dispositivos + caché offline
@@ -39,6 +41,8 @@
 ## Backlog
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras
 - Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
+- Buscador ⌘K sobre tareas, notas y noticias (hoy: secciones, proyectos y acciones)
+- Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional)
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")
