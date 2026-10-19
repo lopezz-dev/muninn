@@ -39,6 +39,8 @@
 - [ ] Agentes programados que informan del estado de las tareas
 
 ## Backlog
+- Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
+  encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras
 - Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
 - Buscador ⌘K sobre tareas, notas y noticias (hoy: secciones, proyectos y acciones)
