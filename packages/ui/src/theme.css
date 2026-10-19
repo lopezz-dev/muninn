@@ -85,6 +85,38 @@
   --ease-out: var(--mn-motion-ease-out);
 }
 
+/* Entradas de overlays (diálogo, panel, menú). Se anulan con prefers-reduced-motion (abajo). */
+@theme {
+  --animate-fade-in: mn-fade-in 160ms var(--mn-motion-ease-out);
+  --animate-pop-in: mn-pop-in 180ms var(--mn-motion-ease-out);
+  --animate-slide-in-right: mn-slide-in-right 280ms var(--mn-motion-ease-out);
+  --animate-slide-in-up: mn-slide-in-up 300ms var(--mn-motion-ease-out);
+
+  @keyframes mn-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes mn-pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+  }
+  @keyframes mn-slide-in-right {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+  @keyframes mn-slide-in-up {
+    from {
+      transform: translateY(32px);
+      opacity: 0;
+    }
+  }
+}
+
 /* Superficies que se vuelven cristal cuando data-glass="on". */
 @utility glass {
   background-color: var(--mn-color-surface);
