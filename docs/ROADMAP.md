@@ -7,9 +7,11 @@
 - [x] Stores: Supabase, fichero local y memoria
 - [x] CI (lint, typecheck, test, build) y releases (release-please + tauri-action: Win/Linux/macOS)
 - [x] Esqueleto de Tauri 2 y de la PWA
+- [x] Sistema de documentación: ADRs, gotchas por área y docs de usuario
 - [ ] **Sistema de diseño** ← siguiente paso, con el enfoque propio que quiere Alex
 - [ ] Login (Supabase Auth) y sesión en la UI
 - [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas
+- [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
 - [ ] Sincronización en tiempo real entre dispositivos + caché offline
 
 ## F2 · Claude y GitHub
