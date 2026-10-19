@@ -2,7 +2,7 @@ import { Button, Card, Icon } from '@muninn/ui'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { EmptyState, Page, PageHeader } from '../components/Page'
 
-const route = getRouteApi('/asistente')
+const route = getRouteApi('/_app/asistente')
 
 export function Asistente() {
   const { q } = route.useSearch()

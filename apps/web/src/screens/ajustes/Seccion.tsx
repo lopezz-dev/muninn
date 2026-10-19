@@ -1,13 +1,15 @@
-import { ACCENTS, type AccentName, Card, Kbd, Switch } from '@muninn/ui'
-import { getRouteApi } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
+import { ACCENTS, type AccentName, Avatar, Button, Card, Kbd, Switch } from '@muninn/ui'
+import { getRouteApi, Link } from '@tanstack/react-router'
+import { type ReactNode, useState } from 'react'
 import { EmptyState, PageHeader } from '../../components/Page'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
 import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appearance'
+import { useAuth } from '../../lib/muninn'
+import { useEndSession } from '../../lib/session'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
 import { settingsSection } from './sections'
 
-const route = getRouteApi('/ajustes/$seccion')
+const route = getRouteApi('/_app/ajustes/$seccion')
 
 const ACCENT_OPTIONS: Swatch<AccentName>[] = (Object.keys(ACCENTS) as AccentName[]).map((a) => ({
   value: a,
@@ -40,7 +42,116 @@ function Row({
   )
 }
 
+const PROVIDER_LABEL: Record<string, string> = {
+  email: 'Código por correo',
+  github: 'GitHub',
+}
+
+function Cuenta() {
+  const auth = useAuth()
+  const endSession = useEndSession()
+  const [busy, setBusy] = useState(false)
+  const end = async () => {
+    setBusy(true)
+    await endSession(auth.kind)
+    setBusy(false)
+  }
+
+  if (auth.kind === 'demo') {
+    return (
+      <EmptyState
+        icon="user"
+        title="Estás en modo demo"
+        actions={
+          <>
+            <Button asChild variant="primary">
+              <Link to="/login">Iniciar sesión</Link>
+            </Button>
+            <Button onClick={end} disabled={busy}>
+              Salir del modo demo
+            </Button>
+          </>
+        }
+      >
+        Tus datos viven en memoria y se pierden al recargar. Inicia sesión para guardarlos en tu
+        cuenta y verlos en todos tus dispositivos.
+      </EmptyState>
+    )
+  }
+
+  const { account } = auth
+  return (
+    <Card className="px-[18px] py-1.5">
+      <div className="flex items-center gap-3.5 py-3">
+        <Avatar name={account.name} src={account.avatarUrl} size="lg" />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate text-md font-semibold">{account.name}</span>
+          {account.email && account.email !== account.name ? (
+            <span className="truncate text-sm text-fg-subtle">{account.email}</span>
+          ) : null}
+        </div>
+      </div>
+      <Row
+        title="Método de acceso"
+        description="Sin contraseñas: entras con un código o con GitHub."
+      >
+        <span className="text-sm text-fg-muted">
+          {PROVIDER_LABEL[account.provider] ?? account.provider}
+        </span>
+      </Row>
+      <Row
+        title="Sesión"
+        description="Se cierra solo en este dispositivo. Tus datos siguen en tu cuenta."
+      >
+        <Button onClick={end} disabled={busy}>
+          {busy ? 'Cerrando…' : 'Cerrar sesión'}
+        </Button>
+      </Row>
+    </Card>
+  )
+}
+
+function Datos() {
+  const auth = useAuth()
+  if (auth.kind === 'demo') {
+    return (
+      <EmptyState
+        icon="sync"
+        title="Datos en memoria"
+        actions={
+          <Button asChild variant="primary">
+            <Link to="/login">Iniciar sesión</Link>
+          </Button>
+        }
+      >
+        Estás en modo demo: tus datos viven en memoria y se pierden al recargar. Con una cuenta se
+        guardan en el servidor y los ves en todos tus dispositivos.
+      </EmptyState>
+    )
+  }
+  return (
+    <Card className="px-[18px] py-1.5">
+      <Row
+        title="Dónde se guardan"
+        description="En tu cuenta de Muninn, en un servidor de la Unión Europea (París). Solo tú puedes verlos."
+      >
+        <span className="flex items-center gap-1.5 text-sm text-fg-muted">
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-success" />
+          Guardado
+        </span>
+      </Row>
+      <Row
+        title="Entre dispositivos"
+        description="Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al recargar; la actualización al momento llegará más adelante."
+      >
+        <span className="text-sm text-fg-muted">Al recargar</span>
+      </Row>
+    </Card>
+  )
+}
+
 function Apariencia() {
+  const auth = useAuth()
   const appearance = useAppearance()
   return (
     <Card className="px-[18px] py-1.5">
@@ -69,7 +180,9 @@ function Apariencia() {
         />
       </Row>
       <p className="border-t border-border-subtle py-3 text-xs text-fg-faint">
-        Se guarda en este dispositivo. Cuando inicies sesión, te seguirá a todos.
+        {auth.kind === 'user'
+          ? 'Se guarda en tu cuenta: te sigue a todos tus dispositivos.'
+          : 'Se guarda en este dispositivo. Cuando inicies sesión, te seguirá a todos.'}
       </p>
     </Card>
   )
@@ -112,7 +225,11 @@ export function Seccion() {
   return (
     <>
       <PageHeader title={section.label} />
-      {section.id === 'apariencia' ? (
+      {section.id === 'cuenta' ? (
+        <Cuenta />
+      ) : section.id === 'datos' ? (
+        <Datos />
+      ) : section.id === 'apariencia' ? (
         <Apariencia />
       ) : section.id === 'atajos' ? (
         <Atajos />

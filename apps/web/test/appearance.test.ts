@@ -85,3 +85,27 @@ describe('appearanceStore', () => {
     expect(store.get().accent).toBe('violet')
   })
 })
+
+describe('connectAppearance', () => {
+  it('la apariencia de la cuenta gana sobre la caché local', async () => {
+    const { connectAppearance } = await import('../src/lib/appearance')
+    const storage = memoryStorage({ [APPEARANCE_KEY]: '{"glass":true,"accent":"amber"}' })
+    const store = createAppearanceStore(storage)
+    const save = vi.fn(async () => {})
+    connectAppearance(save, { glass: false, accent: 'violet' }, store)
+    expect(store.get()).toEqual({ glass: false, accent: 'violet' })
+    expect(JSON.parse(storage.getItem(APPEARANCE_KEY) ?? '{}')).toEqual({
+      glass: false,
+      accent: 'violet',
+    })
+    expect(save).not.toHaveBeenCalled()
+  })
+
+  it('si la cuenta no tiene apariencia, sube la de este dispositivo', async () => {
+    const { connectAppearance } = await import('../src/lib/appearance')
+    const store = createAppearanceStore(memoryStorage({ [APPEARANCE_KEY]: '{"accent":"teal"}' }))
+    const save = vi.fn(async () => {})
+    connectAppearance(save, undefined, store)
+    expect(save).toHaveBeenCalledWith(store.get())
+  })
+})

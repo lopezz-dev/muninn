@@ -10,8 +10,9 @@ import {
 import { useSyncExternalStore } from 'react'
 
 /**
- * Apariencia (cristal y acento) guardada en este dispositivo. Vive en localStorage hasta que exista
- * `user_settings.preferences` en Supabase; entonces esta capa leerá y escribirá allí.
+ * Apariencia (cristal y acento). Con sesión, la fuente es `user_settings.preferences.appearance`
+ * (te sigue a todos tus dispositivos) y localStorage es la caché para el primer render, sin parpadeo.
+ * En modo demo solo existe la copia local.
  */
 export const APPEARANCE_KEY = 'muninn.appearance'
 
@@ -24,18 +25,24 @@ export const defaultAppearance = (): Appearance => ({
   glass: !prefersReducedTransparency(),
 })
 
+/** Valida campo a campo lo que venga (localStorage, la cuenta); lo que no encaje, del `fallback`. */
+export function toAppearance(value: unknown, fallback: Appearance): Appearance {
+  if (!value || typeof value !== 'object') return fallback
+  const data = value as Partial<Record<keyof Appearance, unknown>>
+  return {
+    glass: typeof data.glass === 'boolean' ? data.glass : fallback.glass,
+    accent:
+      typeof data.accent === 'string' && data.accent in ACCENTS
+        ? (data.accent as AccentName)
+        : fallback.accent,
+  }
+}
+
 /** Lee lo guardado; ignora valores corruptos o de versiones antiguas campo a campo. */
 export function parseAppearance(raw: string | null, fallback: Appearance): Appearance {
   if (!raw) return fallback
   try {
-    const data = JSON.parse(raw) as Partial<Record<keyof Appearance, unknown>>
-    return {
-      glass: typeof data.glass === 'boolean' ? data.glass : fallback.glass,
-      accent:
-        typeof data.accent === 'string' && data.accent in ACCENTS
-          ? (data.accent as AccentName)
-          : fallback.accent,
-    }
+    return toAppearance(JSON.parse(raw), fallback)
   } catch {
     return fallback
   }
@@ -100,6 +107,43 @@ if (typeof window !== 'undefined') {
   })
 }
 
+const same = (a: Appearance, b: Appearance) => a.glass === b.glass && a.accent === b.accent
+
+/** Guarda en la cuenta. */
+export type AppearanceRemote = (appearance: Appearance) => Promise<unknown>
+let remote: AppearanceRemote | null = null
+
+/**
+ * Conecta la apariencia con la cuenta al iniciar sesión (`null` en modo demo). Si la cuenta tiene
+ * una guardada, gana y actualiza la caché local; si no, se sube la de este dispositivo.
+ */
+export function connectAppearance(
+  save: AppearanceRemote | null,
+  saved?: unknown,
+  store = appearanceStore,
+) {
+  remote = save
+  if (!save) return
+  const local = store.get()
+  if (saved && typeof saved === 'object') {
+    const next = toAppearance(saved, local)
+    if (!same(next, local)) store.set(next)
+  } else {
+    save(local).catch(() => {})
+  }
+}
+
+/** Hay cuenta conectada: los cambios se guardan también allí. */
+export const isAppearanceSynced = () => remote !== null
+
+function saveRemote(appearance: Appearance) {
+  remote?.(appearance).catch(() => {
+    notify.error('No se pudo guardar en tu cuenta', {
+      description: 'El cambio se queda en este dispositivo',
+    })
+  })
+}
+
 export function useAppearance(): Appearance {
   return useSyncExternalStore(appearanceStore.subscribe, appearanceStore.get)
 }
@@ -116,6 +160,7 @@ export const ACCENT_LABEL: Record<AccentName, string> = {
 export function changeAppearance(patch: Partial<Appearance>) {
   const prev = appearanceStore.set((a) => ({ ...a, ...patch }))
   const now = appearanceStore.get()
+  saveRemote(now)
   const isGlass = patch.glass !== undefined
   notify.success(
     isGlass
@@ -123,11 +168,12 @@ export function changeAppearance(patch: Partial<Appearance>) {
       : `Acento ${ACCENT_LABEL[now.accent].toLowerCase()}`,
     {
       icon: isGlass ? 'glass' : 'palette',
-      description: 'Guardado en este dispositivo',
+      description: remote ? 'Guardado en tu cuenta' : 'Guardado en este dispositivo',
       action: {
         label: 'Deshacer',
         onClick: () => {
           appearanceStore.set(prev)
+          saveRemote(prev)
           notify.info('Apariencia restaurada', { icon: isGlass ? 'glass' : 'palette' })
         },
       },
