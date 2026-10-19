@@ -96,6 +96,14 @@
   Los contadores y el límite de la columna usan el total (`total` en `Column`), no las visibles. Si añades otra forma de mover
   tarjetas, usa `fullIndex`; «Deshacer» ya usa la columna entera y no depende del filtro.
 
+### La vista Lista no tiene arrastre y su vista vive en localStorage
+
+- **Síntoma:** en la lista no se puede reordenar; o en otro dispositivo el proyecto se abre en «Tablero» aunque elegiste «Lista».
+- **Causa:** es intencionado ([ADR-0030](../adr/0030-vista-lista-del-tablero.md)). `BoardList` pinta la caché del tablero sin dnd-kit, y la
+  vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta.
+- **Solución:** si añades una acción a la fila (mover, archivar…), usa las de `task-actions.ts` para que sea optimista y con «Deshacer».
+  Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las dos vistas.
+
 ### Tiempo real: una tabla o un dato sincronizable nuevo
 
 - **Síntoma:** lo que cambias en otro dispositivo no aparece, o aparece solo al recargar.
