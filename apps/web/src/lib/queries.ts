@@ -10,6 +10,7 @@ export const keys = {
   /** Columnas, tareas y subtareas hechas de un proyecto, en una sola entrada (ver `BoardData`). */
   board: (projectId: string) => ['projects', projectId, 'board'] as const,
   overview: ['overview'] as const,
+  settings: ['settings'] as const,
   checklist: (taskId: string) => ['tasks', taskId, 'checklist'] as const,
   taskActivity: (taskId: string) => ['tasks', taskId, 'activity'] as const,
   taskNotes: (taskId: string) => ['tasks', taskId, 'notes'] as const,
@@ -34,6 +35,10 @@ export const boardQuery = (m: Muninn, projectId: string) =>
       return { columns, tasks, counts: await m.checklist.counts(tasks.map((t) => t.id)) }
     },
   })
+
+/** Ajustes del usuario (módulos activos, preferencias). El loader de `_app` la rellena antes del primer pintado. */
+export const settingsQuery = (m: Muninn) =>
+  queryOptions({ queryKey: keys.settings, queryFn: () => m.settings.get() })
 
 export const overviewQuery = (m: Muninn) =>
   queryOptions({ queryKey: keys.overview, queryFn: () => m.overview() })

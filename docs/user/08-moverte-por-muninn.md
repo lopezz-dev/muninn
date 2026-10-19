@@ -12,8 +12,8 @@ status: parcial
 
 ## En el ordenador: la barra lateral
 
-A la izquierda tienes todas las secciones: **Inicio**, **Proyectos**, **Notas**, **Finanzas**,
-**Asistente**, **Noticias** y **GitHub**. Abajo están **Documentación** y **Ajustes**.
+A la izquierda tienes las secciones de los módulos que tienes activos (ver más abajo): **Inicio**, **Proyectos**, **Notas**,
+**Finanzas**, **Asistente**, **Noticias** y **GitHub**. Abajo están **Documentación** y **Ajustes**.
 
 En el apartado **Proyectos** aparecen tus proyectos con su color. Pulsa uno para abrir su tablero, o el
 botón **+** para crear otro.
@@ -43,6 +43,17 @@ En **Documentación** (abajo en la barra lateral, o en **Más** en el móvil) es
 izquierda ves el menú, con una marca **Parcial** o **Próximamente** en las que aún no están completas; arriba, un buscador
 que mira en los títulos y en el texto de todas. Cada guía tiene su enlace, un índice **En esta página** (en pantallas
 anchas) y los botones **Anterior** y **Siguiente**.
+
+## Activar y desactivar módulos
+
+En **Ajustes › Módulos** eliges qué usas: **Tareas y proyectos**, **Notas**, **Finanzas**, **GitHub** y **Noticias**. Lo que
+desactives desaparece de la barra lateral, del dock del móvil, del centro **Más** y del buscador, y la tecla **N** deja de
+abrir «Nueva tarea» si desactivas las tareas. **No se borra nada**: al volver a activarlo, todo sigue donde estaba. Si abres un
+enlace a algo desactivado, Muninn te lo dice y te deja activarlo ahí mismo. Cada cambio avisa y se puede deshacer.
+
+Por defecto solo están activas **Tareas y proyectos** y **Notas**. Finanzas, GitHub y Noticias se pueden activar, pero
+todavía enseñan una pantalla de «Próximamente»; **Concentración** aún no se puede activar. Los asistentes de IA conectados
+por MCP siguen viendo todos tus datos aunque los oculte la app.
 
 ## Buscar o ir a cualquier sitio
 

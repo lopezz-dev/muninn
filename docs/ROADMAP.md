@@ -20,7 +20,8 @@
 - [x] Correos de acceso con SMTP propio (Resend) y plantillas con la marca de Muninn
   ([gotchas/db](gotchas/db.md))
 - [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs)
-- [ ] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos)
+- [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, el dock y el buscador solo enseñan lo activo
+  ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md))
 - [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
   personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
