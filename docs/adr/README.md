@@ -86,6 +86,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0027](0027-documentacion-en-la-app-desde-docs-user.md) — La sección Documentación se genera con `docs/user/*.md` importados al compilar
 - [ADR-0028](0028-modulos-activables-solo-en-la-interfaz.md) — Los módulos activables ocultan la interfaz; los datos y el MCP no cambian
 - [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) — Tiempo real por invalidación de caché y caché de solo lectura sin conexión
+- [ADR-0034](0034-escribir-sin-conexion.md) — Escribir sin conexión con una cola de intenciones persistente e ids generados en el cliente *(propuesto)*
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
