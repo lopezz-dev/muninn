@@ -22,7 +22,8 @@ RLS ([ADR-0004](0004-multiusuario-con-rls.md)) hace falta saber quién es el usu
 - **Supabase Auth** con dos métodos, sin contraseñas:
   - **Código de un solo uso por correo** (`signInWithOtp` + `verifyOtp({ type: 'email' })`). Funciona igual
     en la PWA y en Tauri porque no hay redirección: el usuario teclea el código en la app. La plantilla de
-    correo (`supabase/templates/codigo.html`) envía **solo el código**, sin enlace mágico.
+    correo (`supabase/templates/`: `acceso.html` y `registro.html`, con la marca y los colores de la app) envía
+    **solo el código**, sin enlace mágico.
   - **GitHub OAuth** (PKCE). Vuelve a `/login?redirect=…&code=…` y supabase-js canjea el código al crear el
     cliente. **Oculto en Tauri** hasta que haya deep links. El botón solo aparece si el proveedor está
     activado en el proyecto (`GET /auth/v1/settings`), para no ofrecer algo que falla.

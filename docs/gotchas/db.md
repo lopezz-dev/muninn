@@ -70,8 +70,9 @@
   Safari en lugar de la PWA.
 - **Causa:** las plantillas por defecto de Supabase (*Magic link* y *Confirm sign up*) solo traen
   `{{ .ConfirmationURL }}`. El primer acceso de un correo nuevo usa *Confirm sign up*; los siguientes, *Magic link*.
-- **Solución:** en **Authentication › Emails › Templates**, pega `supabase/templates/codigo.html` en las **dos**
-  plantillas (asunto `Tu código de Muninn: {{ .Token }}`).
+- **Solución:** en **Authentication › Emails › Templates**, pega `supabase/templates/acceso.html` en *Magic link*
+  y `registro.html` en *Confirm sign up*, con los asuntos de `supabase/templates/README.md`. Al cambiarlas, pruébalas
+  sirviéndolas con Vite (`http://localhost:5173/@fs/<ruta del repo>/supabase/templates/acceso.html`).
 - **Ref:** [ADR-0022](../adr/0022-auth-y-sesion.md)
 
 ### SMTP de serie: solo envía al equipo y con límite
