@@ -4,7 +4,7 @@ Sistema operativo personal (proyectos/Kanban, notas, finanzas, GitHub, asistente
 diseñado para venderse. Índice de documentación: `docs/README.md`.
 
 ## Antes de empezar una tarea
-1. Identifica el **área** que vas a tocar: `core` · `db` · `mcp` · `web` · `desktop` · `ci` · `tooling` · `docs`.
+1. Identifica el **área** que vas a tocar: `core` · `db` · `mcp` · `ui` · `web` · `desktop` · `ci` · `tooling` · `docs`.
 2. Lee `docs/gotchas/<área>.md` y los ADRs de esa área (índice en `docs/adr/README.md`).
 3. Si tu cambio contradice un ADR aceptado, **para y pregunta**: no lo cambies en silencio.
 
@@ -26,7 +26,9 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - Validación con zod en `schemas.ts`; el MCP reutiliza esos enums y formas.
 - El MCP no expone borrados definitivos. Tras cambiar el core, recompila el MCP.
 - Comentarios en español, concisos, al estilo de alrededor. Biome formatea (`pnpm format`).
-- UI: radios pequeños (4–6 px), estilo Claude Desktop / Shopify; nada de tarjetas muy redondeadas.
+- UI: solo tokens de `@muninn/ui` (clases `bg-surface`, `text-fg-muted`, `rounded-lg`…; la paleta de Tailwind
+  está desactivada). Iconos siempre vía `icons` / `<Icon name>` de `@muninn/ui`. Superficies con `glass*`
+  para respetar el modo cristal. Diseño de referencia: lienzo «Muninn — Pantallas» (enlace en docs/ROADMAP.md).
 
 ## Git
 - `main` producción (por defecto), `develop` integración. Ramas `feat/*`, `fix/*`, `docs/*` → PR a `develop`.

@@ -8,6 +8,7 @@ Si te encuentras con una nueva, apúntala en el mismo PR.
 | `core` | [core.md](core.md) |
 | `db` | [db.md](db.md) |
 | `mcp` | [mcp.md](mcp.md) |
+| `ui` | [ui.md](ui.md) |
 | `web` | [web.md](web.md) |
 | `desktop` | [desktop.md](desktop.md) |
 | `ci` | [ci.md](ci.md) |

@@ -17,6 +17,9 @@
    webhooks GitHub   agentes (F4)     cron noticias (F4)
 
   packages/mcp ── createMuninn(store, { actor: 'mcp' }) ──► Claude Desktop / Claude Code / Codex / Jarvis local
+
+  packages/ui ── tokens.ts → tokens.css (--mn-*) → theme.css (Tailwind v4) ──► apps/web (y por tanto desktop)
+                 icons (Phosphor) · fonts (Geist) · applyAppearance (cristal, acento)
 ```
 
 ## Principios
