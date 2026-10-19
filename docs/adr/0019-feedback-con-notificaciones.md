@@ -18,6 +18,10 @@ en la parte superior, en línea con la «isla» del diseño.
 - **Componente:** `notify.success | error | info | loading | promise | dismiss` y `<Toaster />` de `@muninn/ui`.
   Por debajo usa **Sonner** (pila, deslizar para descartar, región `aria-live`, pausa al pasar el ratón), y el
   aspecto es nuestro: `NotificationPill`, una píldora de cristal de 40 px arriba en el centro, con icono por tono.
+- **Icono animado que resalta la acción:** con `icon`, el icono de la acción (enlace, mover, archivar…) hace su
+  gesto y se transforma en un check que se dibuja, rematado por un anillo que se expande una vez. Cada tramo dura
+  menos de 300 ms, con curvas `ease-strong`, en CSS (fuera del hilo principal). El error niega con un temblor
+  lateral, y al terminar una carga solo se dibuja el check, sin repetir la entrada.
 - **Duraciones:** 4 s, 6 s con acción o en error, y la de carga dura hasta resolverse (`notify.promise`).
 - **Portapapeles:** `copyText()`, con alternativa para contextos sin la API asíncrona, que devuelve si funcionó
   para mostrar éxito o error.

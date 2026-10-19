@@ -126,3 +126,23 @@
 
 - Necesita `matchMedia` y `setPointerCapture`, que ya están como stubs en `test/setup-dom.ts`. Envuelve `notify.*` en
   `act()` y busca con `findByText`, porque el render es asíncrono.
+
+### Animaciones con retardo: `forwards`, no `both`
+
+- **Síntoma:** un elemento que debía aparecer al final de una coreografía (el anillo del check) se ve quieto desde el principio.
+- **Causa:** `animation-fill-mode: both` aplica el primer fotograma **durante el retardo**. Si ese fotograma es
+  visible (`opacity: 0.45`), se ve antes de tiempo.
+- **Solución:** con retardo y primer fotograma visible, usa `forwards`; o empieza el keyframe en el estado invisible.
+
+### Gestos de icono: `translate`/`rotate`/`scale` sueltos, no `transform`
+
+- La insignia encadena dos animaciones sobre el mismo icono (gesto + salida). Si ambas tocaran `transform`, la
+  segunda pisaría la primera. Por eso los gestos usan `translate`/`rotate` y la salida, `scale`/`opacity`/`filter`.
+- Para revisar una coreografía fotograma a fotograma: `document.getAnimations()` filtrando por el elemento,
+  `a.pause(); a.currentTime = t`, y leer los `getComputedStyle` (también los de `::after`).
+
+### Notificaciones: pasa el icono de la acción
+
+- `notify.success('Enlace copiado', { icon: 'link' })`: el icono hace su gesto (se eleva, avanza, cae, tiembla, gira)
+  y se transforma en el check. Sin `icon` solo se dibuja el check. El gesto de cada icono está en `MOTION`
+  (`notify.tsx`); los iconos sin gesto propio laten.
