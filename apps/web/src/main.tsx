@@ -1,6 +1,6 @@
 import '@muninn/ui/fonts.css'
 import './index.css'
-import { applyAppearance, DEFAULT_APPEARANCE, IconDefaults } from '@muninn/ui'
+import { applyAppearance, DEFAULT_APPEARANCE, IconDefaults, TooltipProvider } from '@muninn/ui'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -18,7 +18,9 @@ createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <IconDefaults>
-        <App />
+        <TooltipProvider>
+          <App />
+        </TooltipProvider>
       </IconDefaults>
     </QueryClientProvider>
   </StrictMode>,

@@ -2,14 +2,39 @@ import {
   ACCENTS,
   type AccentName,
   type Appearance,
+  Avatar,
   applyAppearance,
+  Button,
+  Card,
+  CardHeader,
+  Checkbox,
+  Chip,
+  ColorDot,
   colors,
   columnKinds,
   DEFAULT_APPEARANCE,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTrigger,
   Icon,
+  IconButton,
   type IconName,
   icons,
-  palette,
+  Kbd,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuLabel,
+  MenuSeparator,
+  MenuTrigger,
+  ProgressBar,
+  SegmentedControl,
+  SheetContent,
+  Switch,
+  TextArea,
+  TextField,
+  Tooltip,
 } from '@muninn/ui'
 import { useEffect, useState } from 'react'
 import { backendLabel } from '../lib/muninn'
@@ -32,9 +57,15 @@ const KIND_LABEL: Record<keyof typeof columnKinds, string> = {
   done: 'Hecho',
 }
 
-/** Página de desarrollo: los tokens de Fundamentos renderizados con el tema real. */
+const sectionTitle = 'mb-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle'
+
+/** Página de desarrollo: tokens y componentes de @muninn/ui con el tema real. */
 export function Fundamentos() {
   const [appearance, setAppearance] = useState<Appearance>(DEFAULT_APPEARANCE)
+  const [view, setView] = useState<'board' | 'list' | 'calendar'>('board')
+  const [kind, setKind] = useState<'expense' | 'income' | 'saving' | 'investment'>('expense')
+  const [done, setDone] = useState(false)
+  const [notify, setNotify] = useState(true)
   useEffect(() => applyAppearance(appearance), [appearance])
 
   return (
@@ -53,6 +84,7 @@ export function Fundamentos() {
             <a
               key={item.icon}
               href="#fundamentos"
+              aria-current={i === 0 ? 'page' : undefined}
               className={`flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] font-medium ${
                 i === 0
                   ? 'bg-surface-raised text-fg'
@@ -64,30 +96,30 @@ export function Fundamentos() {
             </a>
           ))}
         </nav>
-        <p className="mt-auto px-2.5 text-xs text-fg-faint">Datos: {backendLabel}</p>
+        <div className="mt-auto flex items-center gap-2.5 border-t border-border-subtle px-2 pt-3">
+          <Avatar name="Alex López" />
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-medium">Alex López</span>
+            <span className="text-xs text-fg-faint">Datos: {backendLabel}</span>
+          </div>
+        </div>
       </aside>
 
       <main id="fundamentos" className="flex min-w-0 flex-[999_1_560px] flex-col gap-6 px-8 py-7">
         <header className="flex flex-wrap items-end gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Fundamentos</h1>
-            <p className="text-fg-muted">Tokens de @muninn/ui renderizados con el tema real.</p>
+            <p className="text-fg-muted">Tokens y componentes de @muninn/ui con el tema real.</p>
           </div>
           <div className="ml-auto flex items-center gap-5">
-            <label className="flex items-center gap-2.5 text-sm font-medium">
+            <label htmlFor="glass" className="flex items-center gap-2.5 text-sm font-medium">
               <Icon name="glass" className="text-fg-subtle" />
               Cristal
-              <button
-                type="button"
-                role="switch"
-                aria-checked={appearance.glass}
-                onClick={() => setAppearance((a) => ({ ...a, glass: !a.glass }))}
-                className={`flex h-5 w-[34px] rounded-full p-0.5 transition-colors ${
-                  appearance.glass ? 'justify-end bg-accent' : 'bg-border-strong'
-                }`}
-              >
-                <span className="size-4 rounded-full bg-fg" />
-              </button>
+              <Switch
+                id="glass"
+                checked={appearance.glass}
+                onCheckedChange={(glass) => setAppearance((a) => ({ ...a, glass }))}
+              />
             </label>
             <fieldset className="flex items-center gap-2">
               <legend className="sr-only">Color de acento</legend>
@@ -98,7 +130,7 @@ export function Fundamentos() {
                   aria-label={`Acento ${name}`}
                   aria-pressed={appearance.accent === name}
                   onClick={() => setAppearance((a) => ({ ...a, accent: name }))}
-                  className="size-[22px] rounded-md aria-pressed:ring-2 aria-pressed:ring-fg aria-pressed:ring-offset-2 aria-pressed:ring-offset-bg"
+                  className="size-[22px] cursor-pointer rounded-md aria-pressed:ring-2 aria-pressed:ring-fg aria-pressed:ring-offset-2 aria-pressed:ring-offset-bg"
                   style={{ background: ACCENTS[name] }}
                 />
               ))}
@@ -106,13 +138,273 @@ export function Fundamentos() {
           </div>
         </header>
 
-        <section aria-labelledby="t-color" className="glass rounded-lg border border-border p-5">
-          <h2
-            id="t-color"
-            className="mb-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle"
-          >
-            Color
-          </h2>
+        <div className="grid gap-3 xl:grid-cols-2">
+          <Card className="p-5">
+            <h2 className={sectionTitle}>Botones</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Button variant="primary">
+                  <Icon name="plus" />
+                  Nueva tarea
+                  <Kbd className="border-accent-fg/25 text-accent-fg">N</Kbd>
+                </Button>
+                <Button>
+                  <Icon name="assistant" className="text-accent" />
+                  Preguntar a Muninn
+                </Button>
+                <Button variant="ghost">Cancelar</Button>
+                <Button variant="danger">
+                  <Icon name="archive" />
+                  Archivar
+                </Button>
+                <Button disabled>Deshabilitado</Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Button size="sm">Pequeño</Button>
+                <Button size="md">Mediano</Button>
+                <Button size="lg" variant="primary">
+                  Táctil 44 px
+                </Button>
+                <Tooltip content="Buscar (⌘K)">
+                  <IconButton aria-label="Buscar" icon={<Icon name="search" />} />
+                </Tooltip>
+                <Tooltip content="Filtrar">
+                  <IconButton
+                    aria-label="Filtrar"
+                    variant="secondary"
+                    icon={<Icon name="filter" />}
+                  />
+                </Tooltip>
+                <IconButton
+                  aria-label="Nueva nota"
+                  variant="primary"
+                  size="lg"
+                  icon={<Icon name="plus" size={18} />}
+                />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className={sectionTitle}>Etiquetas y estado</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-2">
+                <Chip dot="blue">Muninn</Chip>
+                <Chip dot="violet">HuginnDB</Chip>
+                <Chip variant="accent" icon={<Icon name="flag" size={12} />}>
+                  Alta
+                </Chip>
+                <Chip variant="danger">Vencida · 17 oct</Chip>
+                <Chip variant="success">CI ✓</Chip>
+                <Chip variant="outline">Media</Chip>
+                <Chip icon={<Icon name="github" size={12} />}>GitHub</Chip>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                {(Object.keys(columnKinds) as (keyof typeof columnKinds)[]).map((k) => (
+                  <span key={k} className="flex items-center gap-1.5 text-xs text-fg-subtle">
+                    <ColorDot color={columnKinds[k]} />
+                    {KIND_LABEL[k]}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <ColorDot color="blue" />
+                  Muninn
+                  <span className="ml-auto text-xs text-fg-subtle">9 de 23</span>
+                </div>
+                <ProgressBar label="Progreso de Muninn" value={9 / 23} color="blue" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className={sectionTitle}>Formularios</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-3">
+                <SegmentedControl
+                  aria-label="Vista"
+                  value={view}
+                  onValueChange={setView}
+                  options={[
+                    { value: 'board', label: 'Tablero', icon: <Icon name="projects" size={14} /> },
+                    { value: 'list', label: 'Lista' },
+                    {
+                      value: 'calendar',
+                      label: 'Calendario',
+                      icon: <Icon name="calendar" size={14} />,
+                    },
+                  ]}
+                />
+              </div>
+              <SegmentedControl
+                aria-label="Tipo de movimiento"
+                fill
+                size="lg"
+                value={kind}
+                onValueChange={setKind}
+                options={[
+                  { value: 'expense', label: 'Gasto' },
+                  { value: 'income', label: 'Ingreso' },
+                  { value: 'saving', label: 'Ahorro' },
+                  { value: 'investment', label: 'Inversión' },
+                ]}
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <TextField
+                  label="Concepto"
+                  placeholder="Cine + palomitas"
+                  hint="Lo verás en la lista"
+                />
+                <TextField label="Importe" defaultValue="24,90" trailing="€" className="tabular" />
+                <TextField
+                  label="Buscar"
+                  hideLabel
+                  placeholder="Filtrar tareas…"
+                  leading={<Icon name="search" size={14} />}
+                />
+                <TextField
+                  label="Repositorio"
+                  defaultValue="huginndb"
+                  error="Formato esperado: owner/repo"
+                />
+              </div>
+              <TextArea label="Descripción" placeholder="Markdown…" rows={3} />
+              <div className="flex flex-wrap items-center gap-6 text-sm">
+                <label htmlFor="cb-done" className="flex items-center gap-2.5">
+                  <Checkbox id="cb-done" checked={done} onCheckedChange={setDone} />
+                  Tarea completada
+                </label>
+                <label htmlFor="cb-lg" className="flex items-center gap-2.5">
+                  <Checkbox
+                    id="cb-lg"
+                    size="lg"
+                    touch
+                    checked={!done}
+                    onCheckedChange={(v) => setDone(!v)}
+                  />
+                  Grande (móvil)
+                </label>
+                <label htmlFor="sw-notify" className="flex items-center gap-2.5">
+                  <Switch id="sw-notify" checked={notify} onCheckedChange={setNotify} />
+                  Notificaciones
+                </label>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="flex flex-col">
+            <CardHeader
+              title="Superposiciones"
+              description="Diálogo, panel lateral, hoja inferior y menú"
+              action={
+                <Menu>
+                  <MenuTrigger asChild>
+                    <IconButton aria-label="Más acciones" icon={<Icon name="dots" />} />
+                  </MenuTrigger>
+                  <MenuContent>
+                    <MenuLabel>Tarea</MenuLabel>
+                    <MenuItem icon={<Icon name="link" />} shortcut="L">
+                      Copiar enlace
+                    </MenuItem>
+                    <MenuItem icon={<Icon name="pin" />}>Fijar</MenuItem>
+                    <MenuItem icon={<Icon name="assistant" />}>Preguntar a Muninn</MenuItem>
+                    <MenuSeparator />
+                    <MenuItem icon={<Icon name="archive" />} shortcut="E">
+                      Archivar
+                    </MenuItem>
+                    <MenuItem danger icon={<Icon name="trash" />}>
+                      Borrar
+                    </MenuItem>
+                  </MenuContent>
+                </Menu>
+              }
+            />
+            <div className="flex flex-wrap gap-2.5 px-4 pb-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="primary">Nuevo proyecto</Button>
+                </DialogTrigger>
+                <DialogContent
+                  title="Nuevo proyecto"
+                  description="Se crea con el tablero por defecto: Backlog, Pendiente, En curso, Revisión y Hecho."
+                  footer={
+                    <>
+                      <DialogClose asChild>
+                        <Button variant="ghost">Cancelar</Button>
+                      </DialogClose>
+                      <Button variant="primary">Crear proyecto</Button>
+                    </>
+                  }
+                >
+                  <TextField label="Nombre" placeholder="Muninn" autoFocus />
+                  <TextField
+                    label="Repositorio de GitHub"
+                    placeholder="owner/repo"
+                    hint="Opcional"
+                  />
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>Detalle de tarea</Button>
+                </DialogTrigger>
+                <SheetContent
+                  title="Muninn › En curso"
+                  toolbar={<IconButton aria-label="Copiar enlace" icon={<Icon name="link" />} />}
+                  footer={
+                    <>
+                      <TextField
+                        label="Preguntar"
+                        hideLabel
+                        className="flex-1"
+                        placeholder="Pide algo a Muninn sobre esta tarea…"
+                        leading={<Icon name="assistant" size={14} className="text-accent" />}
+                      />
+                      <Button variant="primary">Completar</Button>
+                    </>
+                  }
+                >
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Definir sistema de diseño
+                  </h2>
+                  <div className="mt-3 flex gap-2">
+                    <Chip dot="amber">En curso</Chip>
+                    <Chip variant="accent">Alta</Chip>
+                    <Chip>Hoy, 19 oct</Chip>
+                  </div>
+                  <p className="mt-4 leading-relaxed text-fg-muted">
+                    Pasar los fundamentos del diseño a código y construir los componentes base.
+                  </p>
+                  <div className="mt-5 flex items-center gap-2.5 text-xs text-fg-subtle">
+                    Subtareas 3 de 5
+                    <ProgressBar label="Subtareas" value={0.6} className="flex-1" />
+                  </div>
+                </SheetContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>Hoja (móvil)</Button>
+                </DialogTrigger>
+                <SheetContent side="bottom" title="Mover a…">
+                  <div className="flex flex-col gap-1">
+                    {(Object.keys(columnKinds) as (keyof typeof columnKinds)[]).map((k) => (
+                      <DialogClose asChild key={k}>
+                        <Button variant="ghost" size="lg" className="justify-start">
+                          <ColorDot color={columnKinds[k]} />
+                          {KIND_LABEL[k]}
+                        </Button>
+                      </DialogClose>
+                    ))}
+                  </div>
+                </SheetContent>
+              </Dialog>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-5">
+          <h2 className={sectionTitle}>Color</h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
             {Object.entries(colors).map(([name, value]) => (
               <div key={name} className="flex flex-col gap-1.5 text-xs">
@@ -125,118 +417,10 @@ export function Fundamentos() {
               </div>
             ))}
           </div>
-          <div className="mt-5 flex flex-wrap gap-4 text-sm text-fg-muted">
-            {Object.entries(palette).map(([name, value]) => (
-              <span key={name} className="flex items-center gap-1.5">
-                <span className="size-2 rounded-xs" style={{ background: value }} />
-                {name}
-              </span>
-            ))}
-          </div>
-        </section>
+        </Card>
 
-        <div className="grid gap-3 lg:grid-cols-2">
-          <section
-            aria-labelledby="t-type"
-            className="glass flex flex-col gap-3 rounded-lg border border-border p-5"
-          >
-            <h2
-              id="t-type"
-              className="text-xs font-semibold uppercase tracking-wider text-fg-subtle"
-            >
-              Tipografía
-            </h2>
-            <p className="text-2xl font-semibold tracking-tight">Buenos días, Alex</p>
-            <p className="text-md font-semibold">Título de tarjeta</p>
-            <p className="text-base text-fg-muted">
-              Texto de lectura para notas y respuestas del asistente.
-            </p>
-            <p className="text-xs font-medium text-fg-subtle">Etiqueta · metadato</p>
-            <p className="tabular font-mono text-xl font-medium">1.284,30 €</p>
-          </section>
-
-          <section
-            aria-labelledby="t-comp"
-            className="glass flex flex-col gap-4 rounded-lg border border-border p-5"
-          >
-            <h2
-              id="t-comp"
-              className="text-xs font-semibold uppercase tracking-wider text-fg-subtle"
-            >
-              Componentes
-            </h2>
-            <div className="flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-medium text-accent-fg hover:bg-accent-hover"
-              >
-                <Icon name="plus" />
-                Nueva tarea
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border-strong bg-surface-raised px-3 text-sm font-medium hover:bg-surface-hover"
-              >
-                <Icon name="assistant" className="text-accent" />
-                Preguntar a Muninn
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-8 items-center rounded-md px-3 text-sm font-medium text-fg-muted hover:bg-surface-hover"
-              >
-                Fantasma
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex h-[22px] items-center gap-1.5 rounded-sm bg-surface-raised px-2 text-xs font-medium text-fg-muted">
-                <span className="size-2 rounded-xs bg-project-blue" />
-                Muninn
-              </span>
-              <span className="inline-flex h-[22px] items-center rounded-sm border border-accent/35 px-2 text-xs font-medium text-accent">
-                Alta
-              </span>
-              <span className="inline-flex h-[22px] items-center rounded-sm bg-danger-soft px-2 text-xs font-medium text-danger">
-                Vencida
-              </span>
-              <span className="inline-flex h-[22px] items-center gap-1.5 rounded-sm bg-surface-raised px-2 text-xs font-medium text-fg-muted">
-                <Icon name="github" size={12} />
-                GitHub
-              </span>
-            </div>
-            <div className="flex gap-3">
-              {(Object.keys(columnKinds) as (keyof typeof columnKinds)[]).map((k) => (
-                <span key={k} className="flex items-center gap-1.5 text-xs text-fg-subtle">
-                  <span className="size-2 rounded-xs" style={{ background: columnKinds[k] }} />
-                  {KIND_LABEL[k]}
-                </span>
-              ))}
-            </div>
-            <article className="glass-raised flex w-72 flex-col gap-2 rounded-md border border-border-strong p-3 text-[13.5px] shadow-drag">
-              <span className="w-fit rounded-sm bg-surface-sunken px-1.5 text-2xs text-fg-muted">
-                diseño
-              </span>
-              Definir sistema de diseño
-              <span className="h-[3px] rounded-full bg-border">
-                <span className="block h-[3px] w-3/5 rounded-full bg-accent" />
-              </span>
-              <span className="flex gap-2.5 text-xs text-fg-subtle">
-                <span className="text-accent">Hoy</span>3/5
-                <span className="ml-auto flex items-center gap-1 text-accent">
-                  <Icon name="flag" size={13} />
-                  Alta
-                </span>
-              </span>
-            </article>
-          </section>
-        </div>
-
-        <section aria-labelledby="t-icons" className="glass rounded-lg border border-border p-5">
-          <h2
-            id="t-icons"
-            className="mb-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle"
-          >
-            Iconos · Phosphor ({Object.keys(icons).length})
-          </h2>
+        <Card className="p-5">
+          <h2 className={sectionTitle}>Iconos · Phosphor ({Object.keys(icons).length})</h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2">
             {(Object.keys(icons) as IconName[]).map((name) => (
               <div
@@ -248,7 +432,7 @@ export function Fundamentos() {
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       </main>
     </div>
   )
