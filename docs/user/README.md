@@ -14,6 +14,7 @@ se renderizan tal cual, así que se escriben pensando en la persona usuaria, no 
 | 5 | [Notas](05-notas.md) | parcial |
 | 6 | [Asistentes de IA (Claude, Codex…)](06-asistentes-ia.md) | disponible |
 | 7 | [Tus datos y privacidad](07-datos-y-privacidad.md) | disponible |
+| 8 | [Moverte por Muninn](08-moverte-por-muninn.md) | parcial |
 
 ## Cómo se escribe una página
 

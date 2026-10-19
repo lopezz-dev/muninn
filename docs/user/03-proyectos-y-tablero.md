@@ -8,7 +8,9 @@ status: parcial
 # Proyectos y tablero
 
 > **Estado:** todo lo descrito aquí ya funciona a través de los [asistentes de IA](06-asistentes-ia.md).
-> La interfaz visual del tablero llegará próximamente.
+> En la app ya puedes crear y archivar proyectos y ver las columnas de su tablero (en modo demo, sin
+> guardar: ver [Moverte por Muninn](08-moverte-por-muninn.md)). Crear, mover y personalizar tareas y
+> columnas desde la app llegará próximamente.
 
 ## Proyectos
 

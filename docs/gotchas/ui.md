@@ -146,3 +146,31 @@
 - `notify.success('Enlace copiado', { icon: 'link' })`: el icono hace su gesto (se eleva, avanza, cae, tiembla, gira)
   y se transforma en el check. Sin `icon` solo se dibuja el check. El gesto de cada icono está en `MOTION`
   (`notify.tsx`); los iconos sin gesto propio laten.
+
+### Un componente con primitiva de Radix por módulo
+
+- **Síntoma:** el JS inicial de la app incluye `DropdownMenu`, `Checkbox` o `ToggleGroup` aunque solo los use
+  una pantalla diferida.
+- **Causa:** el bundler no parte un módulo entre chunks. Si `TextField` y `Switch` viven en el mismo fichero y
+  el shell usa `TextField`, `Switch` y su primitiva viajan con él.
+- **Solución:** cada componente que importa una primitiva pesada va en su propio fichero (`menu.tsx`,
+  `tooltip.tsx`, `toggles.tsx`, `segmented-control.tsx`). `package.json` declara `"sideEffects": ["*.css"]`
+  para que lo no usado se pueda descartar.
+
+### Selección sobre cristal: `bg-fg/[0.07]`, no `bg-surface-raised`
+
+- **Síntoma:** con el cristal activado, la opción seleccionada de una lista dentro de un panel `glass-raised`
+  no se distingue.
+- **Causa:** `surface-raised` en cristal es translúcido y casi igual que el propio panel.
+- **Solución:** para resaltar dentro de un panel elevado, un velo del color de texto (`bg-fg/[0.07]`), que se
+  ve en sólido y en cristal.
+
+### `DialogContent` con `bare` y `size`
+
+- `bare` quita cabecera, relleno y botón de cerrar (el título queda solo para lectores de pantalla); Escape
+  sigue cerrando. En móvil, pon tú un botón de cerrar visible. `size="lg"` son 660 px (buscador ⌘K).
+
+### `transition-colors` también anima el anillo de foco
+
+- En Tailwind v4 incluye `outline-color`: el anillo de foco entra con un fundido de 150 ms. Si un test lee
+  `outlineColor` justo después de enfocar, verá el color anterior; espera o desactiva la transición.
