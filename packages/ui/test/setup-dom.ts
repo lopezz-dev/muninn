@@ -12,5 +12,17 @@ globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObse
 Element.prototype.scrollIntoView ??= () => {}
 Element.prototype.hasPointerCapture ??= () => false
 Element.prototype.releasePointerCapture ??= () => {}
+Element.prototype.setPointerCapture ??= () => {}
+// Sonner consulta matchMedia (tema, reduce motion).
+window.matchMedia ??= ((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener() {},
+  removeListener() {},
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent: () => false,
+})) as unknown as typeof window.matchMedia
 
 afterEach(() => cleanup())
