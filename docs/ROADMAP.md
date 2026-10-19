@@ -1,6 +1,8 @@
 # Roadmap
 
 ## F1 · Base + tareas y notas
+> **Estado:** el código de la F1 está completo (ver las casillas). Quedan **dos pasos manuales** antes de darla por cerrada:
+> activar GitHub OAuth en el panel de Supabase y pasar la [lista de pruebas del iPhone](pruebas-iphone.md).
 - [x] Monorepo (pnpm + Turborepo), Biome, TypeScript estricto
 - [x] Esquema Supabase con RLS y Realtime
 - [x] `@muninn/core`: proyectos, columnas personalizables, tareas, checklist, notas, actividad, informes
@@ -19,7 +21,9 @@
 - [x] Apariencia en `user_settings.preferences` (localStorage como caché del primer render)
 - [x] Correos de acceso con SMTP propio (Resend) y plantillas con la marca de Muninn
   ([gotchas/db](gotchas/db.md))
-- [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs)
+- [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs): pasos en
+  [gotchas/db](gotchas/db.md#activar-github-oauth-paso-manual)
+- [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) (gestos, teclado de iOS, sin conexión) y corregir lo que falle
 - [ ] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos)
 - [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
@@ -76,7 +80,7 @@ más o menos en este orden:
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras
 - Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
-- Buscador ⌘K sobre tareas, notas y noticias (hoy: secciones, proyectos y acciones)
+- Buscador ⌘K sobre tareas, notas y noticias, y acción «Nueva nota» (hoy: secciones, proyectos y acciones)
 - Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional)
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS

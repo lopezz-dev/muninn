@@ -70,6 +70,15 @@
   en Vercel, un `rewrites` a `/`). `vite dev` y `vite preview` ya lo hacen. En Tauri, comprueba al recargar una ruta
   profunda con `pnpm dev:desktop` cuando toques la configuración de ventanas.
 
+### iPhone: en pantallas táctiles todos los campos de texto miden 16 px
+
+- **Síntoma:** al tocar un campo en el iPhone, Safari amplía la página y no vuelve.
+- **Causa:** iOS hace zoom en cualquier `input`, `textarea` o `select` con `font-size` < 16 px (y el viewport no desactiva el zoom, a
+  propósito: sería un problema de accesibilidad).
+- **Solución:** una regla global en `apps/web/src/index.css`, bajo `@media (pointer: coarse)` y **fuera de `@layer`** (así gana a las clases
+  de Tailwind, que están en capa). Un campo con `text-xs` pasa a 16 px en el móvil: si en un campo muy pequeño (la etiqueta de la tarea)
+  se ve apretado, ajusta el alto, no la letra. Sin probar aún en un iPhone real: va en [pruebas-iphone](../pruebas-iphone.md).
+
 ### Animaciones con `requestAnimationFrame` y ventanas sin pintar
 
 - **Síntoma:** el dock se queda a medio camino, o en el navegador integrado de las herramientas de desarrollo

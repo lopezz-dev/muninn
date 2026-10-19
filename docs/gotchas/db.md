@@ -75,6 +75,24 @@
   sirviéndolas con Vite (`http://localhost:5173/@fs/<ruta del repo>/supabase/templates/acceso.html`).
 - **Ref:** [ADR-0022](../adr/0022-auth-y-sesion.md)
 
+### Activar GitHub OAuth (paso manual)
+
+- **Síntoma:** en la pantalla de entrada no sale «Continuar con GitHub».
+- **Causa:** el botón solo aparece si `GET /auth/v1/settings` dice que GitHub está activado, y eso se configura en el panel de
+  Supabase y en GitHub; no se puede hacer desde el código.
+- **Solución:**
+  1. En GitHub: **Settings › Developer settings › OAuth Apps › New OAuth App**. Nombre «Muninn»; *Homepage URL* = la de la PWA (de
+     momento, `http://localhost:5173`); *Authorization callback URL* = `https://yjzzubpxikpvukymgfkt.supabase.co/auth/v1/callback`
+     (la misma que enseña Supabase en el paso 2). Registra la app y pulsa **Generate a new client secret**: copia el *Client ID* y el secreto.
+  2. En Supabase (proyecto `muninn`): **Authentication › Sign In / Providers › GitHub**: actívalo, pega el *Client ID* y el *Client Secret*
+     y guarda.
+  3. En **Authentication › URL Configuration**, comprueba que *Redirect URLs* tiene `http://localhost:5173/**`, `http://localhost:5174/**` y la
+     dirección de la PWA publicada (ver «Site URL y Redirect URLs»).
+  4. Prueba: en la web (no en Tauri) sale «Continuar con GitHub»; al volver, Ajustes › Cuenta dice «GitHub».
+- **Ojo:** si el correo de tu cuenta de GitHub es el mismo con el que entras con código, comprueba que ves tus mismos datos; si ves una
+  cuenta vacía, Supabase creó un usuario distinto (vincula las identidades en **Authentication › Users**).
+- **Ref:** [ADR-0022](../adr/0022-auth-y-sesion.md)
+
 ### SMTP de serie: solo envía al equipo y con límite
 
 - **Síntoma:** `Email address not authorized` al pedir el código con un correo cualquiera, o
