@@ -22,11 +22,24 @@ export interface DialogContentProps extends Omit<ComponentProps<typeof RDialog.C
   footer?: ReactNode
 }
 
+/**
+ * Posición del diálogo SIEMPRE en píxeles enteros: centrar con translate(-50%) o margin:auto deja
+ * medios píxeles y, al repintar (hover), el texto «salta» al encajar en la rejilla. Se ancla arriba
+ * (12vh) para que no se mueva si el contenido crece.
+ */
+const dialogPosition = {
+  width: 'min(480px, calc(100vw - 32px))',
+  left: 'round(down, max(16px, calc((100vw - 480px) / 2)), 1px)',
+  top: 'round(down, max(16px, 12vh), 1px)',
+  maxHeight: 'calc(100vh - max(16px, 12vh) - 16px)',
+} as const
+
 export function DialogContent({
   title,
   description,
   footer,
   className,
+  style,
   children,
   ...props
 }: DialogContentProps) {
@@ -38,9 +51,10 @@ export function DialogContent({
         // Sin descripción, Radix exige `aria-describedby={undefined}` explícito para no avisar.
         {...(description ? {} : { 'aria-describedby': undefined })}
         className={cn(
-          'glass-raised fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] w-[min(480px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-xl border border-border-strong p-5 shadow-popover outline-none data-[state=open]:animate-pop-in',
+          'glass-raised fixed z-50 flex flex-col gap-4 overflow-y-auto rounded-xl border border-border-strong p-5 shadow-popover outline-none data-[state=open]:animate-pop-in',
           className,
         )}
+        style={{ ...dialogPosition, ...style }}
         {...props}
       >
         <div className="flex items-start gap-3">

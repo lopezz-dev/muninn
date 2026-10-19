@@ -146,10 +146,14 @@
     background-attachment: fixed;
     color: var(--mn-color-fg);
     font-family: var(--mn-font-sans);
-    font-size: var(--mn-text-base);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* El tamaño base va en body, NO en html: en html cambiaría el rem y encogería todo el espaciado de Tailwind. */
+  body {
+    font-size: var(--mn-text-base);
   }
 
   ::selection {

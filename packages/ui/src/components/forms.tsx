@@ -158,7 +158,7 @@ export function Switch({ className, ...props }: SwitchProps) {
       )}
       {...props}
     >
-      <RSwitch.Thumb className="block size-4 rounded-full bg-fg shadow-sm transition-transform duration-200 ease-out data-[state=checked]:translate-x-[14px]" />
+      <RSwitch.Thumb className="block size-4 rounded-full bg-fg shadow-sm transition-transform duration-200 ease-out data-[state=checked]:translate-x-3.5" />
     </RSwitch.Root>
   )
 }
