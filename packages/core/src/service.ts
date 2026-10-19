@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { DEFAULT_SETTINGS } from './memory-store'
 import { positionAt, positionsFor } from './ordering'
 import {
   type Activity,
@@ -27,10 +28,13 @@ import {
   type UpdateColumnInput,
   type UpdateNoteInput,
   type UpdateProjectInput,
+  type UpdateSettingsInput,
   type UpdateTaskInput,
+  type UserSettings,
   updateColumnInput,
   updateNoteInput,
   updateProjectInput,
+  updateSettingsInput,
   updateTaskInput,
 } from './schemas'
 import { NotFoundError, type Store } from './store'
@@ -566,6 +570,26 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return store.activity.list(opts)
   }
 
+  /** Ajustes del usuario; sin fila guardada, los valores por defecto (no escribe nada). */
+  async function getSettings(): Promise<UserSettings> {
+    return (await store.settings.get()) ?? { ...DEFAULT_SETTINGS, updatedAt: nowIso() }
+  }
+
+  /** Las preferencias se fusionan por clave; `null` en una clave la borra. */
+  async function updateSettings(input: UpdateSettingsInput): Promise<UserSettings> {
+    const data = parse(updateSettingsInput, input)
+    let preferences: Record<string, unknown> | undefined
+    if (data.preferences) {
+      const current = await getSettings()
+      preferences = { ...current.preferences }
+      for (const [k, v] of Object.entries(data.preferences)) {
+        if (v === null) delete preferences[k]
+        else preferences[k] = v
+      }
+    }
+    return store.settings.upsert({ enabledModules: data.enabledModules, preferences })
+  }
+
   return {
     today,
     projects: {
@@ -607,6 +631,10 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       create: createNote,
       update: updateNote,
       archive: archiveNote,
+    },
+    settings: {
+      get: getSettings,
+      update: updateSettings,
     },
     overview,
     recentActivity,

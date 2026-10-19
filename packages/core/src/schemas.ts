@@ -7,12 +7,15 @@ export const columnKind = z.enum(['backlog', 'todo', 'in_progress', 'review', 'd
 export const taskPriority = z.enum(['none', 'low', 'medium', 'high', 'urgent'])
 export const taskSource = z.enum(['manual', 'github', 'mcp', 'agent'])
 export const actorKind = z.enum(['user', 'mcp', 'github', 'agent', 'system'])
+/** Módulos activables (`user_settings.enabled_modules`). */
+export const moduleName = z.enum(['tasks', 'notes', 'github', 'finance', 'news', 'focus'])
 
 export type ProjectStatus = z.infer<typeof projectStatus>
 export type ColumnKind = z.infer<typeof columnKind>
 export type TaskPriority = z.infer<typeof taskPriority>
 export type TaskSource = z.infer<typeof taskSource>
 export type ActorKind = z.infer<typeof actorKind>
+export type ModuleName = z.infer<typeof moduleName>
 
 const id = z.uuid()
 const isoDate = z.iso.date()
@@ -97,6 +100,16 @@ export interface Activity {
   actor: ActorKind
   payload: Record<string, unknown>
   createdAt: string
+}
+
+/**
+ * Ajustes del usuario: una fila por usuario. `preferences` es JSON libre por clave
+ * (`appearance`, …): cada cliente valida su parte al leerla.
+ */
+export interface UserSettings {
+  enabledModules: ModuleName[]
+  preferences: Record<string, unknown>
+  updatedAt: string
 }
 
 // ─── Entradas (validadas en el servicio; el MCP reutiliza estas formas) ─────
@@ -199,6 +212,12 @@ export const noteQuery = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 })
 
+export const updateSettingsInput = z.object({
+  enabledModules: z.array(moduleName).max(20).optional(),
+  /** Se fusiona por clave con lo guardado: `{ appearance }` no borra el resto de preferencias. */
+  preferences: z.record(z.string().min(1).max(64), z.json()).optional(),
+})
+
 export type CreateProjectInput = z.input<typeof createProjectInput>
 export type UpdateProjectInput = z.input<typeof updateProjectInput>
 export type CreateColumnInput = z.input<typeof createColumnInput>
@@ -210,3 +229,4 @@ export type TaskQuery = z.infer<typeof taskQuery>
 export type CreateNoteInput = z.input<typeof createNoteInput>
 export type UpdateNoteInput = z.input<typeof updateNoteInput>
 export type NoteQuery = z.infer<typeof noteQuery>
+export type UpdateSettingsInput = z.input<typeof updateSettingsInput>

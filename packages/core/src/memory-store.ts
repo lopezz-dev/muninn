@@ -1,4 +1,12 @@
-import type { Activity, BoardColumn, ChecklistItem, Note, Project, Task } from './schemas'
+import type {
+  Activity,
+  BoardColumn,
+  ChecklistItem,
+  Note,
+  Project,
+  Task,
+  UserSettings,
+} from './schemas'
 import {
   type ActivityLog,
   byPosition,
@@ -18,6 +26,7 @@ export interface MemorySnapshot {
   checklist: ChecklistItem[]
   notes: Note[]
   activity: Activity[]
+  settings: UserSettings | null
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -27,7 +36,14 @@ export const emptySnapshot = (): MemorySnapshot => ({
   checklist: [],
   notes: [],
   activity: [],
+  settings: null,
 })
+
+/** Lo que tiene un usuario sin fila en `user_settings` (los defaults de la tabla). */
+export const DEFAULT_SETTINGS: Omit<UserSettings, 'updatedAt'> = {
+  enabledModules: ['tasks', 'notes'],
+  preferences: {},
+}
 
 const includesText = (haystack: string[], needle: string) => {
   const n = needle.toLowerCase()
@@ -99,6 +115,7 @@ export function createMemoryStore(
   const notes = toMap(initial.notes)
   const activity = [...initial.activity]
   let nextActivityId = activity.reduce((max, a) => Math.max(max, a.id), 0) + 1
+  let settings = initial.settings ?? null
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -108,6 +125,7 @@ export function createMemoryStore(
       checklist: [...checklist.values()],
       notes: [...notes.values()],
       activity,
+      settings,
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -132,6 +150,16 @@ export function createMemoryStore(
   return {
     snapshot,
     activity: activityLog,
+    settings: {
+      async get() {
+        return settings ? structuredClone(settings) : null
+      },
+      async upsert(patch) {
+        settings = { ...DEFAULT_SETTINGS, ...settings, ...stripUndefined(patch), updatedAt: now() }
+        changed()
+        return structuredClone(settings)
+      },
+    },
     projects: new MemoryCollection<Project, ProjectStoreQuery>(
       'Proyecto',
       projects,
