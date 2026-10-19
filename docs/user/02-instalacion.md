@@ -51,14 +51,13 @@ dirección, pulsa **Usar otro correo**.
 
 Usa el mismo correo en el ordenador y en el móvil para ver lo mismo en los dos.
 
-> **Ahora mismo:** Muninn está en pruebas y solo puede enviar códigos a las direcciones autorizadas.
-
 ### Con GitHub
 
 En el navegador y en el móvil puedes pulsar **Continuar con GitHub**: te lleva a GitHub para dar permiso y
 vuelve a Muninn con la sesión iniciada. Si el botón no aparece, es que aún no está activado.
 
-> **Próximamente:** GitHub en la app de escritorio. Mientras tanto, entra con el código por correo.
+> **Próximamente:** GitHub en la app de escritorio, y entrar con una **clave de acceso** (Face ID, Touch ID o
+> Windows Hello). Mientras tanto, entra con el código por correo.
 
 ### Probar sin cuenta
 

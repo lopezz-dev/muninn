@@ -81,8 +81,12 @@
   `over_email_send_rate_limit` tras unos pocos intentos.
 - **Causa:** sin SMTP propio, Supabase solo envía a los miembros del equipo de la organización y tiene un
   límite bajo de correos por hora.
-- **Solución:** para uso propio, entra con el correo de tu cuenta de Supabase. Para abrirlo a más gente,
-  configura un SMTP propio en **Authentication › Emails › SMTP Settings**.
+- **Solución:** SMTP propio en **Authentication › Emails › SMTP Settings**. Usamos **Resend** (región eu-west-1):
+  host `smtp.resend.com`, puerto `465`, usuario `resend`, contraseña = API key de Resend con *Sending access*
+  solo para el dominio, y remitente `Muninn <no-reply@<dominio verificado>>`. El dominio se verifica en
+  Resend con sus registros DNS (MX y SPF en `send.<dominio>`, DKIM en `resend._domainkey`, y un DMARC).
+  Con SMTP propio, el límite sube a 30 correos por hora (ajustable en **Authentication › Rate Limits**).
+- **Ojo:** sin SMTP propio, el panel tampoco deja guardar las plantillas de correo.
 
 ### Site URL y Redirect URLs
 

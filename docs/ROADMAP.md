@@ -17,8 +17,9 @@
 - [x] Login con Supabase Auth: código por correo y GitHub (solo web), sesión persistente, rutas protegidas,
   cerrar sesión y modo demo sin cuenta ([ADR-0022](adr/0022-auth-y-sesion.md))
 - [x] Apariencia en `user_settings.preferences` (localStorage como caché del primer render)
-- [ ] Configurar en el panel de Supabase: plantillas de correo con el código, URLs de redirección y GitHub OAuth
+- [x] Correos de acceso con SMTP propio (Resend) y plantillas con la marca de Muninn
   ([gotchas/db](gotchas/db.md))
+- [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs)
 - [ ] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos)
 - [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas ← siguiente paso
 - [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
@@ -43,9 +44,25 @@
 - [ ] Noticias: fuentes RSS elegidas + resumen diario
 - [ ] Agentes programados que informan del estado de las tareas
 
+## Acceso y seguridad
+Hoy se entra con un código por correo o con GitHub ([ADR-0022](adr/0022-auth-y-sesion.md)). Siguientes pasos,
+más o menos en este orden:
+- [ ] Dominio propio de Muninn como remitente (hoy, provisional: `no-reply@shion.es`)
+- [ ] **Claves de acceso (passkeys, WebAuthn):** entrar con Face ID, Touch ID, Windows Hello o una llave
+  física, sin correo ni contraseña. Funciona en la PWA del iPhone y en el navegador; en Tauri, según el
+  soporte de WebAuthn de cada sistema
+- [ ] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional, y obligatorio para conectar integraciones
+  sensibles (finanzas, GitHub con permisos de escritura)
+- [ ] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
+  o en todos (`signOut({ scope: 'global' })`)
+- [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
+  y clave de acceso en el móvil, sin cerrar la sesión
+- [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
+- [ ] Deep links en Tauri para GitHub OAuth en escritorio (hoy el botón se oculta)
+- [ ] Más proveedores: Apple (útil en iPhone) y Google
+- [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
+
 ## Backlog
-- SMTP propio para los correos de acceso (el de Supabase solo envía al equipo y con límite por hora)
-- Deep links en Tauri para GitHub OAuth en escritorio (hoy el botón se oculta)
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice

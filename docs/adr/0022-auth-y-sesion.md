@@ -73,8 +73,11 @@ Medido con `pnpm --filter @muninn/web size`: el JS inicial pasa de 619,0 kB (187
 
 - Hay que configurar el proyecto de Supabase a mano: plantillas de correo con el código, Site URL y
   Redirect URLs, y el proveedor GitHub: ver [gotchas/db](../gotchas/db.md).
-- El SMTP de serie de Supabase solo envía a los miembros del equipo y tiene un límite bajo por hora. Para
-  abrir la app a otras personas hace falta un SMTP propio.
+- El SMTP de serie de Supabase solo envía a los miembros del equipo, tiene un límite bajo por hora y no deja
+  guardar plantillas: los correos salen por un SMTP propio (Resend), con remitente provisional
+  `no-reply@shion.es` hasta tener el dominio de Muninn.
+- Las claves de acceso (passkeys), el segundo factor y la gestión de sesiones quedan en el ROADMAP
+  («Acceso y seguridad»); cuando lleguen, un ADR nuevo actualizará este.
 - `useMuninn()` lee el loader de `/_app` y los `getRouteApi` llevan ese prefijo (`/_app/asistente`): ver
   [gotchas/web](../gotchas/web.md).
 - En escritorio no hay GitHub hasta que existan deep links (backlog).
