@@ -269,6 +269,85 @@ describe('notas', () => {
     await app.notes.create({ title: 'fijada', pinned: true })
     expect((await app.notes.list()).map((n) => n.title)).toEqual(['fijada', 'otra', 'normal'])
   })
+
+  it('archivar y restaurar', async () => {
+    const { app } = setup()
+    const n = await app.notes.create({ title: 'a' })
+    await app.notes.archive(n.id)
+    expect(await app.notes.list()).toHaveLength(0)
+    const back = await app.notes.restore(n.id)
+    expect(back.archivedAt).toBeNull()
+    expect(await app.notes.list()).toHaveLength(1)
+    const actions = (await app.recentActivity({ entityId: n.id })).map((a) => a.action)
+    expect(actions).toEqual(['restored', 'archived', 'created'])
+  })
+
+  it('una nota de tarea es del proyecto de la tarea', async () => {
+    const { app } = setup()
+    const a = await app.projects.create({ name: 'A' })
+    const b = await app.projects.create({ name: 'B' })
+    const t = await app.tasks.create({ projectId: a.id, title: 't' })
+    const n = await app.notes.create({ taskId: t.id })
+    expect(n.projectId).toBe(a.id)
+    await expect(app.notes.create({ taskId: t.id, projectId: b.id })).rejects.toThrow(
+      ValidationError,
+    )
+    await expect(app.notes.update(n.id, { taskId: t.id, projectId: b.id })).rejects.toThrow(
+      ValidationError,
+    )
+    // Cambiar de proyecto suelta la tarea; quitar el proyecto también.
+    const moved = await app.notes.update(n.id, { projectId: b.id })
+    expect(moved).toMatchObject({ projectId: b.id, taskId: null })
+    // Vincular una tarea fija el proyecto sin pedirlo.
+    const linked = await app.notes.update(n.id, { taskId: t.id })
+    expect(linked).toMatchObject({ projectId: a.id, taskId: t.id })
+    const free = await app.notes.update(n.id, { projectId: null })
+    expect(free).toMatchObject({ projectId: null, taskId: null })
+  })
+
+  it('un cambio sin efecto no escribe ni anota', async () => {
+    const { app, store } = setup()
+    const n = await app.notes.create({ title: 'a', content: 'x' })
+    clock = new Date('2026-10-19T10:05:00Z')
+    const same = await app.notes.update(n.id, { title: 'a', content: 'x', pinned: false })
+    expect(same.updatedAt).toBe(n.updatedAt)
+    expect(store.snapshot().activity).toHaveLength(1)
+  })
+
+  it('el autoguardado no llena la actividad: una edición cada 10 minutos', async () => {
+    const { app } = setup()
+    const n = await app.notes.create({ title: 'a' })
+    const edit = async (content: string, minutes: number) => {
+      clock = new Date(clock.getTime() + minutes * 60_000)
+      await app.notes.update(n.id, { content })
+    }
+    await edit('1', 0)
+    await edit('12', 1)
+    await edit('123', 2)
+    expect((await app.recentActivity({ entityId: n.id })).map((a) => a.action)).toEqual([
+      'updated',
+      'created',
+    ])
+    await edit('1234', 11)
+    expect(await app.recentActivity({ entityId: n.id })).toHaveLength(3)
+  })
+
+  it('fijar y desfijar se anotan aparte; vincular siempre se anota', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'A' })
+    const n = await app.notes.create({ title: 'a' })
+    await app.notes.update(n.id, { content: 'x' })
+    await app.notes.update(n.id, { pinned: true })
+    await app.notes.update(n.id, { pinned: false })
+    await app.notes.update(n.id, { projectId: p.id })
+    expect((await app.recentActivity({ entityId: n.id })).map((a) => a.action)).toEqual([
+      'updated',
+      'unpinned',
+      'pinned',
+      'updated',
+      'created',
+    ])
+  })
 })
 
 describe('ajustes', () => {
