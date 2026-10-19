@@ -1,0 +1,48 @@
+# Gotchas · core (`packages/core`)
+
+### Comparar posiciones con `<`, nunca con `localeCompare`
+
+- **Síntoma:** tarjetas que saltan de orden, sobre todo con claves que mezclan mayúsculas y minúsculas (`a0V` vs `a0b`).
+- **Causa:** las claves de fractional-indexing se ordenan por bytes. `localeCompare` usa reglas de idioma.
+- **Solución:** usa `byPosition` (`store.ts`) o los operadores `<` y `>`.
+- **Ref:** [ADR-0006](../adr/0006-orden-con-fractional-indexing.md)
+
+### `positionAt` puede devolver un `rebalance`, y hay que persistirlo
+
+- **Síntoma:** `generateKeyBetween` lanza una excepción, o el orden queda mal tras sincronizar dos dispositivos.
+- **Causa:** dos clientes generaron la misma clave a la vez.
+- **Solución:** en el servicio, usa siempre `place()`, que aplica el rebalanceo antes de devolver la
+  posición. No llames a `generateKeyBetween` directamente.
+
+### No escribir en el store saltándose el servicio
+
+- **Síntoma:** tareas en "Hecho" sin `completedAt`, falta actividad o hay posiciones duplicadas.
+- **Causa:** las reglas viven en `createMuninn`, no en el store.
+- **Solución:** la UI, el MCP y las integraciones usan `createMuninn`. El store es un detalle interno.
+- **Ref:** [ADR-0002](../adr/0002-api-de-dominio-unica.md)
+
+### Zod 4: `z.uuid()` es estricto
+
+- **Síntoma:** un id "válido" se rechaza en la validación.
+- **Causa:** `z.uuid()` valida la variante RFC 4122. Los ids hechos a mano en los tests (`'1'`, `'abc'`) no pasan.
+- **Solución:** en los tests, usa ids reales (`crypto.randomUUID()`) o los que devuelve el propio store.
+
+### `z.input` frente a `z.infer` en los tipos de entrada
+
+- **Síntoma:** TypeScript exige campos opcionales al llamar al servicio.
+- **Causa:** las entradas con `.optional()`, los defaults o los transforms difieren entre la entrada y la salida.
+- **Solución:** los tipos `*Input` se exportan con `z.input<>` y los de consulta con `z.infer<>`. Mantén esa convención.
+
+### "Hoy" depende de la zona horaria
+
+- **Síntoma:** una tarea con fecha de hoy aparece como vencida, o al revés, cerca de medianoche.
+- **Causa:** `dueDate` es una fecha local (`AAAA-MM-DD`) y "hoy" se calcula con `timeZone`.
+- **Solución:** `createMuninn` acepta `timeZone`. En los tests, fíjala (`'UTC'`) junto con `now`.
+  En un servidor (Edge Functions, agentes), pasa la zona del usuario y no la del servidor.
+
+### `file-store` solo funciona en Node
+
+- **Síntoma:** el build de la web falla con `node:fs`.
+- **Causa:** importar `@muninn/core/file-store` desde el frontend.
+- **Solución:** en la web, importa solo `@muninn/core` y `@muninn/core/supabase`.
+- **Ref:** [ADR-0012](../adr/0012-paquetes-internos-como-fuente.md)
