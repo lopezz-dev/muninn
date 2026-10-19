@@ -103,6 +103,10 @@ export const shadow = {
 
 export const motion = {
   'ease-out': 'cubic-bezier(0.3, 0.7, 0.2, 1)',
+  /** Salida enérgica para micro-interacciones (iconos, pulsaciones). */
+  'ease-strong': 'cubic-bezier(0.23, 1, 0.32, 1)',
+  /** Movimiento en pantalla (ida y vuelta). */
+  'ease-in-out': 'cubic-bezier(0.77, 0, 0.175, 1)',
   fast: '120ms',
   base: '200ms',
   slow: '450ms',

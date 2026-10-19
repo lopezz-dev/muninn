@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { Toaster as SonnerToaster, toast } from 'sonner'
 import { cn } from '../cn'
-import { icons } from '../icons'
+import { type IconName, icons } from '../icons'
 
 /**
  * Notificaciones efímeras: una píldora arriba en el centro (la «isla» del diseño).
@@ -18,6 +18,11 @@ export interface NotifyAction {
 export interface NotifyOptions {
   /** Texto secundario, en gris tras el título. */
   description?: string
+  /**
+   * Icono de la acción realizada (`'link'`, `'archive'`, `'move'`…). En éxito, el icono hace su gesto
+   * y se transforma en el check: resalta qué acaba de pasar. En info sustituye al icono «i».
+   */
+  icon?: IconName
   /** Acción en la píldora; típicamente «Deshacer». */
   action?: NotifyAction
   /** ms; por defecto 4 s, 6 s si hay acción o es un error. */
@@ -30,15 +35,76 @@ export interface NotificationPillProps extends Omit<NotifyOptions, 'duration' | 
   tone: NotifyTone
   title: string
   onDismiss?: () => void
+  /** Viene de una notificación de carga: no repite la entrada de la insignia, solo dibuja el check. */
+  continued?: boolean
 }
 
-const toneIcon: Record<
-  Exclude<NotifyTone, 'loading'>,
-  { Icon: (typeof icons)[keyof typeof icons]; cls: string }
-> = {
-  success: { Icon: icons.check, cls: 'bg-success-soft text-success' },
-  error: { Icon: icons.warning, cls: 'bg-danger-soft text-danger' },
-  info: { Icon: icons.info, cls: 'bg-accent-soft text-accent' },
+/** Gesto de cada icono de acción antes de convertirse en check. */
+type Motion = 'lift' | 'slide' | 'drop' | 'spin' | 'turn' | 'shake' | 'pulse'
+
+const MOTION: Partial<Record<IconName, Motion>> = {
+  link: 'lift',
+  pin: 'lift',
+  external: 'slide',
+  move: 'slide',
+  send: 'slide',
+  archive: 'drop',
+  download: 'drop',
+  sync: 'spin',
+  recurring: 'spin',
+  plus: 'turn',
+  trash: 'shake',
+}
+
+const TONE_CLS: Record<NotifyTone, string> = {
+  success: 'bg-success-soft text-success',
+  error: 'bg-danger-soft text-danger',
+  info: 'bg-accent-soft text-accent',
+  loading: '',
+}
+
+/** Insignia animada: la coreografía vive en theme.css (`.mn-badge`). */
+function Badge({
+  tone,
+  icon,
+  continued,
+}: {
+  tone: NotifyTone
+  icon?: IconName
+  continued?: boolean
+}) {
+  if (tone === 'loading') {
+    return (
+      <span aria-hidden="true" className="mn-badge" data-tone="loading">
+        <span className="mn-spinner" />
+      </span>
+    )
+  }
+  const ActionIcon = icon && tone === 'success' && !continued ? icons[icon] : undefined
+  const StaticIcon =
+    tone === 'error' ? icons.warning : tone === 'info' ? icons[icon ?? 'info'] : undefined
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('mn-badge', TONE_CLS[tone])}
+      data-tone={tone}
+      data-action={ActionIcon ? '' : undefined}
+      data-motion={ActionIcon && icon ? (MOTION[icon] ?? 'pulse') : undefined}
+      data-continued={continued ? '' : undefined}
+    >
+      {ActionIcon ? (
+        <span className="mn-badge-action">
+          <ActionIcon size={13} weight="bold" />
+        </span>
+      ) : null}
+      {tone === 'success' ? (
+        <svg className="mn-badge-check" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12.5 9.5 17 19 7.5" pathLength={1} />
+        </svg>
+      ) : null}
+      {StaticIcon ? <StaticIcon size={13} weight="bold" /> : null}
+    </span>
+  )
 }
 
 /** La píldora en sí (exportada para el diseño y los tests). */
@@ -46,8 +112,10 @@ export function NotificationPill({
   tone,
   title,
   description,
+  icon,
   action,
   onDismiss,
+  continued,
 }: NotificationPillProps) {
   const Close = icons.close
   return (
@@ -57,23 +125,7 @@ export function NotificationPill({
         action || tone === 'error' ? 'pr-1.5' : 'pr-4',
       )}
     >
-      {tone === 'loading' ? (
-        <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center">
-          <span className="size-4 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
-        </span>
-      ) : (
-        (() => {
-          const { Icon, cls } = toneIcon[tone]
-          return (
-            <span
-              aria-hidden="true"
-              className={cn('grid size-6 shrink-0 place-items-center rounded-full', cls)}
-            >
-              <Icon size={13} weight="bold" />
-            </span>
-          )
-        })()
-      )}
+      <Badge tone={tone} icon={icon} continued={continued} />
       <p className="min-w-0 truncate text-sm">
         <span className="font-medium text-fg">{title}</span>
         {description ? <span className="text-fg-subtle"> · {description}</span> : null}
@@ -82,7 +134,7 @@ export function NotificationPill({
         <button
           type="button"
           onClick={action.onClick}
-          className="ml-1 h-7 shrink-0 cursor-pointer rounded-full bg-surface-hover px-3 text-xs font-semibold text-fg transition-colors hover:bg-border-strong"
+          className="ml-1 h-7 shrink-0 cursor-pointer rounded-full bg-surface-hover px-3 text-xs font-semibold text-fg transition-[background-color,scale] duration-150 ease-out hover:bg-border-strong active:scale-[0.96]"
         >
           {action.label}
         </button>
@@ -92,7 +144,7 @@ export function NotificationPill({
           type="button"
           aria-label="Cerrar notificación"
           onClick={onDismiss}
-          className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-fg-subtle hover:bg-surface-hover hover:text-fg"
+          className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-fg-subtle transition-[color,background-color,scale] duration-150 ease-out hover:bg-surface-hover hover:text-fg active:scale-[0.92]"
         >
           <Close size={13} />
         </button>
@@ -101,8 +153,8 @@ export function NotificationPill({
   )
 }
 
-function show(tone: NotifyTone, title: string, opts: NotifyOptions = {}) {
-  const { description, action, id } = opts
+function show(tone: NotifyTone, title: string, opts: NotifyOptions = {}, continued = false) {
+  const { description, icon, action, id } = opts
   const duration =
     opts.duration ??
     (tone === 'loading' ? Number.POSITIVE_INFINITY : action || tone === 'error' ? 6000 : 4000)
@@ -113,6 +165,8 @@ function show(tone: NotifyTone, title: string, opts: NotifyOptions = {}) {
           tone={tone}
           title={title}
           description={description}
+          icon={icon}
+          continued={continued}
           action={
             action
               ? {
@@ -149,7 +203,7 @@ export const notify = {
     const id = show('loading', msgs.loading)
     try {
       const value = await promise
-      show('success', resolveMsg(msgs.success, value), { id })
+      show('success', resolveMsg(msgs.success, value), { id }, true)
       return value
     } catch (err) {
       show('error', resolveMsg(msgs.error, err), { id })

@@ -88,3 +88,51 @@ describe('copyText', () => {
     expect(writeText).toHaveBeenCalledWith('https://muninn/t/MUN-23')
   })
 })
+
+describe('icono animado', () => {
+  const badgeOf = (container: HTMLElement) => container.querySelector('.mn-badge') as HTMLElement
+
+  it('con icono de acción: gesto propio y después el check', () => {
+    const { container } = render(
+      <NotificationPill tone="success" title="Enlace copiado" icon="link" />,
+    )
+    const badge = badgeOf(container)
+    expect(badge).toHaveAttribute('data-motion', 'lift')
+    expect(badge).toHaveAttribute('data-action')
+    expect(badge.querySelector('.mn-badge-action')).toBeInTheDocument()
+    expect(badge.querySelector('.mn-badge-check path')).toHaveAttribute('pathLength', '1')
+  })
+
+  it('cada acción tiene su gesto; las desconocidas laten', () => {
+    const motion = (icon: Parameters<typeof NotificationPill>[0]['icon']) =>
+      badgeOf(render(<NotificationPill tone="success" title="x" icon={icon} />).container).dataset
+        .motion
+    expect(motion('trash')).toBe('shake')
+    expect(motion('archive')).toBe('drop')
+    expect(motion('move')).toBe('slide')
+    expect(motion('finance')).toBe('pulse')
+  })
+
+  it('sin icono, solo se dibuja el check', () => {
+    const badge = badgeOf(render(<NotificationPill tone="success" title="Guardado" />).container)
+    expect(badge).not.toHaveAttribute('data-action')
+    expect(badge.querySelector('.mn-badge-action')).not.toBeInTheDocument()
+  })
+
+  it('al continuar una carga no repite la entrada ni el gesto', () => {
+    const badge = badgeOf(
+      render(<NotificationPill tone="success" title="Sincronizado" icon="sync" continued />)
+        .container,
+    )
+    expect(badge).toHaveAttribute('data-continued')
+    expect(badge.querySelector('.mn-badge-action')).not.toBeInTheDocument()
+  })
+
+  it('en info, el icono de acción sustituye a la «i»', () => {
+    const badge = badgeOf(
+      render(<NotificationPill tone="info" title="Abriendo" icon="assistant" />).container,
+    )
+    expect(badge).toHaveAttribute('data-tone', 'info')
+    expect(badge.querySelector('.mn-badge-check')).not.toBeInTheDocument()
+  })
+})

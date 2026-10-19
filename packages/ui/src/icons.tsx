@@ -1,6 +1,7 @@
 import {
   Archive,
   ArrowDown,
+  ArrowRight,
   ArrowsClockwise,
   ArrowUp,
   ArrowUpRight,
@@ -80,6 +81,7 @@ export const icons = {
   filter: FunnelSimple,
   sync: ArrowsClockwise,
   external: ArrowUpRight,
+  move: ArrowRight,
   income: ArrowUp,
   expense: ArrowDown,
   recurring: Repeat,
