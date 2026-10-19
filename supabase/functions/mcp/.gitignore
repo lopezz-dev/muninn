@@ -1,0 +1,2 @@
+# MCP empaquetado (pnpm --filter @muninn/mcp build:edge)
+_mcp/

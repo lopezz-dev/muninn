@@ -20,6 +20,10 @@ Puedes nombrar los proyectos y las columnas por su nombre, sin preocuparte de ma
 
 **Seguridad:** el asistente puede crear, editar, mover, completar y archivar, pero **nunca borrar** nada definitivamente.
 
+> **Próximamente: desde el móvil o desde claude.ai.** Muninn ya tiene preparado un servidor MCP remoto (por internet, entrando con tu
+> cuenta), pero aún no está en marcha. Cuando lo esté, podrás añadirlo como conector en claude.ai o en la app de Claude del móvil e iniciar
+> sesión con tu cuenta de Muninn; verá lo mismo que la app y tampoco podrá borrar nada.
+
 ---
 
 ## Configuración (avanzado)
