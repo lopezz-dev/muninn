@@ -1,0 +1,32 @@
+{
+  "name": "@muninn/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./supabase": "./src/supabase-store.ts",
+    "./file-store": "./src/file-store.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fractional-indexing": "4.0.0",
+    "zod": "4.6.7"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  },
+  "peerDependenciesMeta": {
+    "@supabase/supabase-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "@types/node": "26.6.5",
+    "vitest": "5.0.5"
+  }
+}

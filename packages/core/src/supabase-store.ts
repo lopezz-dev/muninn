@@ -1,0 +1,170 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Activity } from './schemas'
+import {
+  type ActivityLog,
+  type Collection,
+  type NewRow,
+  type NoteStoreQuery,
+  NotFoundError,
+  type ProjectStoreQuery,
+  type Store,
+  type TaskStoreQuery,
+} from './store'
+
+// biome-ignore lint/suspicious/noExplicitAny: cliente genérico sin tipos generados; validamos en el servicio.
+type Client = SupabaseClient<any, any, any>
+// biome-ignore lint/suspicious/noExplicitAny: builder de PostgREST sin tipos generados.
+type Builder = any
+type Row = Record<string, unknown>
+
+const toSnake = (k: string) => k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
+const toCamel = (k: string) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())
+
+function toRow(obj: object): Row {
+  const out: Row = {}
+  for (const [k, v] of Object.entries(obj)) if (v !== undefined) out[toSnake(k)] = v
+  return out
+}
+
+function fromRow<T>(row: Row): T {
+  const out: Row = {}
+  for (const [k, v] of Object.entries(row)) if (k !== 'owner_id') out[toCamel(k)] = v
+  return out as T
+}
+
+/** Quita los caracteres con significado en los filtros `or()` de PostgREST y en LIKE. */
+const likeTerm = (s: string) => `%${s.replace(/[,()*"\\%_]/g, ' ').trim()}%`
+
+class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q> {
+  constructor(
+    private readonly client: Client,
+    private readonly ownerId: string,
+    private readonly table: string,
+    private readonly entity: string,
+    private readonly applyQuery: (qb: Builder, query: Q) => Builder,
+  ) {}
+
+  private from() {
+    return this.client.from(this.table)
+  }
+
+  async get(id: string) {
+    const { data, error } = await this.from()
+      .select('*')
+      .eq('owner_id', this.ownerId)
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return data ? fromRow<T>(data) : null
+  }
+
+  async list(query: Q) {
+    const { data, error } = await this.applyQuery(
+      this.from().select('*').eq('owner_id', this.ownerId),
+      query,
+    )
+    if (error) throw error
+    return (data as Row[]).map((r) => fromRow<T>(r))
+  }
+
+  async insert(row: NewRow<T>) {
+    const { data, error } = await this.from()
+      .insert({ ...toRow(row), owner_id: this.ownerId })
+      .select('*')
+      .single()
+    if (error) throw error
+    return fromRow<T>(data)
+  }
+
+  async update(id: string, patch: Partial<NewRow<T>>) {
+    const { data, error } = await this.from()
+      .update(toRow(patch))
+      .eq('owner_id', this.ownerId)
+      .eq('id', id)
+      .select('*')
+      .maybeSingle()
+    if (error) throw error
+    if (!data) throw new NotFoundError(this.entity, id)
+    return fromRow<T>(data)
+  }
+
+  async remove(id: string) {
+    const { error } = await this.from().delete().eq('owner_id', this.ownerId).eq('id', id)
+    if (error) throw error
+  }
+}
+
+/**
+ * Store sobre Supabase. Funciona igual con el cliente del usuario (RLS) que con la service key
+ * (MCP/servidor): siempre filtra y escribe con `ownerId` explícito.
+ */
+export function createSupabaseStore(client: Client, ownerId: string): Store {
+  const col = <T extends { id: string }, Q>(
+    table: string,
+    entity: string,
+    apply: (qb: Builder, q: Q) => Builder,
+  ) => new SupabaseCollection<T, Q>(client, ownerId, table, entity, apply)
+
+  const activity: ActivityLog = {
+    async insert(row) {
+      const { data, error } = await client
+        .from('activity')
+        .insert({ ...toRow(row), owner_id: ownerId })
+        .select('*')
+        .single()
+      if (error) throw error
+      return fromRow<Activity>(data)
+    },
+    async list({ projectId, since, limit = 50 }) {
+      let qb = client.from('activity').select('*').eq('owner_id', ownerId)
+      if (projectId) qb = qb.eq('project_id', projectId)
+      if (since) qb = qb.gte('created_at', since)
+      const { data, error } = await qb.order('id', { ascending: false }).limit(limit)
+      if (error) throw error
+      return (data as Row[]).map((r) => fromRow<Activity>(r))
+    },
+  }
+
+  return {
+    activity,
+    projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
+      if (q.statuses) qb = qb.in('status', q.statuses)
+      if (q.githubRepo) qb = qb.ilike('github_repo', q.githubRepo)
+      return qb.order('position')
+    }),
+    columns: col('board_columns', 'Columna', (qb, q: { projectId: string }) =>
+      qb.eq('project_id', q.projectId).order('position'),
+    ),
+    tasks: col('tasks', 'Tarea', (qb, q: TaskStoreQuery) => {
+      if (!q.includeArchived) qb = qb.is('archived_at', null)
+      if (q.projectId) qb = qb.eq('project_id', q.projectId)
+      if (q.columnIds) qb = qb.in('column_id', q.columnIds)
+      if (q.priority) qb = qb.in('priority', q.priority)
+      if (q.source) qb = qb.eq('source', q.source)
+      if (q.externalId) qb = qb.eq('external_id', q.externalId)
+      if (q.dueBefore) qb = qb.lte('due_date', q.dueBefore)
+      if (q.search) {
+        const term = likeTerm(q.search)
+        qb = qb.or(`title.ilike.${term},description.ilike.${term}`)
+      }
+      qb = qb.order('position')
+      return q.limit ? qb.limit(q.limit) : qb
+    }),
+    checklist: col(
+      'task_checklist_items',
+      'Elemento de checklist',
+      (qb, q: { taskIds: string[] }) => qb.in('task_id', q.taskIds).order('position'),
+    ),
+    notes: col('notes', 'Nota', (qb, q: NoteStoreQuery) => {
+      if (!q.includeArchived) qb = qb.is('archived_at', null)
+      if (q.projectId) qb = qb.eq('project_id', q.projectId)
+      if (q.taskId) qb = qb.eq('task_id', q.taskId)
+      if (q.search) {
+        const term = likeTerm(q.search)
+        qb = qb.or(`title.ilike.${term},content.ilike.${term}`)
+      }
+      qb = qb.order('pinned', { ascending: false }).order('updated_at', { ascending: false })
+      return q.limit ? qb.limit(q.limit) : qb
+    }),
+  }
+}
