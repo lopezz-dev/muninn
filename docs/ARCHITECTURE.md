@@ -1,0 +1,64 @@
+# Arquitectura
+
+```
+┌──────────── apps/desktop (Tauri 2) ─────┐   ┌── apps/web (PWA) ──┐
+│  carga el build de apps/web             │   │  iPhone / navegador │
+└───────────────┬─────────────────────────┘   └─────────┬──────────┘
+                │            @muninn/core               │
+                └──────────────► createMuninn(store) ◄──┘
+                                       │
+        ┌──────────────────────────────┼─────────────────────────────┐
+        │                              │                             │
+  createSupabaseStore            createFileStore              createMemoryStore
+  (cloud o self-hosted)          (~/.muninn/data.json)        (tests / demo)
+        │
+  Supabase: Postgres + Auth + Realtime + Edge Functions
+        ▲            ▲                 ▲
+   webhooks GitHub   agentes (F4)     cron noticias (F4)
+
+  packages/mcp ── createMuninn(store, { actor: 'mcp' }) ──► Claude Desktop / Claude Code / Codex / Jarvis local
+```
+
+## Principios
+
+1. **Una sola API de dominio.** `@muninn/core` (`createMuninn`) es la única puerta a los datos.
+   La UI, el MCP, la sincronización con GitHub y los agentes la usan igual. Una función nueva
+   en el core está disponible para todos.
+2. **El backend es intercambiable.** Nadie importa Supabase salvo `supabase-store.ts`.
+   Migrar a tu servidor = Supabase self-hosted (mismo store) u otro `Store`.
+3. **Multiusuario desde el día uno.** Todas las tablas tienen `owner_id` + RLS. Hoy lo usas tú;
+   mañana se puede vender sin rehacer el esquema.
+4. **Todo deja rastro.** Cada cambio escribe en `activity` con el actor (`user`, `mcp`, `github`,
+   `agent`). De ahí salen los resúmenes ("¿qué he hecho esta semana?") y los insights.
+
+## Modelo de datos (F1)
+
+| Tabla | Para qué |
+|---|---|
+| `projects` | Proyectos. `github_repo` (owner/repo) los vincula con GitHub. |
+| `board_columns` | Estados del Kanban **por proyecto**, totalmente personalizables. `kind` (`backlog`, `todo`, `in_progress`, `review`, `done`) da semántica independiente del nombre. |
+| `tasks` | Tareas. `source` (`manual`, `github`, `mcp`, `agent`) + `external_id`/`external_url` para el origen. `completed_at` se gestiona solo al entrar/salir de una columna `done`. |
+| `task_checklist_items` | Subtareas (la barra de progreso de las tarjetas). |
+| `notes` | Notas Markdown, opcionalmente vinculadas a proyecto o tarea. |
+| `activity` | Log inmutable de eventos. |
+| `user_settings` | Módulos activados y preferencias. |
+
+### Orden en el tablero
+
+Las posiciones usan **fractional indexing** (claves de texto: `a0`, `a0V`, `a1`…). Mover una tarjeta
+solo reescribe esa tarjeta, lo que evita conflictos al sincronizar entre dispositivos. Las columnas
+`position` usan `collate "C"` para que Postgres ordene igual que JavaScript. Si dos dispositivos
+generan la misma clave, el core rebalancea la columna.
+
+## Módulos
+
+Muninn se organiza en módulos activables (`user_settings.enabled_modules`):
+
+| Módulo | Estado |
+|---|---|
+| `tasks` (proyectos + Kanban) | F1 — core listo |
+| `notes` | F1 — core listo |
+| `github` (issues → tareas) | F2 |
+| `finance` (gastos, ingresos, ahorro, inversión, suscripciones) | F3 |
+| `news` (RSS + resúmenes) | F4 |
+| `focus` (temporizador "isla") | Backlog |
