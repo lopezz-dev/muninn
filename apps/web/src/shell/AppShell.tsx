@@ -3,7 +3,6 @@ import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEnabledModules } from '../lib/modules'
 import { Dock } from './Dock'
-import { NewProjectDialog } from './NewProjectDialog'
 import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
@@ -16,6 +15,9 @@ const CommandPalette = lazy(() =>
 const ModuleOff = lazy(() => import('./ModuleOff').then((m) => ({ default: m.ModuleOff })))
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
+)
+const NewProjectDialog = lazy(() =>
+  import('./NewProjectDialog').then((m) => ({ default: m.NewProjectDialog })),
 )
 
 /** Dentro de un campo o de un diálogo, las teclas sueltas son para escribir. */
@@ -32,7 +34,7 @@ export function AppShell() {
     open: false,
     query: '',
   })
-  const [newProject, setNewProject] = useState(false)
+  const [newProject, setNewProject] = useState({ open: false, loaded: false })
   const [newTask, setNewTask] = useState<{ open: boolean; preset: NewTaskPreset; loaded: boolean }>(
     {
       open: false,
@@ -45,7 +47,7 @@ export function AppShell() {
   const tasksOn = sectionEnabled('projects', modules)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
-  const openNewProject = useCallback(() => setNewProject(true), [])
+  const openNewProject = useCallback(() => setNewProject({ open: true, loaded: true }), [])
   const openNewTask = useCallback(
     (preset: NewTaskPreset = {}) => setNewTask({ open: true, preset, loaded: true }),
     [],
@@ -91,9 +93,9 @@ export function AppShell() {
   // Una sección cuyo módulo está desactivado no se pinta: en su lugar, cómo activarlo.
   const off = section && !sectionEnabled(section, modules) ? section : null
 
-  // El detalle de una tarea en móvil ocupa toda la pantalla y trae su propia barra de acciones.
+  // El detalle de una tarea y una nota abierta ocupan toda la pantalla en móvil y traen sus propias barras.
   const immersive = useRouterState({
-    select: (s) => /^\/proyectos\/[^/]+\/tareas\//.test(s.location.pathname),
+    select: (s) => /^\/(?:proyectos\/[^/]+\/tareas|notas)\/./.test(s.location.pathname),
   })
 
   return (
@@ -134,7 +136,14 @@ export function AppShell() {
           onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
         />
       </Suspense>
-      <NewProjectDialog open={newProject} onOpenChange={setNewProject} />
+      {newProject.loaded ? (
+        <Suspense fallback={null}>
+          <NewProjectDialog
+            open={newProject.open}
+            onOpenChange={(open) => setNewProject((p) => ({ ...p, open }))}
+          />
+        </Suspense>
+      ) : null}
       {newTask.loaded ? (
         <Suspense fallback={null}>
           <NewTaskDialog

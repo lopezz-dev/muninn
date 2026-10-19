@@ -4,6 +4,11 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import pkg from './package.json' with { type: 'json' }
 
+// Iconos que solo usa una pantalla diferida (`screenIcons` en @muninn/ui). Se quedan fuera del grupo
+// `ui-vendor`: un grupo carga en el arranque todo módulo que case con su `test`, lo use quien lo use.
+const SCREEN_ICONS = ['ListBullets', 'ListChecks']
+const notScreenIcon = `(?!.*[/](?:${SCREEN_ICONS.join('|')})[.])`
+
 // Tauri carga este mismo build; en escritorio no registramos service worker.
 const isTauri = Boolean(process.env.TAURI_ENV_PLATFORM)
 
@@ -48,7 +53,9 @@ export default defineConfig({
             { name: 'tanstack', test: /node_modules[/]@tanstack[/]/ },
             {
               name: 'ui-vendor',
-              test: /node_modules[/](sonner|@phosphor-icons|tailwind-merge|clsx|class-variance-authority)[/]/,
+              test: new RegExp(
+                `node_modules[/]${notScreenIcon}(sonner|@phosphor-icons|tailwind-merge|clsx|class-variance-authority)[/]`,
+              ),
             },
             // Diferido: lo pide el loader de la ruta raíz (lib/muninn.ts).
             { name: 'core', test: /packages[/]core[/]|node_modules[/]zod[/]/ },

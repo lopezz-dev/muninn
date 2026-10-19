@@ -48,6 +48,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
 - [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
+- [ADR-0026](0026-markdown-marked-a-react-y-textarea.md) — Markdown con marked a elementos de React y un editor sobre `textarea`
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -80,6 +81,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0023](0023-drag-and-drop-con-dnd-kit.md) — Drag & drop del tablero con dnd-kit
 - [ADR-0024](0024-detalle-de-tarea-como-ruta.md) — Detalle de tarea como ruta, con panel en escritorio y pantalla en móvil
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
+- [ADR-0026](0026-markdown-marked-a-react-y-textarea.md) — Markdown con marked a elementos de React y un editor sobre `textarea`
+- [ADR-0027](0027-documentacion-en-la-app-desde-docs-user.md) — La sección Documentación se genera con `docs/user/*.md` importados al compilar
 - [ADR-0028](0028-modulos-activables-solo-en-la-interfaz.md) — Los módulos activables ocultan la interfaz; los datos y el MCP no cambian
 
 ### desktop
@@ -95,3 +98,4 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 
 ### docs
 - [ADR-0013](0013-sistema-de-documentacion.md) — Sistema de documentación: ADRs, gotchas y docs de usuario
+- [ADR-0027](0027-documentacion-en-la-app-desde-docs-user.md) — La sección Documentación se genera con `docs/user/*.md` importados al compilar

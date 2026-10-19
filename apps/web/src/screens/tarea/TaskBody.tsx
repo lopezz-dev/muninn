@@ -1,7 +1,7 @@
 import type { TaskWithColumn } from '@muninn/core'
 import { Checkbox, Chip, cn, columnKinds, Icon, icons, TextArea } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { SelectMenu } from '../../components/SelectMenu'
 import { PRIORITY_TEXT, SourceBadge } from '../../components/task-meta'
@@ -9,6 +9,7 @@ import { actorName, describeActivity } from '../../lib/activity'
 import { type BoardData, PRIORITIES } from '../../lib/board'
 import { dueLabel, timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
+import { createNote } from '../../lib/note-actions'
 import { taskActivityQuery, taskNotesQuery } from '../../lib/queries'
 import { completeTask, moveTask, patchTask, reopenTask } from '../../lib/task-actions'
 import { Checklist } from './Checklist'
@@ -313,17 +314,42 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
   )
 }
 
-function Notes({ task }: Pick<BodyProps, 'task'>) {
+function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const m = useMuninn()
+  const qc = useQueryClient()
+  const navigate = useNavigate()
   const notes = useQuery(taskNotesQuery(m, task.id)).data ?? []
-  if (notes.length === 0) return null
+
+  // La nota nace vinculada a esta tarea (y a su proyecto) y se abre para escribir.
+  const add = async () => {
+    const note = await createNote(m, qc, { taskId: task.id })
+    if (note) navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+  }
+
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className={h3}>Notas vinculadas</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className={h3}>Notas vinculadas</h2>
+        <button
+          type="button"
+          onClick={add}
+          className={cn(
+            '-mr-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg',
+            touch ? 'h-9' : 'h-7',
+          )}
+        >
+          <icons.plus size={13} />
+          Añadir nota
+        </button>
+      </div>
+      {notes.length === 0 ? (
+        <p className="text-sm text-fg-subtle">Apuntes, decisiones o pasos de esta tarea.</p>
+      ) : null}
       {notes.map((n) => (
         <Link
           key={n.id}
-          to="/notas"
+          to="/notas/$noteId"
+          params={{ noteId: n.id }}
           className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-base transition-colors hover:border-border-strong"
         >
           <Icon name="notes" className="text-fg-subtle" />
@@ -376,7 +402,7 @@ export function TaskBody({ task, board, touch }: BodyProps) {
       <Properties task={task} board={board} touch={touch} />
       <Description task={task} />
       <Checklist task={task} touch={touch} />
-      <Notes task={task} />
+      <Notes task={task} touch={touch} />
       <ActivityLog task={task} />
     </div>
   )

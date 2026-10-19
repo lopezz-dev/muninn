@@ -26,8 +26,10 @@
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
   personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
   y «Deshacer» en cada acción ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md))
-- [ ] Notas (editor Markdown, notas vinculadas a proyecto o tarea) ← siguiente paso
-- [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
+- [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
+  proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
+- [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
+  estado, índice de la página; [ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md))
 - [ ] Sincronización en tiempo real entre dispositivos + caché offline
 
 ## F2 · Claude y GitHub

@@ -51,6 +51,11 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
   deshacen si falla; todas dan feedback con «Deshacer» ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md)).
 - **Tablero y detalle:** `/proyectos/$projectId` (drag & drop con dnd-kit, [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)) y su hija
   `/proyectos/$projectId/tareas/$taskId` ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)).
+- **Notas:** `/notas` (lista con búsqueda y filtros) y su hija `/notas/$noteId` (editor), como tablero y detalle de tarea. El Markdown
+  vive en `src/markdown/`: `marked` → elementos de React sin HTML ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md)),
+  que Documentación y la descripción de tareas reutilizan.
+- **Documentación:** `/documentacion` y `/documentacion/$pagina`. Las guías de `docs/user` se importan al compilar
+  ([ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md)).
 - **Sesión:** `src/lib/auth.ts` (Supabase Auth: código por correo y GitHub; modo demo en memoria). Al cambiar
   de usuario se vacían el core y react-query: ver [ADR-0022](adr/0022-auth-y-sesion.md).
 - **Apariencia:** `src/lib/appearance.ts` (en `user_settings.preferences`, con localStorage como caché).

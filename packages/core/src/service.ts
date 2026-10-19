@@ -493,12 +493,21 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   async function createNote(input: CreateNoteInput) {
     const data = parse(createNoteInput, input)
-    if (data.projectId) await getProject(data.projectId)
-    if (data.taskId) await getTask(data.taskId)
+    let projectId = data.projectId ?? null
+    if (data.taskId) {
+      // Una nota de tarea es del proyecto de esa tarea: si dicen otro, algo va mal.
+      const task = await getTask(data.taskId)
+      if (projectId && projectId !== task.projectId) {
+        throw new ValidationError('La tarea no pertenece a ese proyecto')
+      }
+      projectId = task.projectId
+    } else if (projectId) {
+      await getProject(projectId)
+    }
     const note = await store.notes.insert({
       title: data.title ?? '',
       content: data.content ?? '',
-      projectId: data.projectId ?? null,
+      projectId,
       taskId: data.taskId ?? null,
       pinned: data.pinned ?? false,
       archivedAt: null,
@@ -507,11 +516,48 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return note
   }
 
+  /**
+   * Los cambios de título o de texto llegan con el autoguardado del editor (cada pocos segundos): si
+   * el último evento de la nota ya era una edición del mismo actor hace poco, no se anota otro y el
+   * registro no se llena de «editó la nota».
+   */
+  const NOTE_EDIT_WINDOW_MS = 10 * 60_000
+
   async function updateNote(id: string, input: UpdateNoteInput): Promise<Note> {
     const patch = parse(updateNoteInput, input)
-    await getNote(id)
+    const before = await getNote(id)
+    if (patch.taskId) {
+      const task = await getTask(patch.taskId)
+      if (patch.projectId && patch.projectId !== task.projectId) {
+        throw new ValidationError('La tarea no pertenece a ese proyecto')
+      }
+      patch.projectId = task.projectId
+    } else if (patch.projectId !== undefined && patch.projectId !== before.projectId) {
+      // Otro proyecto (o ninguno): la tarea anterior ya no encaja.
+      if (patch.projectId) await getProject(patch.projectId)
+      if (patch.taskId === undefined) patch.taskId = null
+    }
+    const fields = (['title', 'content', 'projectId', 'taskId', 'pinned'] as const).filter(
+      (k) => patch[k] !== undefined && patch[k] !== before[k],
+    )
+    if (fields.length === 0) return before
     const note = await store.notes.update(id, patch)
-    await log('note', id, 'updated', note.projectId, { title: note.title })
+
+    if (fields.length === 1 && fields[0] === 'pinned') {
+      await log('note', id, note.pinned ? 'pinned' : 'unpinned', note.projectId, {
+        title: note.title,
+      })
+      return note
+    }
+    if (fields.every((f) => f === 'title' || f === 'content')) {
+      const [last] = await store.activity.list({ entityId: id, limit: 1 })
+      const recent =
+        last?.action === 'updated' &&
+        last.actor === actor &&
+        clock().getTime() - Date.parse(last.createdAt) < NOTE_EDIT_WINDOW_MS
+      if (recent) return note
+    }
+    await log('note', id, 'updated', note.projectId, { title: note.title, fields })
     return note
   }
 
@@ -519,6 +565,14 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     const note = await getNote(id)
     await log('note', id, 'archived', note.projectId, { title: note.title })
     return store.notes.update(id, { archivedAt: nowIso() })
+  }
+
+  /** Deshace `archiveNote`. */
+  async function restoreNote(id: string) {
+    const note = await getNote(id)
+    const restored = await store.notes.update(id, { archivedAt: null })
+    await log('note', id, 'restored', note.projectId, { title: note.title })
+    return restored
   }
 
   // ─── Informes (UI de inicio, MCP, Jarvis) ──────────────────────────────────
@@ -690,6 +744,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       create: createNote,
       update: updateNote,
       archive: archiveNote,
+      restore: restoreNote,
     },
     settings: {
       get: getSettings,

@@ -1,4 +1,5 @@
 import type { IconName } from '@muninn/ui'
+import { normalize } from '../lib/text'
 
 export type PaletteGroup = 'ask' | 'nav' | 'projects' | 'actions'
 
@@ -25,12 +26,7 @@ export interface PaletteItem {
   run: () => void
 }
 
-/** Minúsculas y sin tildes: «documentacion» encuentra «Documentación». Conserva la longitud. */
-export const normalize = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
+export { normalize }
 
 /**
  * Filtra por palabras (todas deben aparecer en la etiqueta o en los sinónimos) y ordena por grupo;
