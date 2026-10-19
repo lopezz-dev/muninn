@@ -28,6 +28,15 @@ En pantallas pequeñas la barra lateral se convierte en un dock flotante con cin
 
 En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, tu cuenta, el buscador y los ajustes.
 
+## Inicio
+
+La primera pantalla te resume el día: lo que **vence hoy** y lo **vencido**, lo que tienes **en curso**, lo que vence en
+los **próximos 7 días**, lo que has **completado hoy** y una gráfica de los últimos 7 días. Marca la casilla de una
+tarea para completarla; púlsala de nuevo para reabrirla. Si algo no aplica, verás un mensaje en su sitio (por ejemplo,
+«Nada vence hoy ni está atrasado»), no un hueco.
+
+Si aún no tienes proyectos o tareas, Inicio te lo dice y te ofrece crear el primero.
+
 ## Buscar o ir a cualquier sitio
 
 Pulsa **⌘K** en Mac o **Ctrl K** en Windows y Linux (o el botón **Buscar o preguntar…** de la barra
@@ -49,6 +58,11 @@ Muévete con las flechas, abre con **Intro** y cierra con **Esc**.
 3. Pulsa **Crear proyecto**. Se abre su tablero con cinco columnas.
 
 Si te has equivocado, pulsa **Deshacer** en el aviso que aparece arriba: el proyecto se archiva.
+
+## Crear una tarea
+
+Pulsa **Nueva tarea** (o la tecla **N**), elige proyecto y columna, escribe el título y pulsa **Crear tarea**. Más
+detalles en [Tareas](04-tareas.md).
 
 ## Archivar un proyecto
 
@@ -74,8 +88,11 @@ sigue a todos tus dispositivos; en modo demo, solo en este.
 | Atajo | Qué hace |
 |---|---|
 | **⌘K** / **Ctrl K** | Abre o cierra el buscador |
+| **N** | Nueva tarea (fuera de un campo de texto) |
 | **↑** **↓** | Moverse por los resultados del buscador |
 | **Intro** | Abrir el resultado elegido |
-| **Esc** | Cerrar el buscador, un diálogo o un menú |
+| **Esc** | Cerrar el buscador, un diálogo, un menú o el panel de una tarea; cancelar un movimiento |
+| **Espacio** | Con una tarjeta o una columna enfocada, recogerla y soltarla |
+| **← ↑ → ↓** | Con algo recogido, moverlo |
 
 Con el teclado, el primer **Tab** de cada página te ofrece **Saltar al contenido**.

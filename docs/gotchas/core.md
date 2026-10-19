@@ -46,3 +46,20 @@
 - **Causa:** importar `@muninn/core/file-store` desde el frontend.
 - **Solución:** en la web, importa solo `@muninn/core` y `@muninn/core/supabase`.
 - **Ref:** [ADR-0012](../adr/0012-paquetes-internos-como-fuente.md)
+
+### `columns.delete` devuelve los ids movidos, incluidas las archivadas
+
+- Para deshacer un borrado de columna hay que devolver sus tareas al orden que tenían. `delete` devuelve
+  `{ movedTaskIds }` en el orden de la columna y mueve también las **archivadas**, que el tablero no ve.
+- «Deshacer» recrea la columna con **otro id** (el antiguo ya no existe) y mueve las tareas de vuelta una a una.
+
+### `checklist.counts` trocea las consultas
+
+- **Síntoma:** el tablero de un proyecto con cientos de tareas falla al pedir el progreso de las subtareas.
+- **Causa:** `in (…)` de PostgREST va en la URL: con unos cientos de ids se pasa de largo.
+- **Solución:** el core lo pide de 100 en 100. Úsalo (`m.checklist.counts(ids)`) y no `checklist.list` por tarea.
+
+### `overview()` incluye las archivadas para contar lo hecho
+
+- `completedToday`, `completedTodayTasks` y `completedByDay` salen de **todas** las tareas del proyecto, archivadas o no.
+  Lo abierto (`dueToday`, `overdue`, `upcoming`, `inProgress`, `projects[].open/done`) solo cuenta las no archivadas.

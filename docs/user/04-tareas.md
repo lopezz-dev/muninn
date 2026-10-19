@@ -7,20 +7,29 @@ status: parcial
 
 # Tareas
 
-> **Estado:** todo lo descrito aquí ya funciona a través de los [asistentes de IA](06-asistentes-ia.md).
-> La interfaz visual llegará próximamente.
+> **Estado:** ya puedes crear, editar, mover, completar y archivar tareas desde la app, y también a través de los
+> [asistentes de IA](06-asistentes-ia.md). La descripción es texto sencillo por ahora (el Markdown llegará más adelante).
 
 ## Crear una tarea
 
-Una tarea pertenece a un proyecto. Si no eliges columna, va a la primera de tipo **Por hacer**
-("Pendiente" en el tablero por defecto).
+Hay tres formas: el botón **Nueva tarea** (o la tecla **N**), el **+** de la cabecera de una columna, o **Añadir tarea**
+al pie de la columna: escribes el título, pulsas **Intro** y sigues con la siguiente.
 
-Además del título, puedes añadir:
-- **Descripción** en Markdown.
-- **Prioridad:** ninguna, baja, media, alta o urgente.
-- **Fecha límite.**
-- **Etiquetas** libres.
-- **Subtareas** (checklist): la tarjeta muestra el progreso, por ejemplo 2/3.
+Una tarea pertenece a un proyecto. Si no eliges columna, va a la primera de tipo **Por hacer** ("Pendiente" en el
+tablero por defecto). Si te equivocas, **Deshacer** en el aviso la archiva.
+
+## Abrir y editar una tarea
+
+Pulsa una tarjeta para abrirla: en el ordenador sale un panel a la derecha, en el móvil una pantalla completa. Tiene
+enlace propio, así que puedes copiarlo o recargar la página. Desde ahí cambias:
+
+- **Título** y **descripción** (se guardan al salir del campo).
+- **Estado** (la columna), **prioridad** (ninguna, baja, media, alta o urgente) y **fecha límite**.
+- **Etiquetas** libres: escribe y pulsa **Intro**.
+- **Subtareas** (checklist): márcalas, quítalas o añade más; la tarjeta muestra el progreso, por ejemplo 2/3.
+- Ves la **actividad** de la tarea: quién la creó, movió o cambió, y cuándo.
+
+Cada cambio avisa y se puede deshacer.
 
 ## Mover una tarea
 
@@ -29,9 +38,10 @@ tipo **Hecho**, Muninn la marca como completada con la fecha. Si la sacas de ah�
 
 ## Completar, archivar y borrar
 
-- **Completar:** la mueve a la columna "Hecho".
-- **Archivar:** la oculta del tablero sin borrarla.
-- **Borrar:** la elimina para siempre. Los asistentes de IA no pueden borrar, como mucho archivar.
+- **Completar:** pulsa la casilla de la tarea (en Inicio, en el panel o con **Completar**) y pasa a la columna "Hecho".
+  Pulsa otra vez para **reabrirla**.
+- **Archivar:** la oculta del tablero sin borrarla (menú **⋯** de la tarea). **Deshacer** la recupera.
+- **Borrar:** desde la app aún no se puede; archiva. Los asistentes de IA tampoco pueden borrar.
 
 ## De dónde viene cada tarea
 
@@ -46,5 +56,5 @@ Cada tarea recuerda su **origen**, que se muestra con una insignia:
 
 ## Vencidas, para hoy y próximas
 
-Muninn te avisa de las tareas **vencidas**, las que vencen **hoy** y las de los **próximos 7 días**,
-tanto por proyecto como en el resumen general.
+En **Inicio** ves las tareas **vencidas**, las que vencen **hoy**, lo que tienes **en curso**, lo que vence en los
+**próximos 7 días** y lo que has completado hoy. Lo mismo, por proyecto, se lo puedes preguntar a un asistente de IA.

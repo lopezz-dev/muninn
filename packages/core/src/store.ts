@@ -75,7 +75,13 @@ export interface NoteStoreQuery {
 
 export interface ActivityLog {
   insert(row: Omit<Activity, 'id' | 'createdAt'>): Promise<Activity>
-  list(query: { projectId?: string; since?: string; limit?: number }): Promise<Activity[]>
+  list(query: {
+    projectId?: string
+    /** Solo los eventos de una entidad (una tarea, una columna…). */
+    entityId?: string
+    since?: string
+    limit?: number
+  }): Promise<Activity[]>
 }
 
 export class NotFoundError extends Error {

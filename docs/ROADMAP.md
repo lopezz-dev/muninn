@@ -21,7 +21,11 @@
   ([gotchas/db](gotchas/db.md))
 - [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs)
 - [ ] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos)
-- [ ] Inicio (hoy, próximo, mis tareas, semana), tablero Kanban con drag & drop, notas ← siguiente paso
+- [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
+- [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
+  personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
+  y «Deshacer» en cada acción ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md))
+- [ ] Notas (editor Markdown, notas vinculadas a proyecto o tarea) ← siguiente paso
 - [ ] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador)
 - [ ] Sincronización en tiempo real entre dispositivos + caché offline
 
@@ -63,6 +67,10 @@ más o menos en este orden:
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
 
 ## Backlog
+- Tablero: filtros (texto, prioridad, etiquetas, origen, fecha) y vistas Lista y Calendario del diseño
+- Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
+- Borrado definitivo de tareas desde la app (hoy solo se archivan)
+- Descripción de tarea en Markdown
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice

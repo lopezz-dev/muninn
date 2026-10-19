@@ -7,10 +7,9 @@ status: parcial
 
 # Proyectos y tablero
 
-> **Estado:** todo lo descrito aquí ya funciona a través de los [asistentes de IA](06-asistentes-ia.md).
-> En la app ya puedes crear y archivar proyectos y ver las columnas de su tablero (en modo demo, sin
-> guardar: ver [Moverte por Muninn](08-moverte-por-muninn.md)). Crear, mover y personalizar tareas y
-> columnas desde la app llegará próximamente.
+> **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas y personalizar las columnas desde la app.
+> Las vistas de lista y calendario, los filtros y el color de las columnas llegarán más adelante. En modo demo,
+> sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
 
@@ -30,8 +29,13 @@ Cada proyecto tiene su propio tablero Kanban. Al crearlo empieza con cinco colum
 
 ### Personalizar las columnas
 
-Puedes renombrarlas, reordenarlas, añadir nuevas, cambiarles el color o fijar un **límite** de tareas
-(útil para no tener demasiadas cosas "en curso" a la vez).
+Desde el menú **⋯** de cada columna puedes **editarla** (nombre, tipo y límite), **moverla** a la izquierda o a la
+derecha y **borrarla**. Con **Añadir columna** creas una nueva al final. También puedes reordenarlas arrastrándolas
+por el asa de su cabecera.
+
+El **límite** es el número de tareas que quieres tener a la vez en esa columna (útil para no tener demasiadas cosas
+"en curso"). Cuando lo alcanzas, el contador se pone en ámbar, y en rojo si lo superas. Es un aviso: Muninn no te
+impide mover más tarjetas.
 
 Cada columna tiene además un **tipo**, que le dice a Muninn qué significa, la llames como la llames:
 
@@ -48,5 +52,15 @@ y lo cuenta así en los resúmenes.
 
 ### Borrar una columna
 
-Si la columna tiene tareas, Muninn te pedirá a qué columna moverlas. Un proyecto siempre necesita
-al menos una columna.
+Si la columna tiene tareas, eliges a qué columna pasan (**Borrar y mover sus tareas a…**). Un proyecto siempre necesita
+al menos una columna. No hay diálogo de confirmación: pulsa **Deshacer** en el aviso y la columna vuelve, con sus tareas.
+
+## Mover tarjetas
+
+- **Con el ratón:** arrastra la tarjeta a otra columna o a otra posición. Un clic abre la tarea.
+- **Con el dedo:** mantén pulsada la tarjeta y arrástrala. En el móvil verás una pestaña por columna: suelta la tarjeta
+  sobre otra pestaña para cambiarla de columna, o desliza la tarjeta a la izquierda para completarla.
+- **Con el teclado:** enfoca la tarjeta con **Tab**, pulsa **Espacio** para recogerla, muévela con las **flechas**
+  y vuelve a pulsar **Espacio** para soltarla (**Esc** cancela). **Intro** abre la tarea.
+
+Cada movimiento te lo confirma un aviso con **Deshacer**, que devuelve la tarjeta a donde estaba.

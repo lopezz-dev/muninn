@@ -1,11 +1,22 @@
+import { cn } from '@muninn/ui'
 import { Outlet, useRouterState } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CommandPalette } from './CommandPalette'
 import { Dock } from './Dock'
 import { NewProjectDialog } from './NewProjectDialog'
 import { sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
-import { type ShellApi, ShellContext } from './shell-context'
+import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
+
+// Diferido: el diálogo (y todo lo que arrastra) no viaja con el shell hasta que se abre.
+const NewTaskDialog = lazy(() =>
+  import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
+)
+
+/** Dentro de un campo o de un diálogo, las teclas sueltas son para escribir. */
+const typingIn = (t: EventTarget | null) =>
+  t instanceof HTMLElement &&
+  Boolean(t.closest('input, textarea, select, [contenteditable="true"], [role=dialog]'))
 
 /**
  * Estructura común de todas las pantallas: barra lateral en escritorio, dock en móvil (< 768 px),
@@ -17,13 +28,24 @@ export function AppShell() {
     query: '',
   })
   const [newProject, setNewProject] = useState(false)
+  const [newTask, setNewTask] = useState<{ open: boolean; preset: NewTaskPreset; loaded: boolean }>(
+    {
+      open: false,
+      preset: {},
+      loaded: false,
+    },
+  )
   const mainRef = useRef<HTMLElement>(null)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
   const openNewProject = useCallback(() => setNewProject(true), [])
+  const openNewTask = useCallback(
+    (preset: NewTaskPreset = {}) => setNewTask({ open: true, preset, loaded: true }),
+    [],
+  )
   const api = useMemo<ShellApi>(
-    () => ({ openPalette, openNewProject }),
-    [openPalette, openNewProject],
+    () => ({ openPalette, openNewProject, openNewTask }),
+    [openPalette, openNewProject, openNewTask],
   )
 
   // ⌘K / Ctrl+K abre y cierra el buscador desde cualquier sitio, también dentro de un campo.
@@ -32,11 +54,21 @@ export function AppShell() {
       if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPalette((p) => ({ open: !p.open, query: '' }))
+      } else if (
+        e.key.toLowerCase() === 'n' &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !typingIn(e.target)
+      ) {
+        // N: tarea nueva, como en el diseño.
+        e.preventDefault()
+        openNewTask()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [openNewTask])
 
   // Al cambiar de sección, el foco va al contenido: quien navega con teclado o lector de
   // pantalla empieza por la pantalla nueva y no por el principio de la barra lateral.
@@ -47,6 +79,11 @@ export function AppShell() {
     prevSection.current = section
     mainRef.current?.focus({ preventScroll: true })
   }, [section])
+
+  // El detalle de una tarea en móvil ocupa toda la pantalla y trae su propia barra de acciones.
+  const immersive = useRouterState({
+    select: (s) => /^\/proyectos\/[^/]+\/tareas\//.test(s.location.pathname),
+  })
 
   return (
     <ShellContext.Provider value={api}>
@@ -62,11 +99,16 @@ export function AppShell() {
           id="contenido"
           ref={mainRef}
           tabIndex={-1}
-          className="min-w-0 flex-1 px-5 pt-[calc(env(safe-area-inset-top)+28px)] pb-[calc(env(safe-area-inset-bottom)+148px)] outline-none md:px-8 md:pt-7 md:pb-8"
+          className={cn(
+            'min-w-0 flex-1 px-5 pt-[calc(env(safe-area-inset-top)+28px)] outline-none md:px-8 md:pt-7 md:pb-8',
+            immersive
+              ? 'pb-[calc(env(safe-area-inset-bottom)+104px)]'
+              : 'pb-[calc(env(safe-area-inset-bottom)+148px)]',
+          )}
         >
           <Outlet />
         </main>
-        <Dock className="md:hidden" />
+        {immersive ? null : <Dock className="md:hidden" />}
       </div>
       <CommandPalette
         open={palette.open}
@@ -74,6 +116,16 @@ export function AppShell() {
         onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
       />
       <NewProjectDialog open={newProject} onOpenChange={setNewProject} />
+      {newTask.loaded ? (
+        <Suspense fallback={null}>
+          <NewTaskDialog
+            open={newTask.open}
+            preset={newTask.preset}
+            onOpenChange={(open) => setNewTask((t) => ({ ...t, open }))}
+            onNewProject={openNewProject}
+          />
+        </Suspense>
+      ) : null}
     </ShellContext.Provider>
   )
 }

@@ -97,8 +97,14 @@ export interface OverviewReport {
   }[]
   overdue: (TaskWithColumn & { projectName: string })[]
   dueToday: (TaskWithColumn & { projectName: string })[]
+  /** Vencen en los próximos 7 días, sin contar hoy, por fecha. */
+  upcoming: (TaskWithColumn & { projectName: string })[]
   inProgress: (TaskWithColumn & { projectName: string })[]
   completedToday: number
+  /** Las completadas hoy, la más reciente primero. */
+  completedTodayTasks: (TaskWithColumn & { projectName: string })[]
+  /** Completadas por día en los últimos 7 días (el último es hoy). */
+  completedByDay: { date: string; count: number }[]
 }
 
 export type Muninn = ReturnType<typeof createMuninn>
@@ -270,6 +276,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     }
     await store.columns.remove(id)
     await log('column', id, 'deleted', column.projectId, { name: column.name })
+    // En su orden de la columna, incluidas las archivadas: así se puede deshacer devolviéndolas.
+    return { movedTaskIds: tasks.map((t) => t.id) }
   }
 
   // ─── Tareas ────────────────────────────────────────────────────────────────
@@ -363,15 +371,17 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   async function moveTask(id: string, input: MoveTaskInput) {
     const { columnId, index } = parse(moveTaskInput, input)
-    const task = await getTask(id)
-    const [from, to] = await Promise.all([
-      store.columns.get(task.columnId),
+    // Tres lecturas independientes a la vez: con Supabase cada una es un viaje de red.
+    const [task, to, columnTasks] = await Promise.all([
+      getTask(id),
       must(store.columns.get(columnId), 'Columna', columnId),
+      store.tasks.list({ columnIds: [columnId] }),
     ])
+    const from = task.columnId === to.id ? to : await store.columns.get(task.columnId)
     if (to.projectId !== task.projectId) {
       throw new ValidationError('No se puede mover una tarea a otro proyecto con moveTask')
     }
-    const siblings = (await store.tasks.list({ columnIds: [columnId] })).filter((t) => t.id !== id)
+    const siblings = columnTasks.filter((t) => t.id !== id)
     const entersDone = to.kind === 'done' && from?.kind !== 'done'
     const leavesDone = to.kind !== 'done' && from?.kind === 'done'
     const moved = await store.tasks.update(id, {
@@ -406,6 +416,14 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return archived
   }
 
+  /** Deshace `archiveTask`: la tarea vuelve a su columna y posición. */
+  async function restoreTask(id: string) {
+    const task = await getTask(id)
+    const restored = await store.tasks.update(id, { archivedAt: null })
+    await log('task', id, 'restored', task.projectId, { title: task.title })
+    return restored
+  }
+
   async function deleteTask(id: string) {
     const task = await getTask(id)
     await store.tasks.remove(id)
@@ -418,7 +436,12 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return store.checklist.list({ taskIds: [taskId] })
   }
 
-  async function addChecklistItem(taskId: string, title: string) {
+  /** `index` (por defecto, al final) y `done` permiten recrear un elemento borrado (deshacer). */
+  async function addChecklistItem(
+    taskId: string,
+    title: string,
+    opts: { done?: boolean; index?: number } = {},
+  ) {
     await getTask(taskId)
     const clean = title.trim()
     if (!clean) throw new ValidationError('El elemento necesita título')
@@ -426,9 +449,24 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return store.checklist.insert({
       taskId,
       title: clean,
-      done: false,
-      position: await place('checklist', siblings),
+      done: opts.done ?? false,
+      position: await place('checklist', siblings, opts.index),
     })
+  }
+
+  /** Hechos y total de subtareas por tarea (las tarjetas del tablero muestran «3/5»). */
+  async function checklistCounts(taskIds: string[]) {
+    const counts: Record<string, { done: number; total: number }> = {}
+    // Por tandas: con muchos ids, la URL de la consulta de PostgREST se pasaría de largo.
+    for (let i = 0; i < taskIds.length; i += 100) {
+      for (const item of await store.checklist.list({ taskIds: taskIds.slice(i, i + 100) })) {
+        const c = counts[item.taskId] ?? { done: 0, total: 0 }
+        c.total += 1
+        if (item.done) c.done += 1
+        counts[item.taskId] = c
+      }
+    }
+    return counts
   }
 
   async function updateChecklistItem(
@@ -529,20 +567,32 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   async function overview(): Promise<OverviewReport> {
     const projects = await store.projects.list({ statuses: ['active'] })
     const t0 = today()
+    const in7 = addDays(t0, 7)
+    const byDay = new Map(Array.from({ length: 7 }, (_, i) => [addDays(t0, i - 6), 0]))
     const report: OverviewReport = {
       today: t0,
       projects: [],
       overdue: [],
       dueToday: [],
+      upcoming: [],
       inProgress: [],
       completedToday: 0,
+      completedTodayTasks: [],
+      completedByDay: [],
     }
     for (const p of projects) {
       const cols = new Map((await listColumns(p.id)).map((c) => [c.id, c]))
-      const tasks = (await store.tasks.list({ projectId: p.id })).map((t) => ({
-        ...withColumn(t, cols),
-        projectName: p.name,
-      }))
+      // Con archivadas: archivar una tarea hecha no debe quitarla de «Hechas hoy» ni de la gráfica.
+      const every = (await store.tasks.list({ projectId: p.id, includeArchived: true })).map(
+        (t) => ({ ...withColumn(t, cols), projectName: p.name }),
+      )
+      const tasks = every.filter((t) => !t.archivedAt)
+      for (const t of every) {
+        if (!t.completedAt) continue
+        const day = dateFmt.format(new Date(t.completedAt))
+        if (byDay.has(day)) byDay.set(day, (byDay.get(day) ?? 0) + 1)
+        if (day === t0) report.completedTodayTasks.push(t)
+      }
       const open = tasks.filter((t) => t.column.kind !== 'done')
       const overdue = open.filter((t) => t.dueDate && t.dueDate < t0)
       const active = open.filter((t) => OPEN_ACTIVE_KINDS.includes(t.column.kind))
@@ -557,16 +607,23 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       })
       report.overdue.push(...overdue)
       report.dueToday.push(...open.filter((t) => t.dueDate === t0))
+      report.upcoming.push(...open.filter((t) => t.dueDate && t.dueDate > t0 && t.dueDate <= in7))
       report.inProgress.push(...active)
-      report.completedToday += tasks.filter(
-        (t) => t.completedAt && dateFmt.format(new Date(t.completedAt)) === t0,
-      ).length
     }
-    report.overdue.sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
+    const byDue = (a: Task, b: Task) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')
+    report.overdue.sort(byDue)
+    report.upcoming.sort(byDue)
+    report.completedTodayTasks.sort((a, b) =>
+      (b.completedAt ?? '').localeCompare(a.completedAt ?? ''),
+    )
+    report.completedToday = report.completedTodayTasks.length
+    report.completedByDay = [...byDay].map(([date, count]) => ({ date, count }))
     return report
   }
 
-  async function recentActivity(opts: { projectId?: string; since?: string; limit?: number } = {}) {
+  async function recentActivity(
+    opts: { projectId?: string; entityId?: string; since?: string; limit?: number } = {},
+  ) {
     return store.activity.list(opts)
   }
 
@@ -617,10 +674,12 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       complete: completeTask,
       reopen: reopenTask,
       archive: archiveTask,
+      restore: restoreTask,
       delete: deleteTask,
     },
     checklist: {
       list: listChecklist,
+      counts: checklistCounts,
       add: addChecklistItem,
       update: updateChecklistItem,
       delete: deleteChecklistItem,

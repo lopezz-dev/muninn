@@ -115,3 +115,51 @@
 - El proveedor redirige a una URL web; sin deep links, la sesión acabaría en el navegador del sistema.
   `isTauri` (de `TAURI_ENV_PLATFORM`) oculta el botón en escritorio. En la web, el botón solo sale si
   `GET /auth/v1/settings` dice que GitHub está activado.
+
+### Vite recarga la página al descubrir dnd-kit y el modo demo se queda sin datos
+
+- **Síntoma:** al abrir el tablero por primera vez tras instalar dependencias, el proyecto que acabas de crear en
+  modo demo «no existe» («No encontramos este proyecto»).
+- **Causa:** Vite optimiza `@dnd-kit/*` al verlo por primera vez en desarrollo y recarga la página; el modo demo vive en
+  memoria ([ADR-0022](../adr/0022-auth-y-sesion.md)), así que se pierde.
+- **Solución:** solo ocurre una vez por entorno. Si pasa, crea el proyecto otra vez. Con sesión iniciada no se nota.
+
+### Las tarjetas son enlaces *y* elementos ordenables
+
+- **Síntoma:** Enter no abre la tarea, o un clic al soltar una tarjeta navega al detalle.
+- **Causa:** `useSortable` pone `role="button"` y `KeyboardSensor` arranca con Espacio **y Enter**.
+- **Solución:** `SortableTaskCard` pasa `attributes: { role: 'link', … }` y el sensor de teclado se configura con
+  `keyboardCodes: { start: ['Space'], … }`. El `MouseSensor` lleva `distance: 6` (un clic no es un arrastre) y dnd-kit
+  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta.
+- **Ref:** [ADR-0023](../adr/0023-drag-and-drop-con-dnd-kit.md)
+
+### Tacto: `touch-action` y la capa de «deslizar para completar»
+
+- **Síntoma:** en móvil, tocar una tarjeta no abre nada; o el scroll vertical se queda atascado al arrastrar.
+- **Causa:** (1) la capa verde de «Hecho» (`absolute inset-0`) quedaba por encima de la tarjeta y se comía el toque;
+  (2) `touch-action` decide quién se queda con el gesto.
+- **Solución:** la capa lleva `pointer-events-none` y la tarjeta que se desliza es `relative`. Las tarjetas de móvil usan
+  `touch-pan-y` (el navegador scrollea en vertical, el horizontal es del deslizar) y el `TouchSensor` espera 250 ms
+  (`delay`) con 8 px de `tolerance`. Mientras hay un arrastre en curso, deslizar no hace nada (`useDndContext().active`).
+  Si tocas esto, pruébalo en un iPhone real: el navegador integrado simula clics, no gestos táctiles.
+
+### Un cambio optimista que pisa una petición en vuelo
+
+- **Síntoma:** una tarjeta «salta» a su sitio antiguo justo después de soltarla.
+- **Causa:** había un `refetch` del tablero en curso (volver a la pestaña, `invalidate`) y su respuesta llegó después
+  del cambio en caché.
+- **Solución:** `optimistic()` (`lib/mutations.ts`) cancela la petición solo si hay una en vuelo y, si no, es síncrono, para
+  que `setQueryData` ocurra en el mismo instante en que se suelta. No añadas un `await` antes de tocar la caché en un
+  manejador de arrastre.
+- **Ref:** [ADR-0025](../adr/0025-escrituras-optimistas-y-deshacer.md)
+
+### `useMatch` con `shouldThrow: false` para saber si hay una tarea abierta
+
+- El tablero (`Tablero.tsx`) es la ruta padre del detalle y necesita saber si hay una tarea abierta: `useMatch({ from:
+  '/_app/proyectos/$projectId/tareas/$taskId', shouldThrow: false })`. En móvil, con tarea abierta, el tablero no se pinta
+  (solo `<Outlet />`); en escritorio se pinta debajo del panel.
+
+### Las tareas de «Hechas hoy» incluyen archivadas
+
+- `overview()` cuenta las tareas completadas hoy y en los últimos 7 días **también si se archivaron después**. Si archivas
+  una hecha, desaparece del tablero pero no de Inicio. Es intencionado: archivar no es deshacer.

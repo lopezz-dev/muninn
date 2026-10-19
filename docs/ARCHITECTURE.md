@@ -46,7 +46,11 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 
 - **Rutas** en `src/router.tsx` (TanStack Router, tipadas): ver [ADR-0020](adr/0020-tanstack-router-carga-diferida.md).
 - **Navegación** compartida por barra lateral, dock y buscador en `src/shell/nav.ts`: ver [ADR-0021](adr/0021-shell-de-la-app.md).
-- **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Las acciones que cambian datos dan feedback con «Deshacer».
+- **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Un tablero es una sola entrada de caché (`keys.board`) que las
+  acciones (`task-actions.ts`, `column-actions.ts`) actualizan al instante, escriben en el core de una en una por proyecto y
+  deshacen si falla; todas dan feedback con «Deshacer» ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md)).
+- **Tablero y detalle:** `/proyectos/$projectId` (drag & drop con dnd-kit, [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)) y su hija
+  `/proyectos/$projectId/tareas/$taskId` ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)).
 - **Sesión:** `src/lib/auth.ts` (Supabase Auth: código por correo y GitHub; modo demo en memoria). Al cambiar
   de usuario se vacían el core y react-query: ver [ADR-0022](adr/0022-auth-y-sesion.md).
 - **Apariencia:** `src/lib/appearance.ts` (en `user_settings.preferences`, con localStorage como caché).

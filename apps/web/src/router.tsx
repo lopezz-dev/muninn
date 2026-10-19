@@ -93,6 +93,16 @@ const boardRoute = createRoute({
   component: screen(() => import('./screens/Tablero'), 'Tablero'),
 })
 
+/**
+ * Detalle de una tarea (ADR-0023): ruta propia, con enlace compartible y recargable. Cuelga del
+ * tablero: en escritorio se ve como panel lateral sobre él; en móvil, a pantalla completa.
+ */
+const taskRoute = createRoute({
+  getParentRoute: () => boardRoute,
+  path: 'tareas/$taskId',
+  component: screen(() => import('./screens/TareaDetalle'), 'TareaDetalle'),
+})
+
 const notesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'notas',
@@ -182,7 +192,7 @@ const routeTree = rootRoute.addChildren([
   appRoute.addChildren([
     homeRoute,
     projectsRoute,
-    boardRoute,
+    boardRoute.addChildren([taskRoute]),
     notesRoute,
     financeRoute,
     assistantRoute,

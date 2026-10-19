@@ -136,10 +136,13 @@ export function createMemoryStore(
       changed()
       return structuredClone(full)
     },
-    async list({ projectId, since, limit = 50 }) {
+    async list({ projectId, entityId, since, limit = 50 }) {
       return activity
         .filter(
-          (a) => (!projectId || a.projectId === projectId) && (!since || a.createdAt >= since),
+          (a) =>
+            (!projectId || a.projectId === projectId) &&
+            (!entityId || a.entityId === entityId) &&
+            (!since || a.createdAt >= since),
         )
         .sort((a, b) => b.id - a.id)
         .slice(0, limit)
