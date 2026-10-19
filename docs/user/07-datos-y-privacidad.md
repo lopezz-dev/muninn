@@ -18,10 +18,21 @@ status: disponible
 > **Ahora mismo, en la app:**
 >
 > - **Con cuenta:** tus datos se guardan en Supabase, en un servidor de la Unión Europea (París). La
->   apariencia (cristal y color de acento) también va con tu cuenta. Lo que cambies en un dispositivo
->   aparece en los demás al recargar; la actualización al momento llegará más adelante.
+>   apariencia (cristal y color de acento) y los módulos que tienes activos también van con tu cuenta. Lo que
+>   cambies en un dispositivo aparece en los demás al momento, sin recargar.
 > - **En modo demo:** lo que creas vive en la memoria del navegador y se pierde al recargar. Solo la
 >   apariencia se guarda, en este dispositivo.
+
+## Sin conexión
+
+Con cuenta, Muninn guarda **en ese dispositivo** una copia de lo último que viste (tus proyectos, tareas y notas) para abrir
+al instante y poder consultarlo aunque no tengas red. Sin conexión la app es **de solo lectura**: verás el aviso «Sin
+conexión · solo lectura» y, si intentas cambiar algo, Muninn te avisa y lo deja como estaba. Al volver la red se actualiza sola.
+
+Esa copia es privada: se borra del dispositivo al **cerrar sesión**, caduca a los 7 días sin abrir la app y solo la puede
+recuperar tu cuenta. En modo demo no se guarda nada.
+
+> **Próximamente:** poder crear y editar sin conexión, y que los cambios se envíen al volver la red.
 
 ## Tu sesión
 

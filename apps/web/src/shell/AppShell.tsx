@@ -8,12 +8,15 @@ import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
 
-// Diferidos: los diálogos y la pantalla de «módulo desactivado» no viajan con el shell.
+// Diferidos: los diálogos, la pantalla de «módulo desactivado» y el aviso de «sin conexión» no viajan con el shell.
 // El buscador se pide nada más pintar el shell (fuera del JS del arranque) y casi siempre está listo al abrirlo.
 const CommandPalette = lazy(() =>
   import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
 )
 const ModuleOff = lazy(() => import('./ModuleOff').then((m) => ({ default: m.ModuleOff })))
+const OfflineNotice = lazy(() =>
+  import('./OfflineNotice').then((m) => ({ default: m.OfflineNotice })),
+)
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
 )
@@ -133,6 +136,7 @@ export function AppShell() {
           initialQuery={palette.query}
           onOpenChange={(open) => setPalette((p) => ({ ...p, open }))}
         />
+        <OfflineNotice />
       </Suspense>
       <NewProjectDialog open={newProject} onOpenChange={setNewProject} />
       {newTask.loaded ? (

@@ -45,7 +45,11 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             { name: 'react', test: /node_modules[/](react|react-dom|scheduler)[/]/ },
-            { name: 'tanstack', test: /node_modules[/]@tanstack[/]/ },
+            // `query-persist-client-core` y la hidratación de query-core son de la caché sin conexión (diferida, lib/offline.ts): fuera del grupo.
+            {
+              name: 'tanstack',
+              test: /node_modules[/]@tanstack[/](?!query-persist-client-core|.*[/]hydration)/,
+            },
             {
               name: 'ui-vendor',
               test: /node_modules[/](sonner|@phosphor-icons|tailwind-merge|clsx|class-variance-authority)[/]/,
