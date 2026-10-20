@@ -49,7 +49,9 @@
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
   - [x] Selector de repos en Integraciones; los públicos se comprueban al elegirlos (ADR-0035)
   - [x] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real (20 de octubre, [Pruebas finales](#pruebas-finales))
-  - [ ] Pantalla **GitHub** del diseño (repositorios vinculados, «Sincronizar ahora»): llega después de la puesta en marcha
+  - [x] Pantalla **GitHub** del diseño: repos vinculados y sin vincular (vincular, mover y soltar con «Deshacer»), «Sincronizar
+    ahora», columna del agente por proyecto y «Ejecuciones recientes» sacadas de la actividad. Sin el interruptor de pausa por repo
+    del diseño (no existe en el modelo de datos)
 - [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza (ADR-0032, aceptado el
   20 de octubre con la revisión de [#17](https://github.com/lopezz-dev/muninn/pull/17))
   - [x] Columna marcada por proyecto, etiqueta `muninn:agent` que sigue a la columna, PRs del agente que mueven la tarea, cola al

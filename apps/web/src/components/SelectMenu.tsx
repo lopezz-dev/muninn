@@ -64,7 +64,7 @@ export function SelectMenu<T extends string>({
         >
           {buttonText ? null : current?.dot ? <ColorDot color={current.dot} /> : null}
           {buttonText ? null : current?.icon}
-          <span className="truncate">{buttonText ?? current?.label}</span>
+          <span className="min-w-0 flex-1 truncate text-left">{buttonText ?? current?.label}</span>
           <icons.chevronDown size={12} className="shrink-0 text-fg-subtle" />
         </button>
       </MenuTrigger>

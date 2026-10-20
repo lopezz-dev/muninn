@@ -7,13 +7,29 @@ status: parcial
 
 # GitHub
 
-> **Estado:** la sincronización está en marcha y probada con issues reales. La pantalla **GitHub** (repositorios y agentes) llegará
-> después.
+> **Estado:** la sincronización está en marcha y probada con issues reales. El agente necesita una preparación en cada repositorio
+> (más abajo).
+
+## La pantalla GitHub
+
+En **GitHub** (en la barra lateral, o en **Más** en el móvil) tienes todo junto:
+
+- **Tus repositorios.** Primero los vinculados, con su proyecto, cuántas issues siguen abiertas y cuándo cambió algo por última vez.
+  Debajo, los demás repositorios a los que llega la sincronización, como «Sin vincular» (si son muchos, **Ver más**).
+- **Vincular desde aquí.** En la columna **Proyecto en Muninn** elige el proyecto de un repositorio, o **Sin vincular** para soltarlo.
+  Si eliges otro proyecto para un repositorio que ya está vinculado, se pasa a ese proyecto. Siempre con **Deshacer**.
+- **Sincronizar ahora.** Muninn repasa en ese momento todos los repositorios vinculados, sin esperar a los 5 minutos, y te dice qué ha
+  cambiado («2 issues nuevas y 1 cambiada»). Si un repositorio falla, lo verás en rojo en su fila.
+- **La columna del agente** de cada proyecto vinculado, para elegirla o quitarla sin ir al tablero.
+- **Ejecuciones recientes:** qué está haciendo el agente. **Trabajando** si la tarea está en su columna; **PR abierto**, **Fusionado**
+  o **PR cerrado** según su *pull request* (con enlace); **Sin PR** si terminó sin abrir ninguna.
+
+El diseño tiene también un interruptor para pausar un repositorio. Todavía no existe: para que deje de sincronizar, desvincúlalo.
 
 ## Vincular un repositorio
 
-En **Ajustes › Integraciones** verás tus proyectos, cada uno con un selector para su repositorio. Ábrelo y elige uno de la lista. Te lo
-confirma un aviso con **Deshacer**. Para desvincularlo, elige **Sin repositorio**.
+Además de en la pantalla **GitHub**, en **Ajustes › Integraciones** verás tus proyectos, cada uno con un selector para su repositorio.
+Ábrelo y elige uno de la lista. Te lo confirma un aviso con **Deshacer**. Para desvincularlo, elige **Sin repositorio**.
 
 En la lista salen tus repositorios privados a los que la sincronización tiene acceso y **todos** tus repositorios públicos. Al elegir uno
 público, Muninn comprueba en un momento que la sincronización pueda usarlo; si no puede, te avisa y no lo vincula.
