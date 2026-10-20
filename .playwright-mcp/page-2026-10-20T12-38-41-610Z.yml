@@ -1,0 +1,140 @@
+- generic:
+  - generic:
+    - link [aria-hidden]:
+      - /url: "#contenido"
+      - text: Saltar al contenido
+    - generic:
+      - complementary [aria-hidden]:
+        - generic:
+          - generic: Muninn
+          - generic: v0.1.0
+        - button:
+          - text: Buscar o preguntar…
+          - generic: Ctrl K
+        - navigation:
+          - link:
+            - /url: /
+            - text: Inicio
+          - link:
+            - /url: /proyectos
+            - text: Proyectos
+            - generic: "2"
+          - link:
+            - /url: /notas
+            - text: Notas
+          - link:
+            - /url: /asistente
+            - text: Asistente
+          - link:
+            - /url: /github
+            - text: GitHub
+        - region:
+          - generic:
+            - heading [level=2]: Proyectos
+            - button
+          - link:
+            - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4
+            - generic: Muninn
+            - generic: "1"
+          - link:
+            - /url: /proyectos/b659e36c-c7fe-4f5f-bdb4-64e5773c2e64
+            - generic: "[prueba Muninn] Proyecto"
+        - navigation:
+          - link:
+            - /url: /documentacion
+            - text: Documentación
+          - link:
+            - /url: /ajustes
+            - text: Ajustes
+        - generic:
+          - link:
+            - /url: /ajustes/cuenta
+            - generic:
+              - generic: Alex López
+              - generic: Guardado en tu cuenta
+      - main:
+        - generic:
+          - navigation [aria-hidden]:
+            - link:
+              - /url: /proyectos
+              - text: Proyectos
+            - generic: "[prueba Muninn] Proyecto"
+          - generic [aria-hidden]:
+            - generic:
+              - heading [level=1]:
+                - generic: "[prueba Muninn] Proyecto"
+            - generic:
+              - radiogroup:
+                - radio [checked]: Tablero
+                - radio: Lista
+              - button:
+                - generic: Nueva tarea
+                - generic: "N"
+              - button [expanded]
+          - search [aria-hidden]:
+            - generic:
+              - searchbox
+            - button: Prioridad
+            - button: Etiquetas
+            - button: Origen
+            - button: Vence
+          - region [aria-hidden]:
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Backlog
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Pendiente
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: En curso
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Revisión
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Hecho
+                - generic: "0"
+                - generic:
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+            - button: Añadir columna
+          - status
+    - region "Notificaciones alt+T"
+  - menu "Opciones del proyecto" [active] [ref=f9e145]:
+    - menuitem "Copiar enlace" [ref=f9e146] [cursor=pointer]
+    - menuitem "Archivar proyecto" [ref=f9e151] [cursor=pointer]

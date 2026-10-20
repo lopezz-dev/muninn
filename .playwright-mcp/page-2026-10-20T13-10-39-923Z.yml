@@ -1,0 +1,239 @@
+- generic:
+  - generic:
+    - link [aria-hidden]:
+      - /url: "#contenido"
+      - text: Saltar al contenido
+    - generic:
+      - complementary [aria-hidden]:
+        - generic:
+          - generic: Muninn
+          - generic: v0.1.0
+        - button:
+          - text: Buscar o preguntar…
+          - generic: Ctrl K
+        - navigation:
+          - link:
+            - /url: /
+            - text: Inicio
+          - link:
+            - /url: /proyectos
+            - text: Proyectos
+            - generic: "1"
+          - link:
+            - /url: /notas
+            - text: Notas
+          - link:
+            - /url: /asistente
+            - text: Asistente
+          - link:
+            - /url: /github
+            - text: GitHub
+        - region:
+          - generic:
+            - heading [level=2]: Proyectos
+            - button
+          - link:
+            - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4
+            - generic: Muninn
+            - generic: "3"
+        - navigation:
+          - link:
+            - /url: /documentacion
+            - text: Documentación
+          - link:
+            - /url: /ajustes
+            - text: Ajustes
+        - generic:
+          - link:
+            - /url: /ajustes/cuenta
+            - generic:
+              - generic: Alex López
+              - generic: Guardado en tu cuenta
+      - main:
+        - generic:
+          - navigation [aria-hidden]:
+            - link:
+              - /url: /proyectos
+              - text: Proyectos
+            - generic: Muninn
+          - generic [aria-hidden]:
+            - generic:
+              - heading [level=1]:
+                - generic: Muninn
+            - generic:
+              - radiogroup:
+                - radio [checked]: Tablero
+                - radio: Lista
+              - button:
+                - generic: Nueva tarea
+                - generic: "N"
+              - button
+          - search [aria-hidden]:
+            - generic:
+              - searchbox
+            - button: Prioridad
+            - button: Etiquetas
+            - button: Origen
+            - button: Vence
+          - region [aria-hidden]:
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Backlog
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Pendiente
+                - generic: "3"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - link:
+                  - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/bfced5cb-3f95-4501-9d1d-890783256d79
+                  - generic: Testing
+                  - generic:
+                    - generic: Ayer
+                    - generic: Media
+                - link:
+                  - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/220775fb-1523-4cca-9e87-ad11d46c11ad
+                  - generic: "[prueba Muninn] Issue que se borrará"
+                  - generic:
+                    - generic:
+                      - text: GitHub
+                      - generic: "#254"
+                - link:
+                  - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/7fa85721-7044-4608-a525-9b9ee961ca42
+                  - generic:
+                    - generic: enhancement
+                    - generic: question
+                  - generic: "[prueba Muninn] Título editado en GitHub"
+                  - generic:
+                    - generic:
+                      - text: GitHub
+                      - generic: "#253"
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: En curso
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Revisión
+                - generic: "0"
+                - generic:
+                  - button
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+              - button: Añadir tarea
+            - region:
+              - generic:
+                - button
+                - heading [level=2]: Hecho
+                - generic: "0"
+                - generic:
+                  - button
+              - generic:
+                - paragraph: Sin tareas. Arrastra una aquí.
+            - button: Añadir columna
+          - status
+    - region "Notificaciones alt+T":
+      - list:
+        - listitem:
+          - generic [ref=f10e2]:
+            - paragraph [ref=f10e9]: «[prueba Muninn] Título editado en GitHub» reabierta
+            - button "Deshacer" [ref=f10e10] [cursor=pointer]
+  - dialog [ref=f10e12]:
+    - generic [ref=f10e13]:
+      - heading [level=2] [ref=f10e14]:
+        - generic [ref=f10e15]: MuninnPendiente
+      - generic [ref=f10e19]:
+        - button "Copiar enlace" [ref=f10e20] [cursor=pointer]
+        - button "Más acciones" [ref=f10e23] [cursor=pointer]
+        - button "Cerrar" [ref=f10e26] [cursor=pointer]
+    - generic [ref=f10e30]:
+      - generic [ref=f10e31]:
+        - checkbox "Completar tarea" [active] [ref=f10e32] [cursor=pointer]
+        - textbox "Título de la tarea" [ref=f10e33]: "[prueba Muninn] Título editado en GitHub"
+      - generic [ref=f10e34]:
+        - generic [ref=f10e35]:
+          - term [ref=f10e36]: Estado
+          - definition [ref=f10e37]:
+            - 'button "Estado: Pendiente" [ref=f10e38] [cursor=pointer]':
+              - generic [ref=f10e40]: Pendiente
+        - generic [ref=f10e43]:
+          - term [ref=f10e44]: Prioridad
+          - definition [ref=f10e45]:
+            - 'button "Prioridad: Sin prioridad" [ref=f10e46] [cursor=pointer]':
+              - generic [ref=f10e47]: Sin prioridad
+        - generic [ref=f10e50]:
+          - term [ref=f10e51]: Vence
+          - definition [ref=f10e52]:
+            - textbox "Fecha de vencimiento" [ref=f10e54]
+        - generic [ref=f10e55]:
+          - term [ref=f10e56]: Etiquetas
+          - definition [ref=f10e57]:
+            - generic [ref=f10e58]:
+              - generic [ref=f10e59]:
+                - text: enhancement
+                - button "Quitar la etiqueta enhancement" [ref=f10e60] [cursor=pointer]
+              - generic [ref=f10e63]:
+                - text: question
+                - button "Quitar la etiqueta question" [ref=f10e64] [cursor=pointer]
+              - textbox "Añadir etiqueta" [ref=f10e67]:
+                - /placeholder: + Añadir
+        - generic [ref=f10e68]:
+          - term [ref=f10e69]: Origen
+          - definition [ref=f10e70]:
+            - 'link "Abrir la issue #253 en GitHub" [ref=f10e71] [cursor=pointer]':
+              - /url: https://github.com/lopezz-dev/huginnDB/issues/253
+              - text: GitHub
+              - generic [ref=f10e74]: "#253"
+            - generic [ref=f10e77]: · creada hace 36 minutos
+      - generic [ref=f10e78]:
+        - heading "Descripción" [level=2] [ref=f10e80]
+        - paragraph [ref=f10e81]: "El título y la descripción vienen de la issue: cámbialos en GitHub y aquí se actualizan solos."
+        - paragraph [ref=f10e84]: Descripción editada en GitHub (prueba de la sincronización).
+      - region [ref=f10e85]:
+        - heading "Subtareas" [level=2] [ref=f10e87]
+        - list
+        - generic [ref=f10e89]:
+          - generic [ref=f10e90]: Añadir subtarea
+          - textbox "Añadir subtarea" [ref=f10e92]
+      - generic [ref=f10e93]:
+        - generic [ref=f10e94]:
+          - heading "Notas vinculadas" [level=2] [ref=f10e95]
+          - button "Añadir nota" [ref=f10e96] [cursor=pointer]
+        - paragraph [ref=f10e99]: Apuntes, decisiones o pasos de esta tarea.
+      - generic [ref=f10e100]:
+        - heading "Actividad" [level=2] [ref=f10e101]
+        - list [ref=f10e102]:
+          - listitem [ref=f10e103]:
+            - generic [ref=f10e107]: Tú reabriste la tarea · ahora mismo
+          - listitem [ref=f10e108]:
+            - generic [ref=f10e112]: Tú completaste la tarea · hace 34 minutos
+          - listitem [ref=f10e113]:
+            - generic [ref=f10e117]: GitHub reabrió la tarea · hace 35 minutos
+          - listitem [ref=f10e118]:
+            - generic [ref=f10e122]: GitHub completó la tarea · hace 35 minutos
+          - listitem [ref=f10e123]:
+            - generic [ref=f10e127]: GitHub cambió el título y la descripción · hace 35 minutos
+          - listitem [ref=f10e128]:
+            - generic [ref=f10e132]: GitHub creó la tarea · hace 36 minutos
+    - button "Completar" [ref=f10e134] [cursor=pointer]

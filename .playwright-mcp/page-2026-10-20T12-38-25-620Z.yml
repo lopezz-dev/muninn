@@ -1,0 +1,142 @@
+- generic:
+  - generic:
+    - link [aria-hidden]:
+      - /url: "#contenido"
+      - text: Saltar al contenido
+    - generic [aria-hidden]:
+      - complementary:
+        - generic:
+          - generic: Muninn
+          - generic: v0.1.0
+        - button:
+          - text: Buscar o preguntar…
+          - generic: Ctrl K
+        - navigation:
+          - link:
+            - /url: /
+            - text: Inicio
+          - link:
+            - /url: /proyectos
+            - text: Proyectos
+            - generic: "2"
+          - link:
+            - /url: /notas
+            - text: Notas
+          - link:
+            - /url: /asistente
+            - text: Asistente
+          - link:
+            - /url: /github
+            - text: GitHub
+        - region:
+          - generic:
+            - heading [level=2]: Proyectos
+            - button
+          - link:
+            - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4
+            - generic: Muninn
+            - generic: "1"
+          - link:
+            - /url: /proyectos/b659e36c-c7fe-4f5f-bdb4-64e5773c2e64
+            - generic: "[prueba Muninn] Proyecto"
+        - navigation:
+          - link:
+            - /url: /documentacion
+            - text: Documentación
+          - link:
+            - /url: /ajustes
+            - text: Ajustes
+        - generic:
+          - link:
+            - /url: /ajustes/cuenta
+            - generic:
+              - generic: Alex López
+              - generic: Guardado en tu cuenta
+      - main:
+        - generic:
+          - navigation:
+            - paragraph: Ajustes
+            - link:
+              - /url: /ajustes/cuenta
+              - text: Cuenta
+            - link:
+              - /url: /ajustes/modulos
+              - text: Módulos
+            - link:
+              - /url: /ajustes/apariencia
+              - text: Apariencia
+            - link:
+              - /url: /ajustes/asistente
+              - text: Asistente e IA
+            - link:
+              - /url: /ajustes/integraciones
+              - text: Integraciones
+            - link:
+              - /url: /ajustes/notificaciones
+              - text: Notificaciones
+            - link:
+              - /url: /ajustes/datos
+              - text: Datos y sincronización
+            - link:
+              - /url: /ajustes/atajos
+              - text: Atajos de teclado
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=1]:
+                  - generic: Integraciones
+            - generic:
+              - generic:
+                - generic:
+                  - heading [level=2]: GitHub
+                  - paragraph: Las issues de un repositorio llegan como tareas de su proyecto. Cerrar la issue completa la tarea, y completar la tarea cierra la issue.
+              - generic:
+                - generic:
+                  - term: Módulo
+                  - definition:
+                    - text: Activado
+                    - link:
+                      - /url: /ajustes/modulos
+                      - text: Cambiar
+                - generic:
+                  - term: Sincronización
+                  - definition: 1 tarea de GitHub · último cambio hace 2 minutos
+            - generic:
+              - heading [level=2]: Repositorio de cada proyecto
+              - paragraph: Un repositorio por proyecto. Salen los repositorios que ve el token de la sincronización; al elegir uno público se comprueba que el token pueda usarlo. Si falta alguno, dale acceso en GitHub y vuelve a esta página.
+              - generic:
+                - generic: Muninn
+                - generic:
+                  - button:
+                    - generic: lopezz-dev/huginnDB
+              - generic:
+                - generic: "[prueba Muninn] Proyecto"
+                - generic:
+                  - button [expanded]:
+                    - generic: Sin repositorio
+            - paragraph:
+              - text: Las tareas que vienen de GitHub llevan su insignia y su número de issue. Su título y su descripción se cambian en GitHub; lo demás (columna, prioridad, fecha, subtareas y notas) es tuyo.
+              - link:
+                - /url: /documentacion/github
+                - text: Cómo funciona
+    - region "Notificaciones alt+T"
+  - 'menu "Repositorio de GitHub de [prueba Muninn] Proyecto: Sin repositorio" [active] [ref=f8e1]':
+    - menuitem "Sin repositorio" [ref=f8e2] [cursor=pointer]
+    - menuitem "CheapCheese/cheapcheese.github.io" [ref=f8e7] [cursor=pointer]
+    - menuitem "Herpmes/Herpmes.github.io" [ref=f8e10] [cursor=pointer]
+    - menuitem "lopezz-dev/ActionRPG" [ref=f8e13] [cursor=pointer]
+    - menuitem "lopezz-dev/Backend_ChepCheese" [ref=f8e16] [cursor=pointer]
+    - menuitem "lopezz-dev/calenlab" [ref=f8e19] [cursor=pointer]
+    - menuitem "lopezz-dev/CheapCheese_Front" [ref=f8e22] [cursor=pointer]
+    - menuitem "lopezz-dev/flask-app" [ref=f8e25] [cursor=pointer]
+    - menuitem "lopezz-dev/futsal_app" [ref=f8e28] [cursor=pointer]
+    - menuitem "lopezz-dev/huginnDB en Muninn" [disabled]:
+      - generic:
+        - generic:
+          - text: lopezz-dev/huginnDB
+          - generic: en Muninn
+    - menuitem "lopezz-dev/lopezz-dev" [ref=f8e31] [cursor=pointer]
+    - menuitem "lopezz-dev/mya" [ref=f8e34] [cursor=pointer]
+    - menuitem "lopezz-dev/newman-front" [ref=f8e37] [cursor=pointer]
+    - menuitem "lopezz-dev/templateAstroPage" [ref=f8e40] [cursor=pointer]
+    - menuitem "lopezz-dev/WordPressHeadless" [ref=f8e43] [cursor=pointer]

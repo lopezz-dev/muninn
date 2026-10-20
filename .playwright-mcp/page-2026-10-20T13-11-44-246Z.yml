@@ -1,0 +1,126 @@
+- generic [ref=f11e2]:
+  - link "Saltar al contenido" [ref=f11e3] [cursor=pointer]:
+    - /url: "#contenido"
+  - generic [ref=f11e4]:
+    - complementary "Barra lateral" [ref=f11e5]:
+      - generic [ref=f11e6]:
+        - generic [ref=f11e11]: Muninn
+        - generic [ref=f11e12]: v0.1.0
+      - button "Buscar o preguntar… Ctrl K" [ref=f11e13] [cursor=pointer]:
+        - text: Buscar o preguntar…
+        - generic [ref=f11e16]: Ctrl K
+      - navigation "Principal" [ref=f11e17]:
+        - link "Inicio" [ref=f11e18] [cursor=pointer]:
+          - /url: /
+        - link "Proyectos 1" [ref=f11e21] [cursor=pointer]:
+          - /url: /proyectos
+          - text: Proyectos
+          - generic [ref=f11e24]: "1"
+        - link "Notas" [ref=f11e25] [cursor=pointer]:
+          - /url: /notas
+        - link "Asistente" [ref=f11e28] [cursor=pointer]:
+          - /url: /asistente
+        - link "GitHub" [ref=f11e31] [cursor=pointer]:
+          - /url: /github
+      - region [ref=f11e34]:
+        - generic [ref=f11e35]:
+          - heading "Proyectos" [level=2] [ref=f11e36]
+          - button "Nuevo proyecto" [ref=f11e37] [cursor=pointer]
+        - link "Muninn 1" [ref=f11e193] [cursor=pointer]:
+          - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4
+          - generic [ref=f11e42]: Muninn
+          - generic [ref=f11e43]: "1"
+      - navigation "Ayuda y ajustes" [ref=f11e45]:
+        - link "Documentación" [ref=f11e46] [cursor=pointer]:
+          - /url: /documentacion
+        - link "Ajustes" [ref=f11e49] [cursor=pointer]:
+          - /url: /ajustes
+      - 'link "Tu cuenta: Alex López" [ref=f11e53] [cursor=pointer]':
+        - /url: /ajustes/cuenta
+        - img "Alex López" [ref=f11e54]
+        - generic [ref=f11e55]:
+          - generic [ref=f11e56]: Alex López
+          - generic [ref=f11e57]: Guardado en tu cuenta
+    - main [ref=f11e59]:
+      - generic [ref=f11e60]:
+        - navigation "Ruta" [ref=f11e61]:
+          - link "Proyectos" [ref=f11e62] [cursor=pointer]:
+            - /url: /proyectos
+          - generic [ref=f11e65]: Muninn
+        - generic [ref=f11e66]:
+          - heading "Muninn" [level=1] [ref=f11e68]
+          - generic [ref=f11e71]:
+            - radiogroup "Vista" [ref=f11e72]:
+              - radio "Tablero" [ref=f11e73] [cursor=pointer]
+              - radio "Lista" [checked] [ref=f11e76] [cursor=pointer]
+            - button "Nueva tarea N" [ref=f11e79] [cursor=pointer]:
+              - generic [ref=f11e82]: Nueva tarea
+              - generic [ref=f11e83]: "N"
+            - button "Opciones del proyecto" [ref=f11e84] [cursor=pointer]
+        - search "Filtrar el tablero" [ref=f11e87]:
+          - searchbox "Filtrar tareas por texto" [ref=f11e91]
+          - button "Filtrar por prioridad" [ref=f11e92] [cursor=pointer]: Prioridad
+          - button "Filtrar por etiquetas" [ref=f11e95] [cursor=pointer]: Etiquetas
+          - button "Filtrar por origen" [ref=f11e98] [cursor=pointer]: Origen
+          - button "Filtrar por vence" [ref=f11e101] [cursor=pointer]: Vence
+        - generic [ref=f11e104]:
+          - region "Backlog" [ref=f11e105]:
+            - heading [level=2] [ref=f11e106]:
+              - button "Backlog 0" [expanded] [ref=f11e107] [cursor=pointer]:
+                - generic [ref=f11e111]: Backlog
+                - generic [ref=f11e112]: "0"
+            - generic [ref=f11e113]:
+              - paragraph [ref=f11e114]: Sin tareas en Backlog.
+              - button "Añadir tarea" [ref=f11e116] [cursor=pointer]
+          - region "Pendiente" [ref=f11e119]:
+            - heading [level=2] [ref=f11e194]:
+              - button "Pendiente 1" [expanded] [ref=f11e195] [cursor=pointer]:
+                - generic [ref=f11e125]: Pendiente
+                - generic [ref=f11e126]: "1"
+            - generic [ref=f11e127]:
+              - list [ref=f11e128]:
+                - listitem [ref=f11e129]:
+                  - 'checkbox "Completar: Testing" [ref=f11e130] [cursor=pointer]'
+                  - link "Testing" [ref=f11e132] [cursor=pointer]:
+                    - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/bfced5cb-3f95-4501-9d1d-890783256d79
+                  - generic [ref=f11e133]: Ayer
+                  - generic [ref=f11e137]: Media
+              - button "Añadir tarea" [ref=f11e152] [cursor=pointer]
+          - region "En curso" [ref=f11e155]:
+            - heading [level=2] [ref=f11e156]:
+              - button "En curso 0" [expanded] [ref=f11e157] [cursor=pointer]:
+                - generic [ref=f11e161]: En curso
+                - generic [ref=f11e162]: "0"
+            - generic [ref=f11e163]:
+              - paragraph [ref=f11e164]: Sin tareas en En curso.
+              - button "Añadir tarea" [ref=f11e166] [cursor=pointer]
+          - region "Revisión" [ref=f11e169]:
+            - heading [level=2] [ref=f11e170]:
+              - button "Revisión 0" [expanded] [ref=f11e171] [cursor=pointer]:
+                - generic [ref=f11e175]: Revisión
+                - generic [ref=f11e176]: "0"
+            - generic [ref=f11e177]:
+              - paragraph [ref=f11e178]: Sin tareas en Revisión.
+              - button "Añadir tarea" [ref=f11e180] [cursor=pointer]
+          - region "Hecho" [ref=f11e183]:
+            - heading [level=2] [ref=f11e196]:
+              - button "Hecho 1" [expanded] [ref=f11e197] [cursor=pointer]:
+                - generic [ref=f11e189]: Hecho
+                - generic [ref=f11e190]: "1"
+            - list [ref=f11e198]:
+              - listitem [ref=f11e199]:
+                - 'checkbox "Reabrir: [prueba Muninn] Título editado en GitHub" [checked] [ref=f11e200] [cursor=pointer]'
+                - link "[prueba Muninn] Título editado en GitHub" [ref=f11e202] [cursor=pointer]:
+                  - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/7fa85721-7044-4608-a525-9b9ee961ca42
+                - generic [ref=f11e203]:
+                  - generic [ref=f11e204]:
+                    - generic [ref=f11e205]: enhancement
+                    - generic [ref=f11e206]: question
+                  - generic [ref=f11e207]: Hecha ahora mismo
+                  - generic [ref=f11e208]: GitHub
+  - region "Notificaciones alt+T":
+    - list:
+      - listitem [ref=f11e211]:
+        - generic [ref=f11e215]:
+          - paragraph [ref=f11e222]: «[prueba Muninn] Título editado en GitHub» completada
+          - button "Deshacer" [ref=f11e223] [cursor=pointer]
