@@ -64,15 +64,64 @@ export function DueDate({
   )
 }
 
-/** Quién creó la tarea, si no fuiste tú. */
-export function SourceBadge({ source, className }: { source: TaskSource; className?: string }) {
+/** Número de la issue de un `external_id` de GitHub (`owner/repo#123` → 123). */
+export const issueNumber = (externalId: string | null) => {
+  const m = externalId ? /#(\d+)$/.exec(externalId) : null
+  return m ? Number(m[1]) : null
+}
+
+interface SourceBadgeProps {
+  source: TaskSource
+  externalId?: string | null
+  externalUrl?: string | null
+  /**
+   * Con `link`, la insignia de GitHub es un enlace a la issue. En las tarjetas del tablero no: la tarjeta
+   * entera ya es un enlace y no se pueden anidar.
+   */
+  link?: boolean
+  className?: string
+}
+
+/** Quién creó la tarea, si no fuiste tú. Las de GitHub llevan su número de issue. */
+export function SourceBadge({
+  source,
+  externalId,
+  externalUrl,
+  link,
+  className,
+}: SourceBadgeProps) {
   if (source === 'manual') return null
+  if (source === 'github') {
+    const n = issueNumber(externalId ?? null)
+    const body = (
+      <>
+        <Icon name="github" size={13} />
+        GitHub
+        {n ? <span className="font-mono tabular">#{n}</span> : null}
+      </>
+    )
+    return link && externalUrl ? (
+      <a
+        href={externalUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={n ? `Abrir la issue #${n} en GitHub` : 'Abrir la issue en GitHub'}
+        className={cn(
+          'inline-flex items-center gap-1 rounded-xs transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent',
+          className,
+        )}
+      >
+        {body}
+        <icons.external size={11} aria-hidden="true" />
+      </a>
+    ) : (
+      <span className={cn('inline-flex items-center gap-1', className)}>{body}</span>
+    )
+  }
   const [icon, label] =
-    source === 'github'
-      ? (['github', 'GitHub'] as const)
-      : source === 'mcp'
-        ? (['assistant', 'Creada por Claude'] as const)
-        : (['branch', 'Agente'] as const)
+    source === 'mcp'
+      ? (['assistant', 'Creada por Claude'] as const)
+      : (['branch', 'Agente'] as const)
   return (
     <span className={cn('inline-flex items-center gap-1', className)}>
       <Icon name={icon} size={13} />

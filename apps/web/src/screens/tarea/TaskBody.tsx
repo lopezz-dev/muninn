@@ -17,6 +17,9 @@ import { Checklist } from './Checklist'
 
 const h3 = 'text-xs font-semibold tracking-wider text-fg-subtle uppercase'
 
+/** En las tareas de una issue, GitHub manda en el título y la descripción (ADR-0031): aquí no se editan. */
+const fromGithub = (task: TaskWithColumn) => task.source === 'github' && task.externalId !== null
+
 interface BodyProps {
   task: TaskWithColumn
   board: BoardData
@@ -31,8 +34,10 @@ function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const [title, setTitle] = useState(task.title)
   useEffect(() => setTitle(task.title), [task.title])
   const done = task.column.kind === 'done'
+  const locked = fromGithub(task)
 
   const commit = () => {
+    if (locked) return
     const clean = title.trim()
     if (!clean) return setTitle(task.title)
     if (clean !== task.title) {
@@ -52,6 +57,8 @@ function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
       />
       <textarea
         aria-label="Título de la tarea"
+        readOnly={locked}
+        title={locked ? 'El título viene de GitHub: cámbialo en la issue' : undefined}
         value={title}
         rows={1}
         maxLength={300}
@@ -242,7 +249,13 @@ function Properties({ task, board, touch }: BodyProps) {
           <DueField task={task} touch />
         </div>
         <LabelsField task={task} />
-        <SourceBadge source={task.source} className="text-sm text-fg-subtle" />
+        <SourceBadge
+          source={task.source}
+          externalId={task.externalId}
+          externalUrl={task.externalUrl}
+          link
+          className="text-sm text-fg-subtle"
+        />
       </div>
     )
   }
@@ -279,7 +292,12 @@ function Properties({ task, board, touch }: BodyProps) {
               Manual
             </>
           ) : (
-            <SourceBadge source={task.source} />
+            <SourceBadge
+              source={task.source}
+              externalId={task.externalId}
+              externalUrl={task.externalUrl}
+              link
+            />
           )}
           <span className="font-normal text-fg-subtle">· creada {timeAgo(task.createdAt)}</span>
         </dd>
@@ -304,7 +322,8 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
   const [editing, setEditing] = useState(false)
   useEffect(() => setText(task.description), [task.description])
   const hasText = task.description.trim().length > 0
-  const showing = hasText && !editing
+  const locked = fromGithub(task)
+  const showing = (hasText || locked) && !editing
 
   const toggleBox = (index: number) => {
     const next = toggleTask(task.description, index)
@@ -319,29 +338,46 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
         <>
           <div className="flex items-center justify-between gap-2">
             <h2 className={h3}>Descripción</h2>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="-mr-2 h-7 cursor-pointer rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
-            >
-              Editar
-            </button>
+            {locked ? null : (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="-mr-2 h-7 cursor-pointer rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+              >
+                Editar
+              </button>
+            )}
           </div>
+          {locked ? (
+            <p className="text-xs text-fg-subtle">
+              El título y la descripción vienen de la issue: cámbialos en GitHub y aquí se
+              actualizan solos.
+            </p>
+          ) : null}
           {/* Un clic en el texto (no en un enlace ni en una casilla) pasa a editar. */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: el botón «Editar» es la vía de teclado */}
           {/* biome-ignore lint/a11y/noStaticElementInteractions: ver arriba */}
           <div
             onClick={(e) => {
-              if (!(e.target as HTMLElement).closest('a, input, button')) setEditing(true)
+              if (!locked && !(e.target as HTMLElement).closest('a, input, button'))
+                setEditing(true)
             }}
-            className="cursor-text"
+            className={locked ? undefined : 'cursor-text'}
           >
             <Suspense
               fallback={
                 <p className="text-base whitespace-pre-wrap text-fg-muted">{task.description}</p>
               }
             >
-              <Markdown source={task.description} onToggleTask={toggleBox} className="text-base" />
+              {hasText ? (
+                <Markdown
+                  source={task.description}
+                  onToggleTask={locked ? undefined : toggleBox}
+                  className="text-base"
+                />
+              ) : (
+                <p className="text-sm text-fg-faint">La issue no tiene descripción.</p>
+              )}
             </Suspense>
           </div>
         </>
@@ -440,7 +476,10 @@ function ActivityLog({ task }: Pick<BodyProps, 'task'>) {
                   a.actor !== 'user' && 'text-accent',
                 )}
               >
-                <Icon name={a.actor === 'user' ? 'user' : 'assistant'} size={12} />
+                <Icon
+                  name={a.actor === 'user' ? 'user' : a.actor === 'github' ? 'github' : 'assistant'}
+                  size={12}
+                />
               </span>
               <span>
                 <b className="font-medium text-fg">{actorName(a.actor)}</b> {describeActivity(a)} ·{' '}

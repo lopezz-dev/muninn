@@ -1,3 +1,5 @@
+import { Button } from '@muninn/ui'
+import { Link } from '@tanstack/react-router'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 
 export function GitHub() {
@@ -8,6 +10,13 @@ export function GitHub() {
         icon="github"
         title="Conecta tus repositorios"
         soon="Fase 2"
+        actions={
+          <Button asChild variant="primary">
+            <Link to="/ajustes/$seccion" params={{ seccion: 'integraciones' }}>
+              Vincular repositorios
+            </Link>
+          </Button>
+        }
         preview={
           <div className="flex flex-col gap-2 pb-6">
             {[0, 1, 2].map((i) => (
@@ -24,7 +33,9 @@ export function GitHub() {
         }
       >
         Las issues de cada repositorio entrarán como tareas del proyecto vinculado, y al cerrar una
-        se completará la otra. También podrás pedir a un agente que las resuelva.
+        se completará la otra. Ya puedes vincular un repositorio a cada proyecto en Ajustes ›
+        Integraciones; la sincronización se activa en el servidor y aún no está en marcha. Esta
+        pantalla, con los repositorios y los agentes, llegará después.
       </EmptyState>
     </Page>
   )

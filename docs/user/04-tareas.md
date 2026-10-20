@@ -54,7 +54,7 @@ Cada tarea recuerda su **origen**, que se muestra con una insignia:
 |---|---|
 | Manual | La creaste tú en la app |
 | Asistente | La creó Claude u otro asistente por ti |
-| GitHub | Viene de una issue de GitHub *(próximamente)* |
+| GitHub | Viene de una issue de GitHub: lleva su número y su título y descripción se cambian allí (ver [GitHub](09-github.md)) |
 | Agente | La creó un agente automático *(próximamente)* |
 
 ## Vencidas, para hoy y próximas
