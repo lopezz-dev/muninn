@@ -28,3 +28,18 @@
 - Cuenta de GitHub: **`lopezz-dev`**. `gh auth status` aún puede mostrar el nombre antiguo (`Alexfp28`) por la
   caché del keyring; `gh api user` devuelve el real.
 - Compilar Rust: ver [gotchas/desktop](desktop.md).
+
+### Playwright MCP en Windows: regístralo desde PowerShell
+
+- **Síntoma:** `claude mcp list` dice que `playwright` no conecta (*Failed to connect*), o el navegador no abre: *Browser
+  "chrome-for-testing" is not installed*.
+- **Causa:** en Windows `npx` es un `.cmd` y hay que lanzarlo con `cmd /c`. Desde **Git Bash**, la conversión de rutas de MSYS
+  cambia `/c` por `C:/` y el servidor nunca arranca. Además, `@playwright/mcp` no trae el navegador: lo descarga aparte.
+- **Solución:** desde **PowerShell** (no Git Bash), en la raíz del repo y con ámbito local (no entra en `.mcp.json`):
+  ```powershell
+  claude mcp add playwright --scope local -- cmd /c npx -y @playwright/mcp@0.0.83 --browser chromium --user-data-dir C:\Users\<tú>\.muninn\playwright-profile
+  npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing
+  ```
+  El perfil persistente (fuera del repo) guarda la sesión de Muninn: solo hay que entrar con el código del correo la primera vez.
+- **Ojo:** las capturas, instantáneas y registros de la consola van a `.playwright-mcp/` en la raíz del repo; está en `.gitignore`.
+  `pnpm dev` debe estar corriendo (http://localhost:5173) y necesita `apps/web/.env.local` (ver [gotchas/web](web.md)).
