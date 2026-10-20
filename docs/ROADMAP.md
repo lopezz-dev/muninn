@@ -50,8 +50,11 @@
   - [x] Selector de repos en Integraciones; los públicos se comprueban al elegirlos (ADR-0035)
   - [x] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real (20 de octubre, [Pruebas finales](#pruebas-finales))
   - [ ] Pantalla **GitHub** del diseño (repositorios vinculados, «Sincronizar ahora»): llega después de la puesta en marcha
-- [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza. Diseño en ADR-0032
-  (propuesto, [#17](https://github.com/lopezz-dev/muninn/pull/17)); se implementa cuando la sincronización esté en marcha
+- [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza (ADR-0032, aceptado el
+  20 de octubre con la revisión de [#17](https://github.com/lopezz-dev/muninn/pull/17))
+  - [x] Columna marcada por proyecto, etiqueta `muninn:agent` que sigue a la columna, PRs del agente que mueven la tarea, cola al
+    momento tras mover (`/sync` con `scope`), migración, función desplegada y webhook suscrito a `pull_request`
+  - [ ] En `huginnDB`: GitHub App de Claude, secreto y workflow en `main` → [Pruebas finales](#pruebas-finales)
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai (ADR-0033, [#18](https://github.com/lopezz-dev/muninn/pull/18))
   - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
   - [ ] Despliegue y OAuth con Supabase para claude.ai y el móvil (sin verificar) → [Pruebas finales](#pruebas-finales)
@@ -89,6 +92,18 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] Borrar la issue (o transferirla) → la tarea se archiva (probado borrando, en ~4 s)
 - [x] Ajustes › Integraciones dice cuántas tareas han llegado y cuándo fue el último cambio
 - [x] `select * from github_outbox where processed_at is null` queda vacío tras un ciclo del cron
+
+### F2 · Columna «Para el agente» (ADR-0032)
+> Probado el 20 de octubre en la app (Playwright) y en `huginnDB` (issue #256) sin el workflow: la etiqueta llega en ~6 s al mover y se
+> va en ~4 s al sacar; una tarea manual no entra («Solo las tareas de GitHub…»); con webhooks `pull_request` firmados (PRs ficticios
+> #9998 y #9999): abierto → «Revisión» con «Ver el PR», cerrado → «Pendiente», fusionado → «Hecho» y la issue se cierra; quitar la
+> etiqueta sin PR → «Pendiente» con «terminó sin abrir un PR». Falta lo que necesita el repo:
+- [ ] Puesta en marcha en `huginnDB`: [gotchas/ci](gotchas/ci.md#columna-para-el-agente-pasos-manuales) › pasos 4 y 5 (App de Claude,
+  `CLAUDE_CODE_OAUTH_TOKEN` y el workflow en `main`)
+- [ ] Mover una issue sencilla a la columna: arranca «Muninn · agente» en Actions y abre un PR contra `develop` con `Closes #n`; la
+  tarea pasa a «Revisión» y la CI del repo corre en el PR
+- [ ] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`)
+- [ ] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer»
 
 ### F2 · MCP remoto ([#18](https://github.com/lopezz-dev/muninn/pull/18))
 - [ ] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)» (llega con [#18](https://github.com/lopezz-dev/muninn/pull/18))

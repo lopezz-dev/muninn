@@ -41,6 +41,29 @@ export const githubIssue = z.object({
 export type GithubIssue = z.input<typeof githubIssue>
 export type GithubIssueState = 'open' | 'closed'
 
+/** Etiqueta que lanza al agente en el repo (ADR-0032): la pone y la quita la sincronización. */
+export const AGENT_LABEL = 'muninn:agent'
+
+/** Lo que usa la columna del agente de un PR (evento `pull_request` del webhook). */
+export const githubPullRequest = z.object({
+  number: z.number().int().positive(),
+  html_url: z.url(),
+  body: z.string().nullable().optional(),
+  state: z.enum(['open', 'closed']),
+  merged: z.boolean().nullable().optional(),
+  draft: z.boolean().nullable().optional(),
+  head: z.object({ ref: z.string() }),
+})
+export type GithubPullRequest = z.input<typeof githubPullRequest>
+
+/** Qué lleva una entrada de la cola de salida: el estado de la issue o la etiqueta del agente. */
+export const outboxKind = z.enum(['state', 'agent'])
+export type OutboxKind = z.infer<typeof outboxKind>
+
+/** `outbox`: solo vaciar la cola (tras un cambio en la app); `all`: también repasar los repos. */
+export const githubSyncScope = z.enum(['outbox', 'all'])
+export type GithubSyncScope = z.infer<typeof githubSyncScope>
+
 /** Un repo al que llega el token de la sincronización: lo que ofrece el selector de Ajustes › Integraciones. */
 export const githubRepoSummary = z.object({
   fullName: githubRepo,
@@ -60,6 +83,8 @@ export interface Project {
   icon: string | null
   status: ProjectStatus
   githubRepo: string | null
+  /** Columna «Para el agente» (ADR-0032): mover ahí una tarea de GitHub etiqueta su issue. */
+  agentColumnId: string | null
   position: string
   createdAt: string
   updatedAt: string
@@ -156,6 +181,8 @@ export const updateProjectInput = z.object({
   icon: z.string().max(64).nullable().optional(),
   status: projectStatus.optional(),
   githubRepo: githubRepo.nullable().optional(),
+  /** La columna del agente; `null` la quita. Debe ser del proyecto y no de tipo «hecho». */
+  agentColumnId: id.nullable().optional(),
 })
 
 export const createColumnInput = z.object({

@@ -3,11 +3,13 @@ import type {
   ChecklistItem,
   CreateTaskInput,
   Muninn,
+  Project,
   TaskWithColumn,
   UpdateTaskInput,
 } from '@muninn/core'
 import { type IconName, notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { AGENT_ONLY_GITHUB, blocksAgentDrop, flushGithubSoon } from './agent'
 import { applyTaskMove, type BoardData, indexInColumn } from './board'
 import { fail, optimistic, rollback, serial, settle } from './mutations'
 import { keys } from './queries'
@@ -22,6 +24,10 @@ type TaskRef = Pick<TaskWithColumn, 'id' | 'projectId' | 'columnId' | 'title'>
 
 const board = (qc: QueryClient, projectId: string) =>
   qc.getQueryData<BoardData>(keys.board(projectId))
+
+/** El proyecto en caché (para su columna del agente). */
+const cachedProject = (qc: QueryClient, projectId: string) =>
+  qc.getQueryData<Project>(keys.project(projectId))
 
 // ─── Mover ──────────────────────────────────────────────────────────────────
 
@@ -43,6 +49,14 @@ export interface MoveOptions {
 /** Mueve (o reordena) una tarea: optimista, serializado y con «Deshacer» que la devuelve a su sitio. */
 export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Promise<boolean> {
   const { projectId, taskId, columnId, index } = o
+  // La columna del agente solo admite tareas de una issue (ADR-0032): se avisa antes de moverla.
+  const cached = board(qc, projectId)?.tasks.find((t) => t.id === taskId)
+  if (cached && blocksAgentDrop(cachedProject(qc, projectId), cached, columnId)) {
+    notify.error(AGENT_ONLY_GITHUB, {
+      description: 'Las que creas en Muninn no tienen una issue que etiquetar.',
+    })
+    return false
+  }
   const prev = await optimistic(qc, projectId, (d) => applyTaskMove(d, taskId, columnId, index))
   const task = prev?.tasks.find((t) => t.id === taskId)
   const fromColumnId = task?.columnId ?? o.fromColumnId
@@ -58,6 +72,8 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
     return false
   }
   settle(qc, projectId, taskId)
+  // Cerrar o reabrir la issue, o etiquetarla para el agente, sin esperar al cron.
+  if (task?.source === 'github' && task.columnId !== columnId) flushGithubSoon(m)
 
   if (o.undoing) return true
   const same = fromColumnId === columnId
@@ -122,9 +138,10 @@ export async function completeTask(m: Muninn, qc: QueryClient, task: TaskRef) {
   })
 }
 
-/** Vuelve a la primera columna «Por hacer» (o la primera que no sea «Hecho»). */
+/** Vuelve a la primera columna «Por hacer» (o la primera que no sea «Hecho»), sin contar la del agente. */
 export async function reopenTask(m: Muninn, qc: QueryClient, task: TaskRef) {
-  const cols = await columnsOf(m, qc, task.projectId)
+  const agent = cachedProject(qc, task.projectId)?.agentColumnId
+  const cols = (await columnsOf(m, qc, task.projectId)).filter((c) => c.id !== agent)
   const to = cols.find((c) => c.kind === 'todo') ?? cols.find((c) => c.kind !== 'done') ?? cols[0]
   if (!to) return false
   return moveTask(m, qc, {

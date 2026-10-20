@@ -39,8 +39,18 @@ const list = (items: string[]) =>
 /** «moviste la tarea de Pendiente a En curso», «Claude cambió el título». Sin el nombre del actor. */
 export function describeActivity(a: Pick<Activity, 'action' | 'actor' | 'payload'>): string {
   const verb = VERBS[a.action]?.[a.actor === 'user' ? 0 : 1] ?? a.action
-  const p = a.payload as { from?: string; to?: string }
+  const p = a.payload as { from?: string; to?: string; number?: number }
+  const pr = p.number ? `el PR #${p.number}` : 'el PR'
   switch (a.action) {
+    // Columna «Para el agente» (ADR-0032): el actor es el agente o GitHub, nunca tú.
+    case 'agent_pr_opened':
+      return `abrió ${pr} y pasó la tarea a revisión`
+    case 'agent_pr_merged':
+      return `completó la tarea al fusionarse ${pr}`
+    case 'agent_pr_closed':
+      return `devolvió la tarea: ${pr} se cerró sin fusionar`
+    case 'agent_stopped':
+      return 'sacó la tarea del agente: terminó sin abrir un PR'
     case 'moved':
       return p.from && p.to
         ? `${verb} la tarea de ${p.from} a ${p.to}`
@@ -60,4 +70,10 @@ export function describeActivity(a: Pick<Activity, 'action' | 'actor' | 'payload
     default:
       return verb
   }
+}
+
+/** El enlace al PR de un evento del agente, si es de GitHub (nunca se enlaza una URL cualquiera). */
+export function activityLink(a: Pick<Activity, 'payload'>): string | null {
+  const url = (a.payload as { url?: unknown }).url
+  return typeof url === 'string' && url.startsWith('https://github.com/') ? url : null
 }

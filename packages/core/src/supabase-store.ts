@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Activity, GithubRepoSummary, UserSettings } from './schemas'
+import type { Activity, GithubRepoSummary, GithubSyncScope, UserSettings } from './schemas'
 import {
   type ActivityLog,
   type Collection,
@@ -154,22 +154,24 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
-  // Tabla `github_outbox` (migración 20261020000000_github_outbox). Solo la usan las tareas de GitHub.
+  // Tabla `github_outbox` (migraciones 20261020000000_github_outbox y 20261020133907_agent_column).
+  // Solo la usan las tareas de GitHub.
   const githubOutbox: GithubOutbox = {
-    async enqueue(taskId) {
+    async enqueue(taskId, kind) {
       const { error } = await client
         .from('github_outbox')
-        .insert({ task_id: taskId, owner_id: ownerId })
+        .insert({ task_id: taskId, owner_id: ownerId, kind })
       if (error) throw error
     },
-    async pending({ maxAttempts, limit = 100, taskId }) {
+    async pending({ maxAttempts, limit = 100, taskId, kind }) {
       let qb = client
         .from('github_outbox')
-        .select('id, task_id, attempts, last_error, created_at')
+        .select('id, task_id, kind, attempts, last_error, created_at')
         .eq('owner_id', ownerId)
         .is('processed_at', null)
         .lt('attempts', maxAttempts)
       if (taskId) qb = qb.eq('task_id', taskId)
+      if (kind) qb = qb.eq('kind', kind)
       const { data, error } = await qb.order('id').limit(limit)
       if (error) throw error
       return (data as Row[]).map((r) => fromRow<OutboxEntry>(r))
@@ -214,6 +216,14 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       )
       if (error) throw error
       return (data as { writable: boolean }).writable
+    },
+    async sync(scope: GithubSyncScope) {
+      const { data, error } = await client.functions.invoke('github/sync', {
+        method: 'POST',
+        body: { scope },
+      })
+      if (error) throw error
+      return data as unknown
     },
   }
 

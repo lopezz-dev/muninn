@@ -56,6 +56,17 @@ function fakeGithub(issues: Record<string, GithubIssue[]> = {}) {
       const i = find(repo, n)
       if (i) i.state = state
     },
+    async addLabel(repo, n, label) {
+      changes.push({ repo, number: n, state: `+${label}` })
+      const i = find(repo, n)
+      if (i) i.labels = [...(i.labels ?? []), { name: label }]
+    },
+    async removeLabel(repo, n, label) {
+      changes.push({ repo, number: n, state: `-${label}` })
+      const i = find(repo, n)
+      if (i)
+        i.labels = (i.labels ?? []).filter((l) => (typeof l === 'string' ? l : l.name) !== label)
+    },
     async listRepos() {
       return []
     },
@@ -519,7 +530,14 @@ describe('github: repos para vincular', () => {
     expect(await user.github.repos()).toBeNull()
     let answer: unknown[] = [{ fullName: 'lopezz-dev/huginnDB', private: false, description: null }]
     const withRepos = createMuninn(
-      { ...store, githubRepos: { list: async () => answer as never, canWrite: async () => true } },
+      {
+        ...store,
+        githubRepos: {
+          list: async () => answer as never,
+          canWrite: async () => true,
+          sync: async () => ({}),
+        },
+      },
       { timeZone: 'UTC' },
     )
     expect(await withRepos.github.repos()).toEqual(answer)
@@ -536,6 +554,7 @@ describe('github: repos para vincular', () => {
         ...store,
         githubRepos: {
           list: async () => [],
+          sync: async () => ({}),
           canWrite: async (repo) => {
             asked.push(repo)
             return repo.endsWith('huginnDB')
