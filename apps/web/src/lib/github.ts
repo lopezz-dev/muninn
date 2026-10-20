@@ -1,4 +1,4 @@
-import type { Muninn, Project } from '@muninn/core'
+import type { GithubRepoSummary, Muninn, Project } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { fail, serial } from './mutations'
@@ -19,6 +19,82 @@ export function parseRepoInput(input: string): string | null | undefined {
   const [owner, repo] = s.split(/[/?#]/)
   const name = `${owner ?? ''}/${(repo ?? '').replace(/\.git$/i, '')}`
   return REPO.test(name) ? name : undefined
+}
+
+type ProjectRepo = Pick<Project, 'id' | 'name' | 'githubRepo'>
+
+export interface RepoChoice {
+  value: string
+  label: string
+  hint?: string
+  disabled?: boolean
+  tone?: string
+}
+
+const sameRepo = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+
+/**
+ * Lo que ofrece el selector de repo de `project`: «Sin repositorio» (`''`) y los repos a los que llega el
+ * token. Los que ya van con otro proyecto salen deshabilitados (uno por proyecto). Si el vinculado no está
+ * en la lista (se escribió a mano, o el token ya no llega), se añade al final para que se siga viendo.
+ * `value` es el elegido, con las mayúsculas de GitHub.
+ */
+export function repoChoices(
+  project: ProjectRepo,
+  projects: ProjectRepo[],
+  repos: GithubRepoSummary[],
+): { value: string; options: RepoChoice[] } {
+  const current = project.githubRepo
+  const options: RepoChoice[] = [{ value: '', label: 'Sin repositorio', tone: 'text-fg-muted' }]
+  for (const r of repos) {
+    const other = projects.find(
+      (p) => p.id !== project.id && p.githubRepo && sameRepo(p.githubRepo, r.fullName),
+    )
+    options.push({
+      value: r.fullName,
+      label: r.fullName,
+      hint: other ? `en ${other.name}` : r.private ? 'privado' : undefined,
+      disabled: Boolean(other),
+    })
+  }
+  if (!current) return { value: '', options }
+  const listed = repos.find((r) => sameRepo(r.fullName, current))
+  if (listed) return { value: listed.fullName, options }
+  options.push({ value: current, label: current, hint: 'sin acceso del token' })
+  return { value: current, options }
+}
+
+/**
+ * Vincula el repo elegido en el selector (o ninguno, con `null`). Los públicos salen en la lista aunque el token
+ * no llegue a ellos (ADR-0035): antes de vincular uno se pregunta, y si no llega se avisa y no se vincula.
+ */
+export async function pickProjectRepo(
+  m: Muninn,
+  qc: QueryClient,
+  project: Pick<Project, 'id' | 'name' | 'githubRepo'>,
+  repo: GithubRepoSummary | null,
+): Promise<boolean> {
+  if (
+    repo &&
+    !repo.private &&
+    (!project.githubRepo || !sameRepo(project.githubRepo, repo.fullName))
+  ) {
+    let writable: boolean | null
+    try {
+      writable = await m.github.canWrite(repo.fullName)
+    } catch (err) {
+      fail('No se pudo comprobar el acceso del token', err)
+      return false
+    }
+    if (writable === false) {
+      notify.error(`El token no tiene acceso a ${repo.fullName}`, {
+        description:
+          'Dáselo en GitHub › Settings › Developer settings › Fine-grained tokens, y vuelve a elegirlo.',
+      })
+      return false
+    }
+  }
+  return setProjectRepo(m, qc, project, repo?.fullName ?? null)
 }
 
 /** Vincula (o desvincula, con `null`) un repositorio a un proyecto, con aviso y «Deshacer». */

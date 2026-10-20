@@ -11,6 +11,8 @@ export const keys = {
   board: (projectId: string) => ['projects', projectId, 'board'] as const,
   overview: ['overview'] as const,
   settings: ['settings'] as const,
+  /** Repos a los que llega el token de la sincronización (Ajustes › Integraciones). */
+  githubRepos: ['github-repos'] as const,
   checklist: (taskId: string) => ['tasks', taskId, 'checklist'] as const,
   taskActivity: (taskId: string) => ['tasks', taskId, 'activity'] as const,
   taskNotes: (taskId: string) => ['tasks', taskId, 'notes'] as const,

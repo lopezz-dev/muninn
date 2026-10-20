@@ -137,6 +137,15 @@
   y la tabla llega con la migración `20261020000000_github_outbox`.
 - **Solución:** aplica esa migración **antes** de desplegar la función (paso 1 de abajo). Las tareas manuales no tocan la tabla.
 
+### Una Edge Function que llama el navegador necesita CORS
+
+- **Síntoma:** desde la app, `functions.invoke` falla con *Failed to send a request to the Edge Function* (o un error de CORS en la
+  consola), pero con `curl` la función responde bien.
+- **Causa:** `functions.invoke` manda `Authorization` y `apikey`, así que el navegador hace antes un `OPTIONS` (preflight). Si la función
+  no lo contesta con las cabeceras `access-control-allow-*`, el navegador corta la petición. `curl` no hace preflight.
+- **Solución:** contesta `OPTIONS` con 204 y pon las mismas cabeceras en todas las respuestas, también en las de error. Mira `cors` en
+  `supabase/functions/github/index.ts`. Compruébalo con `curl -i -X OPTIONS <url>`.
+
 ### Sincronización con GitHub (pasos manuales)
 
 - **Síntoma:** en Ajustes › Integraciones sale «Aún no ha llegado ninguna issue» aunque el proyecto tenga repositorio.
@@ -187,5 +196,12 @@
   uso real están en la pila «Pruebas finales» del [ROADMAP](../ROADMAP.md).
 - **Mantenimiento:** la cola guarda lo procesado. De vez en cuando (o con otro `cron.schedule`):
   `delete from github_outbox where processed_at < now() - interval '30 days';`
+- **Selector de repos:** Integraciones pide la lista a `GET /github/repos` ([ADR-0035](../adr/0035-repos-de-github-desde-la-funcion.md)).
+  Si sale «No se pudo cargar la lista de repositorios», mira **Edge Functions › github › Logs**: un 401 es que la sesión no es la de
+  `MUNINN_USER_ID`; un 500 con `Listar repositorios: 401`, que el token ha caducado. Si sale «El token no tiene acceso a …» al elegir
+  un repo, edita el token en GitHub y añade el repo en *Repository access*.
+- **Ojo:** la lista trae **todos** los repos públicos de la cuenta aunque el token sea *fine-grained* y no los tenga: todo token lee los
+  públicos. Por eso, al elegir uno público, la app pregunta a `GET /github/access?repo=…`, que intenta crear una issue sin título (422 =
+  tiene permiso; 403/404 = no). No lo «arregles» filtrando con `permissions` del repo: ese es el permiso del usuario, no el del token.
 - **Ojo:** si renombras el repo en GitHub, cambia también su `github_repo` en Integraciones; las tareas ya importadas siguen con el id del
   nombre antiguo y la siguiente sincronización crearía otras nuevas (archiva las viejas).

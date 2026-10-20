@@ -41,6 +41,15 @@ export const githubIssue = z.object({
 export type GithubIssue = z.input<typeof githubIssue>
 export type GithubIssueState = 'open' | 'closed'
 
+/** Un repo al que llega el token de la sincronización: lo que ofrece el selector de Ajustes › Integraciones. */
+export const githubRepoSummary = z.object({
+  fullName: githubRepo,
+  private: z.boolean(),
+  description: z.string().nullable(),
+})
+export type GithubRepoSummary = z.infer<typeof githubRepoSummary>
+export const githubRepoList = z.array(githubRepoSummary)
+
 // ─── Entidades (lo que devuelve el store) ────────────────────────────────────
 
 export interface Project {

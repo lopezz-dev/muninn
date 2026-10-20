@@ -38,9 +38,9 @@
   en IndexedDB ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
 
 ## F2 · Claude y GitHub
-> **Estado:** en curso. Lo de la tanda del 19 de octubre está en PRs a `develop` ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#19](https://github.com/lopezz-dev/muninn/pull/19)); conviene fusionarlos en ese orden.
-> La sincronización con GitHub y el MCP remoto tienen el código listo pero **no están en marcha**: faltan sus pasos manuales y sus pruebas,
-> en [Pruebas finales](#pruebas-finales).
+> **Estado:** en curso. La tanda del 19 de octubre ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#20](https://github.com/lopezz-dev/muninn/pull/20)) ya está en `develop`.
+> La sincronización con GitHub se está poniendo en marcha (20 de octubre): migración, secretos, función, webhook de `huginnDB` y cron
+> hechos; falta la prueba real. El MCP remoto tiene el código listo pero **no está en marcha**. Lo pendiente, en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
@@ -48,6 +48,7 @@
 - [ ] Sync GitHub: issues → tareas, cerrar issue ↔ completar (ADR-0031, [#16](https://github.com/lopezz-dev/muninn/pull/16))
   - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
+  - [x] Selector de repos en Integraciones; los públicos se comprueban al elegirlos (ADR-0035)
   - [ ] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real → [Pruebas finales](#pruebas-finales)
   - [ ] Pantalla **GitHub** del diseño (repositorios vinculados, «Sincronizar ahora»): llega después de la puesta en marcha
 - [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza. Diseño en ADR-0032
@@ -74,6 +75,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ### F2 · Sincronización con GitHub ([#16](https://github.com/lopezz-dev/muninn/pull/16))
 - [ ] Puesta en marcha: los 7 pasos de [gotchas/db](gotchas/db.md) › «Sincronización con GitHub (pasos manuales)» (llegan con [#16](https://github.com/lopezz-dev/muninn/pull/16))
 - [ ] En **Recent Deliveries** del webhook, el `ping` da 200; una entrega con la firma cambiada da 401
+- [ ] Ajustes › Integraciones: elegir un repo **público** al que el token no llega avisa «El token no tiene acceso…» y no lo vincula; `huginnDB` se vincula. Uno ya vinculado sale «en …» y en gris
 - [ ] Abrir una issue en el repo vinculado → aparece en «Por hacer» en segundos, con «GitHub #n», sus etiquetas y el enlace a la issue
 - [ ] Editar el título de la issue → cambia en Muninn; en el detalle, título y descripción no se pueden editar
 - [ ] Cerrar la issue → la tarea pasa a «Hecho»; reabrirla → vuelve a «Por hacer»

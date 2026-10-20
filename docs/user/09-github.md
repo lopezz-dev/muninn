@@ -7,21 +7,28 @@ status: parcial
 
 # GitHub
 
-> **Estado:** ya puedes vincular un repositorio a cada proyecto y Muninn sabe tratar las tareas que vienen de GitHub, pero la
-> sincronización todavía no está en marcha: corre en el servidor y le faltan unos pasos de puesta en marcha. Hasta entonces,
-> vincular un repositorio no trae nada. La pantalla **GitHub** (repositorios y agentes) llegará después.
+> **Estado:** la sincronización ya está en marcha, pero todavía la estamos probando con issues reales: si algo no llega como
+> esperas, cuéntanoslo. La pantalla **GitHub** (repositorios y agentes) llegará después.
 
 ## Vincular un repositorio
 
-En **Ajustes › Integraciones** verás tus proyectos, cada uno con un campo para su repositorio. Escribe `usuario/repositorio` (por
-ejemplo `lopezz-dev/muninn`) o pega la dirección que copias de GitHub, y pulsa **Intro** o sal del campo. Te lo confirma un aviso con
-**Deshacer**. Para desvincularlo, deja el campo vacío.
+En **Ajustes › Integraciones** verás tus proyectos, cada uno con un selector para su repositorio. Ábrelo y elige uno de la lista. Te lo
+confirma un aviso con **Deshacer**. Para desvincularlo, elige **Sin repositorio**.
 
-Cada repositorio va con un solo proyecto. En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha llegado alguna issue.
+En la lista salen tus repositorios privados a los que la sincronización tiene acceso y **todos** tus repositorios públicos. Al elegir uno
+público, Muninn comprueba en un momento que la sincronización pueda usarlo; si no puede, te avisa y no lo vincula.
 
-## Qué hará la sincronización
+Cada repositorio va con un solo proyecto: si ya está con otro, sale en gris y te dice con cuál («en Huginn»).
 
-Cuando esté activa:
+¿No sale el repositorio que buscas, o te dice que no tiene acceso? La sincronización solo puede usar los repositorios a los que le diste
+acceso al configurarla. Dale acceso a ese repositorio en GitHub y vuelve a elegirlo.
+
+Si la lista no puede cargarse (por ejemplo, en el modo demo), en su lugar verás un campo: escribe `usuario/repositorio` o pega la
+dirección de GitHub y pulsa **Intro**.
+
+En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha llegado alguna issue.
+
+## Qué hace la sincronización
 
 - Cada **issue abierta** del repositorio aparece como tarea del proyecto, en la columna «Por hacer», con sus etiquetas. Las issues que
   ya estaban cerradas no se traen, ni las *pull requests*.

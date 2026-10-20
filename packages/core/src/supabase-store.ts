@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Activity, UserSettings } from './schemas'
+import type { Activity, GithubRepoSummary, UserSettings } from './schemas'
 import {
   type ActivityLog,
   type Collection,
@@ -199,10 +199,29 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Los responde la Edge Function `github` (GET /github/repos), que es quien tiene el token (ADR-0035).
+  // `invoke` manda la sesión del cliente: con la del usuario, la función comprueba que es el dueño.
+  const githubRepos = {
+    async list() {
+      const { data, error } = await client.functions.invoke('github/repos', { method: 'GET' })
+      if (error) throw error
+      return (data as { repos: GithubRepoSummary[] }).repos
+    },
+    async canWrite(repo: string) {
+      const { data, error } = await client.functions.invoke(
+        `github/access?repo=${encodeURIComponent(repo)}`,
+        { method: 'GET' },
+      )
+      if (error) throw error
+      return (data as { writable: boolean }).writable
+    },
+  }
+
   return {
     activity,
     settings,
     githubOutbox,
+    githubRepos,
     projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
       if (q.statuses) qb = qb.in('status', q.statuses)
       if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))

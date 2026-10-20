@@ -50,6 +50,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
 - [ADR-0026](0026-markdown-marked-a-react-y-textarea.md) — Markdown con marked a elementos de React y un editor sobre `textarea`
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
+- [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -91,6 +92,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) — Tiempo real por invalidación de caché y caché de solo lectura sin conexión
 - [ADR-0030](0030-vista-lista-del-tablero.md) — Vista Lista del tablero: la misma consulta, sin arrastre, recordada por dispositivo
 - [ADR-0034](0034-escribir-sin-conexion.md) — Escribir sin conexión con una cola de intenciones persistente e ids generados en el cliente *(propuesto)*
+- [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

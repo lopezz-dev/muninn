@@ -4,6 +4,12 @@
 
 - Se llaman `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` (la clave pública `sb_publishable_…`).
   **Nunca** pongas la service role key en una variable `VITE_*`: acaba dentro del bundle.
+- **Síntoma:** en un ordenador recién clonado, la pantalla de entrada tiene el correo y «Enviar código» deshabilitados y
+  dice «Este build no tiene servidor».
+- **Causa:** `apps/web/.env.local` está en `.gitignore` y no viaja con el repo; sin las dos variables, `hasSupabase` es
+  `false` y la app solo ofrece el modo demo. No hay error en consola.
+- **Solución:** copia `.env.example` a `.env.local` con los valores de Supabase (**Settings › API Keys**, o
+  `get_publishable_keys` del MCP de Supabase). Vite reinicia solo al guardar el fichero.
 
 ### El service worker no se registra en Tauri
 
