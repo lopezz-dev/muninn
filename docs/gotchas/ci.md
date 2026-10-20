@@ -43,7 +43,7 @@
   migración, la función desplegada, el webhook suscrito a `pull_request` y, en el repo vinculado, la GitHub App de Claude, su secreto y
   el workflow.
 - **Solución**, en este orden (además de la [puesta en marcha de la sincronización](db.md#sincronización-con-github-pasos-manuales)):
-  1. **Migración** `supabase/migrations/20261021000000_agent_column.sql` (columna `agent_column_id` y `kind` en la cola). Si usas
+  1. **Migración** `supabase/migrations/20261020140000_agent_column.sql` (columna `agent_column_id` y `kind` en la cola). Si usas
      `apply_migration` del MCP de Supabase, alinea la versión (ver gotchas/db).
   2. **Desplegar la función:** `pnpm --filter @muninn/core build:edge` y
      `supabase functions deploy github --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt`.

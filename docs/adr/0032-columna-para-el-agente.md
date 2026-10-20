@@ -1,13 +1,13 @@
 # ADR-0032: Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 
 - **Estado:** Aceptado
-- **Fecha:** 2026-10-19 (propuesto) · 2026-10-21 (aceptado, revisado tras poner en marcha la sincronización)
+- **Fecha:** 2026-10-19 (propuesto) · 2026-10-20 (aceptado, revisado tras poner en marcha la sincronización)
 - **Área:** ci, core, db
 
 ## Contexto
 
 El diseño (GitHub.dc.html) tiene una columna «Para el agente»: arrastras una tarea ahí y un agente la resuelve en su repositorio,
-abre un PR y la tarea avanza sola. Se propuso el 19 de octubre y se revisó el 21, con la sincronización issues ↔ tareas
+abre un PR y la tarea avanza sola. Se propuso el 19 de octubre y se revisó el 20, con la sincronización issues ↔ tareas
 ([ADR-0031](0031-sync-github-issues-tareas.md)) ya en marcha y probada. La revisión encontró cuatro huecos en la propuesta:
 
 - `Closes #n` solo cierra la issue al fusionar en la **rama por defecto**; los PRs del agente van a `develop` (en `huginnDB`, la rama
@@ -19,7 +19,7 @@ abre un PR y la tarea avanza sola. Se propuso el 19 de octubre y se revisó el 2
 ## Decisión
 
 **La columna.** Una columna normal (cualquier tipo menos `done`) que el proyecto marca como la del agente:
-`projects.agent_column_id uuid null references board_columns (id) on delete set null` (migración `20261021000000_agent_column`, con
+`projects.agent_column_id uuid null references board_columns (id) on delete set null` (migración `20261020140000_agent_column`, con
 un trigger que exige que sea del mismo proyecto y dueño). No hay un `kind` nuevo ([ADR-0005](0005-columnas-con-kind-semantico.md)).
 Se marca desde el menú de la columna («Usar para el agente»), solo en proyectos con repo y con el módulo GitHub activado. No cuenta
 como columna por defecto: ni las issues nuevas ni las tareas reabiertas caen ahí aunque sea la primera «Por hacer».
