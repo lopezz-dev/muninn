@@ -7,8 +7,8 @@ status: parcial
 
 # GitHub
 
-> **Estado:** la sincronización ya está en marcha, pero todavía la estamos probando con issues reales: si algo no llega como
-> esperas, cuéntanoslo. La pantalla **GitHub** (repositorios y agentes) llegará después.
+> **Estado:** la sincronización está en marcha y probada con issues reales. La pantalla **GitHub** (repositorios y agentes) llegará
+> después.
 
 ## Vincular un repositorio
 
@@ -30,9 +30,9 @@ En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha lle
 
 ## Qué hace la sincronización
 
-- Cada **issue abierta** del repositorio aparece como tarea del proyecto, en la columna «Por hacer», con sus etiquetas. Las issues que
-  ya estaban cerradas no se traen, ni las *pull requests*.
-- **Cerrar la issue completa la tarea**, y reabrirla la devuelve a «Por hacer». Al revés también: **completar la tarea cierra la issue**,
+- Cada **issue abierta** del repositorio aparece como tarea del proyecto, en la primera columna de tipo **Por hacer** («Pendiente» en un
+  tablero nuevo), con sus etiquetas. Las issues que ya estaban cerradas no se traen, ni las *pull requests*.
+- **Cerrar la issue completa la tarea**, y reabrirla la devuelve a esa columna. Al revés también: **completar la tarea cierra la issue**,
   y reabrirla la reabre. Lo de GitHub llega en unos segundos; lo de Muninn tarda como mucho unos 5 minutos en llegar a GitHub.
 - Si la issue se borra o se pasa a otro repositorio, su tarea se **archiva** (no se borra).
 

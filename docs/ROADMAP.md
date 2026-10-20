@@ -39,8 +39,7 @@
 
 ## F2 · Claude y GitHub
 > **Estado:** en curso. La tanda del 19 de octubre ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#20](https://github.com/lopezz-dev/muninn/pull/20)) ya está en `develop`.
-> La sincronización con GitHub se está poniendo en marcha (20 de octubre): migración, secretos, función, webhook de `huginnDB` y cron
-> hechos; falta la prueba real. El MCP remoto tiene el código listo pero **no está en marcha**. Lo pendiente, en [Pruebas finales](#pruebas-finales).
+> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`). El MCP remoto tiene el código listo pero **no está en marcha**. Lo pendiente, en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
@@ -49,7 +48,7 @@
   - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
   - [x] Selector de repos en Integraciones; los públicos se comprueban al elegirlos (ADR-0035)
-  - [ ] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real → [Pruebas finales](#pruebas-finales)
+  - [x] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real (20 de octubre, [Pruebas finales](#pruebas-finales))
   - [ ] Pantalla **GitHub** del diseño (repositorios vinculados, «Sincronizar ahora»): llega después de la puesta en marcha
 - [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza. Diseño en ADR-0032
   (propuesto, [#17](https://github.com/lopezz-dev/muninn/pull/17)); se implementa cuando la sincronización esté en marcha
@@ -73,16 +72,20 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Cerrar y abrir la app: el proyecto sigue en Lista (se recuerda por dispositivo); en el ordenador sigue en Tablero
 
 ### F2 · Sincronización con GitHub ([#16](https://github.com/lopezz-dev/muninn/pull/16))
-- [ ] Puesta en marcha: los 7 pasos de [gotchas/db](gotchas/db.md) › «Sincronización con GitHub (pasos manuales)» (llegan con [#16](https://github.com/lopezz-dev/muninn/pull/16))
-- [ ] En **Recent Deliveries** del webhook, el `ping` da 200; una entrega con la firma cambiada da 401
-- [ ] Ajustes › Integraciones: elegir un repo **público** al que el token no llega avisa «El token no tiene acceso…» y no lo vincula; `huginnDB` se vincula. Uno ya vinculado sale «en …» y en gris
-- [ ] Abrir una issue en el repo vinculado → aparece en «Por hacer» en segundos, con «GitHub #n», sus etiquetas y el enlace a la issue
-- [ ] Editar el título de la issue → cambia en Muninn; en el detalle, título y descripción no se pueden editar
-- [ ] Cerrar la issue → la tarea pasa a «Hecho»; reabrirla → vuelve a «Por hacer»
-- [ ] Completar la tarea en Muninn → la issue se cierra en ≤ 5 min; reabrirla en Muninn → la issue se reabre
-- [ ] Borrar la issue (o transferirla) → la tarea se archiva
-- [ ] Ajustes › Integraciones dice cuántas tareas han llegado y cuándo fue el último cambio
-- [ ] `select * from github_outbox where processed_at is null` queda vacío tras un ciclo del cron
+> Probado el 20 de octubre con `lopezz-dev/huginnDB` (issues de prueba #253 y #254, ya cerradas y con sus tareas archivadas): `gh` para
+> GitHub, Playwright para la app y SQL para `tasks`, `github_outbox` y `net._http_response`.
+- [x] Puesta en marcha: los 7 pasos de [gotchas/db](gotchas/db.md) › «Sincronización con GitHub (pasos manuales)». El paso 7 (activar el
+  módulo GitHub) faltaba y se hizo durante la prueba
+- [x] El `ping` del webhook da 200 (`gh api …/hooks/<id>/deliveries`); una entrega con la firma cambiada da 401 (`curl`)
+- [x] Ajustes › Integraciones: elegir un repo **público** al que el token no llega avisa «El token no tiene acceso…» y no lo vincula; `huginnDB` se vincula. Uno ya vinculado sale «en …» y en gris
+- [x] Abrir una issue en el repo vinculado → aparece en la primera columna «Por hacer» («Pendiente») en ~6 s y sin recargar, con «GitHub #n», sus etiquetas y el enlace a la issue
+- [x] Editar el título de la issue → cambia en Muninn; en el detalle, título y descripción no se pueden editar
+- [x] Cerrar la issue → la tarea pasa a «Hecho»; reabrirla → vuelve a «Por hacer»
+- [x] Completar la tarea en Muninn → la issue se cierra en ≤ 5 min; reabrirla en Muninn → la issue se reabre. Varios cambios seguidos se
+  resuelven en un solo envío con el estado del momento, y lo que llega de GitHub no se apunta en la cola (no hay ida y vuelta)
+- [x] Borrar la issue (o transferirla) → la tarea se archiva (probado borrando, en ~4 s)
+- [x] Ajustes › Integraciones dice cuántas tareas han llegado y cuándo fue el último cambio
+- [x] `select * from github_outbox where processed_at is null` queda vacío tras un ciclo del cron
 
 ### F2 · MCP remoto ([#18](https://github.com/lopezz-dev/muninn/pull/18))
 - [ ] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)» (llega con [#18](https://github.com/lopezz-dev/muninn/pull/18))
