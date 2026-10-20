@@ -7,8 +7,8 @@ status: parcial
 
 # Proyectos y tablero
 
-> **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas y personalizar las columnas desde la app.
-> Las vistas de lista y calendario y el color de las columnas llegarán más adelante. En modo demo,
+> **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas, personalizar las columnas y ver el tablero como
+> lista. La vista de calendario y el color de las columnas llegarán más adelante. En modo demo,
 > sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
@@ -54,6 +54,18 @@ y lo cuenta así en los resúmenes.
 
 Si la columna tiene tareas, eliges a qué columna pasan (**Borrar y mover sus tareas a…**). Un proyecto siempre necesita
 al menos una columna. No hay diálogo de confirmación: pulsa **Deshacer** en el aviso y la columna vuelve, con sus tareas.
+
+## Tablero o lista
+
+Arriba del tablero tienes **Tablero · Lista**. La lista enseña las mismas tareas, agrupadas por columna, una por fila:
+
+- La **casilla** de cada fila la completa (o la reabre si ya está hecha), con su aviso y **Deshacer**.
+- Un clic en el título abre la tarea, igual que en el tablero. Para cambiarla de columna, hazlo desde la tarea.
+- Cada grupo se pliega con un clic en su cabecera y tiene su **Añadir tarea** al pie (menos «Hecho»).
+- En la lista no se arrastra: para reordenar tarjetas, vuelve al tablero.
+- Los filtros valen para las dos vistas.
+- Muninn recuerda la vista que elegiste **en cada proyecto y en cada dispositivo**: puedes tener la lista en el móvil y el
+  tablero en el ordenador.
 
 ## Filtrar el tablero
 

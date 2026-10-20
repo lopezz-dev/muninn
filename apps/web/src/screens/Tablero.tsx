@@ -12,10 +12,12 @@ import {
   MenuItem,
   MenuTrigger,
   notify,
+  SegmentedControl,
+  screenIcons,
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link, Outlet, useMatch, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import {
   activeGroups,
@@ -24,6 +26,7 @@ import {
   labelsOf,
   NO_FILTER,
 } from '../lib/board-filter'
+import { type BoardView, readBoardView, saveBoardView } from '../lib/board-view'
 import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, boardQuery, projectQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
@@ -33,6 +36,33 @@ import { BoardMobile } from './tablero/BoardMobile'
 import { FilterBar, FilterSheet, FilterSummary } from './tablero/FilterBar'
 
 const route = getRouteApi('/_app/proyectos/$projectId')
+
+// La lista no viaja con el tablero: solo la descarga quien la abre.
+const BoardList = lazy(() =>
+  import('./tablero/BoardList').then((mod) => ({ default: mod.BoardList })),
+)
+
+const VIEWS: { value: BoardView; label: string; icon: ReactNode }[] = [
+  { value: 'board', label: 'Tablero', icon: <icons.projects size={14} aria-hidden="true" /> },
+  { value: 'list', label: 'Lista', icon: <screenIcons.list size={14} aria-hidden="true" /> },
+]
+
+function BoardSkeleton() {
+  return (
+    <div aria-hidden="true" className="flex gap-3 overflow-hidden">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="flex w-[280px] shrink-0 flex-col gap-2 rounded-lg bg-surface-sunken p-2"
+        >
+          <Ghost className="h-5 w-24" />
+          <Ghost className="h-16" />
+          <Ghost className="h-12" />
+        </div>
+      ))}
+    </div>
+  )
+}
 
 /** Tablero Kanban de un proyecto (Tablero.dc.html y M-Tablero.dc.html). El detalle de tarea cuelga de aquí. */
 export function Tablero() {
@@ -45,6 +75,13 @@ export function Tablero() {
   // Los filtros viven aquí, en la ruta padre: sobreviven a abrir y cerrar una tarea.
   const [filter, setFilter] = useState<BoardFilter>(NO_FILTER)
   const [sheet, setSheet] = useState(false)
+  // Tablero o Lista, recordado por proyecto en este dispositivo (`lib/board-view.ts`).
+  const [view, setView] = useState<BoardView>(() => readBoardView(projectId))
+  useEffect(() => setView(readBoardView(projectId)), [projectId])
+  const changeView = (next: BoardView) => {
+    setView(next)
+    saveBoardView(projectId, next)
+  }
   const project = useQuery(projectQuery(m, projectId))
   const board = useQuery({ ...boardQuery(m, projectId), enabled: project.isSuccess })
   const tasks = board.data?.tasks
@@ -120,6 +157,15 @@ export function Tablero() {
         description={p.description || undefined}
         actions={
           <>
+            {desktop ? (
+              <SegmentedControl
+                aria-label="Vista"
+                value={view}
+                onValueChange={changeView}
+                options={VIEWS}
+                className="self-center"
+              />
+            ) : null}
             <IconButton
               aria-label={
                 activeGroups(filter) ? `Filtrar (${activeGroups(filter)} activos)` : 'Filtrar'
@@ -174,6 +220,14 @@ export function Tablero() {
       ) : null}
       {board.data && !desktop ? (
         <>
+          <SegmentedControl
+            aria-label="Vista"
+            value={view}
+            onValueChange={changeView}
+            options={VIEWS}
+            size="lg"
+            fill
+          />
           <FilterSummary
             filter={filter}
             onClear={() => setFilter(NO_FILTER)}
@@ -192,7 +246,11 @@ export function Tablero() {
       ) : null}
 
       {board.data ? (
-        desktop ? (
+        view === 'list' ? (
+          <Suspense fallback={<BoardSkeleton />}>
+            <BoardList projectId={p.id} board={board.data} today={m.today()} filter={filter} />
+          </Suspense>
+        ) : desktop ? (
           <BoardDesktop projectId={p.id} board={board.data} today={m.today()} filter={filter} />
         ) : (
           <BoardMobile projectId={p.id} board={board.data} today={m.today()} filter={filter} />
@@ -202,18 +260,7 @@ export function Tablero() {
           Comprueba tu conexión e inténtalo de nuevo.
         </EmptyState>
       ) : (
-        <div aria-hidden="true" className="flex gap-3 overflow-hidden">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="flex w-[280px] shrink-0 flex-col gap-2 rounded-lg bg-surface-sunken p-2"
-            >
-              <Ghost className="h-5 w-24" />
-              <Ghost className="h-16" />
-              <Ghost className="h-12" />
-            </div>
-          ))}
-        </div>
+        <BoardSkeleton />
       )}
 
       <Outlet />
