@@ -1020,7 +1020,14 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   }
 
   async function recentActivity(
-    opts: { projectId?: string; entityId?: string; since?: string; limit?: number } = {},
+    opts: {
+      projectId?: string
+      entityId?: string
+      /** Solo estas acciones; la pantalla GitHub pide las del agente (`AGENT_ACTIONS`). */
+      actions?: string[]
+      since?: string
+      limit?: number
+    } = {},
   ) {
     return store.activity.list(opts)
   }

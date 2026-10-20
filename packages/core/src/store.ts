@@ -121,6 +121,8 @@ export interface ActivityLog {
     projectId?: string
     /** Solo los eventos de una entidad (una tarea, una columna…). */
     entityId?: string
+    /** Solo estas acciones (`agent_pr_opened`…). */
+    actions?: string[]
     since?: string
     limit?: number
   }): Promise<Activity[]>

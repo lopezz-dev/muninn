@@ -121,10 +121,11 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       if (error) throw error
       return fromRow<Activity>(data)
     },
-    async list({ projectId, entityId, since, limit = 50 }) {
+    async list({ projectId, entityId, actions, since, limit = 50 }) {
       let qb = client.from('activity').select('*').eq('owner_id', ownerId)
       if (projectId) qb = qb.eq('project_id', projectId)
       if (entityId) qb = qb.eq('entity_id', entityId)
+      if (actions) qb = qb.in('action', actions)
       if (since) qb = qb.gte('created_at', since)
       const { data, error } = await qb.order('id', { ascending: false }).limit(limit)
       if (error) throw error

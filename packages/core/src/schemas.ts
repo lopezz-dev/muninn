@@ -44,6 +44,15 @@ export type GithubIssueState = 'open' | 'closed'
 /** Etiqueta que lanza al agente en el repo (ADR-0032): la pone y la quita la sincronización. */
 export const AGENT_LABEL = 'muninn:agent'
 
+/** Lo que apunta en la actividad el flujo del agente: un PR abierto, fusionado o cerrado, o que terminó sin PR. */
+export const AGENT_ACTIONS = [
+  'agent_pr_opened',
+  'agent_pr_merged',
+  'agent_pr_closed',
+  'agent_stopped',
+] as const
+export type AgentAction = (typeof AGENT_ACTIONS)[number]
+
 /** Lo que usa la columna del agente de un PR (evento `pull_request` del webhook). */
 export const githubPullRequest = z.object({
   number: z.number().int().positive(),
