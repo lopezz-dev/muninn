@@ -6,6 +6,7 @@
 //   POST /functions/v1/github/webhook  ← GitHub (evento `issues`, firmado con GITHUB_WEBHOOK_SECRET)
 //   POST /functions/v1/github/sync     ← pg_cron cada pocos minutos (cabecera x-muninn-sync-secret)
 //   GET  /functions/v1/github/repos    ← la app (Ajustes › Integraciones), con la sesión del dueño (ADR-0035)
+//   GET  /functions/v1/github/access?repo=owner/repo  ← ídem, al elegir un repo público: ¿llega el token?
 
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 import {
@@ -20,6 +21,9 @@ import {
 } from './_core/muninn.js'
 
 const env = (name: string) => Deno.env.get(name) ?? ''
+
+/** Mismo formato que `githubRepo` del core: así no se manda a GitHub una ruta rara. */
+const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
 
 const admin = () =>
   createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
@@ -68,11 +72,14 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   const route = new URL(req.url).pathname.split('/').filter(Boolean).pop()
   try {
-    if (route === 'repos') {
+    if (route === 'repos' || route === 'access') {
       if (req.method !== 'GET') return json(405, { error: 'Solo GET' })
       if (!(await isOwner(req)))
         return json(401, { error: 'Inicia sesión con tu cuenta de Muninn' })
-      return json(200, { repos: await github().listRepos() })
+      if (route === 'repos') return json(200, { repos: await github().listRepos() })
+      const repo = new URL(req.url).searchParams.get('repo') ?? ''
+      if (!REPO.test(repo)) return json(400, { error: 'Falta ?repo=owner/repo' })
+      return json(200, { repo, writable: await github().canWriteIssues(repo) })
     }
     if (req.method !== 'POST') return json(405, { error: 'Solo POST' })
     if (route === 'webhook') {
@@ -95,7 +102,7 @@ Deno.serve(async (req: Request) => {
       }
       return json(200, await reconcileGithub(muninn(), github()))
     }
-    return json(404, { error: 'Usa /github/webhook, /github/sync o /github/repos' })
+    return json(404, { error: 'Usa /github/webhook, /github/sync, /github/repos o /github/access' })
   } catch (err) {
     // Los logs van al panel de Supabase (Edge Functions › github › Logs).
     console.error(err)

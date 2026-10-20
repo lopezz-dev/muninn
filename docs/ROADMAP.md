@@ -48,7 +48,7 @@
 - [ ] Sync GitHub: issues → tareas, cerrar issue ↔ completar (ADR-0031, [#16](https://github.com/lopezz-dev/muninn/pull/16))
   - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
-  - [x] Selector de repos en Integraciones con los repos a los que llega el token (ADR-0035)
+  - [x] Selector de repos en Integraciones; los públicos se comprueban al elegirlos (ADR-0035)
   - [ ] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real → [Pruebas finales](#pruebas-finales)
   - [ ] Pantalla **GitHub** del diseño (repositorios vinculados, «Sincronizar ahora»): llega después de la puesta en marcha
 - [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza. Diseño en ADR-0032
@@ -75,7 +75,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ### F2 · Sincronización con GitHub ([#16](https://github.com/lopezz-dev/muninn/pull/16))
 - [ ] Puesta en marcha: los 7 pasos de [gotchas/db](gotchas/db.md) › «Sincronización con GitHub (pasos manuales)» (llegan con [#16](https://github.com/lopezz-dev/muninn/pull/16))
 - [ ] En **Recent Deliveries** del webhook, el `ping` da 200; una entrega con la firma cambiada da 401
-- [ ] Ajustes › Integraciones enseña en el selector solo los repos del token (no todos los de tu cuenta); uno ya vinculado sale «en …» y en gris
+- [ ] Ajustes › Integraciones: elegir un repo **público** al que el token no llega avisa «El token no tiene acceso…» y no lo vincula; `huginnDB` se vincula. Uno ya vinculado sale «en …» y en gris
 - [ ] Abrir una issue en el repo vinculado → aparece en «Por hacer» en segundos, con «GitHub #n», sus etiquetas y el enlace a la issue
 - [ ] Editar el título de la issue → cambia en Muninn; en el detalle, título y descripción no se pueden editar
 - [ ] Cerrar la issue → la tarea pasa a «Hecho»; reabrirla → vuelve a «Por hacer»

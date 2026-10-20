@@ -64,6 +64,39 @@ export function repoChoices(
   return { value: current, options }
 }
 
+/**
+ * Vincula el repo elegido en el selector (o ninguno, con `null`). Los públicos salen en la lista aunque el token
+ * no llegue a ellos (ADR-0035): antes de vincular uno se pregunta, y si no llega se avisa y no se vincula.
+ */
+export async function pickProjectRepo(
+  m: Muninn,
+  qc: QueryClient,
+  project: Pick<Project, 'id' | 'name' | 'githubRepo'>,
+  repo: GithubRepoSummary | null,
+): Promise<boolean> {
+  if (
+    repo &&
+    !repo.private &&
+    (!project.githubRepo || !sameRepo(project.githubRepo, repo.fullName))
+  ) {
+    let writable: boolean | null
+    try {
+      writable = await m.github.canWrite(repo.fullName)
+    } catch (err) {
+      fail('No se pudo comprobar el acceso del token', err)
+      return false
+    }
+    if (writable === false) {
+      notify.error(`El token no tiene acceso a ${repo.fullName}`, {
+        description:
+          'Dáselo en GitHub › Settings › Developer settings › Fine-grained tokens, y vuelve a elegirlo.',
+      })
+      return false
+    }
+  }
+  return setProjectRepo(m, qc, project, repo?.fullName ?? null)
+}
+
 /** Vincula (o desvincula, con `null`) un repositorio a un proyecto, con aviso y «Deshacer». */
 export async function setProjectRepo(
   m: Muninn,

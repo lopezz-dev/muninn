@@ -198,7 +198,10 @@
   `delete from github_outbox where processed_at < now() - interval '30 days';`
 - **Selector de repos:** Integraciones pide la lista a `GET /github/repos` ([ADR-0035](../adr/0035-repos-de-github-desde-la-funcion.md)).
   Si sale «No se pudo cargar la lista de repositorios», mira **Edge Functions › github › Logs**: un 401 es que la sesión no es la de
-  `MUNINN_USER_ID`; un 500 con `Listar repositorios: 401`, que el token ha caducado. Si en vez de eso sale «el token no tiene acceso a
-  ningún repositorio», edita el token en GitHub y añade el repo en *Repository access*.
+  `MUNINN_USER_ID`; un 500 con `Listar repositorios: 401`, que el token ha caducado. Si sale «El token no tiene acceso a …» al elegir
+  un repo, edita el token en GitHub y añade el repo en *Repository access*.
+- **Ojo:** la lista trae **todos** los repos públicos de la cuenta aunque el token sea *fine-grained* y no los tenga: todo token lee los
+  públicos. Por eso, al elegir uno público, la app pregunta a `GET /github/access?repo=…`, que intenta crear una issue sin título (422 =
+  tiene permiso; 403/404 = no). No lo «arregles» filtrando con `permissions` del repo: ese es el permiso del usuario, no el del token.
 - **Ojo:** si renombras el repo en GitHub, cambia también su `github_repo` en Integraciones; las tareas ya importadas siguen con el id del
   nombre antiguo y la siguiente sincronización crearía otras nuevas (archiva las viejas).

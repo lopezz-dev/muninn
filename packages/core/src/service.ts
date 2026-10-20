@@ -589,6 +589,16 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return parse(githubRepoList, await store.githubRepos.list())
   }
 
+  /**
+   * Si la sincronización podrá crear y cerrar issues en `repo`. La lista de `repos()` trae todos los
+   * públicos de la cuenta, también aquellos a los que el token no llega: se comprueba al elegir uno.
+   * `null` si este store no puede preguntarlo.
+   */
+  async function canWriteGithubRepo(repo: string) {
+    if (!store.githubRepos) return null
+    return store.githubRepos.canWrite(parse(githubRepo, repo))
+  }
+
   /** Tareas de GitHub de un proyecto que siguen abiertas en Muninn (para reconciliar). */
   async function openGithubTasks(projectId: string) {
     const tasks = await listTasks({ projectId, source: 'github' })
@@ -921,6 +931,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       stateOf: githubStateOf,
       linkedProjects,
       repos: listGithubRepos,
+      canWrite: canWriteGithubRepo,
       openTasks: openGithubTasks,
       outbox: {
         pending: (limit?: number) =>

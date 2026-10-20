@@ -207,6 +207,14 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       if (error) throw error
       return (data as { repos: GithubRepoSummary[] }).repos
     },
+    async canWrite(repo: string) {
+      const { data, error } = await client.functions.invoke(
+        `github/access?repo=${encodeURIComponent(repo)}`,
+        { method: 'GET' },
+      )
+      if (error) throw error
+      return (data as { writable: boolean }).writable
+    },
   }
 
   return {

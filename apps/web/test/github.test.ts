@@ -1,6 +1,8 @@
+import type { Muninn } from '@muninn/core'
+import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import { issueNumber } from '../src/components/task-meta'
-import { parseRepoInput, repoChoices } from '../src/lib/github'
+import { parseRepoInput, pickProjectRepo, repoChoices } from '../src/lib/github'
 
 describe('repositorio de un proyecto', () => {
   it('acepta owner/repo y la dirección que se copia de GitHub', () => {
@@ -54,6 +56,49 @@ describe('selector de repositorio', () => {
       value: 'lopezz-dev/viejo',
       hint: 'sin acceso del token',
     })
+  })
+})
+
+describe('elegir un repositorio', () => {
+  /** Solo lo que usa `pickProjectRepo`: comprobar el acceso y guardar el repo del proyecto. */
+  const fake = (writable: boolean) => {
+    const asked: string[] = []
+    const saved: (string | null | undefined)[] = []
+    const m = {
+      github: {
+        canWrite: async (repo: string) => {
+          asked.push(repo)
+          return writable
+        },
+      },
+      projects: {
+        update: async (_id: string, patch: { githubRepo?: string | null }) => {
+          saved.push(patch.githubRepo)
+          return {}
+        },
+      },
+    } as unknown as Muninn
+    return { m, asked, saved }
+  }
+  const project = { id: 'p1', name: 'Muninn', githubRepo: null }
+  const pub = { fullName: 'lopezz-dev/huginnDB', private: false, description: null }
+  const priv = { fullName: 'lopezz-dev/secreto', private: true, description: null }
+
+  it('un público al que el token no llega no se vincula', async () => {
+    const { m, asked, saved } = fake(false)
+    expect(await pickProjectRepo(m, new QueryClient(), project, pub)).toBe(false)
+    expect(asked).toEqual(['lopezz-dev/huginnDB'])
+    expect(saved).toEqual([])
+  })
+
+  it('un público con acceso se vincula; un privado y «Sin repositorio» no se comprueban', async () => {
+    const { m, asked, saved } = fake(true)
+    expect(await pickProjectRepo(m, new QueryClient(), project, pub)).toBe(true)
+    expect(await pickProjectRepo(m, new QueryClient(), project, priv)).toBe(true)
+    const linked = { ...project, githubRepo: 'lopezz-dev/secreto' }
+    expect(await pickProjectRepo(m, new QueryClient(), linked, null)).toBe(true)
+    expect(asked).toEqual(['lopezz-dev/huginnDB'])
+    expect(saved).toEqual(['lopezz-dev/huginnDB', 'lopezz-dev/secreto', null])
   })
 })
 

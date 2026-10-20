@@ -16,8 +16,13 @@ export interface GithubClient {
   /** La issue, o `null` si ya no existe (borrada o transferida: 404/410). */
   getIssue(repo: string, issueNumber: number): Promise<GithubIssue | null>
   setIssueState(repo: string, issueNumber: number, state: GithubIssueState): Promise<void>
-  /** Repos a los que llega el token y que se pueden sincronizar (sin archivar y con issues), por nombre. */
+  /**
+   * Repos que ve el token y que se pueden sincronizar (sin archivar y con issues), por nombre. Ojo: incluye
+   * todos los públicos de la cuenta, aunque el token no pueda escribir en ellos (ver `canWriteIssues`).
+   */
   listRepos(): Promise<GithubRepoSummary[]>
+  /** Si el token puede crear y cerrar issues en el repo (lo que necesita la sincronización). */
+  canWriteIssues(repo: string): Promise<boolean>
 }
 
 /** Lo que usa `listRepos` de cada repo de `GET /user/repos`. */
@@ -104,7 +109,8 @@ export function createGithubClient(options: {
       if (!res.ok) throw await fail(res, `Cambiar el estado de ${repo}#${issueNumber}`)
     },
     async listRepos() {
-      // Con un token fine-grained, solo salen los repos que se le dieron al crearlo.
+      // Todo token lee los repos públicos: `/user/repos` los da aunque no sean de los que se le dieron. Un privado
+      // que sale sí es del token; un público se comprueba con `canWriteIssues` al elegirlo (ADR-0035).
       const out: GithubRepoSummary[] = []
       for (let page = 1; page <= maxPages; page++) {
         const res = await call(`/user/repos?per_page=100&page=${page}`)
@@ -118,6 +124,14 @@ export function createGithubClient(options: {
         if (batch.length < 100) break
       }
       return out.sort((a, b) => (a.fullName.toLowerCase() < b.fullName.toLowerCase() ? -1 : 1))
+    },
+    async canWriteIssues(repo) {
+      // Se pide crear una issue sin título: con permiso, GitHub responde 422 (falta el título); sin él, 403 o
+      // 404 (410: el repo tiene las issues desactivadas). En ningún caso se crea nada.
+      const res = await call(`/repos/${repo}/issues`, { method: 'POST', body: '{}' })
+      if (res.status === 422) return true
+      if (res.status === 403 || res.status === 404 || res.status === 410) return false
+      throw await fail(res, `Comprobar el acceso a ${repo}`)
     },
   }
 }

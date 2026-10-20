@@ -6,7 +6,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { EmptyState } from '../../components/Page'
 import { SelectMenu } from '../../components/SelectMenu'
 import { timeAgo } from '../../lib/dates'
-import { parseRepoInput, repoChoices, setProjectRepo } from '../../lib/github'
+import { parseRepoInput, pickProjectRepo, repoChoices, setProjectRepo } from '../../lib/github'
 import { useEnabledModules } from '../../lib/modules'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { keys, projectsQuery } from '../../lib/queries'
@@ -56,8 +56,9 @@ function RepoRow({ project, children }: { project: Project; children: ReactNode 
 }
 
 /**
- * Selector de repo de un proyecto, con los repos a los que llega el token. Los que ya van con otro
- * proyecto salen deshabilitados; uno vinculado antes al que el token ya no llega se sigue viendo.
+ * Selector de repo de un proyecto, con los repos que ve el token. Los que ya van con otro proyecto salen
+ * deshabilitados; uno vinculado antes al que el token ya no llega se sigue viendo. Al elegir uno público se
+ * comprueba primero que el token pueda escribir en él.
  */
 function RepoPicker({
   project,
@@ -70,15 +71,31 @@ function RepoPicker({
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const [checking, setChecking] = useState(false)
   const { value, options } = repoChoices(project, projects, repos ?? [])
+
+  const choose = async (name: string) => {
+    const repo = repos?.find((r) => r.fullName === name)
+    // El vinculado que ya no está en la lista: elegirlo de nuevo no cambia nada.
+    if (name && !repo) return
+    setChecking(true)
+    try {
+      await pickProjectRepo(m, qc, project, repo ?? null)
+    } finally {
+      setChecking(false)
+    }
+  }
+
   return (
     <SelectMenu
       label={`Repositorio de GitHub de ${project.name}`}
       value={value}
       options={options}
-      onChange={(repo) => void setProjectRepo(m, qc, project, repo || null)}
-      disabled={!repos}
-      buttonText={repos ? undefined : 'Cargando repositorios…'}
+      onChange={(name) => void choose(name)}
+      disabled={!repos || checking}
+      buttonText={
+        !repos ? 'Cargando repositorios…' : checking ? 'Comprobando el acceso…' : undefined
+      }
       className="w-full justify-between"
     />
   )
@@ -190,10 +207,10 @@ export function Integraciones() {
         </dl>
         {synced ? null : (
           <p className="rounded-md bg-surface-sunken px-3 py-2.5 text-[12.5px] leading-relaxed text-fg-muted">
-            <b className="font-semibold text-fg">Todavía no está activa.</b> La sincronización corre
-            en el servidor y necesita un token de GitHub y unos pasos de puesta en marcha que aún no
-            se han hecho. Puedes vincular los repositorios ya: en cuanto se active, sus issues
-            abiertas aparecerán en el tablero.
+            <b className="font-semibold text-fg">Aún no ha llegado nada.</b> La sincronización corre
+            en el servidor: las issues abiertas de un repositorio vinculado llegan en unos segundos,
+            y como mucho en 5 minutos. Si el repositorio tiene issues abiertas y no aparecen, revisa
+            la puesta en marcha.
           </p>
         )}
       </Card>
@@ -202,8 +219,9 @@ export function Integraciones() {
         <h2 className="pt-3 text-md font-semibold">Repositorio de cada proyecto</h2>
         {picker ? (
           <p className="pb-2 text-[12.5px] text-fg-subtle">
-            Un repositorio por proyecto. Salen los repositorios a los que tiene acceso el token de
-            la sincronización; si falta alguno, dale acceso en GitHub y vuelve a esta página.
+            Un repositorio por proyecto. Salen los repositorios que ve el token de la
+            sincronización; al elegir uno público se comprueba que el token pueda usarlo. Si falta
+            alguno, dale acceso en GitHub y vuelve a esta página.
           </p>
         ) : (
           <p className="pb-2 text-[12.5px] text-fg-subtle">

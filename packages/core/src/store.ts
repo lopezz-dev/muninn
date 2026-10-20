@@ -32,7 +32,11 @@ export interface Store {
    * Repos a los que llega el token de la sincronización. Solo lo sabe el store de Supabase (se lo pregunta
    * a la Edge Function `github`, que es quien tiene el token); sin él, la UI pide el repo a mano.
    */
-  githubRepos?: { list(): Promise<GithubRepoSummary[]> }
+  githubRepos?: {
+    list(): Promise<GithubRepoSummary[]>
+    /** Si el token puede escribir issues en `repo` (los públicos salen en la lista aunque no pueda). */
+    canWrite(repo: string): Promise<boolean>
+  }
 }
 
 export interface OutboxEntry {

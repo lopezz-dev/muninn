@@ -59,6 +59,9 @@ function fakeGithub(issues: Record<string, GithubIssue[]> = {}) {
     async listRepos() {
       return []
     },
+    async canWriteIssues() {
+      return true
+    },
   }
   return { client, changes, issues }
 }
@@ -494,17 +497,57 @@ describe('github: repos para vincular', () => {
     ])
   })
 
+  it('comprueba el acceso pidiendo una issue sin título: 422 sí, 403/404/410 no', async () => {
+    const calls: { url: string; init?: RequestInit }[] = []
+    let status = 422
+    const fetchFake = (async (url: string, init?: RequestInit) => {
+      calls.push({ url, init })
+      return new Response('{}', { status })
+    }) as unknown as typeof fetch
+    const gh = createGithubClient({ token: 't', fetch: fetchFake })
+    expect(await gh.canWriteIssues('lopezz-dev/huginnDB')).toBe(true)
+    expect(calls[0]?.url).toBe('https://api.github.com/repos/lopezz-dev/huginnDB/issues')
+    expect(calls[0]?.init?.method).toBe('POST')
+    expect(calls[0]?.init?.body).toBe('{}')
+    for (status of [403, 404, 410]) expect(await gh.canWriteIssues('lopezz-dev/x')).toBe(false)
+    status = 500
+    await expect(gh.canWriteIssues('lopezz-dev/x')).rejects.toThrow('500')
+  })
+
   it('el servicio devuelve null si el store no sabe preguntarlo y valida lo que llega', async () => {
     const { user, store } = await setup()
     expect(await user.github.repos()).toBeNull()
     let answer: unknown[] = [{ fullName: 'lopezz-dev/huginnDB', private: false, description: null }]
     const withRepos = createMuninn(
-      { ...store, githubRepos: { list: async () => answer as never } },
+      { ...store, githubRepos: { list: async () => answer as never, canWrite: async () => true } },
       { timeZone: 'UTC' },
     )
     expect(await withRepos.github.repos()).toEqual(answer)
     answer = [{ fullName: 'no es un repo', private: false, description: null }]
     await expect(withRepos.github.repos()).rejects.toThrow('owner/repo')
+  })
+
+  it('canWrite pregunta al store con un repo válido; null si no sabe', async () => {
+    const { user, store } = await setup()
+    expect(await user.github.canWrite('lopezz-dev/huginnDB')).toBeNull()
+    const asked: string[] = []
+    const withRepos = createMuninn(
+      {
+        ...store,
+        githubRepos: {
+          list: async () => [],
+          canWrite: async (repo) => {
+            asked.push(repo)
+            return repo.endsWith('huginnDB')
+          },
+        },
+      },
+      { timeZone: 'UTC' },
+    )
+    expect(await withRepos.github.canWrite('lopezz-dev/huginnDB')).toBe(true)
+    expect(await withRepos.github.canWrite('lopezz-dev/otro')).toBe(false)
+    await expect(withRepos.github.canWrite('../../user')).rejects.toThrow('owner/repo')
+    expect(asked).toEqual(['lopezz-dev/huginnDB', 'lopezz-dev/otro'])
   })
 
   it('lee el token de la cabecera Authorization', () => {
