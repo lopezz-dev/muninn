@@ -37,3 +37,48 @@
 
 - Los `inputSchema` del MCP son formas zod. Reutiliza los enums del core (`taskPriority`, `columnKind`…)
   para no duplicar valores válidos, y deja que el servicio haga la validación completa.
+
+### MCP remoto: sin estado y solo POST
+
+- **Síntoma:** un cliente que abre un flujo con `GET /mcp` recibe 405, o no llegan notificaciones del servidor.
+- **Causa:** es intencionado ([ADR-0033](../adr/0033-mcp-remoto-http.md)): cada petición crea su servidor y su transporte y responde JSON. No hay
+  sesión ni SSE.
+- **Solución:** nada para las herramientas actuales. Si alguna necesitara progreso o notificaciones, haría falta el modo con sesiones y un
+  almacén de eventos compartido (otro ADR).
+
+### MCP remoto: el token es el del usuario, nunca la service role
+
+- **Síntoma:** con el MCP remoto «no hay proyectos», o un `insert` falla con *row-level security*.
+- **Causa:** `supabaseAuthenticator` crea el core con la clave pública y el token de la petición: RLS manda. Un token de otra cuenta ve sus datos,
+  no los tuyos; un token caducado (los de Supabase duran 1 h) da 401.
+- **Solución:** comprueba con qué cuenta se sacó el token. No cambies a la service role para «arreglarlo».
+
+### La Edge Function `mcp` lleva el MCP empaquetado
+
+- **Síntoma:** una herramienta nueva o un cambio del core no aparece en el MCP remoto.
+- **Causa:** como el binario de stdio, la función usa una copia (`supabase/functions/mcp/_mcp/mcp.js`, fuera de git).
+- **Solución:** `pnpm --filter @muninn/mcp build:edge` y vuelve a desplegar. El paquete no debe importar `node:*` en lo que usa `http.ts`
+  (el modo `--http` de Node está en `index.ts`, que no entra en el paquete).
+
+### MCP remoto (pasos manuales)
+
+- **Síntoma:** no hay URL a la que conectar el móvil o claude.ai.
+- **Causa:** la función hay que desplegarla y, para claude.ai y el móvil, activar OAuth en Supabase; no se puede hacer desde el código.
+- **Solución:**
+  1. **Desplegar** (CLI de Supabase con sesión): `pnpm --filter @muninn/mcp build:edge` y
+     `supabase functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt`. La URL queda en
+     `https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp`. Secretos opcionales: `MUNINN_TIME_ZONE` (por defecto `Europe/Madrid`) y
+     `MUNINN_MCP_ALLOWED_ORIGINS` (orígenes de navegador, separados por comas; vacío = ninguno).
+  2. **Comprobar** sin token: `curl -i -X POST https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp` debe dar 401 con
+     `www-authenticate: Bearer resource_metadata="…"`, y `curl https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp/.well-known/oauth-protected-resource`
+     debe devolver los metadatos.
+  3. **Claude Code con un token (prueba rápida, caduca a la hora):** saca tu token de acceso (en la app, DevTools › Application › Local Storage ›
+     clave `muninn.auth`, campo `access_token`) y
+     `claude mcp add --transport http muninn-remoto https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp --header "Authorization: Bearer <token>"`.
+     No lo guardes en ningún fichero del repo.
+  4. **claude.ai y el móvil (OAuth):** en Supabase › **Authentication**, activa Supabase Auth como **servidor OAuth 2.1** (si tu proyecto lo
+     ofrece; cuando se escribió esto era una función nueva) con registro dinámico de clientes, y añade a *Redirect URLs* las que pida el
+     cliente. Después, en claude.ai › Ajustes › Conectores › **Añadir conector personalizado**, pega la URL del paso 1: debería abrir el inicio
+     de sesión de Muninn. **Sin verificar**: si el cliente no encuentra el servidor de autorización o Supabase no admite el registro dinámico,
+     el plan B son tokens personales de Muninn (ADR-0033, alternativas).
+- **Ref:** [ADR-0033](../adr/0033-mcp-remoto-http.md)
