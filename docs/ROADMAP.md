@@ -1,8 +1,8 @@
 # Roadmap
 
 ## F1 · Base + tareas y notas
-> **Estado:** el código de la F1 está completo (ver las casillas). Quedan **dos pasos manuales** antes de darla por cerrada:
-> activar GitHub OAuth en el panel de Supabase y pasar la [lista de pruebas del iPhone](pruebas-iphone.md).
+> **Estado:** el código de la F1 está completo y GitHub OAuth ya está activo. Solo queda pasar la
+> [lista de pruebas del iPhone](pruebas-iphone.md), que está en la pila de [Pruebas finales](#pruebas-finales).
 - [x] Monorepo (pnpm + Turborepo), Biome, TypeScript estricto
 - [x] Esquema Supabase con RLS y Realtime
 - [x] `@muninn/core`: proyectos, columnas personalizables, tareas, checklist, notas, actividad, informes
@@ -21,9 +21,9 @@
 - [x] Apariencia en `user_settings.preferences` (localStorage como caché del primer render)
 - [x] Correos de acceso con SMTP propio (Resend) y plantillas con la marca de Muninn
   ([gotchas/db](gotchas/db.md))
-- [ ] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs): pasos en
+- [x] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs): pasos en
   [gotchas/db](gotchas/db.md#activar-github-oauth-paso-manual)
-- [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) (gestos, teclado de iOS, sin conexión) y corregir lo que falle
+- [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) y corregir lo que falle → en [Pruebas finales](#pruebas-finales)
 - [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, el dock y el buscador solo enseñan lo activo
   ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md))
 - [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
@@ -38,16 +38,55 @@
   en IndexedDB ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
 
 ## F2 · Claude y GitHub
+> **Estado:** en curso. Lo de la tanda del 19 de octubre está en PRs a `develop` ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#19](https://github.com/lopezz-dev/muninn/pull/19)); conviene fusionarlos en ese orden.
+> La sincronización con GitHub y el MCP remoto tienen el código listo pero **no están en marcha**: faltan sus pasos manuales y sus pruebas,
+> en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
-- [ ] Tablero: vistas **Lista** y **Calendario** del diseño. No entran en F1: el diseño de móvil no las contempla, y el
-  calendario necesita elegir cómo se arrastra una fecha y qué hacer con las tareas sin fecha. Con los filtros ya hechos, la
-  Lista es la más barata (misma fuente de datos, sin arrastre entre columnas)
-- [ ] Sync GitHub: issues → tareas (insignia GitHub, proyecto por `github_repo`), cerrar issue ↔ completar
-- [ ] Columna "Para el agente": etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza
-- [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai
-- [ ] **Escribir sin conexión:** cola de mutaciones persistente que se reproduce al volver la red (orden con fractional
-  indexing frente a cambios de otros dispositivos, conflictos, «Deshacer» sobre lo pendiente, ids provisionales). Pide su ADR;
-  hoy sin red solo se puede leer ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
+- [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
+  sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
+- [ ] Tablero: vista **Calendario**. No entra todavía: necesita decidir cómo se arrastra una fecha y dónde van las tareas sin fecha
+- [ ] Sync GitHub: issues → tareas, cerrar issue ↔ completar (ADR-0031, [#16](https://github.com/lopezz-dev/muninn/pull/16))
+  - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
+  - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
+  - [ ] Puesta en marcha (migración, token, secretos, despliegue, webhook, cron) y prueba real → [Pruebas finales](#pruebas-finales)
+  - [ ] Pantalla **GitHub** del diseño (repositorios vinculados, «Sincronizar ahora»): llega después de la puesta en marcha
+- [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza. Diseño en ADR-0032
+  (propuesto, [#17](https://github.com/lopezz-dev/muninn/pull/17)); se implementa cuando la sincronización esté en marcha
+- [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai (ADR-0033, [#18](https://github.com/lopezz-dev/muninn/pull/18))
+  - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
+  - [ ] Despliegue y OAuth con Supabase para claude.ai y el móvil (sin verificar) → [Pruebas finales](#pruebas-finales)
+- [ ] **Escribir sin conexión:** cola de intenciones persistente, UUID del cliente, orden por ancla, conflictos y «Deshacer» sobre lo
+  pendiente. ADR-0034 **propuesto** ([#19](https://github.com/lopezz-dev/muninn/pull/19)), para revisarlo juntos antes de implementar; hoy sin red solo se puede leer
+  ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
+
+## Pruebas finales
+
+Pila única de lo que hay que comprobar **a mano** (no se puede verificar desde el ordenador o necesita secretos y despliegues). Cada bloque
+que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. Marca cada línea al pasarla y abre una tarea si algo falla.
+
+### F1 · iPhone
+- [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) entera (instalar, teclado de iOS, gestos del tablero, sin conexión) y corregir lo que falle
+
+### F2 · Vista Lista ([#15](https://github.com/lopezz-dev/muninn/pull/15))
+- [ ] En el iPhone: cambiar a **Lista** en un proyecto; la casilla de cada fila se toca bien (zona de 44 px) y completa con «Deshacer»
+- [ ] Cerrar y abrir la app: el proyecto sigue en Lista (se recuerda por dispositivo); en el ordenador sigue en Tablero
+
+### F2 · Sincronización con GitHub ([#16](https://github.com/lopezz-dev/muninn/pull/16))
+- [ ] Puesta en marcha: los 7 pasos de [gotchas/db](gotchas/db.md) › «Sincronización con GitHub (pasos manuales)» (llegan con [#16](https://github.com/lopezz-dev/muninn/pull/16))
+- [ ] En **Recent Deliveries** del webhook, el `ping` da 200; una entrega con la firma cambiada da 401
+- [ ] Abrir una issue en el repo vinculado → aparece en «Por hacer» en segundos, con «GitHub #n», sus etiquetas y el enlace a la issue
+- [ ] Editar el título de la issue → cambia en Muninn; en el detalle, título y descripción no se pueden editar
+- [ ] Cerrar la issue → la tarea pasa a «Hecho»; reabrirla → vuelve a «Por hacer»
+- [ ] Completar la tarea en Muninn → la issue se cierra en ≤ 5 min; reabrirla en Muninn → la issue se reabre
+- [ ] Borrar la issue (o transferirla) → la tarea se archiva
+- [ ] Ajustes › Integraciones dice cuántas tareas han llegado y cuándo fue el último cambio
+- [ ] `select * from github_outbox where processed_at is null` queda vacío tras un ciclo del cron
+
+### F2 · MCP remoto ([#18](https://github.com/lopezz-dev/muninn/pull/18))
+- [ ] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)» (llega con [#18](https://github.com/lopezz-dev/muninn/pull/18))
+- [ ] Claude Code con `--header "Authorization: Bearer <token>"`: «¿Cómo voy hoy?» responde con tus datos; con el token caducado, 401
+- [ ] Activar OAuth en Supabase y añadir el conector en claude.ai: inicia sesión con tu cuenta de Muninn y lista tus proyectos (**sin verificar**)
+- [ ] Lo mismo desde la app de Claude en el iPhone
 
 ## F3 · Móvil y finanzas
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
@@ -81,6 +120,8 @@ más o menos en este orden:
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
 
 ## Backlog
+- GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
+- MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Borrado definitivo de tareas desde la app (hoy solo se archivan)
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
