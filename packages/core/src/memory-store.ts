@@ -161,10 +161,11 @@ export function createMemoryStore(
     snapshot,
     activity: activityLog,
     githubOutbox: {
-      async enqueue(taskId) {
+      async enqueue(taskId, kind) {
         outbox.push({
           id: nextOutboxId++,
           taskId,
+          kind,
           attempts: 0,
           lastError: null,
           createdAt: now(),
@@ -172,10 +173,15 @@ export function createMemoryStore(
         })
         changed()
       },
-      async pending({ maxAttempts, limit = 100, taskId }) {
+      async pending({ maxAttempts, limit = 100, taskId, kind }) {
         return outbox
           .filter(
-            (e) => !e.processedAt && e.attempts < maxAttempts && (!taskId || e.taskId === taskId),
+            (e) =>
+              !e.processedAt &&
+              e.attempts < maxAttempts &&
+              (!taskId || e.taskId === taskId) &&
+              // Las de antes de ADR-0032 no tienen tipo: eran todas de estado.
+              (!kind || (e.kind ?? 'state') === kind),
           )
           .slice(0, limit)
           .map(({ processedAt: _, ...e }) => structuredClone(e))

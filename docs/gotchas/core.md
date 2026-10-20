@@ -90,3 +90,11 @@
   resuelve los imports sin extensión del TS fuente.
 - **Solución:** `pnpm --filter @muninn/core build:edge` y vuelve a desplegar la función. `@muninn/core/github` solo usa `fetch` y
   `crypto.subtle`: no importes `node:*` desde ahí ni desde lo que importa.
+
+### La columna del agente nunca es la «por defecto»
+
+- **Síntoma:** una issue nueva o una tarea reabierta acaba en «Para el agente» sin etiqueta (o una tarea manual da el error «Solo las
+  tareas de GitHub pueden ir al agente» al reabrirla).
+- **Causa:** «la primera columna de tipo `todo`» puede ser la del agente si el usuario la puso delante ([ADR-0032](../adr/0032-columna-para-el-agente.md)).
+- **Solución:** `defaultColumn` (core) y `reopenTask` (`apps/web/src/lib/task-actions.ts`) se saltan `project.agentColumnId`. Si
+  añades otro sitio que elija columna por su tipo, sáltatela también.

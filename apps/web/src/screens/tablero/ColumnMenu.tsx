@@ -12,6 +12,7 @@ import {
   MenuTrigger,
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
+import { canBeAgentColumn, setAgentColumn, useAgentColumn } from '../../lib/agent'
 import { deleteColumn, moveColumn } from '../../lib/column-actions'
 import { useMuninn } from '../../lib/muninn'
 
@@ -25,7 +26,8 @@ interface ColumnMenuProps {
 }
 
 /**
- * Opciones de una columna: editar, moverla con el teclado (alternativa al arrastre) y borrarla.
+ * Opciones de una columna: editar, moverla con el teclado (alternativa al arrastre), marcarla como la del
+ * agente (si el proyecto tiene repo; ADR-0032) y borrarla.
  * Con tareas, el borrado pregunta a qué columna pasan (es una elección, no una confirmación; todo
  * se puede deshacer).
  */
@@ -35,6 +37,8 @@ export function ColumnMenu({ column, columns, taskCount, onEdit, size = 'md' }: 
   const index = columns.findIndex((c) => c.id === column.id)
   const others = columns.filter((c) => c.id !== column.id)
   const last = columns.length <= 1
+  const { project, githubOn } = useAgentColumn(column.projectId)
+  const isAgent = project?.agentColumnId === column.id
 
   return (
     <Menu>
@@ -63,6 +67,14 @@ export function ColumnMenu({ column, columns, taskCount, onEdit, size = 'md' }: 
         >
           Mover a la derecha
         </MenuItem>
+        {project && canBeAgentColumn(project, githubOn, column) ? (
+          <MenuItem
+            icon={<icons.agent />}
+            onSelect={() => setAgentColumn(m, qc, project, columns, isAgent ? null : column.id)}
+          >
+            {isAgent ? 'Dejar de usarla para el agente' : 'Usar para el agente'}
+          </MenuItem>
+        ) : null}
         <MenuSeparator />
         {taskCount === 0 || last ? (
           <MenuItem

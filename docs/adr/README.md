@@ -50,6 +50,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
 - [ADR-0026](0026-markdown-marked-a-react-y-textarea.md) — Markdown con marked a elementos de React y un editor sobre `textarea`
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
+- [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 - [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 
 ### db
@@ -62,6 +63,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
 - [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) — Tiempo real por invalidación de caché y caché de solo lectura sin conexión
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
+- [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -99,7 +101,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 
 ### ci
 - [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please
-- [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea *(propuesto)*
+- [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 
 ### tooling
 - [ADR-0001](0001-monorepo-pnpm-turborepo.md) — Monorepo con pnpm y Turborepo

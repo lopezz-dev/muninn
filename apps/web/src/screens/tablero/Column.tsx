@@ -2,6 +2,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import type { BoardColumn, TaskWithColumn } from '@muninn/core'
 import { cn, IconButton, icons, Tooltip } from '@muninn/ui'
+import { useAgentColumn } from '../../lib/agent'
 import { colKey } from '../../lib/board'
 import { useShell } from '../../shell/shell-context'
 import { ColumnMenu } from './ColumnMenu'
@@ -39,6 +40,18 @@ export function ColumnCount({ count, limit }: { count: number; limit: number | n
   )
 }
 
+/** Marca de la columna «Para el agente» (ADR-0032), junto a su nombre. */
+export function AgentMark({ className }: { className?: string }) {
+  return (
+    <Tooltip content="Para el agente: lo que muevas aquí desde GitHub lo resuelve en un PR">
+      <span className={cn('inline-flex shrink-0 text-accent', className)}>
+        <icons.agent size={14} aria-hidden="true" />
+        <span className="sr-only">(columna del agente)</span>
+      </span>
+    </Tooltip>
+  )
+}
+
 interface ColumnProps {
   column: BoardColumn
   columns: BoardColumn[]
@@ -64,6 +77,7 @@ export function Column({
   onEdit,
 }: ColumnProps) {
   const shell = useShell()
+  const isAgent = useAgentColumn(projectId).columnId === column.id
   const {
     attributes,
     listeners,
@@ -109,6 +123,7 @@ export function Column({
         <h2 className="min-w-0 truncate" title={column.name}>
           {column.name}
         </h2>
+        {isAgent ? <AgentMark /> : null}
         <ColumnCount count={total} limit={column.wipLimit} />
         <span className="ml-auto flex items-center">
           {column.kind === 'done' ? null : (
@@ -127,7 +142,11 @@ export function Column({
         <div className="flex min-h-10 flex-col gap-2">
           {tasks.length === 0 ? (
             <p className="grid min-h-16 place-items-center rounded-md border border-dashed border-border-strong px-4 text-center text-xs text-fg-faint">
-              {total > 0 ? 'Ninguna tarea cumple el filtro.' : 'Sin tareas. Arrastra una aquí.'}
+              {total > 0
+                ? 'Ninguna tarea cumple el filtro.'
+                : isAgent
+                  ? 'Arrastra aquí una tarea de GitHub para que la resuelva el agente.'
+                  : 'Sin tareas. Arrastra una aquí.'}
             </p>
           ) : null}
           {tasks.map((t) => (

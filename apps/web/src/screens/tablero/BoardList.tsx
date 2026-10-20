@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { DueDate, LabelChips, PriorityFlag, SourceBadge } from '../../components/task-meta'
+import { useAgentColumn } from '../../lib/agent'
 import { type BoardData, groupByColumn } from '../../lib/board'
 import { type BoardFilter, filterTasks } from '../../lib/board-filter'
 import { timeAgo } from '../../lib/dates'
@@ -93,6 +94,7 @@ interface GroupProps {
 function Group({ column, tasks, total, filtering, counts, today, projectId }: GroupProps) {
   const [open, setOpen] = useState(true)
   const listId = `lista-${column.id}`
+  const isAgent = useAgentColumn(projectId).columnId === column.id
   return (
     <section
       aria-label={column.name}
@@ -116,6 +118,13 @@ function Group({ column, tasks, total, filtering, counts, today, projectId }: Gr
             className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[column.kind])}
           />
           <span className="truncate">{column.name}</span>
+          {isAgent ? (
+            <icons.agent
+              size={13}
+              className="shrink-0 text-accent"
+              aria-label="columna del agente"
+            />
+          ) : null}
           {filtering && tasks.length !== total ? (
             <span className="shrink-0 text-xs font-normal text-fg-subtle tabular">
               {tasks.length} de {total}

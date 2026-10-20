@@ -45,3 +45,27 @@ En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha lle
   solo al crearse la tarea).
 - Si **archivas** una tarea de GitHub, Muninn no la vuelve a sacar aunque la issue cambie.
 - En el tablero puedes quedarte solo con ellas con el filtro **Origen › GitHub**.
+
+## Para el agente
+
+Puedes pedirle a un agente (Claude Code) que resuelva una issue por ti: mueve su tarea a la columna del agente y él trabaja en el
+repositorio, abre una *pull request* y la tarea avanza sola.
+
+> **Estado:** recién llegado. Necesita una preparación en el repositorio de GitHub que todavía no se hace desde Muninn (instalar la
+> app de Claude, una clave y un fichero de flujo de trabajo). Mientras no esté hecha, mover una tarea a la columna solo le pone una
+> etiqueta a la issue.
+
+- **Elige la columna.** En el menú de una columna (los tres puntos), **Usar para el agente**. Sale con un pequeño robot junto al nombre.
+  Solo se ofrece si el proyecto tiene repositorio y el módulo GitHub está activado, y nunca en una columna «Hecho». Para quitarla,
+  **Dejar de usarla para el agente**.
+- **Mueve una tarea de GitHub ahí.** Muninn etiqueta su issue con `muninn:agent` en unos segundos y el agente empieza. Las tareas que
+  creas en Muninn no tienen issue: no se pueden mover ahí y te lo dice.
+- **Cuando el agente abre su PR**, la tarea pasa a «Revisión». En su actividad verás «Ver el PR».
+- **Tú revisas y fusionas.** El agente nunca fusiona. Al fusionar el PR, la tarea se completa y la issue se cierra. Si cierras el PR sin
+  fusionarlo, la tarea vuelve a «Por hacer».
+- **Si el agente termina sin PR** (no lo consiguió o le faltaba información), la tarea vuelve a «Por hacer» y su actividad lo cuenta.
+  Para reintentarlo, muévela otra vez a la columna.
+- **¿Te arrepientes?** Saca la tarea de la columna: se quita la etiqueta y el agente se detiene.
+
+Cada vez que mandas una tarea al agente se gasta una ejecución de GitHub Actions y uso de Claude. Manda solo issues que hayas leído:
+el agente lee la issue entera, y en un repositorio público cualquiera puede escribir en ella.

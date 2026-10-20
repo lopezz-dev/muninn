@@ -1,4 +1,11 @@
-import type { GithubIssue, GithubIssueState, GithubRepoSummary } from './schemas'
+import {
+  AGENT_LABEL,
+  type GithubIssue,
+  type GithubIssueState,
+  type GithubPullRequest,
+  type GithubRepoSummary,
+  type GithubSyncScope,
+} from './schemas'
 import type { Muninn } from './service'
 import { NotFoundError } from './store'
 
@@ -16,6 +23,10 @@ export interface GithubClient {
   /** La issue, o `null` si ya no existe (borrada o transferida: 404/410). */
   getIssue(repo: string, issueNumber: number): Promise<GithubIssue | null>
   setIssueState(repo: string, issueNumber: number, state: GithubIssueState): Promise<void>
+  /** Pone una etiqueta (GitHub la crea si el repo no la tiene). */
+  addLabel(repo: string, issueNumber: number, label: string): Promise<void>
+  /** Quita una etiqueta; si la issue no la tenía, no pasa nada. */
+  removeLabel(repo: string, issueNumber: number, label: string): Promise<void>
   /**
    * Repos que ve el token y que se pueden sincronizar (sin archivar y con issues), por nombre. Ojo: incluye
    * todos los públicos de la cuenta, aunque el token no pueda escribir en ellos (ver `canWriteIssues`).
@@ -108,6 +119,22 @@ export function createGithubClient(options: {
       })
       if (!res.ok) throw await fail(res, `Cambiar el estado de ${repo}#${issueNumber}`)
     },
+    async addLabel(repo, issueNumber, label) {
+      const res = await call(`/repos/${repo}/issues/${issueNumber}/labels`, {
+        method: 'POST',
+        body: JSON.stringify({ labels: [label] }),
+      })
+      if (!res.ok) throw await fail(res, `Etiquetar ${repo}#${issueNumber}`)
+    },
+    async removeLabel(repo, issueNumber, label) {
+      const res = await call(
+        `/repos/${repo}/issues/${issueNumber}/labels/${encodeURIComponent(label)}`,
+        { method: 'DELETE' },
+      )
+      if (!res.ok && res.status !== 404) {
+        throw await fail(res, `Quitar la etiqueta de ${repo}#${issueNumber}`)
+      }
+    },
     async listRepos() {
       // Todo token lee los repos públicos: `/user/repos` los da aunque no sean de los que se le dieron. Un privado
       // que sale sí es del token; un público se comprueba con `canWriteIssues` al elegirlo (ADR-0035).
@@ -186,19 +213,41 @@ export interface WebhookResult {
 interface IssuesPayload {
   action?: string
   issue?: GithubIssue
+  /** En `labeled` y `unlabeled`: la etiqueta que se puso o se quitó. */
+  label?: { name?: string }
+  repository?: { full_name?: string }
+}
+
+interface PullRequestPayload {
+  action?: string
+  pull_request?: GithubPullRequest
   repository?: { full_name?: string }
 }
 
 /**
- * Atiende un evento de GitHub ya verificado. Solo `issues` (y `ping`); lo demás se acepta y se ignora
- * (202), para que GitHub no lo marque como fallo.
+ * Atiende un evento de GitHub ya verificado: `issues`, `pull_request` (los PRs del agente, ADR-0032) y
+ * `ping`. Lo demás se acepta y se ignora (202), para que GitHub no lo marque como fallo. `agent` es el
+ * mismo core con actor `agent`: lo que hace un PR del agente queda a su nombre en la actividad.
  */
 export async function handleGithubWebhook(
   m: Muninn,
   event: string | null,
   payload: unknown,
+  options: { agent?: Muninn } = {},
 ): Promise<WebhookResult> {
   if (event === 'ping') return { status: 200, body: { ok: true } }
+  if (event === 'pull_request') {
+    const p = (payload ?? {}) as PullRequestPayload
+    const repo = p.repository?.full_name
+    if (!repo || !p.pull_request || !p.action) {
+      return { status: 400, body: { error: 'Falta el PR o el repositorio' } }
+    }
+    const pr = await (options.agent ?? m).github.applyPullRequest(repo, p.action, p.pull_request)
+    return {
+      status: 200,
+      body: pr.action === 'ignored' ? pr : { action: pr.action, taskId: pr.task.id },
+    }
+  }
   if (event !== 'issues') return { status: 202, body: { ignored: event ?? 'sin evento' } }
   const p = (payload ?? {}) as IssuesPayload
   const repo = p.repository?.full_name
@@ -206,6 +255,10 @@ export async function handleGithubWebhook(
   if (p.action === 'deleted' || p.action === 'transferred') {
     const task = await m.github.removeIssue(repo, p.issue.number)
     return { status: 200, body: { action: task ? 'archived' : 'unchanged' } }
+  }
+  if (p.action === 'unlabeled' && p.label?.name === AGENT_LABEL) {
+    const task = await m.github.agentStopped(repo, p.issue.number)
+    if (task) return { status: 200, body: { action: 'agent-stopped', taskId: task.id } }
   }
   const result = await m.github.applyIssue(repo, p.issue)
   return {
@@ -217,7 +270,7 @@ export async function handleGithubWebhook(
 // ─── Cola de salida y reconciliación ─────────────────────────────────────────
 
 export interface DrainSummary {
-  /** Issues cuyo estado se cambió en GitHub. */
+  /** Issues cuyo estado o etiqueta del agente se cambió en GitHub. */
   sent: number
   /** Ya estaban como debían, o la tarea/issue ya no existe. */
   skipped: number
@@ -226,26 +279,55 @@ export interface DrainSummary {
 
 const message = (err: unknown) => (err instanceof Error ? err.message : String(err))
 
+/** `null` si la tarea ya no existe. */
+const unlessMissing = <T>(p: Promise<T>) =>
+  p.catch((err) => {
+    if (err instanceof NotFoundError) return null
+    throw err
+  })
+
+const labelNames = (issue: GithubIssue) =>
+  (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : (l.name ?? '')))
+
+/** Cierra o reabre la issue si no está como la tarea. `true` si hubo que cambiarla. */
+async function sendState(m: Muninn, gh: GithubClient, taskId: string) {
+  const want = await unlessMissing(m.github.stateOf(taskId))
+  const issue = want && !want.archived ? await gh.getIssue(want.repo, want.number) : null
+  if (!want || !issue || issue.state === want.state) return false
+  await gh.setIssueState(want.repo, want.number, want.state)
+  return true
+}
+
+/** Pone o quita la etiqueta del agente si no está como la tarea (ADR-0032). `true` si hubo que cambiarla. */
+async function sendAgentLabel(m: Muninn, gh: GithubClient, taskId: string) {
+  const want = await unlessMissing(m.github.agentStateOf(taskId))
+  const issue = want ? await gh.getIssue(want.repo, want.number) : null
+  if (!want || !issue || labelNames(issue).includes(AGENT_LABEL) === want.labeled) return false
+  if (want.labeled) await gh.addLabel(want.repo, want.number, AGENT_LABEL)
+  else await gh.removeLabel(want.repo, want.number, AGENT_LABEL)
+  return true
+}
+
 /**
- * Lleva a GitHub lo que se completó o reabrió en Muninn. Relee cada tarea (si se completó y reabrió
- * varias veces, cuenta el estado de ahora) y solo cambia la issue si no está ya así.
+ * Lleva a GitHub lo que se hizo en Muninn: el estado de la issue (completar o reabrir) y la etiqueta del
+ * agente. Relee cada tarea (si cambió varias veces, cuenta lo de ahora) y solo toca la issue si no está ya así.
  */
 export async function drainGithubOutbox(m: Muninn, gh: GithubClient, limit = 50) {
   const summary: DrainSummary = { sent: 0, skipped: 0, failed: 0 }
   const entries = await m.github.outbox.pending(limit)
-  const byTask = new Map<string, typeof entries>()
-  for (const e of entries) byTask.set(e.taskId, [...(byTask.get(e.taskId) ?? []), e])
-  for (const [taskId, group] of byTask) {
+  const groups = new Map<string, typeof entries>()
+  for (const e of entries) {
+    // Las de antes de la columna del agente no traen tipo: eran todas de estado.
+    const key = `${e.kind ?? 'state'} ${e.taskId}`
+    groups.set(key, [...(groups.get(key) ?? []), e])
+  }
+  for (const [key, group] of groups) {
+    const [kind, taskId] = key.split(' ') as [string, string]
     try {
-      const want = await m.github.stateOf(taskId).catch((err) => {
-        if (err instanceof NotFoundError) return null
-        throw err
-      })
-      const issue = want && !want.archived ? await gh.getIssue(want.repo, want.number) : null
-      if (want && issue && issue.state !== want.state) {
-        await gh.setIssueState(want.repo, want.number, want.state)
-        summary.sent++
-      } else summary.skipped++
+      const sent =
+        kind === 'agent' ? await sendAgentLabel(m, gh, taskId) : await sendState(m, gh, taskId)
+      if (sent) summary.sent++
+      else summary.skipped++
       await m.github.outbox.settle(group)
     } catch (err) {
       summary.failed++
@@ -279,7 +361,7 @@ export async function reconcileGithub(
   options: { maxLookups?: number } = {},
 ): Promise<ReconcileSummary> {
   const outbox = await drainGithubOutbox(m, gh)
-  const pending = new Set((await m.github.outbox.pending(500)).map((e) => e.taskId))
+  const pending = new Set((await m.github.outbox.pending(500, 'state')).map((e) => e.taskId))
   let lookups = options.maxLookups ?? 50
   const repos: ReconcileSummary['repos'] = []
 
@@ -310,4 +392,17 @@ export async function reconcileGithub(
     }
   }
   return { outbox, repos }
+}
+
+/**
+ * Lo que hace `POST /github/sync`: con `outbox`, solo vaciar la cola (la app lo pide justo después de un
+ * cambio, para no esperar al cron); con `all` (el cron y «Sincronizar ahora»), la reconciliación entera.
+ */
+export async function syncGithub(
+  m: Muninn,
+  gh: GithubClient,
+  scope: GithubSyncScope = 'all',
+): Promise<Partial<ReconcileSummary> & { outbox: DrainSummary }> {
+  if (scope === 'outbox') return { outbox: await drainGithubOutbox(m, gh) }
+  return reconcileGithub(m, gh)
 }

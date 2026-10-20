@@ -3,7 +3,9 @@ import type {
   BoardColumn,
   ChecklistItem,
   GithubRepoSummary,
+  GithubSyncScope,
   Note,
+  OutboxKind,
   Project,
   ProjectStatus,
   Task,
@@ -36,26 +38,34 @@ export interface Store {
     list(): Promise<GithubRepoSummary[]>
     /** Si el token puede escribir issues en `repo` (los públicos salen en la lista aunque no pueda). */
     canWrite(repo: string): Promise<boolean>
+    /** Lanza la sincronización ahora: solo la cola de salida o también la reconciliación de los repos. */
+    sync(scope: GithubSyncScope): Promise<unknown>
   }
 }
 
 export interface OutboxEntry {
   id: number
   taskId: string
+  kind: OutboxKind
   attempts: number
   lastError: string | null
   createdAt: string
 }
 
 /**
- * Cola de salida hacia GitHub: tareas con issue cuyo estado (abierta o cerrada) hay que llevar a
- * GitHub. La llena el servicio al completar o reabrir una tarea de GitHub; la vacía la
- * sincronización (`drainOutbox`, en la Edge Function), que relee la tarea al procesarla.
+ * Cola de salida hacia GitHub: tareas con issue cuyo estado (abierta o cerrada, `state`) o cuya etiqueta
+ * del agente (`agent`, ADR-0032) hay que llevar a GitHub. La llena el servicio; la vacía la
+ * sincronización (`drainGithubOutbox`, en la Edge Function), que relee la tarea al procesarla.
  */
 export interface GithubOutbox {
-  enqueue(taskId: string): Promise<void>
+  enqueue(taskId: string, kind: OutboxKind): Promise<void>
   /** Sin procesar y con menos de `maxAttempts` intentos, de la más antigua a la más nueva. */
-  pending(query: { maxAttempts: number; limit?: number; taskId?: string }): Promise<OutboxEntry[]>
+  pending(query: {
+    maxAttempts: number
+    limit?: number
+    taskId?: string
+    kind?: OutboxKind
+  }): Promise<OutboxEntry[]>
   /** Sin `error`, quedan procesadas. Con `error`, siguen pendientes con un intento más. */
   settle(entries: OutboxEntry[], error?: string): Promise<void>
 }

@@ -66,19 +66,20 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 
 | Tabla | Para qué |
 |---|---|
-| `projects` | Proyectos. `github_repo` (owner/repo) los vincula con GitHub. |
+| `projects` | Proyectos. `github_repo` (owner/repo) los vincula con GitHub; `agent_column_id`, su columna «Para el agente» ([ADR-0032](adr/0032-columna-para-el-agente.md)). |
 | `board_columns` | Estados del Kanban **por proyecto**, totalmente personalizables. `kind` (`backlog`, `todo`, `in_progress`, `review`, `done`) da semántica independiente del nombre. |
 | `tasks` | Tareas. `source` (`manual`, `github`, `mcp`, `agent`) + `external_id`/`external_url` para el origen. `completed_at` se gestiona solo al entrar/salir de una columna `done`. |
 | `task_checklist_items` | Subtareas (la barra de progreso de las tarjetas). |
 | `notes` | Notas Markdown, opcionalmente vinculadas a proyecto o tarea. |
 | `activity` | Log inmutable de eventos. |
 | `user_settings` | Módulos activados y preferencias. |
-| `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn ([ADR-0031](adr/0031-sync-github-issues-tareas.md)). |
+| `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn (`kind = 'state'`, [ADR-0031](adr/0031-sync-github-issues-tareas.md)) o que entraron o salieron de la columna del agente (`kind = 'agent'`, ADR-0032). |
 
 ### Sincronización con GitHub
 
-`supabase/functions/github` (Edge Function, Deno) recibe los webhooks de `issues` y, cada 5 minutos (`pg_cron`), reconcilia y vacía
-la cola de salida. No tiene lógica propia: usa `createMuninn(store, { actor: 'github' })` y `@muninn/core/github`, empaquetados con
+`supabase/functions/github` (Edge Function, Deno) recibe los webhooks de `issues` y `pull_request` y, cada 5 minutos (`pg_cron`), reconcilia
+y vacía la cola de salida; la app le pide vaciarla al momento tras mover una tarea de GitHub (`/sync` con `scope: outbox`). Los PRs del
+agente (rama `agent/issue-<n>`) mueven su tarea con actor `agent` ([ADR-0032](adr/0032-columna-para-el-agente.md)). No tiene lógica propia: usa `createMuninn(store, { actor: 'github' })` y `@muninn/core/github`, empaquetados con
 `pnpm --filter @muninn/core build:edge`. El token de GitHub es un secreto de la función ([ADR-0031](adr/0031-sync-github-issues-tareas.md)).
 
 ### Orden en el tablero

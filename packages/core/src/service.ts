@@ -17,14 +17,19 @@ import {
   createTaskInput,
   type GithubIssue,
   type GithubIssueState,
+  type GithubPullRequest,
+  type GithubSyncScope,
   githubIssue,
+  githubPullRequest,
   githubRepo,
   githubRepoList,
+  githubSyncScope,
   type MoveTaskInput,
   moveTaskInput,
   type Note,
   type NoteQuery,
   noteQuery,
+  type OutboxKind,
   type Project,
   type Task,
   type TaskQuery,
@@ -54,6 +59,8 @@ export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = [
 
 const OPEN_ACTIVE_KINDS: ColumnKind[] = ['in_progress', 'review']
 
+const AGENT_ONLY_GITHUB = 'Solo las tareas de GitHub pueden ir al agente'
+
 /** Intentos de llevar un estado a GitHub antes de dejarlo (con su error a la vista). */
 export const GITHUB_MAX_ATTEMPTS = 5
 
@@ -77,6 +84,22 @@ function issueLabels(issue: GithubIssue): string[] {
     .filter(Boolean)
   return [...new Set(names)].slice(0, 20)
 }
+
+/**
+ * Número de la issue que resuelve un PR del agente: el de su rama `agent/issue-<n>` o, en una rama
+ * `agent/…` con otro nombre, el de `Closes|Fixes|Resolves #n` en la descripción. `null` si no es del agente.
+ */
+export function agentIssueNumber(pr: { head: { ref: string }; body?: string | null }) {
+  const branch = /^agent\/issue-(\d+)(?:\D|$)/.exec(pr.head.ref)
+  if (branch) return Number(branch[1])
+  if (!pr.head.ref.startsWith('agent/')) return null
+  const body = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)\b/i.exec(pr.body ?? '')
+  return body ? Number(body[1]) : null
+}
+
+export type GithubPullResult =
+  | { action: 'review' | 'completed' | 'returned' | 'unchanged'; task: Task }
+  | { action: 'ignored'; reason: 'not-agent' | 'no-task' | 'archived' }
 
 export type GithubApplyResult =
   | { action: 'created' | 'updated' | 'unchanged'; task: Task }
@@ -219,6 +242,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       color: data.color ?? 'blue',
       icon: data.icon ?? null,
       githubRepo: data.githubRepo ?? null,
+      agentColumnId: null,
       status: 'active',
       position: await place('projects', siblings),
     })
@@ -240,6 +264,18 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   async function updateProject(id: string, input: UpdateProjectInput) {
     const patch = parse(updateProjectInput, input)
     await getProject(id)
+    if (patch.agentColumnId) {
+      const column = await must(
+        store.columns.get(patch.agentColumnId),
+        'Columna',
+        patch.agentColumnId,
+      )
+      if (column.projectId !== id)
+        throw new ValidationError('La columna no pertenece a ese proyecto')
+      if (column.kind === 'done') {
+        throw new ValidationError('La columna del agente no puede ser de tipo «Hecho»')
+      }
+    }
     const project = await store.projects.update(id, patch)
     await log('project', id, patch.status === 'archived' ? 'archived' : 'updated', id, patch)
     return project
@@ -276,6 +312,9 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   async function updateColumn(id: string, input: UpdateColumnInput) {
     const patch = parse(updateColumnInput, input)
     const before = await must(store.columns.get(id), 'Columna', id)
+    if (patch.kind === 'done' && (await agentColumnOf(before.projectId)) === id) {
+      throw new ValidationError('La columna del agente no puede ser de tipo «Hecho»')
+    }
     const column = await store.columns.update(id, patch)
     // Cambiar la semántica de la columna cambia el estado "hecho" de sus tareas.
     if (patch.kind && (patch.kind === 'done') !== (before.kind === 'done')) {
@@ -307,6 +346,10 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
         )
       }
       for (const t of tasks) await moveTask(t.id, { columnId: opts.moveTasksTo })
+    }
+    // En Supabase lo hace la clave ajena (`on delete set null`); el store de memoria no la tiene.
+    if ((await agentColumnOf(column.projectId)) === id) {
+      await store.projects.update(column.projectId, { agentColumnId: null })
     }
     await store.columns.remove(id)
     await log('column', id, 'deleted', column.projectId, { name: column.name })
@@ -355,10 +398,20 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return tasks.map((t) => withColumn(t, cols))
   }
 
+  /** La columna «Para el agente» del proyecto (ADR-0032), o `null`. Los FileStore antiguos no la traen. */
+  async function agentColumnOf(projectId: string) {
+    return (await store.projects.get(projectId))?.agentColumnId ?? null
+  }
+
+  /** La primera «Por hacer» que no sea la del agente (a esa solo se llega a propósito). */
   async function defaultColumn(projectId: string) {
-    const cols = await listColumns(projectId)
+    const [all, agent] = await Promise.all([listColumns(projectId), agentColumnOf(projectId)])
+    const cols = all.filter((c) => c.id !== agent)
     const col =
-      cols.find((c) => c.kind === 'todo') ?? cols.find((c) => c.kind !== 'done') ?? cols[0]
+      cols.find((c) => c.kind === 'todo') ??
+      cols.find((c) => c.kind !== 'done') ??
+      cols[0] ??
+      all[0]
     if (!col) throw new ValidationError('El proyecto no tiene columnas')
     return col
   }
@@ -371,6 +424,10 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       : await defaultColumn(data.projectId)
     if (column.projectId !== data.projectId) {
       throw new ValidationError('La columna no pertenece a ese proyecto')
+    }
+    // Al agente va una issue que ya existe: una tarea nueva no tiene ninguna que etiquetar.
+    if (data.columnId && (await agentColumnOf(data.projectId)) === column.id) {
+      throw new ValidationError(AGENT_ONLY_GITHUB)
     }
     const siblings = await store.tasks.list({ columnIds: [column.id] })
     const task = await store.tasks.insert({
@@ -411,9 +468,17 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       must(store.columns.get(columnId), 'Columna', columnId),
       store.tasks.list({ columnIds: [columnId] }),
     ])
-    const from = task.columnId === to.id ? to : await store.columns.get(task.columnId)
+    const [from, agent] = await Promise.all([
+      task.columnId === to.id ? to : store.columns.get(task.columnId),
+      agentColumnOf(task.projectId),
+    ])
     if (to.projectId !== task.projectId) {
       throw new ValidationError('No se puede mover una tarea a otro proyecto con moveTask')
+    }
+    const entersAgent = to.id === agent && task.columnId !== agent
+    const leavesAgent = task.columnId === agent && to.id !== agent
+    if (entersAgent && (task.source !== 'github' || !task.externalId)) {
+      throw new ValidationError(AGENT_ONLY_GITHUB)
     }
     const siblings = columnTasks.filter((t) => t.id !== id)
     const entersDone = to.kind === 'done' && from?.kind !== 'done'
@@ -429,6 +494,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       await log('task', id, action, task.projectId, { from: from?.name, to: to.name })
     }
     if (entersDone || leavesDone) await queueGithubState(task)
+    if (entersAgent || leavesAgent) await queueAgentLabel(task)
     return moved
   }
 
@@ -474,7 +540,18 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
    */
   async function queueGithubState(task: Task) {
     if (actor === 'github' || task.source !== 'github' || !task.externalId) return
-    await store.githubOutbox.enqueue(task.id)
+    await store.githubOutbox.enqueue(task.id, 'state')
+  }
+
+  /**
+   * Entrar en la columna del agente pone la etiqueta `muninn:agent` en la issue (lo que lanza la Action) y
+   * salir la quita (lo que la cancela). Lo que mueven la sincronización o el propio flujo del agente
+   * (actores `github` y `agent`) no se apunta: la etiqueta ya está como debe (ADR-0032).
+   */
+  async function queueAgentLabel(task: Task) {
+    if (actor === 'github' || actor === 'agent') return
+    if (task.source !== 'github' || !task.externalId) return
+    await store.githubOutbox.enqueue(task.id, 'agent')
   }
 
   /** El proyecto vinculado a un repo (`github_repo`, sin distinguir mayúsculas), si no está archivado. */
@@ -539,6 +616,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     const sending = await store.githubOutbox.pending({
       maxAttempts: GITHUB_MAX_ATTEMPTS,
       taskId: task.id,
+      kind: 'state',
       limit: 1,
     })
     if (sending.length > 0) return { action: changed ? 'updated' : 'unchanged', task }
@@ -603,6 +681,97 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   async function openGithubTasks(projectId: string) {
     const tasks = await listTasks({ projectId, source: 'github' })
     return tasks.filter((t) => t.column.kind !== 'done' && t.externalId)
+  }
+
+  // ─── Columna «Para el agente» (ADR-0032) ──────────────────────────────────
+
+  /**
+   * Si la issue de una tarea debe llevar la etiqueta del agente: sí mientras la tarea está (sin archivar) en
+   * la columna del agente. `null` si la tarea no viene de una issue.
+   */
+  async function githubAgentStateOf(taskId: string) {
+    const task = await getTask(taskId)
+    const ref =
+      task.source === 'github' && task.externalId ? parseGithubExternalId(task.externalId) : null
+    if (!ref) return null
+    const agent = await agentColumnOf(task.projectId)
+    return { ...ref, labeled: !task.archivedAt && agent !== null && task.columnId === agent }
+  }
+
+  /**
+   * Un PR del agente (rama `agent/issue-<n>`) cambia su tarea. Idempotente, como `applyIssue`:
+   * - abierto (y no en borrador) → a la primera columna «Revisión»;
+   * - fusionado → «Hecho», lo que apunta cerrar la issue (fusionar en `develop` no la cierra solo);
+   * - cerrado sin fusionar → vuelve a «Por hacer», para reintentarlo moviéndola otra vez al agente.
+   * Cada paso queda en la actividad con el enlace al PR. Pensado para un `createMuninn` con actor `agent`.
+   */
+  async function applyGithubPullRequest(
+    repo: string,
+    action: string,
+    input: GithubPullRequest,
+  ): Promise<GithubPullResult> {
+    const name = parse(githubRepo, repo)
+    const pr = parse(githubPullRequest, input)
+    const issueNumber = agentIssueNumber(pr)
+    if (issueNumber === null) return { action: 'ignored', reason: 'not-agent' }
+    const task = await taskForIssue(name, issueNumber)
+    if (!task) return { action: 'ignored', reason: 'no-task' }
+    if (task.archivedAt) return { action: 'ignored', reason: 'archived' }
+    const column = await store.columns.get(task.columnId)
+    const done = column?.kind === 'done'
+    const ref = { number: pr.number, url: pr.html_url }
+
+    if (action === 'closed') {
+      if (done) return { action: 'unchanged', task }
+      if (pr.merged) {
+        const completed = await completeTask(task.id)
+        await log('task', task.id, 'agent_pr_merged', task.projectId, ref)
+        return { action: 'completed', task: completed }
+      }
+      const back = await moveTask(task.id, { columnId: (await defaultColumn(task.projectId)).id })
+      await log('task', task.id, 'agent_pr_closed', task.projectId, ref)
+      return { action: 'returned', task: back }
+    }
+    if (!['opened', 'reopened', 'ready_for_review'].includes(action)) {
+      return { action: 'unchanged', task }
+    }
+    if (pr.state !== 'open' || pr.draft || done || column?.kind === 'review') {
+      return { action: 'unchanged', task }
+    }
+    const review = (await listColumns(task.projectId)).find((c) => c.kind === 'review')
+    const moved = review ? await moveTask(task.id, { columnId: review.id, index: 0 }) : task
+    await log('task', task.id, 'agent_pr_opened', task.projectId, ref)
+    return { action: 'review', task: moved }
+  }
+
+  /**
+   * Se quitó la etiqueta del agente de la issue sin que hubiera PR: el agente terminó sin conseguirlo (el
+   * workflow la quita al acabar) o alguien la quitó a mano. La tarea sale de la columna del agente y vuelve a
+   * «Por hacer». Si Muninn tiene pendiente poner la etiqueta, el aviso es viejo: manda Muninn.
+   */
+  async function githubAgentStopped(repo: string, issueNumber: number) {
+    const task = await taskForIssue(parse(githubRepo, repo), issueNumber)
+    if (!task || task.archivedAt) return null
+    if ((await agentColumnOf(task.projectId)) !== task.columnId) return null
+    const sending = await store.githubOutbox.pending({
+      maxAttempts: GITHUB_MAX_ATTEMPTS,
+      taskId: task.id,
+      kind: 'agent',
+      limit: 1,
+    })
+    if (sending.length > 0) return null
+    const moved = await moveTask(task.id, { columnId: (await defaultColumn(task.projectId)).id })
+    await log('task', task.id, 'agent_stopped', task.projectId, {})
+    return moved
+  }
+
+  /**
+   * Lanza la sincronización ahora (la Edge Function, con la sesión del usuario): `outbox` tras un cambio
+   * en la app, para que no espere al cron; `all` para «Sincronizar ahora». `null` si este store no puede.
+   */
+  async function syncGithubNow(scope: GithubSyncScope = 'all') {
+    if (!store.githubRepos) return null
+    return store.githubRepos.sync(parse(githubSyncScope, scope))
   }
 
   // ─── Checklist ─────────────────────────────────────────────────────────────
@@ -933,9 +1102,13 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       repos: listGithubRepos,
       canWrite: canWriteGithubRepo,
       openTasks: openGithubTasks,
+      applyPullRequest: applyGithubPullRequest,
+      agentStopped: githubAgentStopped,
+      agentStateOf: githubAgentStateOf,
+      syncNow: syncGithubNow,
       outbox: {
-        pending: (limit?: number) =>
-          store.githubOutbox.pending({ maxAttempts: GITHUB_MAX_ATTEMPTS, limit }),
+        pending: (limit?: number, kind?: OutboxKind) =>
+          store.githubOutbox.pending({ maxAttempts: GITHUB_MAX_ATTEMPTS, limit, kind }),
         settle: (entries: OutboxEntry[], error?: string) =>
           store.githubOutbox.settle(entries, error),
       },

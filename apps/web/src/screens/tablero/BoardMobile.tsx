@@ -23,11 +23,12 @@ import type { BoardColumn } from '@muninn/core'
 import { cn, IconButton, icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { useAgentColumn } from '../../lib/agent'
 import { type BoardData, groupByColumn, isColKey, isTabKey, tabKey } from '../../lib/board'
 import { type BoardFilter, filterTasks, fullIndex } from '../../lib/board-filter'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, moveTask } from '../../lib/task-actions'
-import { KIND_DOT } from './Column'
+import { AgentMark, KIND_DOT } from './Column'
 import { ColumnDialog } from './ColumnDialog'
 import { ColumnMenu } from './ColumnMenu'
 import { announcements, screenReaderInstructions } from './dnd'
@@ -168,6 +169,7 @@ export function BoardMobile({
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const agentColumnId = useAgentColumn(projectId).columnId
   // Con un filtro puesto solo se ven las tareas que lo cumplen; el índice que se manda al servidor sigue
   // siendo el de la columna entera (`fullIndex`).
   const visible = useMemo(
@@ -301,6 +303,7 @@ export function BoardMobile({
                   {tasks.length !== total ? ` de ${total}` : ''} en {column.name}
                 </span>
               )}
+              {column.id === agentColumnId ? <AgentMark /> : null}
               <span className="ml-auto">
                 <ColumnMenu
                   column={column}

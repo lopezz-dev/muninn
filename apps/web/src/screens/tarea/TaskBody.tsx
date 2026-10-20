@@ -5,7 +5,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { SelectMenu } from '../../components/SelectMenu'
 import { PRIORITY_TEXT, SourceBadge } from '../../components/task-meta'
-import { actorName, describeActivity } from '../../lib/activity'
+import { activityLink, actorName, describeActivity } from '../../lib/activity'
 import { type BoardData, PRIORITIES } from '../../lib/board'
 import { dueLabel, timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
@@ -477,13 +477,34 @@ function ActivityLog({ task }: Pick<BodyProps, 'task'>) {
                 )}
               >
                 <Icon
-                  name={a.actor === 'user' ? 'user' : a.actor === 'github' ? 'github' : 'assistant'}
+                  name={
+                    a.actor === 'user'
+                      ? 'user'
+                      : a.actor === 'github'
+                        ? 'github'
+                        : a.actor === 'agent'
+                          ? 'agent'
+                          : 'assistant'
+                  }
                   size={12}
                 />
               </span>
               <span>
                 <b className="font-medium text-fg">{actorName(a.actor)}</b> {describeActivity(a)} ·{' '}
                 {timeAgo(a.createdAt)}
+                {activityLink(a) ? (
+                  <>
+                    {' · '}
+                    <a
+                      href={activityLink(a) as string}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-accent hover:underline"
+                    >
+                      Ver el PR
+                    </a>
+                  </>
+                ) : null}
               </span>
             </li>
           ))}

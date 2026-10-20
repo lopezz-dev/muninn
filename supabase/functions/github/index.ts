@@ -3,8 +3,10 @@
 // Antes de desplegar: `pnpm --filter @muninn/core build:edge` (genera ./_core/muninn.js). Pasos completos en
 // docs/gotchas/db.md, «Sincronización con GitHub (pasos manuales)».
 //
-//   POST /functions/v1/github/webhook  ← GitHub (evento `issues`, firmado con GITHUB_WEBHOOK_SECRET)
-//   POST /functions/v1/github/sync     ← pg_cron cada pocos minutos (cabecera x-muninn-sync-secret)
+//   POST /functions/v1/github/webhook  ← GitHub (`issues` y `pull_request`, firmado con GITHUB_WEBHOOK_SECRET)
+//   POST /functions/v1/github/sync     ← pg_cron cada pocos minutos (cabecera x-muninn-sync-secret), o la app con
+//                                        la sesión del dueño: { "scope": "outbox" } tras un cambio, "all" para
+//                                        «Sincronizar ahora» (ADR-0032)
 //   GET  /functions/v1/github/repos    ← la app (Ajustes › Integraciones), con la sesión del dueño (ADR-0035)
 //   GET  /functions/v1/github/access?repo=owner/repo  ← ídem, al elegir un repo público: ¿llega el token?
 
@@ -15,8 +17,8 @@ import {
   createMuninn,
   createSupabaseStore,
   handleGithubWebhook,
-  reconcileGithub,
   sameSecret,
+  syncGithub,
   verifyGithubSignature,
 } from './_core/muninn.js'
 
@@ -30,12 +32,15 @@ const admin = () =>
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-/** El core con la service role, ligado al dueño de los proyectos (como el MCP: un usuario por despliegue). */
-function muninn() {
+/**
+ * El core con la service role, ligado al dueño de los proyectos (como el MCP: un usuario por despliegue).
+ * Lo que hace un PR del agente va con actor `agent` (ADR-0032); lo demás, con `github`.
+ */
+function muninn(actor: 'github' | 'agent' = 'github') {
   const userId = env('MUNINN_USER_ID')
   if (!userId) throw new Error('Falta el secreto MUNINN_USER_ID')
   return createMuninn(createSupabaseStore(admin(), userId), {
-    actor: 'github',
+    actor,
     // «Hoy» es el del usuario, no el del servidor (gotchas/core).
     timeZone: env('MUNINN_TIME_ZONE') || 'Europe/Madrid',
   })
@@ -93,14 +98,15 @@ Deno.serve(async (req: Request) => {
         muninn(),
         req.headers.get('x-github-event'),
         JSON.parse(body),
+        { agent: muninn('agent') },
       )
       return json(result.status, result.body)
     }
     if (route === 'sync') {
-      if (!sameSecret(env('MUNINN_SYNC_SECRET'), req.headers.get('x-muninn-sync-secret'))) {
-        return json(401, { error: 'Secreto no válido' })
-      }
-      return json(200, await reconcileGithub(muninn(), github()))
+      const cron = sameSecret(env('MUNINN_SYNC_SECRET'), req.headers.get('x-muninn-sync-secret'))
+      if (!cron && !(await isOwner(req))) return json(401, { error: 'Secreto no válido' })
+      const { scope } = (await req.json().catch(() => ({}))) as { scope?: unknown }
+      return json(200, await syncGithub(muninn(), github(), scope === 'outbox' ? 'outbox' : 'all'))
     }
     return json(404, { error: 'Usa /github/webhook, /github/sync, /github/repos o /github/access' })
   } catch (err) {
