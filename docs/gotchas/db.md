@@ -129,3 +129,63 @@
   `begin; set local role authenticated; set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}'; select … ; rollback;`
   Con un `sub` que no es el dueño, las consultas devuelven 0 filas y los `insert` con su `owner_id` fallan
   con *new row violates row-level security policy*. Con `set local role anon`, todo devuelve 0 filas.
+
+### `github_outbox` antes que cualquier tarea de GitHub
+
+- **Síntoma:** completar o reabrir una tarea con la insignia GitHub falla con `relation "github_outbox" does not exist` y se deshace.
+- **Causa:** el core apunta en `github_outbox` cada cambio de estado de una tarea de GitHub ([ADR-0031](../adr/0031-sync-github-issues-tareas.md)),
+  y la tabla llega con la migración `20261020000000_github_outbox`.
+- **Solución:** aplica esa migración **antes** de desplegar la función (paso 1 de abajo). Las tareas manuales no tocan la tabla.
+
+### Sincronización con GitHub (pasos manuales)
+
+- **Síntoma:** en Ajustes › Integraciones sale «Aún no ha llegado ninguna issue» aunque el proyecto tenga repositorio.
+- **Causa:** la sincronización necesita un token, secretos, una Edge Function desplegada, el webhook en GitHub y un cron; nada de eso se
+  puede hacer desde el código ([ADR-0031](../adr/0031-sync-github-issues-tareas.md)).
+- **Solución**, en este orden:
+  1. **Migración.** Aplica `supabase/migrations/20261020000000_github_outbox.sql` (SQL Editor o `supabase db push`). Si usas `apply_migration`
+     del MCP de Supabase, alinea la versión (ver «`apply_migration` pone su propia versión»).
+  2. **Token de GitHub.** GitHub › **Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token**:
+     nombre «Muninn sync», caducidad de un año como mucho (apúntate renovarlo), *Repository access* = **Only select repositories** (los que
+     vincules), *Permissions › Repository › Issues* = **Read and write** (*Metadata: Read* se añade solo). Copia el token.
+  3. **Secretos de la función.** Supabase (proyecto `muninn`) › **Edge Functions › Secrets** (o `supabase secrets set NOMBRE=valor`):
+     - `GITHUB_TOKEN` = el token del paso 2.
+     - `GITHUB_WEBHOOK_SECRET` = una cadena aleatoria (`openssl rand -hex 32`).
+     - `MUNINN_SYNC_SECRET` = otra cadena aleatoria distinta.
+     - `MUNINN_USER_ID` = tu id de usuario (**Authentication › Users**, columna UID).
+     - `MUNINN_TIME_ZONE` = `Europe/Madrid` (opcional; es el valor por defecto).
+     `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` ya los pone Supabase.
+  4. **Desplegar.** Con la CLI de Supabase iniciada (`supabase login`):
+     `pnpm --filter @muninn/core build:edge` y después
+     `supabase functions deploy github --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt`.
+     `--no-verify-jwt` es necesario: GitHub y el cron no mandan un JWT; la función comprueba su propia firma o secreto.
+  5. **Webhook.** En cada repo vinculado: **Settings › Webhooks › Add webhook**. *Payload URL* =
+     `https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/github/webhook`, *Content type* = `application/json`, *Secret* =
+     `GITHUB_WEBHOOK_SECRET`, *Which events* = **Let me select individual events › Issues** (desmarca *Pushes*). Al guardar, en
+     **Recent Deliveries** el `ping` debe dar 200.
+  6. **Cron.** En **Database › Extensions**, activa `pg_cron` y `pg_net`. En el SQL Editor (cambia `<MUNINN_SYNC_SECRET>`):
+     ```sql
+     select vault.create_secret('<MUNINN_SYNC_SECRET>', 'muninn_sync_secret');
+     select cron.schedule('muninn-github-sync', '*/5 * * * *', $$
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/github/sync',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 30000
+       );
+     $$);
+     ```
+  7. **En la app.** Activa el módulo GitHub (Ajustes › Módulos) y vincula el repo en **Ajustes › Integraciones**.
+- **Verificar:** lanza una sincronización a mano con
+  `curl -X POST -H "x-muninn-sync-secret: <MUNINN_SYNC_SECRET>" https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/github/sync`:
+  responde con lo creado por repo (`repos[].created`) y la cola (`outbox`). Los fallos de la función salen en **Edge Functions › github ›
+  Logs**; los de la cola, en `github_outbox.last_error` (`select * from github_outbox where processed_at is null`). Las comprobaciones de
+  uso real están en la pila «Pruebas finales» del [ROADMAP](../ROADMAP.md).
+- **Mantenimiento:** la cola guarda lo procesado. De vez en cuando (o con otro `cron.schedule`):
+  `delete from github_outbox where processed_at < now() - interval '30 days';`
+- **Ojo:** si renombras el repo en GitHub, cambia también su `github_repo` en Integraciones; las tareas ya importadas siguen con el id del
+  nombre antiguo y la siguiente sincronización crearía otras nuevas (archiva las viejas).

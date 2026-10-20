@@ -15,6 +15,10 @@ import {
   createNoteInput,
   createProjectInput,
   createTaskInput,
+  type GithubIssue,
+  type GithubIssueState,
+  githubIssue,
+  githubRepo,
   type MoveTaskInput,
   moveTaskInput,
   type Note,
@@ -37,7 +41,7 @@ import {
   updateSettingsInput,
   updateTaskInput,
 } from './schemas'
-import { NotFoundError, type Store } from './store'
+import { NotFoundError, type OutboxEntry, type Store } from './store'
 
 export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = [
   { name: 'Backlog', kind: 'backlog' },
@@ -48,6 +52,34 @@ export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = [
 ]
 
 const OPEN_ACTIVE_KINDS: ColumnKind[] = ['in_progress', 'review']
+
+/** Intentos de llevar un estado a GitHub antes de dejarlo (con su error a la vista). */
+export const GITHUB_MAX_ATTEMPTS = 5
+
+/**
+ * `external_id` de una tarea que viene de una issue: `owner/repo#123`, con el repo en minúsculas
+ * (GitHub no distingue mayúsculas en los nombres; así `Lopezz-Dev/Muninn` es la misma issue).
+ */
+export const githubExternalId = (repo: string, issueNumber: number) =>
+  `${repo.toLowerCase()}#${issueNumber}`
+
+/** Lo contrario de `githubExternalId`; `null` si no tiene esa forma. */
+export function parseGithubExternalId(externalId: string) {
+  const m = /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)#(\d+)$/.exec(externalId)
+  return m ? { repo: m[1] as string, number: Number(m[2]) } : null
+}
+
+/** Nombres de las etiquetas de una issue, limpios y dentro de los límites de una tarea. */
+function issueLabels(issue: GithubIssue): string[] {
+  const names = (issue.labels ?? [])
+    .map((l) => (typeof l === 'string' ? l : (l.name ?? '')).trim().slice(0, 40))
+    .filter(Boolean)
+  return [...new Set(names)].slice(0, 20)
+}
+
+export type GithubApplyResult =
+  | { action: 'created' | 'updated' | 'unchanged'; task: Task }
+  | { action: 'ignored'; reason: 'pull-request' | 'no-project' | 'closed' | 'archived' }
 
 export interface MuninnOptions {
   /** Quién actúa: queda registrado en la actividad y decide el `source` por defecto de las tareas. */
@@ -249,6 +281,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       const tasks = await store.tasks.list({ columnIds: [id] })
       for (const t of tasks) {
         await store.tasks.update(t.id, { completedAt: patch.kind === 'done' ? nowIso() : null })
+        await queueGithubState(t)
       }
     }
     await log('column', id, 'updated', column.projectId, patch)
@@ -394,6 +427,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       const action = entersDone ? 'completed' : leavesDone ? 'reopened' : 'moved'
       await log('task', id, action, task.projectId, { from: from?.name, to: to.name })
     }
+    if (entersDone || leavesDone) await queueGithubState(task)
     return moved
   }
 
@@ -428,6 +462,127 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     const task = await getTask(id)
     await store.tasks.remove(id)
     await log('task', id, 'deleted', task.projectId, { title: task.title })
+  }
+
+  // ─── GitHub (issues ↔ tareas; ADR-0031) ────────────────────────────────────
+
+  /**
+   * Si una tarea de GitHub entra en «hecho» o sale de ahí, su issue tiene que cerrarse o reabrirse: se
+   * apunta en la cola de salida. Lo que hace la propia sincronización (actor `github`) no se apunta: ya
+   * viene de GitHub, y así no hay ida y vuelta.
+   */
+  async function queueGithubState(task: Task) {
+    if (actor === 'github' || task.source !== 'github' || !task.externalId) return
+    await store.githubOutbox.enqueue(task.id)
+  }
+
+  /** El proyecto vinculado a un repo (`github_repo`, sin distinguir mayúsculas), si no está archivado. */
+  async function projectForRepo(repo: string) {
+    const [project] = await store.projects.list({
+      githubRepo: repo,
+      statuses: ['active', 'paused'],
+    })
+    return project ?? null
+  }
+
+  async function taskForIssue(repo: string, issueNumber: number) {
+    const [task] = await store.tasks.list({
+      source: 'github',
+      externalId: githubExternalId(repo, issueNumber),
+      includeArchived: true,
+    })
+    return task ?? null
+  }
+
+  /**
+   * Crea o actualiza la tarea de una issue. Idempotente: aplicar dos veces la misma issue no cambia nada.
+   * - Nueva y abierta → tarea en la columna por defecto, con título, descripción y etiquetas de la issue.
+   *   Nueva y cerrada → no se importa (no traemos el historial).
+   * - Ya existe → GitHub manda en el título y la descripción; columna, orden, prioridad, fecha,
+   *   etiquetas, subtareas y notas son de Muninn.
+   * - Cerrada ↔ hecha: cerrar la issue completa la tarea; reabrirla la saca de «hecho».
+   * - Una tarea archivada en Muninn no se toca (archivar es «no la quiero ver»).
+   */
+  async function applyGithubIssue(repo: string, input: GithubIssue): Promise<GithubApplyResult> {
+    const name = parse(githubRepo, repo)
+    const issue = parse(githubIssue, input)
+    if (issue.pull_request !== undefined) return { action: 'ignored', reason: 'pull-request' }
+    const project = await projectForRepo(name)
+    if (!project) return { action: 'ignored', reason: 'no-project' }
+    const title = issue.title.trim().slice(0, 300) || `Issue #${issue.number}`
+    const description = (issue.body ?? '').slice(0, 20000)
+    const existing = await taskForIssue(name, issue.number)
+
+    if (!existing) {
+      if (issue.state === 'closed') return { action: 'ignored', reason: 'closed' }
+      const task = await createTask({
+        projectId: project.id,
+        title,
+        description,
+        labels: issueLabels(issue),
+        source: 'github',
+        externalId: githubExternalId(name, issue.number),
+        externalUrl: issue.html_url,
+      })
+      return { action: 'created', task }
+    }
+    if (existing.archivedAt) return { action: 'ignored', reason: 'archived' }
+
+    let task = existing
+    let changed = false
+    if (task.title !== title || task.description !== description) {
+      task = await updateTask(task.id, { title, description })
+      changed = true
+    }
+    // Si hay un cambio de Muninn sin llegar a GitHub, el estado de la issue es viejo: manda Muninn.
+    const sending = await store.githubOutbox.pending({
+      maxAttempts: GITHUB_MAX_ATTEMPTS,
+      taskId: task.id,
+      limit: 1,
+    })
+    if (sending.length > 0) return { action: changed ? 'updated' : 'unchanged', task }
+    const column = await store.columns.get(task.columnId)
+    const done = column?.kind === 'done'
+    if (issue.state === 'closed' && !done) {
+      task = await completeTask(task.id)
+      changed = true
+    } else if (issue.state === 'open' && done) {
+      task = await reopenTask(task.id)
+      changed = true
+    }
+    return { action: changed ? 'updated' : 'unchanged', task }
+  }
+
+  /** La issue se borró o se transfirió a otro repo: su tarea se archiva (nunca se borra). */
+  async function removeGithubIssue(repo: string, issueNumber: number) {
+    const task = await taskForIssue(parse(githubRepo, repo), issueNumber)
+    if (!task || task.archivedAt) return null
+    return archiveTask(task.id)
+  }
+
+  /**
+   * En qué estado debe estar en GitHub la issue de una tarea: cerrada si la tarea está en una columna
+   * de tipo `done`, abierta si no. `null` si la tarea no viene de una issue.
+   */
+  async function githubStateOf(taskId: string) {
+    const task = await getTask(taskId)
+    const ref =
+      task.source === 'github' && task.externalId ? parseGithubExternalId(task.externalId) : null
+    if (!ref) return null
+    const column = await store.columns.get(task.columnId)
+    const state: GithubIssueState = column?.kind === 'done' ? 'closed' : 'open'
+    return { ...ref, state, archived: task.archivedAt !== null }
+  }
+
+  /** Proyectos con repo vinculado (los que recorre la sincronización). */
+  async function linkedProjects() {
+    return (await listProjects()).filter((p) => p.githubRepo)
+  }
+
+  /** Tareas de GitHub de un proyecto que siguen abiertas en Muninn (para reconciliar). */
+  async function openGithubTasks(projectId: string) {
+    const tasks = await listTasks({ projectId, source: 'github' })
+    return tasks.filter((t) => t.column.kind !== 'done' && t.externalId)
   }
 
   // ─── Checklist ─────────────────────────────────────────────────────────────
@@ -749,6 +904,19 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     settings: {
       get: getSettings,
       update: updateSettings,
+    },
+    github: {
+      applyIssue: applyGithubIssue,
+      removeIssue: removeGithubIssue,
+      stateOf: githubStateOf,
+      linkedProjects,
+      openTasks: openGithubTasks,
+      outbox: {
+        pending: (limit?: number) =>
+          store.githubOutbox.pending({ maxAttempts: GITHUB_MAX_ATTEMPTS, limit }),
+        settle: (entries: OutboxEntry[], error?: string) =>
+          store.githubOutbox.settle(entries, error),
+      },
     },
     overview,
     recentActivity,

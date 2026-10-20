@@ -13,7 +13,8 @@
     "start": "tsx src/index.ts",
     "build": "tsup",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:edge": "tsup --config tsup.edge.config.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",

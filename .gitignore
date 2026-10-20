@@ -18,3 +18,6 @@ apps/desktop/src-tauri/gen/
 # Supabase local
 supabase/.branches/
 supabase/.temp/
+
+# Core empaquetado para la Edge Function (pnpm --filter @muninn/core build:edge)
+supabase/functions/github/_core/

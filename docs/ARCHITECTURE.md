@@ -16,7 +16,8 @@
         ▲            ▲                 ▲
    webhooks GitHub   agentes (F4)     cron noticias (F4)
 
-  packages/mcp ── createMuninn(store, { actor: 'mcp' }) ──► Claude Desktop / Claude Code / Codex / Jarvis local
+  packages/mcp ── createMuninn(store, { actor: 'mcp' }) ──► Claude Desktop / Claude Code / Codex / Jarvis local (stdio)
+               └─ http.ts (Streamable HTTP, token del usuario) ── supabase/functions/mcp ──► claude.ai / móvil (ADR-0033)
 
   packages/ui ── tokens.ts → tokens.css (--mn-*) → theme.css (Tailwind v4) ──► apps/web (y por tanto desktop)
                  icons (Phosphor) · fonts (Geist) · applyAppearance (cristal, acento)
@@ -72,6 +73,13 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 | `notes` | Notas Markdown, opcionalmente vinculadas a proyecto o tarea. |
 | `activity` | Log inmutable de eventos. |
 | `user_settings` | Módulos activados y preferencias. |
+| `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn ([ADR-0031](adr/0031-sync-github-issues-tareas.md)). |
+
+### Sincronización con GitHub
+
+`supabase/functions/github` (Edge Function, Deno) recibe los webhooks de `issues` y, cada 5 minutos (`pg_cron`), reconcilia y vacía
+la cola de salida. No tiene lógica propia: usa `createMuninn(store, { actor: 'github' })` y `@muninn/core/github`, empaquetados con
+`pnpm --filter @muninn/core build:edge`. El token de GitHub es un secreto de la función ([ADR-0031](adr/0031-sync-github-issues-tareas.md)).
 
 ### Orden en el tablero
 

@@ -22,15 +22,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
       text: 'Elegirás el cerebro del asistente (un modelo local o Claude), la voz y el resumen diario.',
     },
   },
-  {
-    id: 'integraciones',
-    label: 'Integraciones',
-    icon: 'github',
-    soon: {
-      phase: 'Fase 2',
-      text: 'Conecta GitHub para convertir issues en tareas y trabajar con agentes.',
-    },
-  },
+  { id: 'integraciones', label: 'Integraciones', icon: 'github' },
   {
     id: 'notificaciones',
     label: 'Notificaciones',

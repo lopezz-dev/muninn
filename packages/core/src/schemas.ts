@@ -19,9 +19,27 @@ export type ModuleName = z.infer<typeof moduleName>
 
 const id = z.uuid()
 const isoDate = z.iso.date()
-const githubRepo = z
+export const githubRepo = z
   .string()
   .regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/, 'Formato esperado: owner/repo')
+
+/**
+ * Lo que usa la sincronización de una issue de GitHub: el subconjunto común a la API REST y a los
+ * webhooks (`issues`). Lo demás se descarta. Si trae `pull_request`, es un PR y no se importa.
+ */
+export const githubIssue = z.object({
+  number: z.number().int().positive(),
+  title: z.string(),
+  body: z.string().nullable().optional(),
+  state: z.enum(['open', 'closed']),
+  html_url: z.url(),
+  labels: z
+    .array(z.union([z.string(), z.object({ name: z.string().nullable().optional() })]))
+    .optional(),
+  pull_request: z.unknown().optional(),
+})
+export type GithubIssue = z.input<typeof githubIssue>
+export type GithubIssueState = 'open' | 'closed'
 
 // ─── Entidades (lo que devuelve el store) ────────────────────────────────────
 
