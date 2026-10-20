@@ -13,11 +13,17 @@ status: parcial
 
 ## Vincular un repositorio
 
-En **Ajustes › Integraciones** verás tus proyectos, cada uno con un campo para su repositorio. Escribe `usuario/repositorio` (por
-ejemplo `lopezz-dev/muninn`) o pega la dirección que copias de GitHub, y pulsa **Intro** o sal del campo. Te lo confirma un aviso con
-**Deshacer**. Para desvincularlo, deja el campo vacío.
+En **Ajustes › Integraciones** verás tus proyectos, cada uno con un selector para su repositorio. Ábrelo y elige uno de la lista: salen
+los repositorios a los que tiene acceso la sincronización, así que lo que elijas es lo que se va a sincronizar. Te lo confirma un aviso
+con **Deshacer**. Para desvincularlo, elige **Sin repositorio**.
 
-Cada repositorio va con un solo proyecto. En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha llegado alguna issue.
+Cada repositorio va con un solo proyecto: si ya está con otro, sale en gris y te dice con cuál («en Huginn»).
+
+¿No sale el repositorio que buscas? La sincronización solo ve los repositorios a los que le diste acceso al configurarla. Dale acceso a
+ese repositorio en GitHub y vuelve a la pantalla. Si la lista no puede cargarse (por ejemplo, en el modo demo), en su lugar verás un campo:
+escribe `usuario/repositorio` o pega la dirección de GitHub y pulsa **Intro**.
+
+En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha llegado alguna issue.
 
 ## Qué hará la sincronización
 

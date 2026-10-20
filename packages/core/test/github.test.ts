@@ -7,6 +7,7 @@ import {
   parseGithubExternalId,
 } from '../src'
 import {
+  bearerToken,
   createGithubClient,
   drainGithubOutbox,
   type GithubClient,
@@ -54,6 +55,9 @@ function fakeGithub(issues: Record<string, GithubIssue[]> = {}) {
       changes.push({ repo, number: n, state })
       const i = find(repo, n)
       if (i) i.state = state
+    },
+    async listRepos() {
+      return []
     },
   }
   return { client, changes, issues }
@@ -445,5 +449,69 @@ describe('github: cliente REST', () => {
     })
     next = new Response('Bad credentials', { status: 401 })
     await expect(gh.setIssueState(REPO, 7, 'open')).rejects.toThrow('401')
+  })
+})
+
+describe('github: repos para vincular', () => {
+  const repo = (full_name: string, over: Record<string, unknown> = {}) => ({
+    full_name,
+    private: true,
+    description: null,
+    archived: false,
+    has_issues: true,
+    ...over,
+  })
+
+  it('el cliente pagina, deja fuera los archivados y los que no tienen issues, y ordena', async () => {
+    const urls: string[] = []
+    const fetchFake = (async (url: string) => {
+      urls.push(url)
+      const p = Number(new URL(url).searchParams.get('page'))
+      const first = Array.from({ length: 100 }, (_, i) =>
+        repo(`lopezz-dev/r${String(i).padStart(3, '0')}`, { archived: i > 0 }),
+      )
+      return new Response(
+        JSON.stringify(
+          p === 1
+            ? first
+            : [
+                repo('lopezz-dev/huginnDB', { private: false, description: 'Base de datos' }),
+                repo('Lopezz-Dev/Alfa'),
+                repo('lopezz-dev/sin-issues', { has_issues: false }),
+              ],
+        ),
+      )
+    }) as unknown as typeof fetch
+    const gh = createGithubClient({ token: 't', fetch: fetchFake })
+    expect(await gh.listRepos()).toEqual([
+      { fullName: 'Lopezz-Dev/Alfa', private: true, description: null },
+      { fullName: 'lopezz-dev/huginnDB', private: false, description: 'Base de datos' },
+      { fullName: 'lopezz-dev/r000', private: true, description: null },
+    ])
+    expect(urls).toEqual([
+      'https://api.github.com/user/repos?per_page=100&page=1',
+      'https://api.github.com/user/repos?per_page=100&page=2',
+    ])
+  })
+
+  it('el servicio devuelve null si el store no sabe preguntarlo y valida lo que llega', async () => {
+    const { user, store } = await setup()
+    expect(await user.github.repos()).toBeNull()
+    let answer: unknown[] = [{ fullName: 'lopezz-dev/huginnDB', private: false, description: null }]
+    const withRepos = createMuninn(
+      { ...store, githubRepos: { list: async () => answer as never } },
+      { timeZone: 'UTC' },
+    )
+    expect(await withRepos.github.repos()).toEqual(answer)
+    answer = [{ fullName: 'no es un repo', private: false, description: null }]
+    await expect(withRepos.github.repos()).rejects.toThrow('owner/repo')
+  })
+
+  it('lee el token de la cabecera Authorization', () => {
+    expect(bearerToken('Bearer abc.def')).toBe('abc.def')
+    expect(bearerToken('bearer abc')).toBe('abc')
+    expect(bearerToken('Basic abc')).toBeNull()
+    expect(bearerToken('Bearer ')).toBeNull()
+    expect(bearerToken(null)).toBeNull()
   })
 })

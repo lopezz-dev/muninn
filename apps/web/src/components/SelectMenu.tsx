@@ -9,6 +9,9 @@ export interface SelectOption<T extends string> {
   icon?: ReactNode
   /** Clases del texto (la prioridad se pinta con su color). */
   tone?: string
+  /** Texto pequeño a la derecha («en Huginn»): por qué no se puede elegir, o un detalle. */
+  hint?: string
+  disabled?: boolean
 }
 
 interface SelectMenuProps<T extends string> {
@@ -23,6 +26,8 @@ interface SelectMenuProps<T extends string> {
   buttonText?: string
   /** Táctil: 44 px (móvil). */
   large?: boolean
+  /** Mientras se cargan las opciones. */
+  disabled?: boolean
   className?: string
 }
 
@@ -35,17 +40,20 @@ export function SelectMenu<T extends string>({
   variant = 'field',
   large,
   buttonText,
+  disabled,
   className,
 }: SelectMenuProps<T>) {
   const current = options.find((o) => o.value === value)
+  // Con pistas, cada fila ocupa todo el ancho para alinearlas a la derecha.
+  const withHints = options.some((o) => o.hint)
   return (
     <Menu>
-      <MenuTrigger asChild>
+      <MenuTrigger asChild disabled={disabled}>
         <button
           type="button"
           aria-label={`${label}: ${current?.label ?? ''}`}
           className={cn(
-            'inline-flex cursor-pointer items-center gap-2 rounded-md font-medium whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:outline-accent',
+            'inline-flex cursor-pointer items-center gap-2 rounded-md font-medium whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default disabled:text-fg-faint',
             variant === 'field'
               ? 'border border-border-strong bg-surface-raised px-3 text-fg hover:bg-surface-hover'
               : '-ml-2 px-2 text-fg hover:bg-surface-hover',
@@ -62,11 +70,17 @@ export function SelectMenu<T extends string>({
       </MenuTrigger>
       <MenuContent align="start" className="max-h-72 overflow-y-auto">
         {options.map((o) => (
-          <MenuItem key={o.value} onSelect={() => onChange(o.value)} className={o.tone}>
-            <span className="flex items-center gap-2">
+          <MenuItem
+            key={o.value}
+            onSelect={() => onChange(o.value)}
+            disabled={o.disabled}
+            className={o.tone}
+          >
+            <span className={cn('flex items-center gap-2', withHints && 'w-full')}>
               {o.dot ? <ColorDot color={o.dot} /> : null}
               {o.icon}
               {o.label}
+              {o.hint ? <span className="ml-auto pl-3 text-xs text-fg-faint">{o.hint}</span> : null}
               {o.value === value ? (
                 <icons.check size={13} className="ml-auto text-accent" aria-hidden="true" />
               ) : null}

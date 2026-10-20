@@ -1,4 +1,4 @@
-import type { GithubIssue, GithubIssueState } from './schemas'
+import type { GithubIssue, GithubIssueState, GithubRepoSummary } from './schemas'
 import type { Muninn } from './service'
 import { NotFoundError } from './store'
 
@@ -16,6 +16,17 @@ export interface GithubClient {
   /** La issue, o `null` si ya no existe (borrada o transferida: 404/410). */
   getIssue(repo: string, issueNumber: number): Promise<GithubIssue | null>
   setIssueState(repo: string, issueNumber: number, state: GithubIssueState): Promise<void>
+  /** Repos a los que llega el token y que se pueden sincronizar (sin archivar y con issues), por nombre. */
+  listRepos(): Promise<GithubRepoSummary[]>
+}
+
+/** Lo que usa `listRepos` de cada repo de `GET /user/repos`. */
+interface ApiRepo {
+  full_name: string
+  private: boolean
+  description: string | null
+  archived?: boolean
+  has_issues?: boolean
 }
 
 export class GithubApiError extends Error {
@@ -92,6 +103,22 @@ export function createGithubClient(options: {
       })
       if (!res.ok) throw await fail(res, `Cambiar el estado de ${repo}#${issueNumber}`)
     },
+    async listRepos() {
+      // Con un token fine-grained, solo salen los repos que se le dieron al crearlo.
+      const out: GithubRepoSummary[] = []
+      for (let page = 1; page <= maxPages; page++) {
+        const res = await call(`/user/repos?per_page=100&page=${page}`)
+        if (!res.ok) throw await fail(res, 'Listar repositorios')
+        const batch = (await res.json()) as ApiRepo[]
+        for (const r of batch) {
+          // En un repo archivado no se puede cerrar una issue; sin issues no hay nada que traer.
+          if (r.archived || r.has_issues === false) continue
+          out.push({ fullName: r.full_name, private: r.private, description: r.description })
+        }
+        if (batch.length < 100) break
+      }
+      return out.sort((a, b) => (a.fullName.toLowerCase() < b.fullName.toLowerCase() ? -1 : 1))
+    },
   }
 }
 
@@ -131,6 +158,11 @@ export async function verifyGithubSignature(
 /** También para el secreto de `/sync`: comparación de tiempo constante. */
 export const sameSecret = (expected: string, given: string | null | undefined) =>
   Boolean(expected) && typeof given === 'string' && sameText(expected, given)
+
+/** El JWT de `Authorization: Bearer …` (la sesión del usuario, para `/repos`), o `null`. */
+export function bearerToken(header: string | null | undefined) {
+  return header?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? null
+}
 
 export interface WebhookResult {
   status: number

@@ -1,14 +1,15 @@
-import type { Project } from '@muninn/core'
+import type { GithubRepoSummary, Project } from '@muninn/core'
 import { Button, Card, ColorDot, cn, Icon, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { EmptyState } from '../../components/Page'
+import { SelectMenu } from '../../components/SelectMenu'
 import { timeAgo } from '../../lib/dates'
-import { parseRepoInput, setProjectRepo } from '../../lib/github'
+import { parseRepoInput, repoChoices, setProjectRepo } from '../../lib/github'
 import { useEnabledModules } from '../../lib/modules'
 import { useAuth, useMuninn } from '../../lib/muninn'
-import { projectsQuery } from '../../lib/queries'
+import { keys, projectsQuery } from '../../lib/queries'
 
 /** Lo que se sabe de la sincronización mirando los datos: cuántas tareas han llegado de GitHub y cuándo. */
 function useGithubActivity() {
@@ -24,6 +25,63 @@ function useGithubActivity() {
       return { count: tasks.length, last }
     },
   })
+}
+
+/**
+ * Repos a los que llega el token de la sincronización (los pregunta a la Edge Function). `null`: este modo
+ * no puede preguntarlo (demo) y el repo se escribe a mano.
+ */
+function useGithubRepos(enabled: boolean) {
+  const m = useMuninn()
+  return useQuery({
+    queryKey: keys.githubRepos,
+    queryFn: () => m.github.repos(),
+    staleTime: 5 * 60_000,
+    retry: false,
+    enabled,
+  })
+}
+
+/** Fila de un proyecto: su nombre y, a la derecha, el selector o el campo. */
+function RepoRow({ project, children }: { project: Project; children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-start gap-x-3.5 gap-y-2 border-t border-border-subtle py-3 first:border-t-0">
+      <span className="flex min-w-0 flex-[1_1_180px] items-center gap-2 pt-2 text-base font-medium">
+        <ColorDot color={project.color} />
+        <span className="truncate">{project.name}</span>
+      </span>
+      <div className="flex-[1_1_260px]">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * Selector de repo de un proyecto, con los repos a los que llega el token. Los que ya van con otro
+ * proyecto salen deshabilitados; uno vinculado antes al que el token ya no llega se sigue viendo.
+ */
+function RepoPicker({
+  project,
+  projects,
+  repos,
+}: {
+  project: Project
+  projects: Project[]
+  repos: GithubRepoSummary[] | undefined
+}) {
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const { value, options } = repoChoices(project, projects, repos ?? [])
+  return (
+    <SelectMenu
+      label={`Repositorio de GitHub de ${project.name}`}
+      value={value}
+      options={options}
+      onChange={(repo) => void setProjectRepo(m, qc, project, repo || null)}
+      disabled={!repos}
+      buttonText={repos ? undefined : 'Cargando repositorios…'}
+      className="w-full justify-between"
+    />
+  )
 }
 
 /** Campo `owner/repo` de un proyecto: se guarda al salir o con Enter; acepta la URL de GitHub. */
@@ -46,36 +104,28 @@ function RepoField({ project }: { project: Project }) {
   }
 
   return (
-    <div className="flex flex-wrap items-start gap-x-3.5 gap-y-2 border-t border-border-subtle py-3 first:border-t-0">
-      <span className="flex min-w-0 flex-[1_1_180px] items-center gap-2 pt-2 text-base font-medium">
-        <ColorDot color={project.color} />
-        <span className="truncate">{project.name}</span>
-      </span>
-      <div className="flex-[1_1_260px]">
-        <TextField
-          label={`Repositorio de GitHub de ${project.name}`}
-          hideLabel
-          placeholder="usuario/repositorio"
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value)
-            setError(undefined)
-          }}
-          onBlur={() => void commit()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur()
-            if (e.key === 'Escape') {
-              setText(project.githubRepo ?? '')
-              setError(undefined)
-            }
-          }}
-          error={error}
-          autoComplete="off"
-          spellCheck={false}
-          className="font-mono"
-        />
-      </div>
-    </div>
+    <TextField
+      label={`Repositorio de GitHub de ${project.name}`}
+      hideLabel
+      placeholder="usuario/repositorio"
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value)
+        setError(undefined)
+      }}
+      onBlur={() => void commit()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur()
+        if (e.key === 'Escape') {
+          setText(project.githubRepo ?? '')
+          setError(undefined)
+        }
+      }}
+      error={error}
+      autoComplete="off"
+      spellCheck={false}
+      className="font-mono"
+    />
   )
 }
 
@@ -88,6 +138,9 @@ export function Integraciones() {
   const activity = useGithubActivity().data
   const moduleOn = modules === null || modules.has('github')
   const synced = (activity?.count ?? 0) > 0
+  const repos = useGithubRepos(auth.kind !== 'demo')
+  // Selector si hay lista (o se está pidiendo); campo de texto en demo, si falla o si el token no llega a ninguno.
+  const picker = auth.kind !== 'demo' && (repos.isPending || (repos.data?.length ?? 0) > 0)
 
   return (
     <>
@@ -147,11 +200,35 @@ export function Integraciones() {
 
       <Card className="px-[18px] py-1.5">
         <h2 className="pt-3 text-md font-semibold">Repositorio de cada proyecto</h2>
-        <p className="pb-2 text-[12.5px] text-fg-subtle">
-          Un repositorio por proyecto. Escribe{' '}
-          <span className="font-mono">usuario/repositorio</span> o pega su dirección de GitHub;
-          déjalo vacío para desvincularlo.
-        </p>
+        {picker ? (
+          <p className="pb-2 text-[12.5px] text-fg-subtle">
+            Un repositorio por proyecto. Salen los repositorios a los que tiene acceso el token de
+            la sincronización; si falta alguno, dale acceso en GitHub y vuelve a esta página.
+          </p>
+        ) : (
+          <p className="pb-2 text-[12.5px] text-fg-subtle">
+            Un repositorio por proyecto. Escribe{' '}
+            <span className="font-mono">usuario/repositorio</span> o pega su dirección de GitHub;
+            déjalo vacío para desvincularlo.
+          </p>
+        )}
+        {repos.isError ? (
+          <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
+            No se pudo cargar la lista de repositorios, así que toca escribirlo a mano.{' '}
+            <button
+              type="button"
+              onClick={() => void repos.refetch()}
+              className="cursor-pointer text-accent hover:underline"
+            >
+              Reintentar
+            </button>
+          </p>
+        ) : repos.data?.length === 0 ? (
+          <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
+            El token de la sincronización todavía no tiene acceso a ningún repositorio: dáselo en
+            GitHub o escríbelo a mano.
+          </p>
+        ) : null}
         {auth.kind === 'demo' ? (
           <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
             En modo demo puedes probar el campo, pero nada llegará de GitHub: la sincronización
@@ -163,7 +240,15 @@ export function Integraciones() {
             Crea uno desde Proyectos y vuelve para vincularle un repositorio.
           </EmptyState>
         ) : (
-          projects.map((p) => <RepoField key={p.id} project={p} />)
+          projects.map((p) => (
+            <RepoRow key={p.id} project={p}>
+              {picker ? (
+                <RepoPicker project={p} projects={projects} repos={repos.data ?? undefined} />
+              ) : (
+                <RepoField project={p} />
+              )}
+            </RepoRow>
+          ))
         )}
       </Card>
 

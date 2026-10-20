@@ -2,6 +2,7 @@ import type {
   Activity,
   BoardColumn,
   ChecklistItem,
+  GithubRepoSummary,
   Note,
   Project,
   ProjectStatus,
@@ -27,6 +28,11 @@ export interface Store {
   activity: ActivityLog
   settings: SettingsStore
   githubOutbox: GithubOutbox
+  /**
+   * Repos a los que llega el token de la sincronización. Solo lo sabe el store de Supabase (se lo pregunta
+   * a la Edge Function `github`, que es quien tiene el token); sin él, la UI pide el repo a mano.
+   */
+  githubRepos?: { list(): Promise<GithubRepoSummary[]> }
 }
 
 export interface OutboxEntry {

@@ -5,9 +5,11 @@
 //
 //   POST /functions/v1/github/webhook  ← GitHub (evento `issues`, firmado con GITHUB_WEBHOOK_SECRET)
 //   POST /functions/v1/github/sync     ← pg_cron cada pocos minutos (cabecera x-muninn-sync-secret)
+//   GET  /functions/v1/github/repos    ← la app (Ajustes › Integraciones), con la sesión del dueño (ADR-0035)
 
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 import {
+  bearerToken,
   createGithubClient,
   createMuninn,
   createSupabaseStore,
@@ -19,30 +21,60 @@ import {
 
 const env = (name: string) => Deno.env.get(name) ?? ''
 
+const admin = () =>
+  createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
 /** El core con la service role, ligado al dueño de los proyectos (como el MCP: un usuario por despliegue). */
 function muninn() {
   const userId = env('MUNINN_USER_ID')
   if (!userId) throw new Error('Falta el secreto MUNINN_USER_ID')
-  const client = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-  return createMuninn(createSupabaseStore(client, userId), {
+  return createMuninn(createSupabaseStore(admin(), userId), {
     actor: 'github',
     // «Hoy» es el del usuario, no el del servidor (gotchas/core).
     timeZone: env('MUNINN_TIME_ZONE') || 'Europe/Madrid',
   })
 }
 
+function github() {
+  const token = env('GITHUB_TOKEN')
+  if (!token) throw new Error('Falta el secreto GITHUB_TOKEN')
+  return createGithubClient({ token })
+}
+
+// `/repos` lo llama el navegador (con preflight por la cabecera Authorization). Sin cookies: `*` basta.
+const cors = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
+    headers: { ...cors, 'content-type': 'application/json; charset=utf-8' },
   })
 
+/** ¿La petición trae la sesión del dueño de este despliegue? (Solo él ve los repos del token.) */
+async function isOwner(req: Request) {
+  const jwt = bearerToken(req.headers.get('authorization'))
+  if (!jwt) return false
+  const { data, error } = await admin().auth.getUser(jwt)
+  return !error && data.user?.id === env('MUNINN_USER_ID')
+}
+
 Deno.serve(async (req: Request) => {
-  if (req.method !== 'POST') return json(405, { error: 'Solo POST' })
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   const route = new URL(req.url).pathname.split('/').filter(Boolean).pop()
   try {
+    if (route === 'repos') {
+      if (req.method !== 'GET') return json(405, { error: 'Solo GET' })
+      if (!(await isOwner(req)))
+        return json(401, { error: 'Inicia sesión con tu cuenta de Muninn' })
+      return json(200, { repos: await github().listRepos() })
+    }
+    if (req.method !== 'POST') return json(405, { error: 'Solo POST' })
     if (route === 'webhook') {
       // La firma es del cuerpo tal cual: se lee como texto antes de interpretarlo.
       const body = await req.text()
@@ -61,11 +93,9 @@ Deno.serve(async (req: Request) => {
       if (!sameSecret(env('MUNINN_SYNC_SECRET'), req.headers.get('x-muninn-sync-secret'))) {
         return json(401, { error: 'Secreto no válido' })
       }
-      const token = env('GITHUB_TOKEN')
-      if (!token) throw new Error('Falta el secreto GITHUB_TOKEN')
-      return json(200, await reconcileGithub(muninn(), createGithubClient({ token })))
+      return json(200, await reconcileGithub(muninn(), github()))
     }
-    return json(404, { error: 'Usa /github/webhook o /github/sync' })
+    return json(404, { error: 'Usa /github/webhook, /github/sync o /github/repos' })
   } catch (err) {
     // Los logs van al panel de Supabase (Edge Functions › github › Logs).
     console.error(err)
