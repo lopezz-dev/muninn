@@ -68,6 +68,9 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) entera (instalar, teclado de iOS, gestos del tablero, sin conexión) y corregir lo que falle
 
 ### F2 · Vista Lista ([#15](https://github.com/lopezz-dev/muninn/pull/15))
+> En el navegador (Playwright, 1440×900 y 390×844) pasa el 20 de octubre: casilla con «Deshacer», grupos plegables, filtros, sin scroll
+> horizontal y zona táctil de 46 px; la vista se recuerda al recargar (`muninn.boardView`, solo el proyecto que está en Lista). La fila
+> no mostraba el número de issue («GitHub» a secas): arreglado. Queda lo del iPhone real:
 - [ ] En el iPhone: cambiar a **Lista** en un proyecto; la casilla de cada fila se toca bien (zona de 44 px) y completa con «Deshacer»
 - [ ] Cerrar y abrir la app: el proyecto sigue en Lista (se recuerda por dispositivo); en el ordenador sigue en Tablero
 

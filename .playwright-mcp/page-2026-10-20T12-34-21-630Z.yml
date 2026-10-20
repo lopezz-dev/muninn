@@ -1,0 +1,115 @@
+- generic [ref=f4e81]:
+  - link "Saltar al contenido" [ref=f4e82] [cursor=pointer]:
+    - /url: "#contenido"
+  - generic [ref=f4e83]:
+    - complementary "Barra lateral" [ref=f4e84]:
+      - generic [ref=f4e85]:
+        - generic [ref=f4e90]: Muninn
+        - generic [ref=f4e91]: v0.1.0
+      - button "Buscar o preguntar… Ctrl K" [ref=f4e92] [cursor=pointer]:
+        - text: Buscar o preguntar…
+        - generic [ref=f4e95]: Ctrl K
+      - navigation "Principal" [ref=f4e96]:
+        - link "Inicio" [ref=f4e97] [cursor=pointer]:
+          - /url: /
+        - link "Proyectos 1" [ref=f4e100] [cursor=pointer]:
+          - /url: /proyectos
+          - text: Proyectos
+          - generic [ref=f4e103]: "1"
+        - link "Notas" [ref=f4e104] [cursor=pointer]:
+          - /url: /notas
+        - link "Asistente" [ref=f4e107] [cursor=pointer]:
+          - /url: /asistente
+        - link "GitHub" [ref=f4e110] [cursor=pointer]:
+          - /url: /github
+      - region [ref=f4e113]:
+        - generic [ref=f4e114]:
+          - heading "Proyectos" [level=2] [ref=f4e115]
+          - button "Nuevo proyecto" [ref=f4e116] [cursor=pointer]
+        - link "Muninn 1" [ref=f4e119] [cursor=pointer]:
+          - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4
+          - generic [ref=f4e121]: Muninn
+          - generic [ref=f4e122]: "1"
+      - navigation "Ayuda y ajustes" [ref=f4e124]:
+        - link "Documentación" [ref=f4e125] [cursor=pointer]:
+          - /url: /documentacion
+        - link "Ajustes" [ref=f4e128] [cursor=pointer]:
+          - /url: /ajustes
+      - 'link "Tu cuenta: Alex López" [ref=f4e132] [cursor=pointer]':
+        - /url: /ajustes/cuenta
+        - img "Alex López" [ref=f4e133]
+        - generic [ref=f4e134]:
+          - generic [ref=f4e135]: Alex López
+          - generic [ref=f4e136]: Guardado en tu cuenta
+    - main [ref=f4e1]:
+      - generic [ref=f4e2]:
+        - navigation "Secciones de ajustes" [ref=f4e3]:
+          - paragraph [ref=f4e4]: Ajustes
+          - link "Cuenta" [ref=f4e5] [cursor=pointer]:
+            - /url: /ajustes/cuenta
+          - link "Módulos" [ref=f4e6] [cursor=pointer]:
+            - /url: /ajustes/modulos
+          - link "Apariencia" [ref=f4e7] [cursor=pointer]:
+            - /url: /ajustes/apariencia
+          - link "Asistente e IA" [ref=f4e8] [cursor=pointer]:
+            - /url: /ajustes/asistente
+          - link "Integraciones" [ref=f4e9] [cursor=pointer]:
+            - /url: /ajustes/integraciones
+          - link "Notificaciones" [ref=f4e10] [cursor=pointer]:
+            - /url: /ajustes/notificaciones
+          - link "Datos y sincronización" [ref=f4e11] [cursor=pointer]:
+            - /url: /ajustes/datos
+          - link "Atajos de teclado" [ref=f4e12] [cursor=pointer]:
+            - /url: /ajustes/atajos
+        - generic [ref=f4e13]:
+          - heading "Módulos" [level=1] [ref=f4e16]
+          - generic [ref=f4e18]:
+            - heading "Módulos" [level=2] [ref=f4e19]
+            - paragraph [ref=f4e20]: Activa solo lo que uses. Lo desactivado desaparece del menú, del dock y del buscador; tus datos siguen guardados.
+            - list [ref=f4e21]:
+              - listitem [ref=f4e22]:
+                - generic [ref=f4e26]:
+                  - generic [ref=f4e27]: Tareas y proyectos
+                  - generic [ref=f4e28]: Kanban por proyecto
+                - switch "Tareas y proyectos" [checked] [ref=f4e29] [cursor=pointer]
+              - listitem [ref=f4e31]:
+                - generic [ref=f4e35]:
+                  - generic [ref=f4e36]: Notas
+                  - generic [ref=f4e37]: Markdown vinculado a proyectos
+                - switch "Notas" [checked] [ref=f4e38] [cursor=pointer]
+              - listitem [ref=f4e40]:
+                - generic [ref=f4e44]:
+                  - generic [ref=f4e45]:
+                    - text: Finanzas
+                    - generic [ref=f4e46]: Llega en la fase 3
+                  - generic [ref=f4e47]: Gastos, ingresos, ahorro, inversión y suscripciones
+                - switch "Finanzas Llega en la fase 3" [ref=f4e48] [cursor=pointer]
+              - listitem [ref=f4e50]:
+                - generic [ref=f4e54]:
+                  - generic [ref=f4e55]:
+                    - text: GitHub
+                    - generic [ref=f4e56]: Llega en la fase 2
+                  - generic [ref=f4e57]: Issues como tareas y agentes
+                - switch "GitHub Llega en la fase 2" [checked] [active] [ref=f4e58] [cursor=pointer]
+              - listitem [ref=f4e60]:
+                - generic [ref=f4e64]:
+                  - generic [ref=f4e65]:
+                    - text: Noticias
+                    - generic [ref=f4e66]: Llega en la fase 4
+                  - generic [ref=f4e67]: RSS con resumen local
+                - switch "Noticias Llega en la fase 4" [ref=f4e68] [cursor=pointer]
+              - listitem [ref=f4e70]:
+                - generic [ref=f4e74]:
+                  - generic [ref=f4e75]:
+                    - text: Concentración
+                    - generic [ref=f4e76]: Próximamente
+                  - generic [ref=f4e77]: Bloques de trabajo profundo con la isla
+                - switch "Concentración Próximamente" [disabled] [ref=f4e78]
+  - region "Notificaciones alt+T":
+    - list:
+      - listitem [ref=f4e138]:
+        - generic [ref=f4e142]:
+          - paragraph [ref=f4e149]:
+            - text: GitHub activado
+            - generic [ref=f4e150]: · Vuelve a estar en el menú y en el buscador
+          - button "Deshacer" [ref=f4e151] [cursor=pointer]

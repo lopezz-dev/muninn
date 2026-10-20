@@ -39,7 +39,7 @@ function TaskRow({ task, progress, today, projectId }: RowProps) {
       ) : task.dueDate ? (
         <DueDate due={task.dueDate} today={today} done={done} />
       ) : null}
-      <SourceBadge source={task.source} />
+      <SourceBadge source={task.source} externalId={task.externalId} />
     </>
   )
   return (

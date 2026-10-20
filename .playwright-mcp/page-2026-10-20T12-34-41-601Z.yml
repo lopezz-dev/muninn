@@ -1,0 +1,131 @@
+- generic [ref=f5e2]:
+  - link "Saltar al contenido" [ref=f5e3] [cursor=pointer]:
+    - /url: "#contenido"
+  - generic [ref=f5e4]:
+    - complementary "Barra lateral" [ref=f5e5]:
+      - generic [ref=f5e6]:
+        - generic [ref=f5e11]: Muninn
+        - generic [ref=f5e12]: v0.1.0
+      - button "Buscar o preguntar… Ctrl K" [ref=f5e13] [cursor=pointer]:
+        - text: Buscar o preguntar…
+        - generic [ref=f5e16]: Ctrl K
+      - navigation "Principal" [ref=f5e17]:
+        - link "Inicio" [ref=f5e18] [cursor=pointer]:
+          - /url: /
+        - link "Proyectos 1" [ref=f5e21] [cursor=pointer]:
+          - /url: /proyectos
+          - text: Proyectos
+          - generic [ref=f5e24]: "1"
+        - link "Notas" [ref=f5e25] [cursor=pointer]:
+          - /url: /notas
+        - link "Asistente" [ref=f5e28] [cursor=pointer]:
+          - /url: /asistente
+        - link "GitHub" [ref=f5e31] [cursor=pointer]:
+          - /url: /github
+      - region [ref=f5e34]:
+        - generic [ref=f5e35]:
+          - heading "Proyectos" [level=2] [ref=f5e36]
+          - button "Nuevo proyecto" [ref=f5e37] [cursor=pointer]
+        - link "Muninn 2" [ref=f5e40] [cursor=pointer]:
+          - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4
+          - generic [ref=f5e42]: Muninn
+          - generic [ref=f5e43]: "2"
+      - navigation "Ayuda y ajustes" [ref=f5e45]:
+        - link "Documentación" [ref=f5e46] [cursor=pointer]:
+          - /url: /documentacion
+        - link "Ajustes" [ref=f5e49] [cursor=pointer]:
+          - /url: /ajustes
+      - 'link "Tu cuenta: Alex López" [ref=f5e53] [cursor=pointer]':
+        - /url: /ajustes/cuenta
+        - img "Alex López" [ref=f5e54]
+        - generic [ref=f5e55]:
+          - generic [ref=f5e56]: Alex López
+          - generic [ref=f5e57]: Guardado en tu cuenta
+    - main [ref=f5e59]:
+      - generic [ref=f5e60]:
+        - navigation "Ruta" [ref=f5e61]:
+          - link "Proyectos" [ref=f5e62] [cursor=pointer]:
+            - /url: /proyectos
+          - generic [ref=f5e65]: Muninn
+        - generic [ref=f5e66]:
+          - heading "Muninn" [level=1] [ref=f5e68]
+          - generic [ref=f5e71]:
+            - radiogroup "Vista" [ref=f5e72]:
+              - radio "Tablero" [checked] [ref=f5e73] [cursor=pointer]
+              - radio "Lista" [ref=f5e76] [cursor=pointer]
+            - button "Nueva tarea N" [ref=f5e79] [cursor=pointer]:
+              - generic [ref=f5e82]: Nueva tarea
+              - generic [ref=f5e83]: "N"
+            - button "Opciones del proyecto" [ref=f5e84] [cursor=pointer]
+        - search "Filtrar el tablero" [ref=f5e87]:
+          - searchbox "Filtrar tareas por texto" [ref=f5e91]
+          - button "Filtrar por prioridad" [ref=f5e92] [cursor=pointer]: Prioridad
+          - button "Filtrar por etiquetas" [ref=f5e95] [cursor=pointer]: Etiquetas
+          - button "Filtrar por origen" [ref=f5e98] [cursor=pointer]: Origen
+          - button "Filtrar por vence" [ref=f5e101] [cursor=pointer]: Vence
+        - region "Columnas" [ref=f5e104]:
+          - region "Backlog" [ref=f5e105]:
+            - generic [ref=f5e106]:
+              - button "Mover la columna Backlog" [ref=f5e107]
+              - heading "Backlog" [level=2] [ref=f5e111]
+              - generic [ref=f5e112]: "0"
+              - generic [ref=f5e113]:
+                - button "Añadir tarea en Backlog" [ref=f5e114] [cursor=pointer]
+                - button "Opciones de la columna Backlog" [ref=f5e117] [cursor=pointer]
+            - paragraph [ref=f5e121]: Sin tareas. Arrastra una aquí.
+            - button "Añadir tarea" [ref=f5e122] [cursor=pointer]
+          - region "Pendiente" [ref=f5e125]:
+            - generic [ref=f5e126]:
+              - button "Mover la columna Pendiente" [ref=f5e127]
+              - heading "Pendiente" [level=2] [ref=f5e131]
+              - generic [ref=f5e132]: "2"
+              - generic [ref=f5e133]:
+                - button "Añadir tarea en Pendiente" [ref=f5e134] [cursor=pointer]
+                - button "Opciones de la columna Pendiente" [ref=f5e137] [cursor=pointer]
+            - generic [ref=f5e140]:
+              - link "Testing Ayer Media" [ref=f5e141] [cursor=pointer]:
+                - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/bfced5cb-3f95-4501-9d1d-890783256d79
+                - generic [ref=f5e142]: Testing
+                - generic [ref=f5e143]:
+                  - generic [ref=f5e144]: Ayer
+                  - generic [ref=f5e147]: Media
+              - 'link "enhancement question [prueba Muninn] Issue de prueba de la sincronización GitHub #253" [ref=f5e150] [cursor=pointer]':
+                - /url: /proyectos/b1245ba6-315b-4f53-9a15-8c77b54113f4/tareas/7fa85721-7044-4608-a525-9b9ee961ca42
+                - generic [ref=f5e151]:
+                  - generic [ref=f5e152]: enhancement
+                  - generic [ref=f5e153]: question
+                - generic [ref=f5e154]: "[prueba Muninn] Issue de prueba de la sincronización"
+                - generic [ref=f5e156]:
+                  - text: GitHub
+                  - generic [ref=f5e159]: "#253"
+            - button "Añadir tarea" [ref=f5e160] [cursor=pointer]
+          - region "En curso" [ref=f5e163]:
+            - generic [ref=f5e164]:
+              - button "Mover la columna En curso" [ref=f5e165]
+              - heading "En curso" [level=2] [ref=f5e169]
+              - generic [ref=f5e170]: "0"
+              - generic [ref=f5e171]:
+                - button "Añadir tarea en En curso" [ref=f5e172] [cursor=pointer]
+                - button "Opciones de la columna En curso" [ref=f5e175] [cursor=pointer]
+            - paragraph [ref=f5e179]: Sin tareas. Arrastra una aquí.
+            - button "Añadir tarea" [ref=f5e180] [cursor=pointer]
+          - region "Revisión" [ref=f5e183]:
+            - generic [ref=f5e184]:
+              - button "Mover la columna Revisión" [ref=f5e185]
+              - heading "Revisión" [level=2] [ref=f5e189]
+              - generic [ref=f5e190]: "0"
+              - generic [ref=f5e191]:
+                - button "Añadir tarea en Revisión" [ref=f5e192] [cursor=pointer]
+                - button "Opciones de la columna Revisión" [ref=f5e195] [cursor=pointer]
+            - paragraph [ref=f5e199]: Sin tareas. Arrastra una aquí.
+            - button "Añadir tarea" [ref=f5e200] [cursor=pointer]
+          - region "Hecho" [ref=f5e203]:
+            - generic [ref=f5e204]:
+              - button "Mover la columna Hecho" [ref=f5e205]
+              - heading "Hecho" [level=2] [ref=f5e209]
+              - generic [ref=f5e210]: "0"
+              - button "Opciones de la columna Hecho" [ref=f5e212] [cursor=pointer]
+            - paragraph [ref=f5e216]: Sin tareas. Arrastra una aquí.
+          - button "Añadir columna" [ref=f5e217] [cursor=pointer]
+        - status [ref=f5e220]
+  - region "Notificaciones alt+T"
