@@ -126,7 +126,7 @@ export function Column({
         {isAgent ? <AgentMark /> : null}
         <ColumnCount count={total} limit={column.wipLimit} />
         <span className="ml-auto flex items-center">
-          {column.kind === 'done' ? null : (
+          {column.kind === 'done' || isAgent ? null : (
             <IconButton
               aria-label={`Añadir tarea en ${column.name}`}
               icon={<icons.plus size={16} />}
@@ -161,7 +161,9 @@ export function Column({
         </div>
       </SortableContext>
 
-      {column.kind === 'done' ? null : <QuickAdd projectId={projectId} columnId={column.id} />}
+      {column.kind === 'done' || isAgent ? null : (
+        <QuickAdd projectId={projectId} columnId={column.id} />
+      )}
     </section>
   )
 }

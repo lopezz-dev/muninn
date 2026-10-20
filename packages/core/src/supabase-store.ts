@@ -154,7 +154,7 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
-  // Tabla `github_outbox` (migraciones 20261020000000_github_outbox y 20261020140000_agent_column).
+  // Tabla `github_outbox` (migraciones 20261020000000_github_outbox y 20261020133907_agent_column).
   // Solo la usan las tareas de GitHub.
   const githubOutbox: GithubOutbox = {
     async enqueue(taskId, kind) {

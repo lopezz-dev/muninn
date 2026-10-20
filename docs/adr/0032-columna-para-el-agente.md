@@ -19,7 +19,7 @@ abre un PR y la tarea avanza sola. Se propuso el 19 de octubre y se revisó el 2
 ## Decisión
 
 **La columna.** Una columna normal (cualquier tipo menos `done`) que el proyecto marca como la del agente:
-`projects.agent_column_id uuid null references board_columns (id) on delete set null` (migración `20261020140000_agent_column`, con
+`projects.agent_column_id uuid null references board_columns (id) on delete set null` (migración `20261020133907_agent_column`, con
 un trigger que exige que sea del mismo proyecto y dueño). No hay un `kind` nuevo ([ADR-0005](0005-columnas-con-kind-semantico.md)).
 Se marca desde el menú de la columna («Usar para el agente»), solo en proyectos con repo y con el módulo GitHub activado. No cuenta
 como columna por defecto: ni las issues nuevas ni las tareas reabiertas caen ahí aunque sea la primera «Por hacer».

@@ -346,7 +346,7 @@ export function BoardMobile({
                 para cambiar de columna
               </p>
             )}
-            {column.kind === 'done' ? null : (
+            {column.kind === 'done' || column.id === agentColumnId ? null : (
               <QuickAdd projectId={projectId} columnId={column.id} large />
             )}
           </div>

@@ -153,7 +153,7 @@ function Group({ column, tasks, total, filtering, counts, today, projectId }: Gr
               {total > 0 ? 'Ninguna tarea cumple el filtro.' : `Sin tareas en ${column.name}.`}
             </p>
           )}
-          {column.kind === 'done' ? null : (
+          {column.kind === 'done' || isAgent ? null : (
             <div className="border-t border-border-subtle px-1.5 py-1.5 md:px-2.5">
               <QuickAdd projectId={projectId} columnId={column.id} />
             </div>
