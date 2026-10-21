@@ -60,3 +60,13 @@
   defecto es `main` (como `huginnDB`), el workflow tiene que estar en `main` o no arranca nunca, aunque esté en `develop`.
 - **Ojo:** la etiqueta la pone el token de la sincronización, que es tuyo: por eso el workflow filtra por
   `github.event.sender.login == github.repository_owner`. Si el repo es de una organización, cambia esa condición por tu usuario.
+
+### El agente falla en segundos sin decir por qué
+
+- **Síntoma:** «Muninn · agente» acaba en rojo en 2–3 s, con `is_error: true`, `num_turns: 1`, `total_cost_usd: 0` y
+  `modelUsage: {}`; la tarea vuelve a «Por hacer» sin PR.
+- **Causa:** Claude no llega al modelo (token mal pegado o caducado, cuota, modelo…), pero la Action oculta su salida, también
+  en modo debug. `show_full_output: true` lo enseña todo, y en un repo público eso queda a la vista.
+- **Solución:** el workflow tiene el paso «Mostrar el error de Claude», que solo al fallar imprime el mensaje final (`result`).
+  Para probar el token en local: `$env:CLAUDE_CODE_OAUTH_TOKEN = "<token>"` y `claude -p "di hola" --model sonnet` (el `--model`
+  evita que un modelo roto en tu `~/.claude/settings.json` falle antes de probar el token).
