@@ -1,6 +1,6 @@
 # ADR-0034: Escribir sin conexión con una cola de intenciones persistente e ids generados en el cliente
 
-- **Estado:** Propuesto (para revisarlo juntos; no hay código)
+- **Estado:** Propuesto (preguntas abiertas respondidas el 21 de octubre; falta leerlo entero antes de aceptarlo; no hay código)
 - **Fecha:** 2026-10-19
 - **Área:** web, core
 - **Reemplazaría a:** la parte «sin red, solo lectura» de [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) (el tiempo real y la caché de
@@ -31,7 +31,8 @@ y se pierde al cerrar la app. Problemas a resolver: ids de lo creado sin red, or
 4. **Conflictos, campo a campo y sin perder nada:**
    - Cada `update` en cola lleva solo los campos cambiados y el `updatedAt` que se vio al editar (`base`). Si al reproducirlo la fila tiene un
      `updatedAt` posterior **y** cambió ese mismo campo (se mira en `activity`), gana lo de este dispositivo (es lo último que hizo la persona),
-     pero se avisa con `notify` y **«Deshacer»** que restaura el valor del servidor.
+     pero se avisa con `notify` y **«Deshacer»** que restaura el valor del servidor. Los conflictos de una misma reproducción se avisan
+     **en un solo resumen** («2 cambios se aplicaron sobre otros más recientes»), con un «Deshacer» para todos.
    - **Notas:** si el texto cambió en otro sitio desde `base`, no se sobrescribe: lo escrito sin red se guarda como **nota nueva** («Título
      (sin conexión)») vinculada a lo mismo, y se avisa. Perder un párrafo es peor que tener dos notas.
    - **Destino desaparecido** (tarea archivada o borrada en otro dispositivo, columna borrada): la entrada se descarta y se avisa; si era un
@@ -46,7 +47,10 @@ y se pierde al cerrar la app. Problemas a resolver: ids de lo creado sin red, or
    (`isBusy`), así que no pisará lo optimista.
 8. **Interfaz:** el aviso pasa de «Sin conexión · solo lectura» a «Sin conexión · 3 cambios por enviar». **Cerrar sesión con cambios sin enviar**
    no se hace en silencio: se avisa con la acción «Cerrar sesión igualmente» (sin diálogo, [ADR-0019](0019-feedback-con-notificaciones.md)).
-   La cola se borra con el resto de datos del usuario (`forgetUserData`).
+   La cola se borra con el resto de datos del usuario (`forgetUserData`). **Ajustes › Datos** enseña la lista de cambios pendientes (qué y
+   cuándo) y deja descartar cada uno.
+9. **Caducidad:** una entrada que no se consigue enviar se guarda **7 días**, como la caché sin conexión; pasado ese tiempo se descarta y se
+   avisa de cuántas eran.
 
 ## Alternativas consideradas
 
@@ -65,7 +69,7 @@ y se pierde al cerrar la app. Problemas a resolver: ids de lo creado sin red, or
 - La cola y su reproducción necesitan tests como los de `sync.test.ts` y `offline.test.ts` (IndexedDB simulado), y probarse en un iPhone real
   (modo avión): entrará en la pila «Pruebas finales» del ROADMAP.
 - `CACHE_VERSION` sube cuando la caché empiece a incluir lo creado sin red.
-- Preguntas abiertas para la revisión: ¿avisar de cada conflicto o resumirlos («2 cambios se aplicaron sobre otros más recientes»)? ¿Cuánto
-  tiempo se guarda una entrada que no se puede enviar (¿7 días, como la caché?)? ¿Hace falta ver la cola en Ajustes › Datos?
+- Preguntas abiertas, respondidas el 21 de octubre: los conflictos se resumen en un aviso (punto 4), las entradas caducan a los 7 días
+  (punto 9) y la cola se ve en Ajustes › Datos (punto 8). Falta la lectura completa antes de aceptarlo.
 - Relacionado: [ADR-0006](0006-orden-con-fractional-indexing.md), [ADR-0025](0025-escrituras-optimistas-y-deshacer.md),
   [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md), `apps/web/src/lib/offline.ts`, `apps/web/src/lib/mutations.ts`.
