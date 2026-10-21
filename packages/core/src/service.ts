@@ -1,4 +1,6 @@
 import type { z } from 'zod'
+import { ValidationError } from './errors'
+import { createFinance } from './finance'
 import { DEFAULT_SETTINGS } from './memory-store'
 import { positionAt, positionsFor } from './ordering'
 import {
@@ -114,12 +116,7 @@ export interface MuninnOptions {
   timeZone?: string
 }
 
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'ValidationError'
-  }
-}
+export { ValidationError }
 
 export type TaskWithColumn = Task & { column: Pick<BoardColumn, 'id' | 'name' | 'kind'> }
 
@@ -201,6 +198,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     }
     return r.data
   }
+
+  const finance = createFinance({ store, nowIso, today, parse, log })
 
   const must = async <T>(p: Promise<T | null>, entity: string, id: string) => {
     const v = await p
@@ -1120,6 +1119,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
           store.githubOutbox.settle(entries, error),
       },
     },
+    finance,
     overview,
     recentActivity,
   }

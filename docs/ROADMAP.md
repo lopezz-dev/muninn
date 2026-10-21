@@ -140,9 +140,21 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   verificar**). En espera de permisos de la organización (Edgar)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
+### F3 · Finanzas: modelo y MCP
+> Migración aplicada el 21 de octubre con `apply_migration` (versión alineada a `20261021120000`); RLS comprobada en SQL con una sesión
+> simulada (0 filas ajenas en tablas y vista) y las tres tablas en `supabase_realtime`. El MCP de stdio y el paquete de la Edge están
+> recompilados; la función `mcp` desplegada **no** se ha tocado.
+- [ ] Redesplegar la función `mcp` para que el MCP remoto tenga Finanzas: `pnpm --filter @muninn/mcp build:edge` y
+  `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` ([gotchas/mcp](gotchas/mcp.md))
+- [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
+  gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
+
 ## F3 · Móvil y finanzas
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
+  - [x] Modelo de datos (ADR-0037): cuentas con saldo derivado, categorías de serie y propias, movimientos (gasto, ingreso, traspaso)
+    en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
+  - [ ] Ajuste de valor de una inversión (hoy, un ingreso o gasto en esa cuenta) y multidivisa: fuera de esta fase
 - [ ] Suscripciones recurrentes con aviso antes del cobro
 - [ ] Panel mensual (entradas, salidas, tasa de ahorro)
 - [ ] (v2) Importar CSV de Imagin / conexión bancaria
