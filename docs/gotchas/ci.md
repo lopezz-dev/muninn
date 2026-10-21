@@ -60,3 +60,22 @@
   defecto es `main` (como `huginnDB`), el workflow tiene que estar en `main` o no arranca nunca, aunque esté en `develop`.
 - **Ojo:** la etiqueta la pone el token de la sincronización, que es tuyo: por eso el workflow filtra por
   `github.event.sender.login == github.repository_owner`. Si el repo es de una organización, cambia esa condición por tu usuario.
+
+### El agente falla en segundos sin decir por qué
+
+- **Síntoma:** «Muninn · agente» acaba en rojo en 2–3 s, con `is_error: true`, `num_turns: 1`, `total_cost_usd: 0` y
+  `modelUsage: {}`; la tarea vuelve a «Por hacer» sin PR.
+- **Causa:** Claude no llega al modelo (token mal pegado o caducado, cuota, modelo…), pero la Action oculta su salida, también
+  en modo debug. `show_full_output: true` lo enseña todo, y en un repo público eso queda a la vista.
+- **Solución:** el workflow tiene el paso «Mostrar el error de Claude», que solo al fallar imprime el mensaje final (`result`).
+  Para probar el token en local: `$env:CLAUDE_CODE_OAUTH_TOKEN = "<token>"` y `claude -p "di hola" --model sonnet` (el `--model`
+  evita que un modelo roto en tu `~/.claude/settings.json` falle antes de probar el token).
+
+### Sacar la tarea no siempre cancela a tiempo
+
+- **Síntoma:** sacas la tarea de la columna del agente con la ejecución en marcha y aun así aparece un PR del agente; la ejecución sale
+  «cancelled» pero todos sus pasos en verde, y la tarea salta a «Revisión».
+- **Causa:** el job `stop` cancela por `concurrency`, pero solo cuando consigue runner (~30 s el 21 de octubre). Una issue sencilla se
+  resuelve en menos (52 s, y el PR se abrió 10 s antes de la cancelación). Muninn mueve a «Revisión» cualquier PR abierto del agente.
+- **Solución:** el paso «Cerrar el PR si sacaste la tarea» del workflow: antes de quitar la etiqueta, si ya no está (la quitó Muninn), cierra
+  los PRs abiertos de `agent/issue-<n>`, y el webhook devuelve la tarea a «Por hacer». La rama se queda; bórrala a mano si quieres.

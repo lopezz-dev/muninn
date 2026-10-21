@@ -39,7 +39,7 @@
 
 ## F2 · Claude y GitHub
 > **Estado:** en curso. La tanda del 19 de octubre ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#20](https://github.com/lopezz-dev/muninn/pull/20)) ya está en `develop`.
-> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`). El MCP remoto tiene el código listo pero **no está en marcha**. Lo pendiente, en [Pruebas finales](#pruebas-finales).
+> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto tiene el código listo pero **no está en marcha**. Lo pendiente, en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
@@ -52,11 +52,12 @@
   - [x] Pantalla **GitHub** del diseño: repos vinculados y sin vincular (vincular, mover y soltar con «Deshacer»), «Sincronizar
     ahora», columna del agente por proyecto y «Ejecuciones recientes» sacadas de la actividad. Sin el interruptor de pausa por repo
     del diseño (no existe en el modelo de datos)
-- [ ] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza (ADR-0032, aceptado el
-  20 de octubre con la revisión de [#17](https://github.com/lopezz-dev/muninn/pull/17))
+- [x] Columna «Para el agente»: etiqueta el issue → Claude Code GitHub Action → PR → la tarea se actualiza (ADR-0032, aceptado el
+  20 de octubre con la revisión de [#17](https://github.com/lopezz-dev/muninn/pull/17)); probada de punta a punta el 21 de octubre
   - [x] Columna marcada por proyecto, etiqueta `muninn:agent` que sigue a la columna, PRs del agente que mueven la tarea, cola al
     momento tras mover (`/sync` con `scope`), migración, función desplegada y webhook suscrito a `pull_request`
-  - [ ] En `huginnDB`: GitHub App de Claude, secreto y workflow en `main` → [Pruebas finales](#pruebas-finales)
+  - [x] En `huginnDB`: GitHub App de Claude, secreto y workflow en `main`; primer PR real del agente el 21 de octubre
+    (huginnDB [#260](https://github.com/lopezz-dev/huginnDB/pull/260)); pruebas en [Pruebas finales](#pruebas-finales)
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai (ADR-0033, [#18](https://github.com/lopezz-dev/muninn/pull/18))
   - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
   - [ ] Despliegue y OAuth con Supabase para claude.ai y el móvil (sin verificar) → [Pruebas finales](#pruebas-finales)
@@ -99,13 +100,25 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > Probado el 20 de octubre en la app (Playwright) y en `huginnDB` (issue #256) sin el workflow: la etiqueta llega en ~6 s al mover y se
 > va en ~4 s al sacar; una tarea manual no entra («Solo las tareas de GitHub…»); con webhooks `pull_request` firmados (PRs ficticios
 > #9998 y #9999): abierto → «Revisión» con «Ver el PR», cerrado → «Pendiente», fusionado → «Hecho» y la issue se cierra; quitar la
-> etiqueta sin PR → «Pendiente» con «terminó sin abrir un PR». Falta lo que necesita el repo:
-- [ ] Puesta en marcha en `huginnDB`: [gotchas/ci](gotchas/ci.md#columna-para-el-agente-pasos-manuales) › pasos 4 y 5 (App de Claude,
+> etiqueta sin PR → «Pendiente» con «terminó sin abrir un PR».
+>
+> El 21 de octubre, con el workflow de verdad (issues #258, #261, #263 y #265, ya cerradas y con sus tareas archivadas): la primera ejecución falló en 2 s sin
+> llegar al modelo (la Action oculta el motivo; ver [gotchas/ci](gotchas/ci.md#el-agente-falla-en-segundos-sin-decir-por-qué)) y la tarea
+> volvió sola a «Pendiente»; la segunda abrió [#260](https://github.com/lopezz-dev/huginnDB/pull/260) (autor `app/claude`, una línea).
+- [x] Puesta en marcha en `huginnDB`: [gotchas/ci](gotchas/ci.md#columna-para-el-agente-pasos-manuales) › pasos 4 y 5 (App de Claude,
   `CLAUDE_CODE_OAUTH_TOKEN` y el workflow en `main`)
-- [ ] Mover una issue sencilla a la columna: arranca «Muninn · agente» en Actions y abre un PR contra `develop` con `Closes #n`; la
+- [x] Mover una issue sencilla a la columna: arranca «Muninn · agente» en Actions y abre un PR contra `develop` con `Closes #n`; la
   tarea pasa a «Revisión» y la CI del repo corre en el PR
-- [ ] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`)
-- [ ] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer»
+- [x] Fusionar el PR del agente: la tarea pasa a «Hecho» y la issue se cierra (#260 en `develop`: «Hecho» en 5 s, issue cerrada en 71 s
+  por la cola, que queda vacía)
+- [x] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`). Con #261 la cancelación llegó ~30 s
+  tarde y el PR (#262) ya estaba abierto ([gotchas/ci](gotchas/ci.md#sacar-la-tarea-no-siempre-cancela-a-tiempo)), y se añadió el paso
+  «Cerrar el PR si sacaste la tarea» (huginnDB [#264](https://github.com/lopezz-dev/huginnDB/pull/264)). Repetido con #265: el paso de
+  Claude quedó cancelado ~1 min después de sacarla, sin PR ni rama, y la tarea se quedó donde la dejé. Ese paso corrió sin nada que
+  cerrar: el cierre automático de un PR que llegue antes de la cancelación aún no se ha visto en real
+- [x] Cerrar el PR del agente sin fusionar: la tarea vuelve a «Pendiente» (`agent_pr_closed`, #262 cerrado a mano)
+- [x] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer» (#263, «Connections sometimes
+  don't work»: pidió driver, error exacto y cuándo pasa; `agent_stopped`)
 
 ### F2 · MCP remoto ([#18](https://github.com/lopezz-dev/muninn/pull/18))
 - [ ] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)» (llega con [#18](https://github.com/lopezz-dev/muninn/pull/18))
