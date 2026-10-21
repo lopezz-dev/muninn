@@ -109,7 +109,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   `CLAUDE_CODE_OAUTH_TOKEN` y el workflow en `main`)
 - [x] Mover una issue sencilla a la columna: arranca «Muninn · agente» en Actions y abre un PR contra `develop` con `Closes #n`; la
   tarea pasa a «Revisión» y la CI del repo corre en el PR
-- [ ] Fusionar el PR del agente: la tarea pasa a «Hecho» y la issue se cierra (probado solo con webhooks ficticios)
+- [x] Fusionar el PR del agente: la tarea pasa a «Hecho» y la issue se cierra (#260 en `develop`: «Hecho» en 5 s, issue cerrada en 71 s
+  por la cola, que queda vacía)
 - [ ] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`)
 - [ ] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer»
 
