@@ -62,8 +62,11 @@
   - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
   - [x] Función `mcp` desplegada el 21 de octubre (CLI de Supabase) y comprobada con `curl`
   - [x] Pantalla de autorización `/oauth/consent` para el servidor OAuth de Supabase (ADR-0036): sin ella, OAuth no funciona
-  - [ ] Activar el servidor OAuth en Supabase y conectar claude.ai (sin verificar) → [Pruebas finales](#pruebas-finales). En el iPhone,
-    cuando la PWA esté publicada (F3): hoy la *Site URL* es `localhost`
+  - [x] Servidor OAuth activado en Supabase el 21 de octubre (*Authorization Path* `/oauth/consent`, registro dinámico, *Site URL*
+    `localhost:5174`); el descubrimiento responde 200
+  - [ ] Conectar claude.ai (sin verificar) → [Pruebas finales](#pruebas-finales). **En espera:** añadir conectores personalizados en
+    claude.ai necesita permisos de la organización que aún no tienes (los tiene que dar Edgar). En el iPhone, cuando la PWA esté publicada
+    (F3): hoy la *Site URL* es `localhost`
 - [ ] **Escribir sin conexión:** cola de intenciones persistente, UUID del cliente, orden por ancla, conflictos y «Deshacer» sobre lo
   pendiente. ADR-0034 **propuesto** ([#19](https://github.com/lopezz-dev/muninn/pull/19)), para revisarlo juntos antes de implementar; hoy sin red solo se puede leer
   ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
@@ -129,8 +132,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Claude Code con `--header "Authorization: Bearer <token>"`: «¿Cómo voy hoy?» responde con tus datos; con el token caducado, 401
 - [ ] Pantalla `/oauth/consent`: comprobada en el navegador con respuestas simuladas de Supabase (permiso, error de solicitud caducada, móvil
   sin scroll horizontal); falta con una solicitud real
-- [ ] Activar el servidor OAuth (paso 4 de gotchas/mcp) y añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso»
-  vuelve a claude.ai y lista tus proyectos (**sin verificar**)
+- [x] Activar el servidor OAuth (paso 4 de gotchas/mcp): hecho el 21 de octubre; `/.well-known/oauth-authorization-server/auth/v1` da 200
+  con `registration_endpoint` (tarda un par de minutos en aplicarse tras guardar)
+- [ ] OAuth sin claude.ai, con Claude Code: `claude mcp add --transport http muninn-remoto <URL>` sin cabecera y, en una sesión interactiva,
+  `/mcp` › muninn-remoto › *Authenticate*: abre el navegador en `/oauth/consent` y, tras «Permitir acceso», lista tus proyectos
+- [ ] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y lista tus proyectos (**sin
+  verificar**). En espera de permisos de la organización (Edgar)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
 ## F3 · Móvil y finanzas
