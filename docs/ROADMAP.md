@@ -56,7 +56,8 @@
   20 de octubre con la revisión de [#17](https://github.com/lopezz-dev/muninn/pull/17))
   - [x] Columna marcada por proyecto, etiqueta `muninn:agent` que sigue a la columna, PRs del agente que mueven la tarea, cola al
     momento tras mover (`/sync` con `scope`), migración, función desplegada y webhook suscrito a `pull_request`
-  - [ ] En `huginnDB`: GitHub App de Claude, secreto y workflow en `main` → [Pruebas finales](#pruebas-finales)
+  - [x] En `huginnDB`: GitHub App de Claude, secreto y workflow en `main`; primer PR real del agente el 21 de octubre
+    (huginnDB [#260](https://github.com/lopezz-dev/huginnDB/pull/260)). Quedan dos comprobaciones en [Pruebas finales](#pruebas-finales)
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai (ADR-0033, [#18](https://github.com/lopezz-dev/muninn/pull/18))
   - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
   - [ ] Despliegue y OAuth con Supabase para claude.ai y el móvil (sin verificar) → [Pruebas finales](#pruebas-finales)
@@ -99,11 +100,16 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > Probado el 20 de octubre en la app (Playwright) y en `huginnDB` (issue #256) sin el workflow: la etiqueta llega en ~6 s al mover y se
 > va en ~4 s al sacar; una tarea manual no entra («Solo las tareas de GitHub…»); con webhooks `pull_request` firmados (PRs ficticios
 > #9998 y #9999): abierto → «Revisión» con «Ver el PR», cerrado → «Pendiente», fusionado → «Hecho» y la issue se cierra; quitar la
-> etiqueta sin PR → «Pendiente» con «terminó sin abrir un PR». Falta lo que necesita el repo:
-- [ ] Puesta en marcha en `huginnDB`: [gotchas/ci](gotchas/ci.md#columna-para-el-agente-pasos-manuales) › pasos 4 y 5 (App de Claude,
+> etiqueta sin PR → «Pendiente» con «terminó sin abrir un PR».
+>
+> El 21 de octubre, con el workflow de verdad (issue #258, enlazar Pulse y Shortcuts en el README): la primera ejecución falló en 2 s sin
+> llegar al modelo (la Action oculta el motivo; ver [gotchas/ci](gotchas/ci.md#el-agente-falla-en-segundos-sin-decir-por-qué)) y la tarea
+> volvió sola a «Pendiente»; la segunda abrió [#260](https://github.com/lopezz-dev/huginnDB/pull/260) (autor `app/claude`, una línea).
+- [x] Puesta en marcha en `huginnDB`: [gotchas/ci](gotchas/ci.md#columna-para-el-agente-pasos-manuales) › pasos 4 y 5 (App de Claude,
   `CLAUDE_CODE_OAUTH_TOKEN` y el workflow en `main`)
-- [ ] Mover una issue sencilla a la columna: arranca «Muninn · agente» en Actions y abre un PR contra `develop` con `Closes #n`; la
+- [x] Mover una issue sencilla a la columna: arranca «Muninn · agente» en Actions y abre un PR contra `develop` con `Closes #n`; la
   tarea pasa a «Revisión» y la CI del repo corre en el PR
+- [ ] Fusionar el PR del agente: la tarea pasa a «Hecho» y la issue se cierra (probado solo con webhooks ficticios)
 - [ ] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`)
 - [ ] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer»
 
