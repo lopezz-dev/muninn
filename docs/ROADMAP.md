@@ -57,7 +57,7 @@
   - [x] Columna marcada por proyecto, etiqueta `muninn:agent` que sigue a la columna, PRs del agente que mueven la tarea, cola al
     momento tras mover (`/sync` con `scope`), migración, función desplegada y webhook suscrito a `pull_request`
   - [x] En `huginnDB`: GitHub App de Claude, secreto y workflow en `main`; primer PR real del agente el 21 de octubre
-    (huginnDB [#260](https://github.com/lopezz-dev/huginnDB/pull/260)). Quedan dos comprobaciones en [Pruebas finales](#pruebas-finales)
+    (huginnDB [#260](https://github.com/lopezz-dev/huginnDB/pull/260)). Queda repetir la cancelación en [Pruebas finales](#pruebas-finales)
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai (ADR-0033, [#18](https://github.com/lopezz-dev/muninn/pull/18))
   - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
   - [ ] Despliegue y OAuth con Supabase para claude.ai y el móvil (sin verificar) → [Pruebas finales](#pruebas-finales)
@@ -102,7 +102,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > #9998 y #9999): abierto → «Revisión» con «Ver el PR», cerrado → «Pendiente», fusionado → «Hecho» y la issue se cierra; quitar la
 > etiqueta sin PR → «Pendiente» con «terminó sin abrir un PR».
 >
-> El 21 de octubre, con el workflow de verdad (issue #258, enlazar Pulse y Shortcuts en el README): la primera ejecución falló en 2 s sin
+> El 21 de octubre, con el workflow de verdad (issues #258, #261 y #263, ya cerradas y con sus tareas archivadas): la primera ejecución falló en 2 s sin
 > llegar al modelo (la Action oculta el motivo; ver [gotchas/ci](gotchas/ci.md#el-agente-falla-en-segundos-sin-decir-por-qué)) y la tarea
 > volvió sola a «Pendiente»; la segunda abrió [#260](https://github.com/lopezz-dev/huginnDB/pull/260) (autor `app/claude`, una línea).
 - [x] Puesta en marcha en `huginnDB`: [gotchas/ci](gotchas/ci.md#columna-para-el-agente-pasos-manuales) › pasos 4 y 5 (App de Claude,
@@ -111,8 +111,13 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   tarea pasa a «Revisión» y la CI del repo corre en el PR
 - [x] Fusionar el PR del agente: la tarea pasa a «Hecho» y la issue se cierra (#260 en `develop`: «Hecho» en 5 s, issue cerrada en 71 s
   por la cola, que queda vacía)
-- [ ] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`)
-- [ ] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer»
+- [ ] Sacar la tarea de la columna con el agente en marcha: la ejecución se cancela (job `stop`). Probado con #261: la cancelación llegó
+  ~30 s tarde y el PR (#262) ya estaba abierto ([gotchas/ci](gotchas/ci.md#sacar-la-tarea-no-siempre-cancela-a-tiempo)). Con el paso
+  «Cerrar el PR si sacaste la tarea» (huginnDB [#264](https://github.com/lopezz-dev/huginnDB/pull/264)) falta repetirla: o se cancela,
+  o el PR se cierra solo y la tarea vuelve a «Por hacer»
+- [x] Cerrar el PR del agente sin fusionar: la tarea vuelve a «Pendiente» (`agent_pr_closed`, #262 cerrado a mano)
+- [x] Una issue que el agente no puede resolver: comenta, no abre PR, y la tarea vuelve a «Por hacer» (#263, «Connections sometimes
+  don't work»: pidió driver, error exacto y cuándo pasa; `agent_stopped`)
 
 ### F2 · MCP remoto ([#18](https://github.com/lopezz-dev/muninn/pull/18))
 - [ ] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)» (llega con [#18](https://github.com/lopezz-dev/muninn/pull/18))

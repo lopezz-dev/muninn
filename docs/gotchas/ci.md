@@ -70,3 +70,12 @@
 - **Solución:** el workflow tiene el paso «Mostrar el error de Claude», que solo al fallar imprime el mensaje final (`result`).
   Para probar el token en local: `$env:CLAUDE_CODE_OAUTH_TOKEN = "<token>"` y `claude -p "di hola" --model sonnet` (el `--model`
   evita que un modelo roto en tu `~/.claude/settings.json` falle antes de probar el token).
+
+### Sacar la tarea no siempre cancela a tiempo
+
+- **Síntoma:** sacas la tarea de la columna del agente con la ejecución en marcha y aun así aparece un PR del agente; la ejecución sale
+  «cancelled» pero todos sus pasos en verde, y la tarea salta a «Revisión».
+- **Causa:** el job `stop` cancela por `concurrency`, pero solo cuando consigue runner (~30 s el 21 de octubre). Una issue sencilla se
+  resuelve en menos (52 s, y el PR se abrió 10 s antes de la cancelación). Muninn mueve a «Revisión» cualquier PR abierto del agente.
+- **Solución:** el paso «Cerrar el PR si sacaste la tarea» del workflow: antes de quitar la etiqueta, si ya no está (la quitó Muninn), cierra
+  los PRs abiertos de `agent/issue-<n>`, y el webhook devuelve la tarea a «Por hacer». La rama se queda; bórrala a mano si quieres.
