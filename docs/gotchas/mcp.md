@@ -62,23 +62,29 @@
 
 ### MCP remoto (pasos manuales)
 
-- **Síntoma:** no hay URL a la que conectar el móvil o claude.ai.
-- **Causa:** la función hay que desplegarla y, para claude.ai y el móvil, activar OAuth en Supabase; no se puede hacer desde el código.
+- **Síntoma:** no hay URL a la que conectar el móvil o claude.ai, o claude.ai no consigue iniciar sesión.
+- **Causa:** la función hay que desplegarla y, para claude.ai y el móvil, activar el servidor OAuth de Supabase y apuntarlo a la pantalla
+  `/oauth/consent` de la web ([ADR-0036](../adr/0036-pantalla-de-autorizacion-oauth.md)); no se puede hacer desde el código.
 - **Solución:**
-  1. **Desplegar** (CLI de Supabase con sesión): `pnpm --filter @muninn/mcp build:edge` y
-     `supabase functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt`. La URL queda en
+  1. **Desplegar** (hecho el 21 de octubre): `pnpm --filter @muninn/mcp build:edge` y, con la CLI (`npx supabase@2 login` una vez),
+     `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. No uses `deploy_edge_function`
+     del MCP de Supabase: el paquete pesa 1,4 MB y no cabe en la llamada. La URL queda en
      `https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp`. Secretos opcionales: `MUNINN_TIME_ZONE` (por defecto `Europe/Madrid`) y
      `MUNINN_MCP_ALLOWED_ORIGINS` (orígenes de navegador, separados por comas; vacío = ninguno).
-  2. **Comprobar** sin token: `curl -i -X POST https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp` debe dar 401 con
-     `www-authenticate: Bearer resource_metadata="…"`, y `curl https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp/.well-known/oauth-protected-resource`
-     debe devolver los metadatos.
+  2. **Comprobar** sin token (pasa desde el 21 de octubre): `curl -i -X POST …/functions/v1/mcp` da 401 con
+     `www-authenticate: Bearer resource_metadata="…"`; `curl …/functions/v1/mcp/.well-known/oauth-protected-resource` devuelve los metadatos;
+     GET da 405, un token inventado 401 y un `Origin` de navegador no permitido 403.
   3. **Claude Code con un token (prueba rápida, caduca a la hora):** saca tu token de acceso (en la app, DevTools › Application › Local Storage ›
      clave `muninn.auth`, campo `access_token`) y
      `claude mcp add --transport http muninn-remoto https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp --header "Authorization: Bearer <token>"`.
+     Pruébalo con `claude -p "¿Cómo voy hoy en Muninn?" --allowedTools "mcp__muninn-remoto__*"` y quítalo con `claude mcp remove muninn-remoto`.
      No lo guardes en ningún fichero del repo.
-  4. **claude.ai y el móvil (OAuth):** en Supabase › **Authentication**, activa Supabase Auth como **servidor OAuth 2.1** (si tu proyecto lo
-     ofrece; cuando se escribió esto era una función nueva) con registro dinámico de clientes, y añade a *Redirect URLs* las que pida el
-     cliente. Después, en claude.ai › Ajustes › Conectores › **Añadir conector personalizado**, pega la URL del paso 1: debería abrir el inicio
-     de sesión de Muninn. **Sin verificar**: si el cliente no encuentra el servidor de autorización o Supabase no admite el registro dinámico,
-     el plan B son tokens personales de Muninn (ADR-0033, alternativas).
-- **Ref:** [ADR-0033](../adr/0033-mcp-remoto-http.md)
+  4. **Servidor OAuth (claude.ai y el móvil):** en Supabase › **Authentication › OAuth Server**, actívalo, pon **Authorization Path**
+     `/oauth/consent` y activa **Dynamic client registration**. La pantalla queda en *Site URL* + ese camino: mientras la web no esté
+     publicada, la *Site URL* (Authentication › URL Configuration) tiene que ser la del servidor de desarrollo (`http://localhost:5174`), y
+     solo funciona en ese ordenador. Recomendado: claves de firma asimétricas (Settings › JWT Keys), obligatorias si un cliente pide `openid`.
+     Comprueba: `curl https://yjzzubpxikpvukymgfkt.supabase.co/.well-known/oauth-authorization-server/auth/v1` da 200 (antes, 404).
+  5. **claude.ai:** Ajustes › Conectores › **Añadir conector personalizado** con la URL del paso 1. Debería abrir `/oauth/consent` en tu Muninn
+     (o el login, si no tienes sesión), y al pulsar «Permitir acceso» volver a claude.ai con el conector listo. **Sin verificar**: si el cliente
+     no encuentra el servidor de autorización o no se puede registrar, el plan B son tokens personales de Muninn (ADR-0033, alternativas).
+- **Ref:** [ADR-0033](../adr/0033-mcp-remoto-http.md), [ADR-0036](../adr/0036-pantalla-de-autorizacion-oauth.md)

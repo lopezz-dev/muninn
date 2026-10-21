@@ -39,7 +39,7 @@
 
 ## F2 · Claude y GitHub
 > **Estado:** en curso. La tanda del 19 de octubre ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#20](https://github.com/lopezz-dev/muninn/pull/20)) ya está en `develop`.
-> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto tiene el código listo pero **no está en marcha**. Lo pendiente, en [Pruebas finales](#pruebas-finales).
+> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto está **desplegado** (21 de octubre); falta activar OAuth en Supabase para claude.ai. Lo pendiente, en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
@@ -60,7 +60,10 @@
     (huginnDB [#260](https://github.com/lopezz-dev/huginnDB/pull/260)); pruebas en [Pruebas finales](#pruebas-finales)
 - [ ] MCP remoto (HTTP) para usarlo desde el móvil o desde claude.ai (ADR-0033, [#18](https://github.com/lopezz-dev/muninn/pull/18))
   - [x] Transporte HTTP sin estado con el token de Supabase del usuario, detrás de `--http`, con tests; Edge Function `mcp` preparada
-  - [ ] Despliegue y OAuth con Supabase para claude.ai y el móvil (sin verificar) → [Pruebas finales](#pruebas-finales)
+  - [x] Función `mcp` desplegada el 21 de octubre (CLI de Supabase) y comprobada con `curl`
+  - [x] Pantalla de autorización `/oauth/consent` para el servidor OAuth de Supabase (ADR-0036): sin ella, OAuth no funciona
+  - [ ] Activar el servidor OAuth en Supabase y conectar claude.ai (sin verificar) → [Pruebas finales](#pruebas-finales). En el iPhone,
+    cuando la PWA esté publicada (F3): hoy la *Site URL* es `localhost`
 - [ ] **Escribir sin conexión:** cola de intenciones persistente, UUID del cliente, orden por ancla, conflictos y «Deshacer» sobre lo
   pendiente. ADR-0034 **propuesto** ([#19](https://github.com/lopezz-dev/muninn/pull/19)), para revisarlo juntos antes de implementar; hoy sin red solo se puede leer
   ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
@@ -121,10 +124,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   don't work»: pidió driver, error exacto y cuándo pasa; `agent_stopped`)
 
 ### F2 · MCP remoto ([#18](https://github.com/lopezz-dev/muninn/pull/18))
-- [ ] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)» (llega con [#18](https://github.com/lopezz-dev/muninn/pull/18))
+- [x] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)».
+  Hecho el 21 de octubre: sin token 401 con `resource_metadata`, metadatos 200, GET 405, token inventado 401 y `Origin` no permitido 403
 - [ ] Claude Code con `--header "Authorization: Bearer <token>"`: «¿Cómo voy hoy?» responde con tus datos; con el token caducado, 401
-- [ ] Activar OAuth en Supabase y añadir el conector en claude.ai: inicia sesión con tu cuenta de Muninn y lista tus proyectos (**sin verificar**)
-- [ ] Lo mismo desde la app de Claude en el iPhone
+- [ ] Pantalla `/oauth/consent`: comprobada en el navegador con respuestas simuladas de Supabase (permiso, error de solicitud caducada, móvil
+  sin scroll horizontal); falta con una solicitud real
+- [ ] Activar el servidor OAuth (paso 4 de gotchas/mcp) y añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso»
+  vuelve a claude.ai y lista tus proyectos (**sin verificar**)
+- [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
 ## F3 · Móvil y finanzas
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
@@ -160,6 +167,7 @@ más o menos en este orden:
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
+- Ver y quitar los permisos OAuth dados a otras apps (claude.ai…) en Ajustes › Cuenta (ADR-0036; la API `oauth` de supabase-js ya lo permite)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Borrado definitivo de tareas desde la app (hoy solo se archivan)
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria

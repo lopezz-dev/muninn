@@ -57,6 +57,31 @@ const loginRoute = createRoute({
   component: screen(() => import('./screens/Login'), 'Login'),
 })
 
+export interface OAuthConsentSearch {
+  /** Lo pone Supabase Auth al mandar aquí desde su servidor OAuth. */
+  authorization_id?: string
+}
+
+/**
+ * Autorizar a una app (claude.ai) a usar el MCP remoto (ADR-0036). Fuera del shell y sin cargar el core;
+ * necesita una cuenta de verdad: sin sesión (o en modo demo), a /login y vuelta aquí.
+ */
+const oauthConsentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'oauth/consent',
+  validateSearch: (search: Record<string, unknown>): OAuthConsentSearch => ({
+    authorization_id:
+      typeof search.authorization_id === 'string'
+        ? search.authorization_id.slice(0, 200)
+        : undefined,
+  }),
+  beforeLoad: ({ context, location }) => {
+    if (context.auth.kind !== 'user')
+      throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+  },
+  component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent'),
+})
+
 /** Todo lo que necesita datos: sin sesión ni demo, a /login (y vuelta aquí al entrar). */
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -206,6 +231,7 @@ const devFundamentosRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  oauthConsentRoute,
   appRoute.addChildren([
     homeRoute,
     projectsRoute,
