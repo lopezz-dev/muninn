@@ -33,6 +33,12 @@ describe('qué refresca cada cambio', () => {
     expect(scopesOf(c('notes', { id: 'n1' }))).toEqual(['notes', 'note:n1'])
     expect(scopesOf(c('user_settings', { owner_id: 'u' }))).toEqual(['settings'])
   })
+
+  it('finanzas: cualquier tabla refresca Finanzas entera', () => {
+    for (const t of ['finance_accounts', 'finance_categories', 'finance_transactions'] as const) {
+      expect(scopesOf(c(t, { id: 'x' }))).toEqual(['finance'])
+    }
+  })
 })
 
 describe('aplicar los cambios sobre la caché', () => {
@@ -89,6 +95,17 @@ describe('aplicar los cambios sobre la caché', () => {
     busy = new Set()
     vi.advanceTimersByTime(400)
     expect(keys().some((k) => k?.[0] === 'settings')).toBe(true)
+  })
+
+  it('Finanzas espera a que se vacíe su cola', () => {
+    let busy = new Set(['finance'])
+    const s = createSync(qc, { busy: (k) => !!k && busy.has(k) })
+    s.handle({ table: 'finance_transactions', row: { id: 't' } })
+    vi.advanceTimersByTime(400)
+    expect(keys().some((k) => k?.[0] === 'finance')).toBe(false)
+    busy = new Set()
+    vi.advanceTimersByTime(400)
+    expect(keys().some((k) => k?.[0] === 'finance')).toBe(true)
   })
 
   it('al reconectar se repone todo, cuando no hay escrituras en vuelo', () => {

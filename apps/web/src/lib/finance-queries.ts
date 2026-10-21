@@ -1,0 +1,44 @@
+import type { Muninn } from '@muninn/core'
+import { type QueryClient, queryOptions } from '@tanstack/react-query'
+
+/**
+ * Consultas de Finanzas. Todas cuelgan de `['finance', …]`: el tiempo real (`sync.ts`) y las acciones
+ * refrescan ese prefijo de una vez. Aparte de `queries.ts` para no engordar el arranque.
+ */
+export const financeKeys = {
+  all: ['finance'] as const,
+  accounts: ['finance', 'accounts'] as const,
+  /** Con las archivadas: para nombrar movimientos antiguos y para Ajustes de categorías. */
+  categories: ['finance', 'categories'] as const,
+  month: (month: string) => ['finance', 'transactions', month] as const,
+  recent: ['finance', 'transactions', 'recent'] as const,
+}
+
+/** Cuentas con su saldo (las archivadas incluidas: la pantalla decide qué enseñar). */
+export const accountsQuery = (m: Muninn) =>
+  queryOptions({
+    queryKey: financeKeys.accounts,
+    queryFn: () => m.finance.accounts.list({ includeArchived: true }),
+  })
+
+export const categoriesQuery = (m: Muninn) =>
+  queryOptions({
+    queryKey: financeKeys.categories,
+    queryFn: () => m.finance.categories.list({ includeArchived: true }),
+  })
+
+/** Movimientos de un mes `AAAA-MM`: la lista los filtra en el navegador. */
+export const monthTransactionsQuery = (m: Muninn, month: string) =>
+  queryOptions({
+    queryKey: financeKeys.month(month),
+    queryFn: () => m.finance.transactions.list({ month }),
+  })
+
+export const recentTransactionsQuery = (m: Muninn) =>
+  queryOptions({
+    queryKey: financeKeys.recent,
+    queryFn: () => m.finance.transactions.list({ limit: 6 }),
+  })
+
+export const invalidateFinance = (qc: QueryClient) =>
+  qc.invalidateQueries({ queryKey: financeKeys.all })
