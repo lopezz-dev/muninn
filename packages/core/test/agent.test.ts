@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  AGENT_ACTIONS,
   AGENT_LABEL,
   agentIssueNumber,
   createMemoryStore,
@@ -237,6 +238,17 @@ describe('agente: PRs', () => {
     expect(closed.action === 'returned' && closed.task.columnId).toBe(col('todo'))
     const [log] = await user.recentActivity({ entityId: task.id, limit: 1 })
     expect(log?.action).toBe('agent_pr_closed')
+  })
+
+  it('la actividad se puede pedir solo con las acciones del agente', async () => {
+    const { user, agent, agentCol, task } = await setup()
+    await user.tasks.move(task.id, { columnId: agentCol.id })
+    await agent.github.applyPullRequest(REPO, 'opened', pr())
+    await agent.github.applyPullRequest(REPO, 'closed', pr({ state: 'closed' }))
+    const runs = await user.recentActivity({ actions: [...AGENT_ACTIONS] })
+    expect(runs.map((a) => a.action)).toEqual(['agent_pr_closed', 'agent_pr_opened'])
+    // Sin filtro salen también los movimientos y la creación.
+    expect((await user.recentActivity()).length).toBeGreaterThan(runs.length)
   })
 
   it('ignora los PRs que no son del agente o sin tarea', async () => {

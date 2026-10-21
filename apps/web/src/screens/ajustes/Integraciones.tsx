@@ -9,7 +9,7 @@ import { timeAgo } from '../../lib/dates'
 import { parseRepoInput, pickProjectRepo, repoChoices, setProjectRepo } from '../../lib/github'
 import { useEnabledModules } from '../../lib/modules'
 import { useAuth, useMuninn } from '../../lib/muninn'
-import { keys, projectsQuery } from '../../lib/queries'
+import { githubReposQuery, projectsQuery } from '../../lib/queries'
 
 /** Lo que se sabe de la sincronización mirando los datos: cuántas tareas han llegado de GitHub y cuándo. */
 function useGithubActivity() {
@@ -24,21 +24,6 @@ function useGithubActivity() {
       )
       return { count: tasks.length, last }
     },
-  })
-}
-
-/**
- * Repos a los que llega el token de la sincronización (los pregunta a la Edge Function). `null`: este modo
- * no puede preguntarlo (demo) y el repo se escribe a mano.
- */
-function useGithubRepos(enabled: boolean) {
-  const m = useMuninn()
-  return useQuery({
-    queryKey: keys.githubRepos,
-    queryFn: () => m.github.repos(),
-    staleTime: 5 * 60_000,
-    retry: false,
-    enabled,
   })
 }
 
@@ -155,7 +140,7 @@ export function Integraciones() {
   const activity = useGithubActivity().data
   const moduleOn = modules === null || modules.has('github')
   const synced = (activity?.count ?? 0) > 0
-  const repos = useGithubRepos(auth.kind !== 'demo')
+  const repos = useQuery(githubReposQuery(m, auth.kind !== 'demo'))
   // Selector si hay lista (o se está pidiendo); campo de texto en demo, si falla o si el token no llega a ninguno.
   const picker = auth.kind !== 'demo' && (repos.isPending || (repos.data?.length ?? 0) > 0)
 

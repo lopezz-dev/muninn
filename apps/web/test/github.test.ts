@@ -2,7 +2,7 @@ import type { Muninn } from '@muninn/core'
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import { issueNumber } from '../src/components/task-meta'
-import { parseRepoInput, pickProjectRepo, repoChoices } from '../src/lib/github'
+import { moveProjectRepo, parseRepoInput, pickProjectRepo, repoChoices } from '../src/lib/github'
 
 describe('repositorio de un proyecto', () => {
   it('acepta owner/repo y la dirección que se copia de GitHub', () => {
@@ -99,6 +99,42 @@ describe('elegir un repositorio', () => {
     expect(await pickProjectRepo(m, new QueryClient(), linked, null)).toBe(true)
     expect(asked).toEqual(['lopezz-dev/huginnDB'])
     expect(saved).toEqual(['lopezz-dev/huginnDB', 'lopezz-dev/secreto', null])
+  })
+})
+
+describe('mover un repositorio a otro proyecto', () => {
+  const from = { id: 'p1', name: 'Muninn' }
+  const to = { id: 'p2', name: 'Huginn' }
+  const fake = (failOn?: string) => {
+    const saved: [string, string | null | undefined][] = []
+    const m = {
+      projects: {
+        update: async (id: string, patch: { githubRepo?: string | null }) => {
+          if (id === failOn && patch.githubRepo) throw new Error('duplicate key')
+          saved.push([id, patch.githubRepo])
+          return {}
+        },
+      },
+    } as unknown as Muninn
+    return { m, saved }
+  }
+
+  it('desvincula el primero y vincula el segundo', async () => {
+    const { m, saved } = fake()
+    expect(await moveProjectRepo(m, new QueryClient(), from, to, 'o/r')).toBe(true)
+    expect(saved).toEqual([
+      ['p1', null],
+      ['p2', 'o/r'],
+    ])
+  })
+
+  it('si el segundo falla, lo devuelve al primero', async () => {
+    const { m, saved } = fake('p2')
+    expect(await moveProjectRepo(m, new QueryClient(), from, to, 'o/r')).toBe(false)
+    expect(saved).toEqual([
+      ['p1', null],
+      ['p1', 'o/r'],
+    ])
   })
 })
 

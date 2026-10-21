@@ -321,3 +321,14 @@
   teclado.
 - **Solución:** en las tarjetas, `SourceBadge` sin `link`; en el detalle de la tarea (y donde no haya un enlace alrededor), con `link` y
   `externalUrl`. El título y la descripción de una tarea de GitHub son de solo lectura en el detalle (`fromGithub` en `TaskBody.tsx`).
+
+### Pantalla GitHub: las «Ejecuciones recientes» salen de la actividad, no de GitHub Actions
+
+- **Síntoma:** una ejecución del agente que falló en Actions no sale como «Falló», o «Trabajando» sigue aunque el workflow ya acabó.
+- **Causa:** es intencionado. Muninn no recibe `workflow_run` ([ADR-0032](../adr/0032-columna-para-el-agente.md), alternativas). `agentRuns`
+  (`lib/github-overview.ts`, con tests) cruza dos cosas: las tareas que están **ahora** en la columna del agente («Trabajando», con la hora
+  de su último cambio) y el último evento `agent_*` de cada tarea en la actividad (`recentActivity({ actions })`). Un fallo del workflow
+  llega como `agent_stopped` cuando el workflow quita la etiqueta; hasta entonces la tarea sigue en la columna.
+- **Solución:** si quieres el estado real de cada ejecución, hay que suscribir el webhook a `workflow_run` y guardarlo (nuevo ADR). Las consultas
+  de la pantalla cuelgan de `['tasks', …]` y `['projects', …]`: la actividad no está en `SYNC_TABLES`, pero cada paso del agente mueve una
+  tarea y eso ya la refresca.

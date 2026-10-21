@@ -97,6 +97,50 @@ export async function pickProjectRepo(
   return setProjectRepo(m, qc, project, repo?.fullName ?? null)
 }
 
+type RepoProject = Pick<Project, 'id' | 'name'>
+
+/**
+ * Pasa el repo de un proyecto a otro (pantalla GitHub), con aviso y «Deshacer». Primero se desvincula del
+ * primero (un repo va con un solo proyecto); si el segundo paso falla, se intenta devolverlo a donde estaba.
+ */
+export async function moveProjectRepo(
+  m: Muninn,
+  qc: QueryClient,
+  from: RepoProject,
+  to: RepoProject,
+  repo: string,
+  undo = false,
+): Promise<boolean> {
+  try {
+    await serial(from.id, () => m.projects.update(from.id, { githubRepo: null }))
+  } catch (err) {
+    fail('No se pudo mover el repositorio', err)
+    return false
+  }
+  try {
+    await serial(to.id, () => m.projects.update(to.id, { githubRepo: repo }))
+  } catch (err) {
+    await serial(from.id, () => m.projects.update(from.id, { githubRepo: repo })).catch(() => {})
+    await invalidateProjects(qc)
+    fail('No se pudo mover el repositorio', err)
+    return false
+  }
+  await invalidateProjects(qc)
+  if (undo) {
+    notify.info(`${repo} vuelve a «${to.name}»`)
+  } else {
+    notify.success(`${repo} va ahora con «${to.name}»`, {
+      icon: 'link',
+      description: `Ya no está vinculado a «${from.name}».`,
+      action: {
+        label: 'Deshacer',
+        onClick: () => void moveProjectRepo(m, qc, to, from, repo, true),
+      },
+    })
+  }
+  return true
+}
+
 /** Vincula (o desvincula, con `null`) un repositorio a un proyecto, con aviso y «Deshacer». */
 export async function setProjectRepo(
   m: Muninn,

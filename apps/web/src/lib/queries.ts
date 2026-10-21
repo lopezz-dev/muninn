@@ -38,6 +38,19 @@ export const boardQuery = (m: Muninn, projectId: string) =>
     },
   })
 
+/**
+ * Repos a los que llega el token de la sincronización (los pregunta a la Edge Function). `null`: este modo
+ * no puede preguntarlo (demo) y el repo se escribe a mano.
+ */
+export const githubReposQuery = (m: Muninn, enabled: boolean) =>
+  queryOptions({
+    queryKey: keys.githubRepos,
+    queryFn: () => m.github.repos(),
+    staleTime: 5 * 60_000,
+    retry: false,
+    enabled,
+  })
+
 /** Ajustes del usuario (módulos activos, preferencias). El loader de `_app` la rellena antes del primer pintado. */
 export const settingsQuery = (m: Muninn) =>
   queryOptions({ queryKey: keys.settings, queryFn: () => m.settings.get() })
