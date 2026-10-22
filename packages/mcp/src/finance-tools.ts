@@ -7,6 +7,9 @@ import {
   financeColor,
   formatEuros,
   type Muninn,
+  monthlyCost,
+  type Subscription,
+  subscriptionFrequency,
   type Transaction,
   transactionKind,
   ValidationError,
@@ -361,5 +364,147 @@ export function registerFinanceTools(
       annotations: write,
     },
     (input) => run(() => f.categories.create(input)),
+  )
+
+  // ─── Suscripciones (ADR-0038) ───────────────────────────────────────────────
+
+  async function resolveSubscription(ref: string) {
+    const all = await f.subscriptions.list({ includeArchived: true })
+    const match = byName(all, ref)
+    if (!match) {
+      throw new ValidationError(
+        `No hay ninguna suscripción "${ref}". Suscripciones: ${all.map((x) => x.name).join(', ') || '(ninguna)'}`,
+      )
+    }
+    return match
+  }
+
+  const subscriptionOut = (x: Subscription) => ({
+    ...x,
+    amountText: formatEuros(x.amount),
+    monthlyCostText: formatEuros(monthlyCost(x)),
+  })
+
+  const subscriptionRef = z.string().min(1).describe('Id o nombre de la suscripción')
+
+  server.registerTool(
+    'list_subscriptions',
+    {
+      title: 'Suscripciones',
+      description:
+        'Suscripciones con su próximo cobro (nextDate) y lo que cuestan al mes. Con upcomingDays, solo las que vencen en esos días (y las ya vencidas). Muninn no cobra solo: avisa, y el cobro se apunta con record_subscription_charge.',
+      inputSchema: {
+        upcomingDays: z.number().int().min(0).max(366).optional(),
+        includeArchived: z.boolean().optional(),
+      },
+      annotations: read,
+    },
+    ({ upcomingDays, includeArchived }) =>
+      run(async () =>
+        (upcomingDays === undefined
+          ? await f.subscriptions.list({ includeArchived })
+          : await f.subscriptions.upcoming({ days: upcomingDays })
+        ).map(subscriptionOut),
+      ),
+  )
+
+  server.registerTool(
+    'create_subscription',
+    {
+      title: 'Crear suscripción',
+      description:
+        'Crea una suscripción recurrente (weekly, monthly, yearly) con su próximo cobro. Sin cuenta, la primera cuenta corriente; sin categoría, Suscripciones.',
+      inputSchema: {
+        name: z.string().min(1).max(80),
+        amount: euros,
+        frequency: subscriptionFrequency,
+        nextDate: isoDate.describe('Próximo cobro AAAA-MM-DD'),
+        account: accountRef.optional(),
+        category: categoryRef.optional(),
+        remindDays: z
+          .number()
+          .int()
+          .min(0)
+          .max(30)
+          .optional()
+          .describe('Días de aviso; 3 por defecto'),
+      },
+      annotations: write,
+    },
+    ({ amount, account, category, ...rest }) =>
+      run(async () => {
+        const from = account ? await resolveAccount(account) : await defaultAccount()
+        const categoryId = category
+          ? (await resolveCategory(category, 'expense')).id
+          : (await f.categories.list({ kind: 'expense' })).find((c) => c.key === 'subscriptions')
+              ?.id
+        return subscriptionOut(
+          await f.subscriptions.create({
+            ...rest,
+            amount: centsFromEuros(amount),
+            accountId: from.id,
+            categoryId,
+          }),
+        )
+      }),
+  )
+
+  server.registerTool(
+    'record_subscription_charge',
+    {
+      title: 'Apuntar cobro de suscripción',
+      description:
+        'Apunta el próximo cobro de una suscripción como gasto (con su importe o el que digas) y adelanta la fecha un periodo. No apunta dos veces el mismo cobro.',
+      inputSchema: {
+        subscription: subscriptionRef,
+        amount: euros.optional().describe('Si esta vez cobraron otra cantidad'),
+      },
+      annotations: write,
+    },
+    ({ subscription, amount }) =>
+      run(async () => {
+        const sub = await resolveSubscription(subscription)
+        const res = await f.subscriptions.charge(sub.id, {
+          expected: sub.nextDate,
+          amount: amount === undefined ? undefined : centsFromEuros(amount),
+        })
+        return {
+          transaction: (await transactionsOut([res.transaction]))[0],
+          subscription: subscriptionOut(res.subscription),
+        }
+      }),
+  )
+
+  server.registerTool(
+    'skip_subscription_charge',
+    {
+      title: 'Saltar cobro de suscripción',
+      description: 'Ese periodo no se cobró: adelanta el próximo cobro sin apuntar gasto.',
+      inputSchema: { subscription: subscriptionRef },
+      annotations: write,
+    },
+    ({ subscription }) =>
+      run(async () => {
+        const sub = await resolveSubscription(subscription)
+        const res = await f.subscriptions.skip(sub.id, { expected: sub.nextDate })
+        return subscriptionOut(res.subscription)
+      }),
+  )
+
+  server.registerTool(
+    'archive_subscription',
+    {
+      title: 'Archivar suscripción',
+      description:
+        'Archiva una suscripción (la cancelaste): deja de avisar. Sus cobros apuntados se conservan. No se borra.',
+      inputSchema: { subscription: subscriptionRef },
+      annotations: { ...write, idempotentHint: true },
+    },
+    ({ subscription }) =>
+      run(async () =>
+        subscriptionOut(
+          await f.subscriptions.archive((await resolveSubscription(subscription)).id),
+        ),
+      ),
   )
 }

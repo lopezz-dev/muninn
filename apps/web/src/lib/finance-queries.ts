@@ -12,7 +12,25 @@ export const financeKeys = {
   categories: ['finance', 'categories'] as const,
   month: (month: string) => ['finance', 'transactions', month] as const,
   recent: ['finance', 'transactions', 'recent'] as const,
+  subscriptions: ['finance', 'subscriptions'] as const,
+  /** Los cobros que hay que avisar (Inicio y Resumen). */
+  upcoming: ['finance', 'upcoming'] as const,
 }
+
+/** Suscripciones sin archivar, por próximo cobro (ADR-0038). */
+export const subscriptionsQuery = (m: Muninn) =>
+  queryOptions({
+    queryKey: financeKeys.subscriptions,
+    queryFn: () => m.finance.subscriptions.list(),
+  })
+
+/** Cobros dentro de sus días de aviso, y los vencidos. */
+export const upcomingChargesQuery = (m: Muninn, enabled = true) =>
+  queryOptions({
+    queryKey: financeKeys.upcoming,
+    queryFn: () => m.finance.subscriptions.upcoming(),
+    enabled,
+  })
 
 /** Cuentas con su saldo (las archivadas incluidas: la pantalla decide qué enseñar). */
 export const accountsQuery = (m: Muninn) =>

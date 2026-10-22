@@ -26,6 +26,7 @@ import {
   updateTransactionInput,
 } from './schemas'
 import { NotFoundError, type Store } from './store'
+import { createSubscriptions } from './subscriptions'
 
 /** Categorías con las que empieza todo usuario (ADR-0037). Son filas normales: se renombran y se archivan. */
 export const DEFAULT_CATEGORIES: {
@@ -376,12 +377,16 @@ export function createFinance({ store, nowIso, today, parse, log }: FinanceConte
       categoryId: data.categoryId ?? null,
       concept: data.concept ?? '',
       note: data.note ?? '',
+      subscriptionId: data.subscriptionId ?? null,
       archivedAt: null,
     }
     if (data.kind !== 'transfer' && data.toAccountId) {
       throw new ValidationError('Solo los traspasos tienen cuenta de destino')
     }
     await checkTransaction(row, { account: true, toAccount: true, category: true })
+    if (row.subscriptionId && !(await store.financeSubscriptions.get(row.subscriptionId))) {
+      throw new NotFoundError('Suscripción', row.subscriptionId)
+    }
     const tx = await store.transactions.insert(row)
     await log('transaction', tx.id, 'created', null, txPayload(tx))
     return tx
@@ -447,7 +452,17 @@ export function createFinance({ store, nowIso, today, parse, log }: FinanceConte
     return restored
   }
 
+  const transactions = {
+    list: listTransactions,
+    get: getTransaction,
+    create: createTransaction,
+    update: updateTransaction,
+    archive: archiveTransaction,
+    restore: restoreTransaction,
+  }
+
   return {
+    subscriptions: createSubscriptions({ store, nowIso, today, parse, log }, transactions),
     accounts: {
       list: listAccounts,
       get: getAccount,
@@ -465,14 +480,7 @@ export function createFinance({ store, nowIso, today, parse, log }: FinanceConte
       archive: archiveCategory,
       restore: restoreCategory,
     },
-    transactions: {
-      list: listTransactions,
-      get: getTransaction,
-      create: createTransaction,
-      update: updateTransaction,
-      archive: archiveTransaction,
-      restore: restoreTransaction,
-    },
+    transactions,
   }
 }
 

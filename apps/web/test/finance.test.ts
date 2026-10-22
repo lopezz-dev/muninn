@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   amountText,
   applyToBalances,
+  chargeLabel,
   dayLabel,
   entryKindOf,
   filterTransactions,
@@ -25,6 +26,7 @@ const tx = (p: Partial<Transaction>): Transaction => ({
   categoryId: null,
   concept: '',
   note: '',
+  subscriptionId: null,
   archivedAt: null,
   createdAt: `2026-10-19T10:00:0${n % 10}Z`,
   updatedAt: '2026-10-19T10:00:00Z',
@@ -136,5 +138,20 @@ describe('finanzas · caché optimista', () => {
     expect(applyToBalances(after, t, -1).map((x) => x.balance)).toEqual([1000, 0])
     const income = { kind: 'income' as const, amount: 50, accountId: 'a', toAccountId: null }
     expect(applyToBalances(list, income, 1)[0]?.balance).toBe(1050)
+  })
+})
+
+describe('finanzas · suscripciones', () => {
+  it('etiqueta del próximo cobro', () => {
+    const t = '2026-10-21'
+    expect(chargeLabel({ nextDate: '2026-10-21', frequency: 'monthly' }, t)).toBe('Hoy')
+    expect(chargeLabel({ nextDate: '2026-10-22', frequency: 'yearly' }, t)).toBe('Mañana')
+    expect(chargeLabel({ nextDate: '2026-10-24', frequency: 'monthly' }, t)).toBe('24 oct')
+    expect(chargeLabel({ nextDate: '2027-03-12', frequency: 'yearly' }, t)).toBe(
+      'Anual · 12 mar 2027',
+    )
+    expect(chargeLabel({ nextDate: '2026-10-18', frequency: 'monthly' }, t)).toBe(
+      'Vencida · 18 oct',
+    )
   })
 })

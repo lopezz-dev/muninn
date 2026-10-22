@@ -270,6 +270,14 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       if (q.kind) qb = qb.eq('kind', q.kind)
       return qb.order('position')
     }),
+    financeSubscriptions: col(
+      'finance_subscriptions',
+      'Suscripción',
+      (qb, q: { includeArchived?: boolean }) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        return qb.order('next_date').order('name')
+      },
+    ),
     transactions: col(
       'finance_transactions',
       'Movimiento',
@@ -278,6 +286,7 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         // Ids ya validados (uuid) en el servicio: no rompen la sintaxis de `or()`.
         if (q.accountId) qb = qb.or(`account_id.eq.${q.accountId},to_account_id.eq.${q.accountId}`)
         if (q.categoryId) qb = qb.eq('category_id', q.categoryId)
+        if (q.subscriptionId) qb = qb.eq('subscription_id', q.subscriptionId)
         if (q.kinds) qb = qb.in('kind', q.kinds)
         if (q.from) qb = qb.gte('date', q.from)
         if (q.to) qb = qb.lte('date', q.to)

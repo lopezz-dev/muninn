@@ -7,8 +7,9 @@ status: parcial
 
 # Finanzas
 
-> **Estado:** ya puedes crear cuentas, apuntar gastos, ingresos, ahorro e inversión y ver el saldo de cada cuenta. Todavía no
-> hay importación del banco: los movimientos se apuntan a mano (o pidiéndoselo al asistente).
+> **Estado:** ya puedes crear cuentas, apuntar gastos, ingresos, ahorro e inversión, ver el saldo de cada cuenta y llevar tus
+> suscripciones con aviso antes de cada cobro. Todavía no hay importación del banco: los movimientos se apuntan a mano (o
+> pidiéndoselo al asistente).
 
 ## Activarlo
 
@@ -59,13 +60,32 @@ movimientos se conservan; una categoría archivada deja de ofrecerse, pero los m
 Empiezas con unas de serie (Vivienda, Supermercado, Suscripciones, Transporte, Restaurantes, Ocio, Salud, Otros; y Nómina,
 Facturas y Otros ingresos). En **Cuentas** puedes renombrarlas, cambiarles el color, archivarlas o crear las tuyas.
 
+## Suscripciones
+
+En la pestaña **Suscripciones** apuntas lo que pagas cada semana, mes o año (Spotify, el gimnasio, un dominio): nombre, importe,
+cuenta, categoría, próximo cobro y cuántos días antes quieres el aviso (3 por defecto). Verás cuánto suman al mes y al año.
+
+Cuando se acerca un cobro, sale en **Próximos cobros**, en Inicio y en Finanzas:
+
+- **Apuntar** lo guarda como gasto (con un icono de repetición en la lista) y pasa la suscripción al siguiente periodo.
+- **Saltar** pasa al siguiente periodo sin apuntar nada (ese mes no te cobraron).
+
+Los dos tienen **Deshacer**. **Muninn nunca apunta un cobro solo**: no está conectado a tu banco y no sabe si al final te lo cobraron,
+si cambió el precio o si cancelaste. Si no abres la app, el cobro se queda como «vencido» hasta que lo apuntes o lo saltes.
+
+Atajo: al apuntar un gasto, marca **Repetir cada mes (suscripción)** y se crea la suscripción con ese primer cobro ya apuntado.
+
+Una suscripción que ya no pagas se **archiva** (deja de avisar; sus cobros apuntados se conservan).
+
 ## Con el asistente
 
 Si tienes un asistente conectado ([Asistentes de IA](06-asistentes-ia.md)), puedes decirle «He gastado 24,90 en el cine» o
-«¿Cuánto tengo en la hucha?». Tampoco puede borrar nada: como mucho, archivar.
+«¿Cuánto tengo en la hucha?», y también «¿Qué suscripciones me cobran esta semana?» o «Apunta el cobro de Spotify». Tampoco
+puede borrar nada: como mucho, archivar.
 
 ## Lo que aún no hay
 
 - Importar los movimientos del banco (CSV de Imagin) o conectarlo directamente.
+- Avisos en el móvil (notificaciones push) antes de un cobro: de momento, solo dentro de la app.
 - Más de una moneda: todo va en euros.
 - Apuntar que una inversión ha subido o bajado de valor: de momento, apúntalo como un ingreso o un gasto en esa cuenta.

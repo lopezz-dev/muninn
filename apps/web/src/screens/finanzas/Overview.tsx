@@ -18,8 +18,10 @@ interface Props {
   onOpen: (tx: Transaction) => void
   onAllMovements: () => void
   onAccounts: () => void
-  /** Lo que va encima (el panel del mes, las suscripciones). */
+  /** Lo que va encima (el panel del mes, los cobros a punto de llegar). */
   children?: ReactNode
+  /** Tercera tarjeta, junto a cuentas y movimientos (suscripciones). */
+  aside?: ReactNode
 }
 
 /** Vista «Resumen»: cuentas con su saldo y los últimos movimientos. */
@@ -32,6 +34,7 @@ export function Overview({
   onAllMovements,
   onAccounts,
   children,
+  aside,
 }: Props) {
   const m = useMuninn()
   const recent = useQuery(recentTransactionsQuery(m))
@@ -42,7 +45,7 @@ export function Overview({
   return (
     <div className="flex flex-col gap-4">
       {children}
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card className="flex flex-col">
           <CardHeader
             title="Cuentas"
@@ -116,6 +119,7 @@ export function Overview({
             </p>
           )}
         </Card>
+        {aside}
       </div>
     </div>
   )

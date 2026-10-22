@@ -6,7 +6,7 @@ import type {
   TransactionKind,
 } from '@muninn/core'
 import { formatAmount } from '@muninn/ui'
-import { addDays } from './dates'
+import { addDays, dueLabel } from './dates'
 
 /**
  * Lógica pura de la pantalla Finanzas (ADR-0037): etiquetas, agrupar por día, filtrar y los cambios
@@ -186,3 +186,21 @@ export function applyToBalances(
 /** Categorías del tipo de un movimiento, sin archivar (las que ofrece el alta). */
 export const categoriesFor = (categories: FinanceCategory[], kind: TransactionKind) =>
   kind === 'transfer' ? [] : categories.filter((c) => c.kind === kind && !c.archivedAt)
+
+const FREQUENCY_SHORT = { weekly: 'Semanal', monthly: 'Mensual', yearly: 'Anual' } as const
+export const FREQUENCY_LABEL = FREQUENCY_SHORT
+
+/**
+ * Cuándo se cobra, como en el diseño: «Hoy», «Mañana», «24 oct», y «Vencida · 18 oct» si ya pasó. Las no mensuales
+ * llevan delante su frecuencia («Anual · 12 mar»).
+ */
+export function chargeLabel(
+  s: { nextDate: string; frequency: keyof typeof FREQUENCY_SHORT },
+  today: string,
+) {
+  const when = dueLabel(s.nextDate, today)
+  if (s.nextDate < today) return `Vencida · ${when}`
+  return s.frequency === 'monthly' || s.nextDate <= addDays(today, 1)
+    ? when
+    : `${FREQUENCY_SHORT[s.frequency]} · ${when}`
+}

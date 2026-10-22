@@ -6,6 +6,7 @@ import type {
   FinanceCategory,
   Note,
   Project,
+  Subscription,
   Task,
   Transaction,
   UserSettings,
@@ -38,6 +39,7 @@ export interface MemorySnapshot {
   financeAccounts: FinanceAccount[]
   financeCategories: FinanceCategory[]
   transactions: Transaction[]
+  financeSubscriptions: Subscription[]
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -52,6 +54,7 @@ export const emptySnapshot = (): MemorySnapshot => ({
   financeAccounts: [],
   financeCategories: [],
   transactions: [],
+  financeSubscriptions: [],
 })
 
 /** Lo que tiene un usuario sin fila en `user_settings` (los defaults de la tabla). */
@@ -138,6 +141,7 @@ export function createMemoryStore(
   const accounts = toMap(initial.financeAccounts ?? [])
   const categories = toMap(initial.financeCategories ?? [])
   const transactions = toMap(initial.transactions ?? [])
+  const subscriptions = toMap(initial.financeSubscriptions ?? [])
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -152,6 +156,7 @@ export function createMemoryStore(
       financeAccounts: [...accounts.values()],
       financeCategories: [...categories.values()],
       transactions: [...transactions.values()],
+      financeSubscriptions: [...subscriptions.values()],
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -212,6 +217,16 @@ export function createMemoryStore(
       changed,
       now,
     ),
+    financeSubscriptions: new MemoryCollection<Subscription, { includeArchived?: boolean }>(
+      'Suscripción',
+      subscriptions,
+      (rows, q) =>
+        rows
+          .filter((x) => q.includeArchived || !x.archivedAt)
+          .sort((a, b) => (a.nextDate < b.nextDate ? -1 : a.nextDate > b.nextDate ? 1 : 0)),
+      changed,
+      now,
+    ),
     transactions: new MemoryCollection<Transaction, TransactionStoreQuery>(
       'Movimiento',
       transactions,
@@ -222,6 +237,7 @@ export function createMemoryStore(
             (t) => !q.accountId || t.accountId === q.accountId || t.toAccountId === q.accountId,
           )
           .filter((t) => !q.categoryId || t.categoryId === q.categoryId)
+          .filter((t) => !q.subscriptionId || t.subscriptionId === q.subscriptionId)
           .filter((t) => !q.kinds || q.kinds.includes(t.kind))
           .filter((t) => !q.from || t.date >= q.from)
           .filter((t) => !q.to || t.date <= q.to)

@@ -20,6 +20,7 @@ import type { FinanceView } from '../router'
 import { AccountDialog, Accounts } from './finanzas/Accounts'
 import { Movements } from './finanzas/Movements'
 import { Overview } from './finanzas/Overview'
+import { SubscriptionsCard, SubscriptionsView, UpcomingCharges } from './finanzas/Subscriptions'
 import { TransactionForm } from './finanzas/TransactionForm'
 import { useFinanceBase } from './finanzas/use-finance'
 
@@ -28,6 +29,7 @@ const route = getRouteApi('/_app/finanzas')
 const VIEWS: { value: FinanceView; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
   { value: 'movimientos', label: 'Movimientos' },
+  { value: 'suscripciones', label: 'Suscripciones' },
   { value: 'cuentas', label: 'Cuentas' },
 ]
 
@@ -128,6 +130,8 @@ export function Finanzas() {
         gastos, ingresos y traspasos, y el saldo se calcula solo.
       </EmptyState>
     )
+  } else if (view === 'suscripciones') {
+    body = <SubscriptionsView accounts={accounts} categories={categories} today={today} />
   } else if (view === 'cuentas') {
     body = (
       <Accounts
@@ -170,7 +174,10 @@ export function Finanzas() {
         onOpen={openTx}
         onAllMovements={() => setView('movimientos')}
         onAccounts={() => setView('cuentas')}
-      />
+        aside={<SubscriptionsCard today={today} onManage={() => setView('suscripciones')} />}
+      >
+        <UpcomingCharges today={today} />
+      </Overview>
     )
   }
 

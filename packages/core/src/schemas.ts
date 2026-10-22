@@ -155,7 +155,15 @@ export interface Note {
 export interface Activity {
   id: number
   projectId: string | null
-  entityType: 'project' | 'column' | 'task' | 'note' | 'account' | 'category' | 'transaction'
+  entityType:
+    | 'project'
+    | 'column'
+    | 'task'
+    | 'note'
+    | 'account'
+    | 'category'
+    | 'transaction'
+    | 'subscription'
   entityId: string
   action: string
   actor: ActorKind
@@ -292,7 +300,11 @@ export const categoryKind = z.enum(['expense', 'income'])
 /** Colores de cuenta y categoría: la paleta de proyectos (`palette` en `@muninn/ui`). */
 export const financeColor = z.enum(['blue', 'violet', 'teal', 'pink', 'green', 'amber', 'gray'])
 
+/** Cada cuánto se cobra una suscripción (ADR-0038). */
+export const subscriptionFrequency = z.enum(['weekly', 'monthly', 'yearly'])
+
 export type AccountKind = z.infer<typeof accountKind>
+export type SubscriptionFrequency = z.infer<typeof subscriptionFrequency>
 export type TransactionKind = z.infer<typeof transactionKind>
 export type CategoryKind = z.infer<typeof categoryKind>
 export type FinanceColor = z.infer<typeof financeColor>
@@ -348,6 +360,28 @@ export interface Transaction {
   categoryId: string | null
   concept: string
   note: string
+  /** El cobro de una suscripción que lo creó (ADR-0038). */
+  subscriptionId: string | null
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Subscription {
+  id: string
+  name: string
+  /** Céntimos por cobro. */
+  amount: number
+  frequency: SubscriptionFrequency
+  accountId: string
+  /** Categoría de gastos, opcional. */
+  categoryId: string | null
+  /** El día que marca el ciclo: un día 31 vuelve al 31 tras un mes corto. */
+  anchorDate: string
+  /** Próximo cobro (`AAAA-MM-DD`). */
+  nextDate: string
+  /** Cuántos días antes avisa la app. */
+  remindDays: number
   archivedAt: string | null
   createdAt: string
   updatedAt: string
@@ -392,6 +426,8 @@ export const createTransactionInput = z.object({
   categoryId: id.nullable().optional(),
   concept: z.string().trim().max(200).optional(),
   note: z.string().max(2000).optional(),
+  /** Lo pone `subscriptions.charge`: el cobro de una suscripción. */
+  subscriptionId: id.nullable().optional(),
 })
 
 export const updateTransactionInput = z.object({
@@ -422,6 +458,28 @@ export const transactionQuery = z.object({
   limit: z.number().int().min(1).max(5000).optional(),
 })
 
+export const createSubscriptionInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  amount: cents,
+  frequency: subscriptionFrequency,
+  accountId: id,
+  categoryId: id.nullable().optional(),
+  /** Próximo cobro; también fija el día del ciclo. */
+  nextDate: isoDate,
+  remindDays: z.number().int().min(0).max(30).optional(),
+})
+
+export const updateSubscriptionInput = z.object({
+  name: z.string().trim().min(1).max(80).optional(),
+  amount: cents.optional(),
+  frequency: subscriptionFrequency.optional(),
+  accountId: id.optional(),
+  categoryId: id.nullable().optional(),
+  /** Cambiarla mueve también el día del ciclo. */
+  nextDate: isoDate.optional(),
+  remindDays: z.number().int().min(0).max(30).optional(),
+})
+
 export type CreateAccountInput = z.input<typeof createAccountInput>
 export type UpdateAccountInput = z.input<typeof updateAccountInput>
 export type CreateCategoryInput = z.input<typeof createCategoryInput>
@@ -429,6 +487,8 @@ export type UpdateCategoryInput = z.input<typeof updateCategoryInput>
 export type CreateTransactionInput = z.input<typeof createTransactionInput>
 export type UpdateTransactionInput = z.input<typeof updateTransactionInput>
 export type TransactionQuery = z.input<typeof transactionQuery>
+export type CreateSubscriptionInput = z.input<typeof createSubscriptionInput>
+export type UpdateSubscriptionInput = z.input<typeof updateSubscriptionInput>
 
 export type CreateProjectInput = z.input<typeof createProjectInput>
 export type UpdateProjectInput = z.input<typeof updateProjectInput>

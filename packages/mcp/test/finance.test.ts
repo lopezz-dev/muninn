@@ -93,6 +93,34 @@ describe('MCP · finanzas', () => {
     expect(res.text).toContain('Importe no válido')
   })
 
+  it('suscripciones: crear, avisar, apuntar el cobro una sola vez y archivar', async () => {
+    const { call } = await connect()
+    await call('create_finance_account', { name: 'Imagin', kind: 'checking' })
+    const sub = (
+      await call('create_subscription', {
+        name: 'Spotify',
+        amount: '10,99',
+        frequency: 'monthly',
+        nextDate: '2026-01-15',
+      })
+    ).data
+    expect(sub).toMatchObject({ amount: 1099, frequency: 'monthly', remindDays: 3 })
+    expect(sub.categoryId).toBeTruthy()
+
+    const upcoming = (await call('list_subscriptions', { upcomingDays: 3 })).data
+    expect(upcoming.map((x: { name: string }) => x.name)).toEqual(['Spotify'])
+
+    const charged = (await call('record_subscription_charge', { subscription: 'spotify' })).data
+    expect(charged.transaction).toMatchObject({ amount: 1099, category: 'Suscripciones' })
+    expect(charged.subscription.nextDate).toBe('2026-02-15')
+
+    const skipped = (await call('skip_subscription_charge', { subscription: 'Spotify' })).data
+    expect(skipped.nextDate).toBe('2026-03-15')
+
+    await call('archive_subscription', { subscription: 'Spotify' })
+    expect((await call('list_subscriptions')).data).toHaveLength(0)
+  })
+
   it('saldo inicial negativo', async () => {
     const { call } = await connect()
     const a = (
