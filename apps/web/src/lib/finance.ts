@@ -204,3 +204,20 @@ export function chargeLabel(
     ? when
     : `${FREQUENCY_SHORT[s.frequency]} · ${when}`
 }
+
+const MONTH_NAME = new Intl.DateTimeFormat('es-ES', { month: 'long' })
+
+/**
+ * Cambio respecto al mes anterior en texto: «−6 % que en septiembre». `null` si el mes anterior fue 0 (no hay base).
+ */
+export function deltaText(current: number, previous: number, previousMonth: string) {
+  if (previous === 0) return null
+  const pct = Math.round(((current - previous) / previous) * 100)
+  const name = MONTH_NAME.format(asDate(`${previousMonth}-15`))
+  if (pct === 0) return `Igual que en ${name}`
+  return `${pct > 0 ? '+' : '−'}${Math.abs(pct)} % que en ${name}`
+}
+
+/** Tasa de ahorro (0–1) como «20 %»; «—» sin ingresos. */
+export const rateText = (rate: number | null) =>
+  rate === null ? '—' : `${Math.round(rate * 100)} %`

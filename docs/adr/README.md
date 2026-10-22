@@ -54,6 +54,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 - [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado
 - [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md) — Las suscripciones avisan antes del cobro y el movimiento lo confirma el usuario
+- [ADR-0039](0039-panel-mensual-y-tasa-de-ahorro.md) — Panel mensual calculado en el core, con la tasa de ahorro como lo que no gastas
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -82,6 +83,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0017](0017-componentes-radix-cva.md) — Componentes base sobre Radix, con variantes cva y `cn()`
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
 - [ADR-0019](0019-feedback-con-notificaciones.md) — Toda acción da feedback: notificaciones en píldora con «Deshacer»
+- [ADR-0039](0039-panel-mensual-y-tasa-de-ahorro.md) — Panel mensual calculado en el core, con la tasa de ahorro como lo que no gastas
 - [ADR-0021](0021-shell-de-la-app.md) — Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K
 
 ### web

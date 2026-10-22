@@ -121,6 +121,23 @@ describe('MCP · finanzas', () => {
     expect((await call('list_subscriptions')).data).toHaveLength(0)
   })
 
+  it('panel mensual', async () => {
+    const { call } = await connect()
+    await call('create_finance_account', { name: 'Imagin', kind: 'checking' })
+    await call('create_transaction', { kind: 'income', amount: 1000, date: '2026-10-01' })
+    await call('create_transaction', {
+      kind: 'expense',
+      amount: 250,
+      category: 'Ocio',
+      date: '2026-10-02',
+    })
+    const r = (await call('finance_month_report', { month: '2026-10' })).data
+    expect(r).toMatchObject({ income: 100_000, expenses: 25_000, savingsRate: 0.75 })
+    expect(r.text.savingsRate).toBe('75 %')
+    expect(r.byCategory[0]).toMatchObject({ name: 'Ocio', amount: 25_000 })
+    expect(r.history).toHaveLength(6)
+  })
+
   it('saldo inicial negativo', async () => {
     const { call } = await connect()
     const a = (

@@ -50,6 +50,15 @@ export const columnKinds = {
 } as const
 
 /**
+ * Series de los gráficos de Finanzas (ingresos frente a gastos). Validados con la skill `dataviz` sobre `surface` en
+ * oscuro: banda de luminosidad, croma y separación para daltonismo (ΔE 26,8). No los cambies sin volver a validarlos.
+ */
+export const chart = {
+  income: '#5B8DEF',
+  expense: '#CF7A2E',
+} as const
+
+/**
  * Modo cristal (`<html data-glass="on">`): superficies translúcidas + desenfoque.
  * Sobrescribe solo lo necesario; con el cristal apagado la app es sólida.
  */
@@ -137,6 +146,7 @@ export function tokensToCss(): string {
     ...decl('color-', colors),
     ...decl('project-', palette),
     ...decl('kind-', columnKinds),
+    ...decl('chart-', chart),
     ...decl('radius-', radius),
     ...decl('font-', fonts),
     ...decl('text-', fontSize),

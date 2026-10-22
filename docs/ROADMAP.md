@@ -170,7 +170,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     apunta o se salta con un toque, con «Deshacer»; nunca se apunta solo. Migración `20261021140000_finance_subscriptions` aplicada el
     21 de octubre. MCP: listar, crear, apuntar, saltar y archivar
   - [ ] Aviso push antes del cobro: bloque E (PWA instalable y Web Push)
-- [ ] Panel mensual (entradas, salidas, tasa de ahorro)
+- [x] Panel mensual (entradas, salidas, tasa de ahorro): calculado en el core (ADR-0039), con el mes anterior, gasto por categoría y
+  los últimos 6 meses; en Finanzas › Resumen y en el MCP (`finance_month_report`)
 - [ ] (v2) Importar CSV de Imagin / conexión bancaria
 
 ## F4 · Jarvis

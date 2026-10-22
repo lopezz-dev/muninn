@@ -5,12 +5,14 @@ import type { ReactNode } from 'react'
 import { Ghost } from '../../components/Page'
 import { dueLabel } from '../../lib/dates'
 import { amountText, ENTRY_LABEL, entryKindOf } from '../../lib/finance'
-import { recentTransactionsQuery } from '../../lib/finance-queries'
+import { monthReportQuery, recentTransactionsQuery } from '../../lib/finance-queries'
 import { useMuninn } from '../../lib/muninn'
 import { accountDetail } from './Accounts'
+import { CategoryBars, HistoryChart, MonthKpis } from './MonthPanel'
 import { TransactionRow } from './TransactionRows'
 
 interface Props {
+  month: string
   today: string
   accounts: AccountWithBalance[]
   accountById: Map<string, AccountWithBalance>
@@ -18,14 +20,18 @@ interface Props {
   onOpen: (tx: Transaction) => void
   onAllMovements: () => void
   onAccounts: () => void
-  /** Lo que va encima (el panel del mes, los cobros a punto de llegar). */
+  /** Lo que va encima de todo (los cobros a punto de llegar). */
   children?: ReactNode
-  /** Tercera tarjeta, junto a cuentas y movimientos (suscripciones). */
+  /** Junto al gasto por categoría (suscripciones). */
   aside?: ReactNode
 }
 
-/** Vista «Resumen»: cuentas con su saldo y los últimos movimientos. */
+/**
+ * Vista «Resumen» (Finanzas.dc.html): el panel del mes (KPIs, gasto por categoría, últimos meses), las cuentas con
+ * su saldo y los últimos movimientos.
+ */
 export function Overview({
+  month,
   today,
   accounts,
   accountById,
@@ -38,6 +44,7 @@ export function Overview({
 }: Props) {
   const m = useMuninn()
   const recent = useQuery(recentTransactionsQuery(m))
+  const report = useQuery(monthReportQuery(m, month))
   const open = accounts.filter((a) => !a.archivedAt)
   const total = open.reduce((s, a) => s + a.balance, 0)
   const link = 'cursor-pointer text-sm text-accent hover:text-accent-hover'
@@ -45,7 +52,27 @@ export function Overview({
   return (
     <div className="flex flex-col gap-4">
       {children}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {report.data ? (
+        <MonthKpis report={report.data} />
+      ) : (
+        <div aria-hidden="true" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Ghost key={i} className="h-[92px]" />
+          ))}
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {report.data ? <CategoryBars report={report.data} /> : <Ghost className="h-48" />}
+        </div>
+        {aside}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {report.data ? <HistoryChart report={report.data} /> : <Ghost className="h-56" />}
+        </div>
         <Card className="flex flex-col">
           <CardHeader
             title="Cuentas"
@@ -82,45 +109,44 @@ export function Overview({
             ))}
           </ul>
         </Card>
-        <Card className="flex flex-col overflow-hidden">
-          <CardHeader
-            title="Últimos movimientos"
-            action={
-              <button type="button" className={link} onClick={onAllMovements}>
-                Ver todos
-              </button>
-            }
-          />
-          {recent.isPending ? (
-            <div className="flex flex-col gap-2 px-4 pb-4" aria-hidden="true">
-              <Ghost className="h-10" />
-              <Ghost className="h-10 opacity-50" />
-            </div>
-          ) : recent.data?.length ? (
-            <div className="flex flex-col pb-1">
-              {recent.data.map((t) => {
-                const cat = t.categoryId ? categoryById.get(t.categoryId) : undefined
-                return (
-                  <TransactionRow
-                    key={t.id}
-                    tx={t}
-                    accountById={accountById}
-                    categoryById={categoryById}
-                    compact
-                    sub={`${dueLabel(t.date, today)} · ${cat?.name ?? ENTRY_LABEL[entryKindOf(t, accountById)]}`}
-                    onOpen={onOpen}
-                  />
-                )
-              })}
-            </div>
-          ) : (
-            <p className="border-t border-border-subtle px-4 py-6 text-sm text-fg-subtle">
-              Aún no hay movimientos. Apunta el primero con «Movimiento».
-            </p>
-          )}
-        </Card>
-        {aside}
       </div>
+
+      <Card className="flex flex-col overflow-hidden">
+        <CardHeader
+          title="Últimos movimientos"
+          action={
+            <button type="button" className={link} onClick={onAllMovements}>
+              Ver todos
+            </button>
+          }
+        />
+        {recent.isPending ? (
+          <div className="flex flex-col gap-2 px-4 pb-4" aria-hidden="true">
+            <Ghost className="h-10" />
+            <Ghost className="h-10 opacity-50" />
+          </div>
+        ) : recent.data?.length ? (
+          <div className="flex flex-col pb-1">
+            {recent.data.map((t) => {
+              const cat = t.categoryId ? categoryById.get(t.categoryId) : undefined
+              return (
+                <TransactionRow
+                  key={t.id}
+                  tx={t}
+                  accountById={accountById}
+                  categoryById={categoryById}
+                  sub={`${dueLabel(t.date, today)} · ${cat?.name ?? ENTRY_LABEL[entryKindOf(t, accountById)]}`}
+                  onOpen={onOpen}
+                />
+              )
+            })}
+          </div>
+        ) : (
+          <p className="border-t border-border-subtle px-4 py-6 text-sm text-fg-subtle">
+            Aún no hay movimientos. Apunta el primero con «Movimiento».
+          </p>
+        )}
+      </Card>
     </div>
   )
 }

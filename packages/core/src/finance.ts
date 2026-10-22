@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import { ValidationError } from './errors'
+import { createFinanceReport } from './finance-report'
 import { positionAt, positionsFor } from './ordering'
 import {
   type AccountKind,
@@ -462,6 +463,7 @@ export function createFinance({ store, nowIso, today, parse, log }: FinanceConte
   }
 
   return {
+    report: createFinanceReport({ store, parse }),
     subscriptions: createSubscriptions({ store, nowIso, today, parse, log }, transactions),
     accounts: {
       list: listAccounts,

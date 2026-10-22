@@ -98,3 +98,4 @@
 - No hay borrados: `archive_transaction` y `archive_finance_account`. Tras cambiar el core, `pnpm --filter @muninn/mcp build` y `build:edge`.
 - Suscripciones: `list_subscriptions` (con `upcomingDays`, las que hay que avisar), `create_subscription`, `record_subscription_charge`,
   `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.
+- Panel: `finance_month_report` devuelve el mismo informe que Finanzas › Resumen (ADR-0039), con céntimos y `text` ya formateado.

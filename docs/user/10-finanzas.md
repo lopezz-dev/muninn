@@ -45,7 +45,14 @@ Al guardar sale un aviso con **Deshacer**, por si te equivocas.
 
 ## Ver y buscar
 
-- **Resumen**: tus cuentas con su saldo y los últimos movimientos.
+- **Resumen**: el mes de un vistazo (cambia de mes con las flechas):
+  - **Ingresos** y **gastos**, comparados con el mes anterior.
+  - **Ahorro** e **inversión**: lo que pasaste ese mes a tus huchas y a tus cuentas de inversión (si sacaste, resta).
+  - **Tasa de ahorro**: la parte de lo que entró que **no gastaste** ((ingresos − gastos) ÷ ingresos). Incluye lo que apartaste y lo
+    que se quedó en la cuenta; **Libre** dice cuánto se quedó sin apartar.
+  - **En qué se va el dinero** (gasto por categoría) y los **últimos 6 meses** de ingresos y gastos (pasa el ratón por una barra para
+    ver las cifras).
+  - Tus cuentas con su saldo, tus suscripciones y los últimos movimientos.
 - **Movimientos**: los del mes, agrupados por día y con el total de cada día. Cambia de mes con las flechas y filtra por texto,
   tipo, categoría o cuenta. Si filtras una cuenta, los traspasos salen con signo: lo que sale (−) y lo que entra (+).
 
@@ -80,7 +87,7 @@ Una suscripción que ya no pagas se **archiva** (deja de avisar; sus cobros apun
 ## Con el asistente
 
 Si tienes un asistente conectado ([Asistentes de IA](06-asistentes-ia.md)), puedes decirle «He gastado 24,90 en el cine» o
-«¿Cuánto tengo en la hucha?», y también «¿Qué suscripciones me cobran esta semana?» o «Apunta el cobro de Spotify». Tampoco
+«¿Cuánto tengo en la hucha?», «¿Cómo voy este mes?», y también «¿Qué suscripciones me cobran esta semana?» o «Apunta el cobro de Spotify». Tampoco
 puede borrar nada: como mucho, archivar.
 
 ## Lo que aún no hay

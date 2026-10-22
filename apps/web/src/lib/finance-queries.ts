@@ -13,6 +13,8 @@ export const financeKeys = {
   month: (month: string) => ['finance', 'transactions', month] as const,
   recent: ['finance', 'transactions', 'recent'] as const,
   subscriptions: ['finance', 'subscriptions'] as const,
+  /** Panel del mes `AAAA-MM` (lo calcula el core). */
+  report: (month: string) => ['finance', 'report', month] as const,
   /** Los cobros que hay que avisar (Inicio y Resumen). */
   upcoming: ['finance', 'upcoming'] as const,
 }
@@ -60,3 +62,10 @@ export const recentTransactionsQuery = (m: Muninn) =>
 
 export const invalidateFinance = (qc: QueryClient) =>
   qc.invalidateQueries({ queryKey: financeKeys.all })
+
+/** Panel mensual: entradas, salidas, ahorro, por categoría y últimos 6 meses (calculado en el core). */
+export const monthReportQuery = (m: Muninn, month: string) =>
+  queryOptions({
+    queryKey: financeKeys.report(month),
+    queryFn: () => m.finance.report.month(month),
+  })

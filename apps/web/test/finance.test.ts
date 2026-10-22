@@ -5,12 +5,14 @@ import {
   applyToBalances,
   chargeLabel,
   dayLabel,
+  deltaText,
   entryKindOf,
   filterTransactions,
   groupByDay,
   monthLabel,
   NO_TX_FILTER,
   putTransaction,
+  rateText,
   shiftMonth,
   signedAmount,
 } from '../src/lib/finance'
@@ -138,6 +140,17 @@ describe('finanzas · caché optimista', () => {
     expect(applyToBalances(after, t, -1).map((x) => x.balance)).toEqual([1000, 0])
     const income = { kind: 'income' as const, amount: 50, accountId: 'a', toAccountId: null }
     expect(applyToBalances(list, income, 1)[0]?.balance).toBe(1050)
+  })
+})
+
+describe('finanzas · panel', () => {
+  it('cambio respecto al mes anterior y tasa de ahorro', () => {
+    expect(deltaText(128430, 136600, '2026-09')).toBe('−6 % que en septiembre')
+    expect(deltaText(110, 100, '2026-09')).toBe('+10 % que en septiembre')
+    expect(deltaText(100, 100, '2026-12')).toBe('Igual que en diciembre')
+    expect(deltaText(100, 0, '2026-09')).toBeNull()
+    expect(rateText(0.2034)).toBe('20 %')
+    expect(rateText(null)).toBe('—')
   })
 })
 
