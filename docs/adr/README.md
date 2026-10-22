@@ -64,6 +64,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) — Tiempo real por invalidación de caché y caché de solo lectura sin conexión
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
+- [ADR-0040](0040-pwa-instalable-y-web-push.md) — PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron *(propuesto)*
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -97,12 +98,14 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0034](0034-escribir-sin-conexion.md) — Escribir sin conexión con una cola de intenciones persistente e ids generados en el cliente *(propuesto)*
 - [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 - [ADR-0036](0036-pantalla-de-autorizacion-oauth.md) — La autorización OAuth del MCP remoto la aprueba una pantalla propia de la web, `/oauth/consent`
+- [ADR-0040](0040-pwa-instalable-y-web-push.md) — PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron *(propuesto)*
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
 
 ### ci
 - [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please
+- [ADR-0040](0040-pwa-instalable-y-web-push.md) — PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron *(propuesto)*
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 
 ### tooling

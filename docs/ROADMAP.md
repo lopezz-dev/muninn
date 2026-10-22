@@ -142,6 +142,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 
 ## F3 · Móvil y finanzas
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
+  - [x] Diseño en ADR-0040 (**propuesto**: hosting en Vercel, `push-sw.js`, suscripciones por dispositivo, Edge Function `push` con cron y
+    VAPID); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
+  - [ ] Publicar la web (tuyo: [gotchas/web](gotchas/web.md) › «Publicar la PWA y activar Web Push»)
+  - [ ] Implementar la suscripción (Ajustes › Notificaciones), la tabla `push_subscriptions` y la función `push`: no entró en esta sesión
+    (necesita la web publicada y claves VAPID para probarse de verdad)
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
 - [ ] Suscripciones recurrentes con aviso antes del cobro
 - [ ] Panel mensual (entradas, salidas, tasa de ahorro)
