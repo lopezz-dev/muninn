@@ -62,7 +62,7 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 - **Apariencia:** `src/lib/appearance.ts` (en `user_settings.preferences`, con localStorage como caché).
 - **Galería de desarrollo:** `/dev/fundamentos` (sin enlace en la navegación).
 
-## Modelo de datos (F1)
+## Modelo de datos
 
 | Tabla | Para qué |
 |---|---|
@@ -73,6 +73,9 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 | `notes` | Notas Markdown, opcionalmente vinculadas a proyecto o tarea. |
 | `activity` | Log inmutable de eventos. |
 | `user_settings` | Módulos activados y preferencias. |
+| `finance_accounts` | Cuentas (corriente, ahorro, inversión, efectivo…) con su saldo inicial. El saldo **no se guarda**: lo suma la vista `finance_account_totals` ([ADR-0037](adr/0037-modelo-de-datos-de-finanzas.md)). |
+| `finance_categories` | Categorías de gastos o de ingresos; las de serie llevan `key` y se siembran la primera vez. |
+| `finance_transactions` | Movimientos: gasto, ingreso o traspaso entre cuentas, en céntimos y siempre positivos ([ADR-0018](adr/0018-dinero-en-centimos.md)). Ahorrar o invertir es un traspaso. |
 | `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn (`kind = 'state'`, [ADR-0031](adr/0031-sync-github-issues-tareas.md)) o que entraron o salieron de la columna del agente (`kind = 'agent'`, ADR-0032). |
 
 ### Sincronización con GitHub
@@ -99,6 +102,6 @@ dock y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0
 | `tasks` (proyectos + Kanban) | F1 — core listo |
 | `notes` | F1 — core listo |
 | `github` (issues → tareas) | F2 |
-| `finance` (gastos, ingresos, ahorro, inversión, suscripciones) | F3 |
+| `finance` (gastos, ingresos, ahorro, inversión, suscripciones) | F3 — core listo (ADR-0037) |
 | `news` (RSS + resúmenes) | F4 |
 | `focus` (temporizador "isla") | Backlog |

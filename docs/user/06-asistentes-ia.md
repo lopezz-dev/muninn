@@ -15,8 +15,10 @@ se conectan a otras aplicaciones. Una vez conectado, puedes pedirle cosas como:
 - *"Crea una tarea urgente en Muninn para revisar el login, con fecha el viernes."*
 - *"Mueve la tarea del login a En curso."*
 - *"Apunta en una nota del proyecto lo que hemos decidido sobre el diseño."*
+- *"He gastado 24,90 en el cine."* o *"¿Cuánto tengo en la hucha?"* (Finanzas: cuentas, gastos, ingresos y traspasos)
 
-Puedes nombrar los proyectos y las columnas por su nombre, sin preocuparte de mayúsculas.
+Puedes nombrar los proyectos, las columnas, las cuentas y las categorías por su nombre, sin preocuparte de mayúsculas. Los
+importes se dicen en euros, como los escribirías tú.
 
 **Seguridad:** el asistente puede crear, editar, mover, completar y archivar, pero **nunca borrar** nada definitivamente.
 

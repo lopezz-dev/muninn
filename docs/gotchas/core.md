@@ -98,3 +98,21 @@
 - **Causa:** «la primera columna de tipo `todo`» puede ser la del agente si el usuario la puso delante ([ADR-0032](../adr/0032-columna-para-el-agente.md)).
 - **Solución:** `defaultColumn` (core) y `reopenTask` (`apps/web/src/lib/task-actions.ts`) se saltan `project.agentColumnId`. Si
   añades otro sitio que elija columna por su tipo, sáltatela también.
+
+### Finanzas: el saldo no se guarda, y los importes del MCP entran en euros
+
+- **Síntoma:** buscas una columna `balance` en `finance_accounts` y no está; o un modelo apunta 2.490 € en vez de 24,90 €.
+- **Causa:** el saldo se deriva siempre de los movimientos no archivados ([ADR-0037](../adr/0037-modelo-de-datos-de-finanzas.md)):
+  `m.finance.accounts.list()` lo calcula con `store.accountTotals()`. Y los modelos se equivocan al multiplicar por cien.
+- **Solución:** no guardes saldos ni los «corrijas» a mano: archiva o edita el movimiento. En el borde (MCP, importaciones), convierte con
+  `centsFromEuros` (acepta `24.9`, `'24,90'`, `'1.284,30'`) y muestra con `formatEuros`; dentro del core todo son céntimos.
+- **Ojo:** «Ahorro» e «Inversión» no son tipos de movimiento: son traspasos a una cuenta `savings` o `investment`. Los informes los
+  sacan del tipo de la cuenta de destino (`accountGroup`).
+
+### Finanzas: las categorías de serie se siembran al leerlas
+
+- `m.finance.categories.list()` crea las de serie si el usuario no tiene **ninguna** (ni archivada). Dentro de una instancia del core las
+  llamadas a la vez esperan a la misma siembra; entre dispositivos, el índice único `(owner_id, key)` rechaza las repetidas y el core lo
+  ignora. Si en un test cuentas categorías, recuerda que la primera lectura ya trae `DEFAULT_CATEGORIES`.
+- Cambiar el tipo de un movimiento quita lo que deja de encajar (la categoría al pasar a traspaso, el destino al dejar de serlo, una
+  categoría del otro tipo): `updateTransaction` lo hace solo; no lo repitas en la UI.

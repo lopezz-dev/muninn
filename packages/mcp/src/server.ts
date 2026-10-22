@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { columnKind, type Muninn, NotFoundError, taskPriority, ValidationError } from '@muninn/core'
 import { z } from 'zod'
+import { registerFinanceTools } from './finance-tools'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -370,6 +371,8 @@ export function createMuninnMcpServer(app: Muninn) {
     },
     ({ noteId, ...patch }) => run(() => app.notes.update(noteId, patch)),
   )
+
+  registerFinanceTools(server, app, { run, read, write })
 
   return server
 }

@@ -155,7 +155,7 @@ export interface Note {
 export interface Activity {
   id: number
   projectId: string | null
-  entityType: 'project' | 'column' | 'task' | 'note'
+  entityType: 'project' | 'column' | 'task' | 'note' | 'account' | 'category' | 'transaction'
   entityId: string
   action: string
   actor: ActorKind
@@ -280,6 +280,155 @@ export const updateSettingsInput = z.object({
   /** Se fusiona por clave con lo guardado: `{ appearance }` no borra el resto de preferencias. */
   preferences: z.record(z.string().min(1).max(64), z.json()).optional(),
 })
+
+// ─── Finanzas (ADR-0037) ─────────────────────────────────────────────────────
+
+/** Tipos de cuenta: corriente, ahorro, inversión, efectivo u otra. */
+export const accountKind = z.enum(['checking', 'savings', 'investment', 'cash', 'other'])
+/** Gasto, ingreso o traspaso entre cuentas. «Ahorro» e «Inversión» son traspasos a esas cuentas. */
+export const transactionKind = z.enum(['expense', 'income', 'transfer'])
+/** Una categoría es de gastos o de ingresos; los traspasos no llevan. */
+export const categoryKind = z.enum(['expense', 'income'])
+/** Colores de cuenta y categoría: la paleta de proyectos (`palette` en `@muninn/ui`). */
+export const financeColor = z.enum(['blue', 'violet', 'teal', 'pink', 'green', 'amber', 'gray'])
+
+export type AccountKind = z.infer<typeof accountKind>
+export type TransactionKind = z.infer<typeof transactionKind>
+export type CategoryKind = z.infer<typeof categoryKind>
+export type FinanceColor = z.infer<typeof financeColor>
+
+/** Céntimos de un importe: entero positivo y como mucho 999.999.999,99 € (lo que admite `AmountField`). */
+export const MAX_CENTS = 99_999_999_999
+const cents = z.number().int().positive().max(MAX_CENTS)
+/** El saldo inicial sí puede ser negativo (una cuenta que empieza en descubierto). */
+const signedCents = z.number().int().min(-MAX_CENTS).max(MAX_CENTS)
+
+export interface FinanceAccount {
+  id: string
+  name: string
+  kind: AccountKind
+  color: string
+  /** Céntimos; puede ser negativo. */
+  initialBalance: number
+  /** Objetivo de una hucha, en céntimos. */
+  goal: number | null
+  currency: 'EUR'
+  position: string
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Cuenta con su saldo derivado de los movimientos (ADR-0037). */
+export type AccountWithBalance = FinanceAccount & { balance: number }
+
+export interface FinanceCategory {
+  id: string
+  name: string
+  kind: CategoryKind
+  color: string
+  /** Las de serie llevan su clave (`housing`…); las propias, `null`. */
+  key: string | null
+  position: string
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Transaction {
+  id: string
+  kind: TransactionKind
+  /** Céntimos, siempre positivo (ADR-0018). */
+  amount: number
+  /** Fecha local `AAAA-MM-DD`. */
+  date: string
+  accountId: string
+  /** Destino de un traspaso; `null` en gastos e ingresos. */
+  toAccountId: string | null
+  categoryId: string | null
+  concept: string
+  note: string
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export const createAccountInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  kind: accountKind,
+  color: financeColor.optional(),
+  initialBalance: signedCents.optional(),
+  goal: cents.nullable().optional(),
+})
+
+export const updateAccountInput = z.object({
+  name: z.string().trim().min(1).max(80).optional(),
+  kind: accountKind.optional(),
+  color: financeColor.optional(),
+  initialBalance: signedCents.optional(),
+  goal: cents.nullable().optional(),
+})
+
+export const createCategoryInput = z.object({
+  name: z.string().trim().min(1).max(60),
+  kind: categoryKind,
+  color: financeColor.optional(),
+})
+
+export const updateCategoryInput = z.object({
+  name: z.string().trim().min(1).max(60).optional(),
+  color: financeColor.optional(),
+})
+
+export const createTransactionInput = z.object({
+  kind: transactionKind,
+  amount: cents,
+  /** Por defecto, hoy (en la zona horaria del core). */
+  date: isoDate.optional(),
+  accountId: id,
+  /** Solo en traspasos, y distinta de `accountId`. */
+  toAccountId: id.nullable().optional(),
+  /** Solo en gastos e ingresos, y de su mismo tipo. */
+  categoryId: id.nullable().optional(),
+  concept: z.string().trim().max(200).optional(),
+  note: z.string().max(2000).optional(),
+})
+
+export const updateTransactionInput = z.object({
+  kind: transactionKind.optional(),
+  amount: cents.optional(),
+  date: isoDate.optional(),
+  accountId: id.optional(),
+  toAccountId: id.nullable().optional(),
+  categoryId: id.nullable().optional(),
+  concept: z.string().trim().max(200).optional(),
+  note: z.string().max(2000).optional(),
+})
+
+export const transactionQuery = z.object({
+  /** Movimientos de una cuenta: los suyos y los traspasos que llegan a ella. */
+  accountId: id.optional(),
+  categoryId: id.optional(),
+  kinds: z.array(transactionKind).optional(),
+  /** Mes `AAAA-MM`; atajo de `from`/`to`. */
+  month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: AAAA-MM')
+    .optional(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+  search: z.string().trim().min(1).max(200).optional(),
+  includeArchived: z.boolean().optional(),
+  limit: z.number().int().min(1).max(5000).optional(),
+})
+
+export type CreateAccountInput = z.input<typeof createAccountInput>
+export type UpdateAccountInput = z.input<typeof updateAccountInput>
+export type CreateCategoryInput = z.input<typeof createCategoryInput>
+export type UpdateCategoryInput = z.input<typeof updateCategoryInput>
+export type CreateTransactionInput = z.input<typeof createTransactionInput>
+export type UpdateTransactionInput = z.input<typeof updateTransactionInput>
+export type TransactionQuery = z.input<typeof transactionQuery>
 
 export type CreateProjectInput = z.input<typeof createProjectInput>
 export type UpdateProjectInput = z.input<typeof updateProjectInput>
