@@ -100,6 +100,7 @@ export async function createTransaction(
     categoryId: input.categoryId ?? null,
     concept: input.concept?.trim() ?? '',
     note: input.note ?? '',
+    subscriptionId: input.subscriptionId ?? null,
     archivedAt: null,
     createdAt: now,
     updatedAt: now,

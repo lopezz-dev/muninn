@@ -96,3 +96,5 @@
 - `account` y `category` admiten id o nombre (exacto y, si no, el primero que lo contiene); sin `account`, un gasto o ingreso va a la
   primera cuenta corriente. `update_transaction` con `category: null` la quita.
 - No hay borrados: `archive_transaction` y `archive_finance_account`. Tras cambiar el core, `pnpm --filter @muninn/mcp build` y `build:edge`.
+- Suscripciones: `list_subscriptions` (con `upcomingDays`, las que hay que avisar), `create_subscription`, `record_subscription_charge`,
+  `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.

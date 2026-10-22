@@ -22,6 +22,7 @@ export type Table =
   | 'finance_accounts'
   | 'finance_categories'
   | 'finance_transactions'
+  | 'finance_subscriptions'
 
 export const SYNC_TABLES: Table[] = [
   'projects',
@@ -33,6 +34,7 @@ export const SYNC_TABLES: Table[] = [
   'finance_accounts',
   'finance_categories',
   'finance_transactions',
+  'finance_subscriptions',
 ]
 
 export interface Change {
@@ -80,6 +82,7 @@ export function scopesOf({ table, row, old }: Change): Scope[] {
     case 'finance_accounts':
     case 'finance_categories':
     case 'finance_transactions':
+    case 'finance_subscriptions':
       return ['finance']
   }
 }

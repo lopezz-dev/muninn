@@ -53,6 +53,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 - [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 - [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado
+- [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md) — Las suscripciones avisan antes del cobro y el movimiento lo confirma el usuario
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -66,6 +67,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 - [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado
+- [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md) — Las suscripciones avisan antes del cobro y el movimiento lo confirma el usuario
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -99,6 +101,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0034](0034-escribir-sin-conexion.md) — Escribir sin conexión con una cola de intenciones persistente e ids generados en el cliente *(propuesto)*
 - [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
 - [ADR-0036](0036-pantalla-de-autorizacion-oauth.md) — La autorización OAuth del MCP remoto la aprueba una pantalla propia de la web, `/oauth/consent`
+- [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md) — Las suscripciones avisan antes del cobro y el movimiento lo confirma el usuario
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

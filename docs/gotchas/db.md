@@ -218,3 +218,10 @@
 - **Ojo:** las claves ajenas de `finance_transactions` a cuentas y categorías no tienen `on delete` (`no action`, que se comprueba al
   final de la sentencia): no las cambies a `restrict`, o borrar un usuario fallaría según el orden de la cascada.
 - **Ref:** [ADR-0037](../adr/0037-modelo-de-datos-de-finanzas.md)
+
+### Suscripciones: un cobro, un movimiento
+
+- `finance_transactions_subscription_date_uq` es único en `(subscription_id, date)` **entre los movimientos sin archivar**: apuntar el mismo
+  cobro dos veces a la vez da `23505`, pero tras archivarlo («Deshacer») se puede volver a apuntar. Si añades otra forma de crear cobros
+  (un cron que apunte solo), cuenta con ese índice en lugar de comprobar antes en el cliente.
+- **Ref:** [ADR-0038](../adr/0038-suscripciones-avisan-y-se-confirman.md), migración `20261021140000_finance_subscriptions`

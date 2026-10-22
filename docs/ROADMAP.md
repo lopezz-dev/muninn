@@ -151,6 +151,9 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   el 5174 lo tenía ocupado otra sesión
 - [ ] En el iPhone: la hoja «Nuevo movimiento» se abre desde abajo, el importe saca el teclado decimal y no hace zoom; con dos
   dispositivos, lo apuntado en uno aparece en el otro sin recargar
+- [ ] Suscripciones con tu sesión: crear «Prueba F3 …» con el cobro mañana; sale en Inicio › «Próximos cobros»; «Apuntar» crea el gasto
+  con el icono de repetición y «Deshacer» lo quita; archivarla al acabar. En la demo pasa el 22 de octubre, y la unicidad del cobro en SQL
+  (`rollback`)
 - [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
   gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
 
@@ -163,6 +166,10 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     y Cuentas (cuentas y categorías editables), con escrituras optimistas, «Deshacer» y tiempo real; guía [Finanzas](user/10-finanzas.md)
   - [ ] Ajuste de valor de una inversión (hoy, un ingreso o gasto en esa cuenta) y multidivisa: fuera de esta fase
 - [ ] Suscripciones recurrentes con aviso antes del cobro
+  - [x] Suscripciones semanales, mensuales y anuales (ADR-0038): al llegar la fecha la app **avisa** (Inicio y Finanzas) y el cobro se
+    apunta o se salta con un toque, con «Deshacer»; nunca se apunta solo. Migración `20261021140000_finance_subscriptions` aplicada el
+    21 de octubre. MCP: listar, crear, apuntar, saltar y archivar
+  - [ ] Aviso push antes del cobro: bloque E (PWA instalable y Web Push)
 - [ ] Panel mensual (entradas, salidas, tasa de ahorro)
 - [ ] (v2) Importar CSV de Imagin / conexión bancaria
 

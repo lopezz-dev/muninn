@@ -56,7 +56,17 @@ export function TransactionRow({
       )}
     >
       <span className="flex min-w-0 flex-col">
-        <span className="truncate text-md md:text-base">{concept}</span>
+        <span className="flex items-center gap-1.5 truncate text-md md:text-base">
+          <span className="truncate">{concept}</span>
+          {tx.subscriptionId ? (
+            <Icon
+              name="recurring"
+              aria-label="Suscripción"
+              size={13}
+              className="shrink-0 text-fg-subtle"
+            />
+          ) : null}
+        </span>
         <span className={cn('truncate text-xs text-fg-subtle', !compact && 'md:hidden')}>
           {sub ?? [category?.name ?? ENTRY_LABEL[entry], to ? `${from} → ${to}` : from].join(' · ')}
         </span>

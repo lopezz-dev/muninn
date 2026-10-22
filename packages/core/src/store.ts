@@ -12,6 +12,7 @@ import type {
   OutboxKind,
   Project,
   ProjectStatus,
+  Subscription,
   Task,
   TaskPriority,
   TaskSource,
@@ -40,6 +41,8 @@ export interface Store {
   financeAccounts: Collection<FinanceAccount, AccountStoreQuery>
   financeCategories: Collection<FinanceCategory, CategoryStoreQuery>
   transactions: Collection<Transaction, TransactionStoreQuery>
+  /** Por próximo cobro, el más cercano primero (ADR-0038). */
+  financeSubscriptions: Collection<Subscription, { includeArchived?: boolean }>
   /**
    * Neto de los movimientos no archivados por cuenta (ingresos − gastos ± traspasos), en céntimos. Las cuentas sin
    * movimientos no salen. En Supabase lo suma la vista `finance_account_totals`.
@@ -144,6 +147,7 @@ export interface TransactionStoreQuery {
   search?: string
   includeArchived?: boolean
   limit?: number
+  subscriptionId?: string
 }
 
 export interface NoteStoreQuery {

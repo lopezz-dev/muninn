@@ -1,5 +1,13 @@
 import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/core'
-import { AmountField, Button, Icon, projectColor, SegmentedControl, TextField } from '@muninn/ui'
+import {
+  AmountField,
+  Button,
+  Checkbox,
+  Icon,
+  projectColor,
+  SegmentedControl,
+  TextField,
+} from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
 import { SelectMenu } from '../../components/SelectMenu'
@@ -14,6 +22,7 @@ import {
 } from '../../lib/finance'
 import { archiveTransaction, createTransaction, updateTransaction } from '../../lib/finance-actions'
 import { useMuninn } from '../../lib/muninn'
+import { createSubscription } from '../../lib/subscription-actions'
 
 const ENTRIES: EntryKind[] = ['expense', 'income', 'saving', 'investment', 'transfer']
 
@@ -60,6 +69,7 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? '')
   const [error, setError] = useState<string>()
   const [saving, setSaving] = useState(false)
+  const [repeat, setRepeat] = useState(false)
 
   const kind = txKindOf(entry)
   // Las cuentas que ya tiene un movimiento antiguo se ofrecen aunque estén archivadas.
@@ -110,15 +120,32 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
       categoryId: kind === 'transfer' ? null : effectiveCat || null,
       concept: concept.trim(),
     }
+    const recurring = !editing && repeat && kind === 'expense'
     const ok = editing
       ? await updateTransaction(m, qc, editing, fields)
-      : await createTransaction(m, qc, fields, { title: `${ENTRY_LABEL[entry]} guardado` })
+      : recurring
+        ? // La suscripción nace con este cobro ya apuntado (y enlazado): la próxima fecha es el mes que viene.
+          await createSubscription(
+            m,
+            qc,
+            {
+              name: fields.concept || 'Suscripción',
+              amount,
+              frequency: 'monthly',
+              accountId,
+              categoryId: fields.categoryId,
+              nextDate: fields.date,
+            },
+            { chargeNow: true },
+          )
+        : await createTransaction(m, qc, fields, { title: `${ENTRY_LABEL[entry]} guardado` })
     setSaving(false)
     if (!ok) return
     if (!editing) {
       // El formulario fijo del escritorio se queda listo para el siguiente.
       setAmount(null)
       setConcept('')
+      setRepeat(false)
     }
     onDone?.()
   }
@@ -214,6 +241,12 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
         onChange={(e) => setDate(e.target.value)}
         leading={<Icon name="calendar" />}
       />
+      {!editing && entry === 'expense' ? (
+        <div className="flex items-center gap-2.5 text-sm">
+          <Checkbox id="tx-repeat" checked={repeat} onCheckedChange={setRepeat} touch />
+          <label htmlFor="tx-repeat">Repetir cada mes (suscripción)</label>
+        </div>
+      ) : null}
       <Button type="submit" variant="primary" size={large ? 'lg' : 'md'} disabled={saving}>
         {editing ? 'Guardar cambios' : SAVE_LABEL[entry]}
       </Button>

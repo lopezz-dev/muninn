@@ -116,3 +116,13 @@
   ignora. Si en un test cuentas categorías, recuerda que la primera lectura ya trae `DEFAULT_CATEGORIES`.
 - Cambiar el tipo de un movimiento quita lo que deja de encajar (la categoría al pasar a traspaso, el destino al dejar de serlo, una
   categoría del otro tipo): `updateTransaction` lo hace solo; no lo repitas en la UI.
+
+### Suscripciones: `charge` con la fecha esperada, y `revert` para deshacer
+
+- **Síntoma:** un cobro apuntado dos veces (dos dispositivos, o un doble clic), o al deshacer «Saltar» la suscripción cambia de día de ciclo.
+- **Causa:** `charge` y `skip` adelantan `nextDate`; si se llaman dos veces sobre el mismo cobro, la segunda apuntaría el periodo siguiente.
+  Y `update({ nextDate })` mueve también `anchorDate` (elegir otra fecha a mano cambia el ciclo).
+- **Solución:** pasa siempre `expected` (la fecha que se ve en pantalla): si ya no es la próxima, `charge`/`skip` fallan con «ya está apuntado
+  o saltado». Para deshacer, `revert(id, { previousDate, transactionId })`, que vuelve a la fecha sin tocar el ciclo y archiva el gasto.
+  Las fechas siguientes salen de `nextChargeDate(anchor, actual, frecuencia)` (con tests): no sumes meses a mano.
+- **Ref:** [ADR-0038](../adr/0038-suscripciones-avisan-y-se-confirman.md)
