@@ -4,6 +4,20 @@
 //
 // Carga esperada (JSON): { "title": "…", "body": "…", "url": "/finanzas?vista=suscripciones", "tag": "…" }
 
+/**
+ * Solo enlaces dentro de Muninn. Un camino como `//otro.com` o `/\otro.com` empieza por «/» pero `new URL` lo
+ * resuelve en otro dominio: se descarta, y tras resolverlo se vuelve a exigir el mismo origen.
+ */
+function sameOriginUrl(raw) {
+  const path = typeof raw === 'string' && /^\/(?![/\\])/.test(raw) ? raw : '/'
+  try {
+    const parsed = new URL(path, self.location.origin)
+    return parsed.origin === self.location.origin ? parsed.href : `${self.location.origin}/`
+  } catch {
+    return `${self.location.origin}/`
+  }
+}
+
 self.addEventListener('push', (event) => {
   let data = {}
   try {
@@ -19,14 +33,24 @@ self.addEventListener('push', (event) => {
       badge: '/icon-192.png',
       // El mismo `tag` sustituye al aviso anterior en lugar de apilarse.
       tag: typeof data.tag === 'string' ? data.tag : undefined,
-      data: { url: typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/' },
+      data: { url: sameOriginUrl(data.url) },
     }),
   )
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = new URL(event.notification.data?.url ?? '/', self.location.origin).href
+  // Se valida otra vez al pulsar: `data` lo guarda el navegador y se lee tal cual.
+  const url = sameOriginUrl(
+    (() => {
+      try {
+        const u = new URL(event.notification.data?.url ?? '/', self.location.origin)
+        return u.origin === self.location.origin ? u.pathname + u.search + u.hash : '/'
+      } catch {
+        return '/'
+      }
+    })(),
+  )
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
