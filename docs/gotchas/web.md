@@ -369,3 +369,22 @@
      (mismo patrón que «Sincronización con GitHub (pasos manuales)» en [gotchas/db](db.md)).
 - **Ojo:** en iOS el permiso solo se puede pedir desde la PWA **instalada** y tras un toque; si la desinstalas, la suscripción muere y
   la función la borrará al recibir `410`. `public/push-sw.js` ya está en el service worker: hoy no hace nada porque nadie envía avisos.
+
+### Asistente: todo en su chunk, y el historial en el dispositivo
+
+- **Síntoma:** el JS inicial crece al tocar el asistente, o una conversación de otra cuenta aparece tras cambiar de usuario.
+- **Causa:** `@muninn/assistant` (catálogo, bucle, proveedores) solo debe viajar con la pantalla Asistente: si el shell lo importa, entra
+  en el arranque. El historial vive en IndexedDB (`muninn-assistant`, `lib/assistant-history.ts`), no en la cuenta ([ADR-0041](../adr/0041-asistente-local-con-catalogo-unico.md)).
+- **Solución:** importa `@muninn/assistant` solo desde `screens/Asistente.tsx`, `screens/asistente/*` y los `lib/assistant-*` que usan
+  ellas; Ajustes usa `lib/assistant-settings.ts`, que no lo importa (repite los dos valores por defecto). `forgetUserData` borra el
+  historial al cerrar sesión o cambiar de usuario.
+- **Ojo:** «Deshacer» guarda las inversas **en memoria** (`useAssistantChat`): tras recargar, los cambios siguen listados pero sin botón (la
+  actividad conserva quién hizo qué). La demo usa el proveedor guionizado (`lib/assistant-demo.ts`) sobre el store en memoria: lo que hace
+  es real dentro de la demo. Para probar el estado «Ollama no responde» basta con una sesión en un ordenador sin Ollama.
+
+### Asistente: los módulos desactivados no se ofrecen al modelo
+
+- **Síntoma:** en la demo «He gastado 24,90…» responde «Finanzas está desactivado».
+- **Causa:** el asistente solo pasa al modelo las herramientas de los módulos activos (`toolsFor`, ADR-0028 y ADR-0041). Si el modelo pide una
+  de un módulo oculto, el bucle le contesta que el usuario lo tiene desactivado para que se lo diga. El MCP sigue viéndolo todo.
+- **Solución:** activa el módulo en Ajustes › Módulos. No lo «arregles» pasando todo el catálogo.

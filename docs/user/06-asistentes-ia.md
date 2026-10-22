@@ -7,8 +7,14 @@ status: disponible
 
 # Asistentes de IA
 
-Muninn incluye un servidor **MCP** (Model Context Protocol), el estándar con el que los asistentes de IA
-se conectan a otras aplicaciones. Una vez conectado, puedes pedirle cosas como:
+Muninn tiene dos formas de hablar con una IA:
+
+- **El Asistente de la app**, con un modelo que corre en tu ordenador: está en [Asistente](11-asistente.md).
+- **Claude, Codex u otros**, conectados a Muninn por **MCP** (Model Context Protocol), el estándar con el que los
+  asistentes de IA se conectan a otras aplicaciones. Es lo que cuenta esta página.
+
+Los dos usan **las mismas herramientas** con las mismas reglas, así que entienden lo mismo. Una vez conectado, puedes
+pedirle cosas como:
 
 - *"¿Cómo voy hoy?"*
 - *"¿Qué tengo vencido en el proyecto Muninn?"*
@@ -21,6 +27,7 @@ Puedes nombrar los proyectos, las columnas, las cuentas y las categorías por su
 importes se dicen en euros, como los escribirías tú.
 
 **Seguridad:** el asistente puede crear, editar, mover, completar y archivar, pero **nunca borrar** nada definitivamente.
+En el historial de una tarea, lo que hace Claude sale como «Claude» y lo del Asistente de la app, como «El asistente».
 
 > **Desde claude.ai o el móvil: casi listo.** El servidor MCP remoto de Muninn (por internet, entrando con tu cuenta) ya está en marcha.
 > Para añadirlo como conector en claude.ai falta activar el inicio de sesión con tu cuenta de Muninn. Cuando lo esté, claude.ai te traerá a
@@ -95,3 +102,5 @@ args = ["C:/sourcecode/personal_app/packages/mcp/dist/index.js"]
 | `list_tasks`: con filtros | `add_checklist_item`, `set_checklist_item_done` |
 | `get_task`: con subtareas y notas | `create_note`, `update_note` |
 | `list_columns`, `list_notes`, `recent_activity` | |
+| `list_finance_accounts`, `list_transactions`, `finance_month_report` | `create_transaction`, `update_transaction`, `archive_transaction` |
+| `list_finance_categories`, `list_subscriptions` | cuentas, categorías y suscripciones: crear, editar, apuntar o saltar un cobro, archivar |

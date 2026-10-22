@@ -13,6 +13,8 @@ export function forgetUserData() {
   connectAppearance(null)
   // Lo guardado para leer sin conexión es privado: se borra del dispositivo (ADR-0029).
   void import('./offline').then((o) => o.clearOfflineCache())
+  // Y el historial del asistente, que también vive en este dispositivo (ADR-0041).
+  void import('./assistant-history').then((h) => h.clearHistory())
 }
 
 /**

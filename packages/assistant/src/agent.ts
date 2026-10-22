@@ -2,7 +2,14 @@ import { type Muninn, withActor } from '@muninn/core'
 import { z } from 'zod'
 import { systemPrompt } from './prompt'
 import type { ChatMessage, ChatProvider, ToolCall, ToolSpec } from './provider'
-import { type AnyTool, type Change, isExpectedError, parametersOf, toolsFor } from './tools'
+import {
+  type AnyTool,
+  type Change,
+  catalog,
+  isExpectedError,
+  parametersOf,
+  toolsFor,
+} from './tools'
 
 /** Una llamada a herramienta dentro de un turno, tal como la enseña la UI. */
 export interface ToolRun {
@@ -52,6 +59,15 @@ export interface RunResult {
   messages: ChatMessage[]
   /** Si se llegó al máximo de vueltas y se le obligó a contestar. */
   stoppedAtLimit: boolean
+}
+
+/** Nombre de cada módulo tal como lo ve el usuario en Ajustes › Módulos. */
+const MODULE_LABEL: Record<string, string> = {
+  tasks: 'Tareas y proyectos',
+  notes: 'Notas',
+  finance: 'Finanzas',
+  news: 'Noticias',
+  github: 'GitHub',
 }
 
 export const MAX_STEPS = 6
@@ -158,7 +174,13 @@ export async function runAssistant(
       }
 
       if (!tool) {
-        reply('error', `Error: no existe la herramienta "${call.name}". Usa una de la lista.`)
+        const hidden = catalog.find((t) => t.name === call.name)?.module
+        reply(
+          'error',
+          hidden
+            ? `Error: "${call.name}" es del módulo «${MODULE_LABEL[hidden] ?? hidden}», que el usuario tiene desactivado. Dile que lo active en Ajustes › Módulos.`
+            : `Error: no existe la herramienta "${call.name}". Usa una de la lista.`,
+        )
         continue
       }
       if (i >= maxCalls) {

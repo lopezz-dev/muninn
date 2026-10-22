@@ -17,10 +17,6 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: 'asistente',
     label: 'Asistente e IA',
     icon: 'assistant',
-    soon: {
-      phase: 'Fase 4',
-      text: 'Elegirás el cerebro del asistente (un modelo local o Claude), la voz y el resumen diario.',
-    },
   },
   { id: 'integraciones', label: 'Integraciones', icon: 'github' },
   {
