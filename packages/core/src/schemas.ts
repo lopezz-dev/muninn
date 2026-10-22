@@ -441,16 +441,16 @@ export const updateTransactionInput = z.object({
   note: z.string().max(2000).optional(),
 })
 
+/** Un mes `AAAA-MM`. */
+export const monthKey = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: AAAA-MM')
+
 export const transactionQuery = z.object({
   /** Movimientos de una cuenta: los suyos y los traspasos que llegan a ella. */
   accountId: id.optional(),
   categoryId: id.optional(),
   kinds: z.array(transactionKind).optional(),
   /** Mes `AAAA-MM`; atajo de `from`/`to`. */
-  month: z
-    .string()
-    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: AAAA-MM')
-    .optional(),
+  month: monthKey.optional(),
   from: isoDate.optional(),
   to: isoDate.optional(),
   search: z.string().trim().min(1).max(200).optional(),

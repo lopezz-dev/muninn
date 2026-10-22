@@ -167,6 +167,7 @@ export function Finanzas() {
   } else {
     body = (
       <Overview
+        month={month}
         today={today}
         accounts={accounts}
         accountById={accountById}
@@ -187,11 +188,15 @@ export function Finanzas() {
     <Page>
       <PageHeader
         title="Finanzas"
-        description={view === 'movimientos' ? undefined : 'Cuentas, gastos, ingresos y ahorro.'}
+        description={
+          view === 'movimientos' || view === 'resumen'
+            ? undefined
+            : 'Cuentas, gastos, ingresos y ahorro.'
+        }
         actions={
           hasAccounts ? (
             <>
-              {view === 'movimientos' ? monthNav : null}
+              {view === 'movimientos' || view === 'resumen' ? monthNav : null}
               {inlineForm ? null : (
                 <Button variant="primary" size={desktop ? 'md' : 'lg'} onClick={() => openTx()}>
                   <Icon name="plus" />

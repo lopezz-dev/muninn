@@ -194,6 +194,37 @@ export function registerFinanceTools(
       ),
   )
 
+  server.registerTool(
+    'finance_month_report',
+    {
+      title: 'Panel mensual de finanzas',
+      description:
+        'Entradas, salidas, ahorro, inversión, lo que queda libre y tasa de ahorro ((ingresos − gastos) / ingresos) de un mes, con el mes anterior, el gasto por categoría y el histórico de los últimos meses. Úsalo para "¿cómo voy este mes?". Céntimos y texto.',
+      inputSchema: {
+        month: month.optional().describe('Mes AAAA-MM; por defecto, el actual'),
+        months: z.number().int().min(2).max(24).optional().describe('Meses de histórico; 6'),
+      },
+      annotations: read,
+    },
+    ({ month: m, months }) =>
+      run(async () => {
+        const r = await f.report.month(m ?? app.today().slice(0, 7), { months })
+        const text = (n: number) => formatEuros(n)
+        return {
+          ...r,
+          text: {
+            income: text(r.income),
+            expenses: text(r.expenses),
+            savings: text(r.savings),
+            investment: text(r.investment),
+            free: text(r.free),
+            savingsRate: r.savingsRate === null ? null : `${Math.round(r.savingsRate * 100)} %`,
+          },
+          byCategory: r.byCategory.map((c) => ({ ...c, amountText: text(c.amount) })),
+        }
+      }),
+  )
+
   // ─── Escritura ──────────────────────────────────────────────────────────────
 
   server.registerTool(

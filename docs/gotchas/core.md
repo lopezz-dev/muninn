@@ -126,3 +126,10 @@
   o saltado». Para deshacer, `revert(id, { previousDate, transactionId })`, que vuelve a la fecha sin tocar el ciclo y archiva el gasto.
   Las fechas siguientes salen de `nextChargeDate(anchor, actual, frecuencia)` (con tests): no sumes meses a mano.
 - **Ref:** [ADR-0038](../adr/0038-suscripciones-avisan-y-se-confirman.md)
+
+### Panel mensual: la tasa de ahorro no es «ahorro ÷ ingresos»
+
+- `m.finance.report.month()` define la tasa como (ingresos − gastos) ÷ ingresos ([ADR-0039](../adr/0039-panel-mensual-y-tasa-de-ahorro.md)): no la
+  «corrijas» a la cifra de ejemplo del lienzo. Ahorro e inversión salen de los traspasos que cruzan de grupo de cuenta (`totalsOf`).
+- Pide los movimientos del primer mes del histórico al último en **una** consulta y reparte en memoria: no llames a `transactions.list`
+  por mes.
