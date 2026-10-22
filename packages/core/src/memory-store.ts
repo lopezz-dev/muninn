@@ -2,14 +2,20 @@ import type {
   Activity,
   BoardColumn,
   ChecklistItem,
+  FinanceAccount,
+  FinanceCategory,
   Note,
   Project,
+  Subscription,
   Task,
+  Transaction,
   UserSettings,
 } from './schemas'
 import {
+  type AccountStoreQuery,
   type ActivityLog,
   byPosition,
+  type CategoryStoreQuery,
   type Collection,
   type NewRow,
   type NoteStoreQuery,
@@ -18,6 +24,7 @@ import {
   type ProjectStoreQuery,
   type Store,
   type TaskStoreQuery,
+  type TransactionStoreQuery,
 } from './store'
 
 export interface MemorySnapshot {
@@ -29,6 +36,10 @@ export interface MemorySnapshot {
   activity: Activity[]
   settings: UserSettings | null
   githubOutbox: (OutboxEntry & { processedAt: string | null })[]
+  financeAccounts: FinanceAccount[]
+  financeCategories: FinanceCategory[]
+  transactions: Transaction[]
+  financeSubscriptions: Subscription[]
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -40,6 +51,10 @@ export const emptySnapshot = (): MemorySnapshot => ({
   activity: [],
   settings: null,
   githubOutbox: [],
+  financeAccounts: [],
+  financeCategories: [],
+  transactions: [],
+  financeSubscriptions: [],
 })
 
 /** Lo que tiene un usuario sin fila en `user_settings` (los defaults de la tabla). */
@@ -122,6 +137,11 @@ export function createMemoryStore(
   // Un FileStore de antes de la cola no trae `githubOutbox`.
   const outbox = [...(initial.githubOutbox ?? [])]
   let nextOutboxId = outbox.reduce((max, e) => Math.max(max, e.id), 0) + 1
+  // Ni los FileStore de antes de Finanzas.
+  const accounts = toMap(initial.financeAccounts ?? [])
+  const categories = toMap(initial.financeCategories ?? [])
+  const transactions = toMap(initial.transactions ?? [])
+  const subscriptions = toMap(initial.financeSubscriptions ?? [])
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -133,6 +153,10 @@ export function createMemoryStore(
       activity,
       settings,
       githubOutbox: outbox,
+      financeAccounts: [...accounts.values()],
+      financeCategories: [...categories.values()],
+      transactions: [...transactions.values()],
+      financeSubscriptions: [...subscriptions.values()],
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -161,6 +185,78 @@ export function createMemoryStore(
   return {
     snapshot,
     activity: activityLog,
+    async accountTotals() {
+      const net = new Map<string, number>()
+      const add = (id: string, delta: number) => net.set(id, (net.get(id) ?? 0) + delta)
+      for (const t of transactions.values()) {
+        if (t.archivedAt) continue
+        add(t.accountId, t.kind === 'income' ? t.amount : -t.amount)
+        if (t.kind === 'transfer' && t.toAccountId) add(t.toAccountId, t.amount)
+      }
+      return [...net].map(([accountId, n]) => ({ accountId, net: n }))
+    },
+    financeAccounts: new MemoryCollection<FinanceAccount, AccountStoreQuery>(
+      'Cuenta',
+      accounts,
+      (rows, q) =>
+        rows
+          .filter((a) => q.includeArchived || !a.archivedAt)
+          .filter((a) => !q.kinds || q.kinds.includes(a.kind))
+          .sort(byPosition),
+      changed,
+      now,
+    ),
+    financeCategories: new MemoryCollection<FinanceCategory, CategoryStoreQuery>(
+      'Categoría',
+      categories,
+      (rows, q) =>
+        rows
+          .filter((c) => q.includeArchived || !c.archivedAt)
+          .filter((c) => !q.kind || c.kind === q.kind)
+          .sort(byPosition),
+      changed,
+      now,
+    ),
+    financeSubscriptions: new MemoryCollection<Subscription, { includeArchived?: boolean }>(
+      'Suscripción',
+      subscriptions,
+      (rows, q) =>
+        rows
+          .filter((x) => q.includeArchived || !x.archivedAt)
+          .sort((a, b) => (a.nextDate < b.nextDate ? -1 : a.nextDate > b.nextDate ? 1 : 0)),
+      changed,
+      now,
+    ),
+    transactions: new MemoryCollection<Transaction, TransactionStoreQuery>(
+      'Movimiento',
+      transactions,
+      (rows, q) =>
+        rows
+          .filter((t) => q.includeArchived || !t.archivedAt)
+          .filter(
+            (t) => !q.accountId || t.accountId === q.accountId || t.toAccountId === q.accountId,
+          )
+          .filter((t) => !q.categoryId || t.categoryId === q.categoryId)
+          .filter((t) => !q.subscriptionId || t.subscriptionId === q.subscriptionId)
+          .filter((t) => !q.kinds || q.kinds.includes(t.kind))
+          .filter((t) => !q.from || t.date >= q.from)
+          .filter((t) => !q.to || t.date <= q.to)
+          .filter((t) => !q.search || includesText([t.concept], q.search))
+          .sort((a, b) =>
+            a.date !== b.date
+              ? a.date < b.date
+                ? 1
+                : -1
+              : a.createdAt < b.createdAt
+                ? 1
+                : a.createdAt > b.createdAt
+                  ? -1
+                  : 0,
+          )
+          .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+      changed,
+      now,
+    ),
     githubOutbox: {
       async enqueue(taskId, kind) {
         outbox.push({

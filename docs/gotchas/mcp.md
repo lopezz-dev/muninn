@@ -88,3 +88,14 @@
      (o el login, si no tienes sesión), y al pulsar «Permitir acceso» volver a claude.ai con el conector listo. **Sin verificar**: si el cliente
      no encuentra el servidor de autorización o no se puede registrar, el plan B son tokens personales de Muninn (ADR-0033, alternativas).
 - **Ref:** [ADR-0033](../adr/0033-mcp-remoto-http.md), [ADR-0036](../adr/0036-pantalla-de-autorizacion-oauth.md)
+
+### Finanzas: importes en euros, cuentas y categorías por nombre
+
+- Las herramientas de Finanzas (`finance-tools.ts`) aceptan los importes en **euros** (`24.9`, `"24,90"`) y devuelven céntimos (`amount`,
+  `balance`) y el texto (`amountText`, `balanceText`): así el modelo no multiplica por cien ni lee mal los céntimos.
+- `account` y `category` admiten id o nombre (exacto y, si no, el primero que lo contiene); sin `account`, un gasto o ingreso va a la
+  primera cuenta corriente. `update_transaction` con `category: null` la quita.
+- No hay borrados: `archive_transaction` y `archive_finance_account`. Tras cambiar el core, `pnpm --filter @muninn/mcp build` y `build:edge`.
+- Suscripciones: `list_subscriptions` (con `upcomingDays`, las que hay que avisar), `create_subscription`, `record_subscription_charge`,
+  `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.
+- Panel: `finance_month_report` devuelve el mismo informe que Finanzas › Resumen (ADR-0039), con céntimos y `text` ya formateado.

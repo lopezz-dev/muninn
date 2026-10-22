@@ -58,6 +58,9 @@
   --color-kind-review: var(--mn-kind-review);
   --color-kind-done: var(--mn-kind-done);
 
+  --color-chart-income: var(--mn-chart-income);
+  --color-chart-expense: var(--mn-chart-expense);
+
   --font-sans: var(--mn-font-sans);
   --font-mono: var(--mn-font-mono);
 

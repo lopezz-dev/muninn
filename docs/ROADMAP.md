@@ -140,7 +140,28 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   verificar**). En espera de permisos de la organización (Edgar)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
+### F3 · Finanzas
+> Migración aplicada el 21 de octubre con `apply_migration` (versión alineada a `20261021120000`); RLS comprobada en SQL con una sesión
+> simulada (0 filas ajenas en tablas y vista) y las tres tablas en `supabase_realtime`. El MCP de stdio y el paquete de la Edge están
+> recompilados; la función `mcp` desplegada **no** se ha tocado.
+- [ ] Redesplegar la función `mcp` para que el MCP remoto tenga Finanzas: `pnpm --filter @muninn/mcp build:edge` y
+  `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` ([gotchas/mcp](gotchas/mcp.md))
+- [ ] Con tu sesión (en el 5174): activar Finanzas, crear una cuenta «Prueba F3 …», apuntar, editar y archivar con «Deshacer», y
+  archivar la cuenta al acabar. En la demo (5175) y con SQL dentro de `rollback` pasa el 21 de octubre; con tu sesión no se pudo porque
+  el 5174 lo tenía ocupado otra sesión
+- [ ] En el iPhone: la hoja «Nuevo movimiento» se abre desde abajo, el importe saca el teclado decimal y no hace zoom; con dos
+  dispositivos, lo apuntado en uno aparece en el otro sin recargar
+- [ ] Suscripciones con tu sesión: crear «Prueba F3 …» con el cobro mañana; sale en Inicio › «Próximos cobros»; «Apuntar» crea el gasto
+  con el icono de repetición y «Deshacer» lo quita; archivarla al acabar. En la demo pasa el 22 de octubre, y la unicidad del cobro en SQL
+  (`rollback`)
+- [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
+  gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
+
 ## F3 · Móvil y finanzas
+> **Estado:** en curso. Finanzas (modelo, pantalla, suscripciones y panel) en [#30](https://github.com/lopezz-dev/muninn/pull/30) →
+> [#31](https://github.com/lopezz-dev/muninn/pull/31) → [#32](https://github.com/lopezz-dev/muninn/pull/32) →
+> [#33](https://github.com/lopezz-dev/muninn/pull/33) (apilados, en ese orden) y el diseño de la PWA con Web Push en
+> [#34](https://github.com/lopezz-dev/muninn/pull/34). Falta publicar la web, los avisos push y lo de la pila [Pruebas finales](#pruebas-finales).
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
   - [x] Diseño en ADR-0040 (**propuesto**: hosting en Vercel, `push-sw.js`, suscripciones por dispositivo, Edge Function `push` con cron y
     VAPID); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
@@ -148,9 +169,20 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [ ] Implementar la suscripción (Ajustes › Notificaciones), la tabla `push_subscriptions` y la función `push`: no entró en esta sesión
     (necesita la web publicada y claves VAPID para probarse de verdad)
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
+  - [x] Modelo de datos (ADR-0037): cuentas con saldo derivado, categorías de serie y propias, movimientos (gasto, ingreso, traspaso)
+    en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
+  - [x] Pantalla Finanzas: Resumen (cuentas y últimos movimientos), Movimientos (mes, filtros, alta fija en escritorio y hoja en móvil)
+    y Cuentas (cuentas y categorías editables), con escrituras optimistas, «Deshacer» y tiempo real; guía [Finanzas](user/10-finanzas.md)
+  - [ ] Ajuste de valor de una inversión (hoy, un ingreso o gasto en esa cuenta) y multidivisa: fuera de esta fase
 - [ ] Suscripciones recurrentes con aviso antes del cobro
-- [ ] Panel mensual (entradas, salidas, tasa de ahorro)
-- [ ] (v2) Importar CSV de Imagin / conexión bancaria
+  - [x] Suscripciones semanales, mensuales y anuales (ADR-0038): al llegar la fecha la app **avisa** (Inicio y Finanzas) y el cobro se
+    apunta o se salta con un toque, con «Deshacer»; nunca se apunta solo. Migración `20261021140000_finance_subscriptions` aplicada el
+    21 de octubre. MCP: listar, crear, apuntar, saltar y archivar
+  - [ ] Aviso push antes del cobro: bloque E (PWA instalable y Web Push)
+- [x] Panel mensual (entradas, salidas, tasa de ahorro): calculado en el core (ADR-0039), con el mes anterior, gasto por categoría y
+  los últimos 6 meses; en Finanzas › Resumen y en el MCP (`finance_month_report`)
+- [ ] (v2) Importar CSV de Imagin / conexión bancaria. Fuera de la sesión del 21–22 de octubre por alcance; el modelo ya lo admite
+  (movimientos en céntimos con concepto y fecha: `parseAmount`/`centsFromEuros` en el borde)
 
 ## F4 · Jarvis
 - [ ] Ollama + modelo de 8–14B con tool calling sobre el MCP de Muninn

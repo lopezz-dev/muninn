@@ -144,9 +144,23 @@ const noteRoute = createRoute({
   component: screen(() => import('./screens/NotaDetalle'), 'NotaDetalle'),
 })
 
+export type FinanceView = 'resumen' | 'movimientos' | 'suscripciones' | 'cuentas'
+
+export interface FinanceSearch {
+  /** Pestaña de Finanzas; sin ella, «Resumen». */
+  vista?: FinanceView
+}
+
+const FINANCE_VIEWS: FinanceView[] = ['resumen', 'movimientos', 'suscripciones', 'cuentas']
+
 const financeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'finanzas',
+  validateSearch: (search: Record<string, unknown>): FinanceSearch => ({
+    vista: FINANCE_VIEWS.includes(search.vista as FinanceView)
+      ? (search.vista as FinanceView)
+      : undefined,
+  }),
   component: screen(() => import('./screens/Finanzas'), 'Finanzas'),
 })
 

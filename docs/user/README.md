@@ -16,6 +16,7 @@ se renderizan tal cual, así que se escriben pensando en la persona usuaria, no 
 | 7 | [Tus datos y privacidad](07-datos-y-privacidad.md) | disponible |
 | 8 | [Moverte por Muninn](08-moverte-por-muninn.md) | parcial |
 | 9 | [GitHub](09-github.md) | parcial |
+| 10 | [Finanzas](10-finanzas.md) | parcial |
 
 ## Cómo se escribe una página
 

@@ -205,3 +205,23 @@
   tiene permiso; 403/404 = no). No lo «arregles» filtrando con `permissions` del repo: ese es el permiso del usuario, no el del token.
 - **Ojo:** si renombras el repo en GitHub, cambia también su `github_repo` en Integraciones; las tareas ya importadas siguen con el id del
   nombre antiguo y la siguiente sincronización crearía otras nuevas (archiva las viejas).
+
+### Finanzas: la vista de saldos y el límite de 1000 filas
+
+- **Síntoma:** el saldo de una cuenta no cuadra con la lista de movimientos, o la lista se corta en 1000.
+- **Causa:** PostgREST devuelve como mucho `max-rows` filas por petición (1000 en Supabase). Sumar en el cliente con una sola petición
+  perdería movimientos.
+- **Solución:** el saldo lo suma la vista `finance_account_totals` (`security_invoker = true`: RLS de `finance_transactions` manda; sin esa
+  opción, la vista vería las filas de todos). La lista de movimientos sin `limit` se pide por páginas de 1000 (`paged` en
+  `supabase-store.ts`), ordenada por `date`, `created_at` e `id` para que las páginas no se solapen. Si algún día bajas `max-rows` del
+  proyecto por debajo de 1000, baja también `PAGE`.
+- **Ojo:** las claves ajenas de `finance_transactions` a cuentas y categorías no tienen `on delete` (`no action`, que se comprueba al
+  final de la sentencia): no las cambies a `restrict`, o borrar un usuario fallaría según el orden de la cascada.
+- **Ref:** [ADR-0037](../adr/0037-modelo-de-datos-de-finanzas.md)
+
+### Suscripciones: un cobro, un movimiento
+
+- `finance_transactions_subscription_date_uq` es único en `(subscription_id, date)` **entre los movimientos sin archivar**: apuntar el mismo
+  cobro dos veces a la vez da `23505`, pero tras archivarlo («Deshacer») se puede volver a apuntar. Si añades otra forma de crear cobros
+  (un cron que apunte solo), cuenta con ese índice en lugar de comprobar antes en el cliente.
+- **Ref:** [ADR-0038](../adr/0038-suscripciones-avisan-y-se-confirman.md), migración `20261021140000_finance_subscriptions`

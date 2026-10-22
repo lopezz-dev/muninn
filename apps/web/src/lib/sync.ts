@@ -19,6 +19,10 @@ export type Table =
   | 'task_checklist_items'
   | 'notes'
   | 'user_settings'
+  | 'finance_accounts'
+  | 'finance_categories'
+  | 'finance_transactions'
+  | 'finance_subscriptions'
 
 export const SYNC_TABLES: Table[] = [
   'projects',
@@ -27,6 +31,10 @@ export const SYNC_TABLES: Table[] = [
   'task_checklist_items',
   'notes',
   'user_settings',
+  'finance_accounts',
+  'finance_categories',
+  'finance_transactions',
+  'finance_subscriptions',
 ]
 
 export interface Change {
@@ -39,7 +47,7 @@ export interface Change {
 
 /**
  * Qué refrescar, como etiquetas:
- * `projects` · `project:<id>` (sus datos y su tablero) · `boards` (todos) · `task:<id>` · `notes` · `note:<id>` · `settings`.
+ * `projects` · `project:<id>` (sus datos y su tablero) · `boards` (todos) · `task:<id>` · `notes` · `note:<id>` · `settings` · `finance`.
  */
 export type Scope = string
 
@@ -70,6 +78,12 @@ export function scopesOf({ table, row, old }: Change): Scope[] {
       return id ? ['notes', `note:${id}`] : ['notes']
     case 'user_settings':
       return ['settings']
+    // Saldos, listas y resumen dependen unos de otros: Finanzas se refresca entera (es poco).
+    case 'finance_accounts':
+    case 'finance_categories':
+    case 'finance_transactions':
+    case 'finance_subscriptions':
+      return ['finance']
   }
 }
 
@@ -77,8 +91,8 @@ export function scopesOf({ table, row, old }: Change): Scope[] {
 const busyKey = (scope: Scope): string | undefined =>
   scope.startsWith('project:')
     ? scope.slice('project:'.length)
-    : scope === 'settings'
-      ? 'settings'
+    : scope === 'settings' || scope === 'finance'
+      ? scope
       : scope.startsWith('note:')
         ? scope
         : undefined
@@ -126,6 +140,8 @@ export function createSync(qc: QueryClient, opts: SyncOptions = {}): Sync {
       })
     } else if (scope === 'settings') {
       void qc.invalidateQueries({ queryKey: ['settings'] })
+    } else if (scope === 'finance') {
+      void qc.invalidateQueries({ queryKey: ['finance'] })
     }
   }
 

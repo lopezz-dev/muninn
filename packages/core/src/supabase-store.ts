@@ -1,7 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Activity, GithubRepoSummary, GithubSyncScope, UserSettings } from './schemas'
 import {
+  type AccountStoreQuery,
   type ActivityLog,
+  type CategoryStoreQuery,
   type Collection,
   type GithubOutbox,
   type NewRow,
@@ -12,6 +14,7 @@ import {
   type SettingsStore,
   type Store,
   type TaskStoreQuery,
+  type TransactionStoreQuery,
 } from './store'
 
 // biome-ignore lint/suspicious/noExplicitAny: cliente genérico sin tipos generados; validamos en el servicio.
@@ -41,6 +44,9 @@ export const ilikeExact = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 /** Quita los caracteres con significado en los filtros `or()` de PostgREST y en LIKE. */
 const likeTerm = (s: string) => `%${s.replace(/[,()*"\\%_]/g, ' ').trim()}%`
 
+/** Filas por petición: el `max-rows` por defecto de PostgREST en Supabase. */
+const PAGE = 1000
+
 class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q> {
   constructor(
     private readonly client: Client,
@@ -48,6 +54,8 @@ class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q
     private readonly table: string,
     private readonly entity: string,
     private readonly applyQuery: (qb: Builder, query: Q) => Builder,
+    /** Sin `limit` en la consulta, pide todas las filas por páginas (PostgREST corta en `PAGE`). */
+    private readonly paged = false,
   ) {}
 
   private from() {
@@ -65,12 +73,21 @@ class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q
   }
 
   async list(query: Q) {
-    const { data, error } = await this.applyQuery(
-      this.from().select('*').eq('owner_id', this.ownerId),
-      query,
-    )
-    if (error) throw error
-    return (data as Row[]).map((r) => fromRow<T>(r))
+    const select = () =>
+      this.applyQuery(this.from().select('*').eq('owner_id', this.ownerId), query)
+    if (!this.paged || (query as { limit?: number }).limit) {
+      const { data, error } = await select()
+      if (error) throw error
+      return (data as Row[]).map((r) => fromRow<T>(r))
+    }
+    const rows: Row[] = []
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await select().range(from, from + PAGE - 1)
+      if (error) throw error
+      rows.push(...(data as Row[]))
+      if ((data as Row[]).length < PAGE) break
+    }
+    return rows.map((r) => fromRow<T>(r))
   }
 
   async insert(row: NewRow<T>) {
@@ -109,7 +126,8 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     table: string,
     entity: string,
     apply: (qb: Builder, q: Q) => Builder,
-  ) => new SupabaseCollection<T, Q>(client, ownerId, table, entity, apply)
+    paged = false,
+  ) => new SupabaseCollection<T, Q>(client, ownerId, table, entity, apply, paged)
 
   const activity: ActivityLog = {
     async insert(row) {
@@ -233,6 +251,55 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     settings,
     githubOutbox,
     githubRepos,
+    // Finanzas (ADR-0037, migración 20261021120000_finance).
+    async accountTotals() {
+      const { data, error } = await client
+        .from('finance_account_totals')
+        .select('account_id, net')
+        .eq('owner_id', ownerId)
+      if (error) throw error
+      return (data as Row[]).map((r) => ({ accountId: r.account_id as string, net: Number(r.net) }))
+    },
+    financeAccounts: col('finance_accounts', 'Cuenta', (qb, q: AccountStoreQuery) => {
+      if (!q.includeArchived) qb = qb.is('archived_at', null)
+      if (q.kinds) qb = qb.in('kind', q.kinds)
+      return qb.order('position')
+    }),
+    financeCategories: col('finance_categories', 'Categoría', (qb, q: CategoryStoreQuery) => {
+      if (!q.includeArchived) qb = qb.is('archived_at', null)
+      if (q.kind) qb = qb.eq('kind', q.kind)
+      return qb.order('position')
+    }),
+    financeSubscriptions: col(
+      'finance_subscriptions',
+      'Suscripción',
+      (qb, q: { includeArchived?: boolean }) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        return qb.order('next_date').order('name')
+      },
+    ),
+    transactions: col(
+      'finance_transactions',
+      'Movimiento',
+      (qb, q: TransactionStoreQuery) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        // Ids ya validados (uuid) en el servicio: no rompen la sintaxis de `or()`.
+        if (q.accountId) qb = qb.or(`account_id.eq.${q.accountId},to_account_id.eq.${q.accountId}`)
+        if (q.categoryId) qb = qb.eq('category_id', q.categoryId)
+        if (q.subscriptionId) qb = qb.eq('subscription_id', q.subscriptionId)
+        if (q.kinds) qb = qb.in('kind', q.kinds)
+        if (q.from) qb = qb.gte('date', q.from)
+        if (q.to) qb = qb.lte('date', q.to)
+        if (q.search) qb = qb.ilike('concept', likeTerm(q.search))
+        // Orden total (con el id): las páginas no se solapan ni se saltan filas.
+        qb = qb
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+        return q.limit ? qb.limit(q.limit) : qb
+      },
+      true,
+    ),
     projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
       if (q.statuses) qb = qb.in('status', q.statuses)
       if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))

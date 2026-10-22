@@ -204,3 +204,13 @@
 
 - Ver [gotchas/web](web.md#un-icono-que-solo-usa-una-pantalla-no-va-en-icons): están en `packages/ui/src/screen-icons.tsx`,
   fuera de `icons`, para no engordar el arranque.
+
+### Colores de gráficos: `chart-income` y `chart-expense`, validados
+
+- **Síntoma:** un gráfico nuevo con los colores de la paleta de proyectos (verde, ámbar) o con gris para una serie.
+- **Causa:** en oscuro, el ámbar y el verde de la paleta quedan fuera de la banda de luminosidad de la skill `dataviz` y el gris no
+  tiene croma: no se distinguen bien con daltonismo o se leen como «sin dato».
+- **Solución:** ingresos y gastos usan `bg-chart-income` (azul) y `bg-chart-expense` (naranja), validados con
+  `node <skill dataviz>/scripts/validate_palette.js "#5B8DEF,#CF7A2E" --mode dark --surface "#15181C"`. Si añades una serie o cambias un
+  color, vuelve a pasar el validador. Las categorías usan el color que eligió el usuario (identidad), no estos.
+- **Ref:** [ADR-0039](../adr/0039-panel-mensual-y-tasa-de-ahorro.md)

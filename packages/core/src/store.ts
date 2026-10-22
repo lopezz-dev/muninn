@@ -1,16 +1,23 @@
 import type {
+  AccountKind,
   Activity,
   BoardColumn,
+  CategoryKind,
   ChecklistItem,
+  FinanceAccount,
+  FinanceCategory,
   GithubRepoSummary,
   GithubSyncScope,
   Note,
   OutboxKind,
   Project,
   ProjectStatus,
+  Subscription,
   Task,
   TaskPriority,
   TaskSource,
+  Transaction,
+  TransactionKind,
   UserSettings,
 } from './schemas'
 
@@ -30,6 +37,17 @@ export interface Store {
   activity: ActivityLog
   settings: SettingsStore
   githubOutbox: GithubOutbox
+  /** Finanzas (ADR-0037). */
+  financeAccounts: Collection<FinanceAccount, AccountStoreQuery>
+  financeCategories: Collection<FinanceCategory, CategoryStoreQuery>
+  transactions: Collection<Transaction, TransactionStoreQuery>
+  /** Por próximo cobro, el más cercano primero (ADR-0038). */
+  financeSubscriptions: Collection<Subscription, { includeArchived?: boolean }>
+  /**
+   * Neto de los movimientos no archivados por cuenta (ingresos − gastos ± traspasos), en céntimos. Las cuentas sin
+   * movimientos no salen. En Supabase lo suma la vista `finance_account_totals`.
+   */
+  accountTotals(): Promise<{ accountId: string; net: number }[]>
   /**
    * Repos a los que llega el token de la sincronización. Solo lo sabe el store de Supabase (se lo pregunta
    * a la Edge Function `github`, que es quien tiene el token); sin él, la UI pide el repo a mano.
@@ -105,6 +123,31 @@ export interface TaskStoreQuery {
   search?: string
   includeArchived?: boolean
   limit?: number
+}
+
+export interface AccountStoreQuery {
+  kinds?: AccountKind[]
+  includeArchived?: boolean
+}
+
+export interface CategoryStoreQuery {
+  kind?: CategoryKind
+  includeArchived?: boolean
+}
+
+/** Movimientos de la fecha más reciente a la más antigua (y, en el mismo día, el último creado primero). */
+export interface TransactionStoreQuery {
+  /** Los de la cuenta y los traspasos que llegan a ella. */
+  accountId?: string
+  categoryId?: string
+  kinds?: TransactionKind[]
+  /** Fechas incluidas (`AAAA-MM-DD`). */
+  from?: string
+  to?: string
+  search?: string
+  includeArchived?: boolean
+  limit?: number
+  subscriptionId?: string
 }
 
 export interface NoteStoreQuery {

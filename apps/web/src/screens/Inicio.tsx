@@ -16,10 +16,12 @@ import { useState } from 'react'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { DueDate, PriorityFlag } from '../components/task-meta'
 import { clock, weekdayShort } from '../lib/dates'
+import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
 import { checklistCountsQuery, overviewQuery } from '../lib/queries'
 import { completeTask, reopenTask } from '../lib/task-actions'
 import { useShell } from '../shell/shell-context'
+import { UpcomingCharges } from './finanzas/UpcomingCharges'
 
 type Task = OverviewReport['dueToday'][number]
 
@@ -147,6 +149,9 @@ export function Inicio() {
   const date = dateFmt.format(now)
   const name = auth.kind === 'user' ? firstName(auth.account.name) : ''
   const today = data?.today ?? m.today()
+  const modules = useEnabledModules()
+  // Con Finanzas oculta no se pregunta por cobros (ADR-0028); mientras no se sepa, tampoco.
+  const financeOn = modules?.has('finance') ?? false
   const projectCount = data?.projects.length ?? 0
   const totalTasks = data?.projects.reduce((n, p) => n + p.open + p.done, 0) ?? 0
 
@@ -227,6 +232,8 @@ export function Inicio() {
           </>
         }
       />
+
+      {financeOn ? <UpcomingCharges today={today} /> : null}
 
       {!data ? (
         <div aria-hidden="true" className="grid gap-3 md:grid-cols-4">

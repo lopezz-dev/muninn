@@ -333,6 +333,17 @@
   de la pantalla cuelgan de `['tasks', …]` y `['projects', …]`: la actividad no está en `SYNC_TABLES`, pero cada paso del agente mueve una
   tarea y eso ya la refresca.
 
+### Finanzas: una sola cola y un solo prefijo de caché
+
+- **Síntoma:** un saldo que «salta» atrás un instante tras apuntar un movimiento, o un cambio de otro dispositivo que no se ve en el resumen.
+- **Causa:** saldos, listas del mes y últimos movimientos dependen unos de otros. Por eso todas las escrituras de Finanzas van por la misma
+  cola (`serial('finance')`, `lib/finance-actions.ts`) y todas las consultas cuelgan de `['finance', …]` (`lib/finance-queries.ts`).
+- **Solución:** una acción nueva de Finanzas usa `run` (la cola) y `settleFinance`; una consulta nueva cuelga de `['finance', …]`. El tiempo
+  real refresca ese prefijo entero (`scope` `finance`) y espera a que se vacíe la cola. Lo optimista (`cacheTransaction`, `cacheBalances`)
+  calcula el saldo igual que la vista del servidor (`applyToBalances`, con tests); si cambias la regla del saldo, cambia las dos.
+- **Ojo:** la lista del mes se filtra en el navegador (`filterTransactions`): el core solo recibe el mes. La pestaña va en la URL
+  (`/finanzas?vista=movimientos`); el mes, no (vuelve al actual al entrar).
+
 ### Publicar la PWA y activar Web Push (pasos manuales)
 
 - **Síntoma:** no se puede instalar Muninn en el iPhone, ni conectar el MCP con OAuth desde otro dispositivo, ni recibir avisos push.

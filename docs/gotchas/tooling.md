@@ -43,3 +43,11 @@
   El perfil persistente (fuera del repo) guarda la sesión de Muninn: solo hay que entrar con el código del correo la primera vez.
 - **Ojo:** las capturas, instantáneas y registros de la consola van a `.playwright-mcp/` en la raíz del repo; está en `.gitignore`.
   `pnpm dev` debe estar corriendo (http://localhost:5173) y necesita `apps/web/.env.local` (ver [gotchas/web](web.md)).
+
+### Vite no ve un cambio hecho con `sed -i` (Windows)
+
+- **Síntoma:** la app falla con un error que el código ya no tiene (`dueLabel is not defined` con el `import` puesto), y `pnpm typecheck` pasa.
+- **Causa:** `sed -i` reemplaza el fichero renombrando uno temporal; en Windows el vigilante de Vite a veces no recibe el cambio y sigue
+  sirviendo la transformación anterior, aunque recargues.
+- **Solución:** `curl -s http://localhost:<puerto>/src/<ruta>.ts | grep …` para ver lo que sirve; `touch <fichero>` lo fuerza a releerlo. Mejor
+  editar con el editor o con un script de Node (`fs.writeFileSync`), que escribe en el mismo fichero.
