@@ -19,7 +19,11 @@ export default defineConfig({
     VitePWA({
       disable: isTauri,
       registerType: 'autoUpdate',
+      // Avisos Web Push (ADR-0040): `public/push-sw.js` solo escucha `push` y `notificationclick`.
+      workbox: { importScripts: ['push-sw.js'] },
       manifest: {
+        id: '/',
+        scope: '/',
         name: 'Muninn',
         short_name: 'Muninn',
         description: 'Tu sistema operativo personal',

@@ -158,7 +158,17 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
 
 ## F3 · Móvil y finanzas
+> **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
+> [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →
+> [#32](https://github.com/lopezz-dev/muninn/pull/32) → [#33](https://github.com/lopezz-dev/muninn/pull/33) (apilados, en ese orden) y el
+> diseño de la PWA con Web Push en [#34](https://github.com/lopezz-dev/muninn/pull/34). Primero se monta toda la app **sin publicar**:
+> publicar la web, los avisos push (que necesitan la web publicada) y la pila [Pruebas finales](#pruebas-finales) quedan para la fase final.
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
+  - [x] Diseño en ADR-0040 (**propuesto**: hosting en Vercel, `push-sw.js`, suscripciones por dispositivo, Edge Function `push` con cron y
+    VAPID); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
+  - [ ] Publicar la web (tuyo: [gotchas/web](gotchas/web.md) › «Publicar la PWA y activar Web Push»): **fase final**, se monta todo antes
+  - [ ] Implementar la suscripción (Ajustes › Notificaciones), la tabla `push_subscriptions` y la función `push`: **fase final** (necesita la
+    web publicada y claves VAPID para probarse de verdad)
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
   - [x] Modelo de datos (ADR-0037): cuentas con saldo derivado, categorías de serie y propias, movimientos (gasto, ingreso, traspaso)
     en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
@@ -172,7 +182,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [ ] Aviso push antes del cobro: bloque E (PWA instalable y Web Push)
 - [x] Panel mensual (entradas, salidas, tasa de ahorro): calculado en el core (ADR-0039), con el mes anterior, gasto por categoría y
   los últimos 6 meses; en Finanzas › Resumen y en el MCP (`finance_month_report`)
-- [ ] (v2) Importar CSV de Imagin / conexión bancaria
+- [ ] (v2) Importar CSV de Imagin / conexión bancaria. Fuera de la sesión del 21–22 de octubre por alcance; el modelo ya lo admite
+  (movimientos en céntimos con concepto y fecha: `parseAmount`/`centsFromEuros` en el borde)
 
 ## F4 · Jarvis
 - [ ] Ollama + modelo de 8–14B con tool calling sobre el MCP de Muninn

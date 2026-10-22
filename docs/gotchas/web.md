@@ -343,3 +343,29 @@
   calcula el saldo igual que la vista del servidor (`applyToBalances`, con tests); si cambias la regla del saldo, cambia las dos.
 - **Ojo:** la lista del mes se filtra en el navegador (`filterTransactions`): el core solo recibe el mes. La pestaña va en la URL
   (`/finanzas?vista=movimientos`); el mes, no (vuelve al actual al entrar).
+
+### Publicar la PWA y activar Web Push (pasos manuales)
+
+- **Síntoma:** no se puede instalar Muninn en el iPhone, ni conectar el MCP con OAuth desde otro dispositivo, ni recibir avisos push.
+- **Causa:** la web solo existe en `localhost`; publicarla, el dominio, los secretos y los despliegues no se pueden hacer desde el código
+  ([ADR-0040](../adr/0040-pwa-instalable-y-web-push.md), **propuesto**: confirma el hosting antes de seguir).
+- **Solución (publicar, con Vercel):**
+  1. Vercel › **Add New › Project** › importa `lopezz-dev/muninn`. **Root Directory** = `apps/web` (deja marcado *Include files outside the
+     root directory*). `apps/web/vercel.json` ya trae el build, el *fallback* a `index.html` y las cabeceras de caché del service worker.
+     **Production Branch** = `main` (hasta que `main` alcance a `develop`, puedes usar `develop` para probar).
+  2. **Environment Variables** (Production y Preview): `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` (las de `apps/web/.env.local`;
+     la publicable, nunca la service role). Despliega.
+  3. Dominio (opcional): Vercel › **Domains** › añade el tuyo y crea el registro DNS que te pida.
+  4. Supabase › **Authentication › URL Configuration**: *Site URL* = la URL publicada (así `/oauth/consent` funciona fuera de este
+     ordenador, ADR-0036) y añade `https://<tu-url>/**` a *Redirect URLs* (deja las de `localhost`). En GitHub › la OAuth App de Muninn, la
+     *Homepage URL* puede pasar a la publicada (el *callback* no cambia).
+  5. Comprueba: abrir `https://<tu-url>/finanzas` y recargar no da 404; en el iPhone, Safari › Compartir › **Añadir a pantalla de inicio**
+     y abrirla desde el icono (pantalla completa, sin barra de Safari). La lista de [pruebas-iphone](../pruebas-iphone.md) ya se puede pasar.
+- **Solución (Web Push, cuando se implemente la suscripción):**
+  1. Claves VAPID (una vez, en tu equipo; no las pegues en el chat ni en el repo): `npx web-push generate-vapid-keys`.
+  2. Supabase › **Edge Functions › Secrets**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:<tu correo>`).
+  3. Vercel › Environment Variables: `VITE_VAPID_PUBLIC_KEY` = la **pública** (es pública por diseño) y vuelve a desplegar.
+  4. Migración de `push_subscriptions`, despliegue de la función `push` y su `cron.schedule` diario: llegarán con la implementación
+     (mismo patrón que «Sincronización con GitHub (pasos manuales)» en [gotchas/db](db.md)).
+- **Ojo:** en iOS el permiso solo se puede pedir desde la PWA **instalada** y tras un toque; si la desinstalas, la suscripción muere y
+  la función la borrará al recibir `410`. `public/push-sw.js` ya está en el service worker: hoy no hace nada porque nadie envía avisos.
