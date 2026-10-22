@@ -5,6 +5,7 @@ import {
   DEFAULT_COLUMNS,
   positionAt,
   ValidationError,
+  withActor,
 } from '../src'
 
 let clock = new Date('2026-10-19T10:00:00Z')
@@ -380,5 +381,36 @@ describe('ajustes', () => {
     await expect(app.settings.update({ enabledModules: ['nope'] })).rejects.toThrow(ValidationError)
     const s = await app.settings.update({ enabledModules: ['tasks', 'finance'] })
     expect(s.enabledModules).toEqual(['tasks', 'finance'])
+  })
+})
+
+describe('withActor', () => {
+  it('escribe con otro actor sobre el mismo store y anota el contexto en la actividad', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    let tool = 'create_task'
+    const assistant = withActor(app, 'assistant', {
+      activityContext: () => ({ conversation: 'c1', tool }),
+    })
+    const t = await assistant.tasks.create({ projectId: p.id, title: 'desde el asistente' })
+    expect(t.source).toBe('mcp')
+    tool = 'complete_task'
+    await assistant.tasks.complete(t.id)
+    const [done, created] = await app.recentActivity({ limit: 2 })
+    expect(created).toMatchObject({
+      actor: 'assistant',
+      payload: { context: { tool: 'create_task' } },
+    })
+    expect(done).toMatchObject({
+      actor: 'assistant',
+      action: 'completed',
+      payload: { context: { conversation: 'c1', tool: 'complete_task' } },
+    })
+    // El core original sigue siendo del usuario y sin contexto.
+    await app.tasks.reopen(t.id)
+    const [reopened] = await app.recentActivity({ limit: 1 })
+    expect(reopened).toMatchObject({ actor: 'user' })
+    expect(reopened?.payload.context).toBeUndefined()
+    expect(() => withActor({} as never, 'assistant')).toThrow()
   })
 })

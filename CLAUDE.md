@@ -24,7 +24,8 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - Solo `packages/core/src/supabase-store.ts` importa Supabase.
 - Esquema: siempre una **migración nueva** en `supabase/migrations/`; toda tabla con `owner_id` + RLS (checklist en gotchas/db).
 - Validación con zod en `schemas.ts`; el MCP reutiliza esos enums y formas.
-- El MCP no expone borrados definitivos. Tras cambiar el core, recompila el MCP.
+- El MCP no expone borrados definitivos. Sus herramientas son el catálogo único de `@muninn/assistant/tools`, que también usa
+  el asistente de la app (ADR-0041): se escriben una vez. Tras cambiar el core o el catálogo, recompila el MCP (`build` y `build:edge`).
 - Comentarios en español, concisos, al estilo de alrededor. Biome formatea (`pnpm format`).
 - UI: solo tokens de `@muninn/ui` (clases `bg-surface`, `text-fg-muted`, `rounded-lg`…; la paleta de Tailwind
   está desactivada). Iconos siempre vía `icons` / `<Icon name>` de `@muninn/ui`. Superficies con `glass*`

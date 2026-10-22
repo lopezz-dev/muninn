@@ -29,3 +29,26 @@
 
 - La versión de `tauri.conf.json` y `Cargo.toml` la actualiza release-please. No la cambies a mano.
   `Cargo.lock` se actualiza en el siguiente build.
+
+### Instalar Ollama y el modelo del asistente (pasos manuales, fase final)
+
+- **Síntoma:** la pantalla Asistente dice «No encuentro Ollama en este ordenador» o «Falta el modelo».
+- **Causa:** el asistente habla con Ollama en `http://localhost:11434` desde la app ([ADR-0041](../adr/0041-asistente-local-con-catalogo-unico.md)),
+  y en este equipo no está instalado. Ni el repo ni la app lo instalan.
+- **Solución** (en tu equipo, Windows 11; necesita el controlador de NVIDIA 551.61 o posterior):
+  1. Descarga `OllamaSetup.exe` de https://ollama.com/download e instálalo (no pide administrador; queda en tu carpeta de usuario y
+     arranca con Windows, con un icono en la bandeja).
+  2. **Orígenes permitidos.** Ollama solo acepta peticiones del navegador desde orígenes conocidos. En PowerShell:
+     ```powershell
+     [Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://tauri.localhost,https://tauri.localhost,tauri://localhost', 'User')
+     ```
+     Sal de Ollama desde la bandeja y vuelve a abrirlo (lee las variables al arrancar). `tauri.localhost` es el origen de la app de
+     escritorio en Windows; `5173`/`5174`, el de `pnpm dev`. Cuando la web esté publicada, añade su URL (y en Chrome acepta el permiso de
+     «acceso a la red local» si lo pide).
+  3. **Modelo:** `ollama pull qwen3:8b` (5,2 GB, en `%USERPROFILE%\.ollama\models`). Opcional, para comparar: `ollama pull qwen3:14b` (9,3 GB).
+  4. **Comprobar:** `curl http://localhost:11434/api/tags` lista el modelo, y `ollama run qwen3:8b "hola"` contesta.
+  5. **Banco de pruebas** (datos de ejemplo en memoria, no toca tu cuenta): `pnpm --filter @muninn/assistant bench -- --model qwen3:8b`.
+     Apunta el resultado en el ROADMAP; si falla mucho, prueba `--model qwen3:14b` y cambia el modelo en Ajustes › Asistente e IA.
+- **Ojo:** el contexto (16384 tokens) lo pide la app en cada llamada (`num_ctx`): no hace falta `OLLAMA_CONTEXT_LENGTH`. El modelo se queda
+  10 minutos en la VRAM tras usarlo (`keep_alive`); si un juego necesita la GPU, `ollama stop qwen3:8b`. Los registros están en
+  `%LOCALAPPDATA%\Ollama\server.log`.

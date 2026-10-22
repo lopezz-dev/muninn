@@ -99,3 +99,13 @@
 - Suscripciones: `list_subscriptions` (con `upcomingDays`, las que hay que avisar), `create_subscription`, `record_subscription_charge`,
   `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.
 - Panel: `finance_month_report` devuelve el mismo informe que Finanzas › Resumen (ADR-0039), con céntimos y `text` ya formateado.
+
+### Las herramientas viven en `@muninn/assistant/tools`, no en el MCP
+
+- **Síntoma:** cambias una descripción en `packages/mcp/src/server.ts` y no la encuentras, o el asistente de la app y Claude ven
+  herramientas distintas.
+- **Causa:** desde la F4 hay un **catálogo único** (`packages/assistant/src/tools`, [ADR-0041](../adr/0041-asistente-local-con-catalogo-unico.md)):
+  `server.ts` solo registra cada herramienta en el SDK. El asistente de la app usa el mismo catálogo.
+- **Solución:** una herramienta nueva es un `defineTool({ name, title, description, input, access, module, run })` en el fichero de su área
+  (`tasks.ts`, `notes.ts`, `finance.ts`). Si cambia datos, `ctx.changed({ summary, undo })` con la inversa (el asistente ofrece «Deshacer»;
+  el MCP lo ignora). Nada de borrados. Después, `pnpm --filter @muninn/mcp build` y `build:edge` (los dos empaquetan `@muninn/assistant`).

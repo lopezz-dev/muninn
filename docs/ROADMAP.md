@@ -157,6 +157,16 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
   gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
 
+### F4 · Asistente (fase final)
+> El MCP de stdio y el paquete de la Edge están recompilados con el catálogo único; la función `mcp` desplegada **no** se ha tocado. La
+> migración del actor `assistant` está aplicada (versión alineada).
+- [ ] Instalar Ollama, `OLLAMA_ORIGINS` y `ollama pull qwen3:8b`: [gotchas/desktop](gotchas/desktop.md#instalar-ollama-y-el-modelo-del-asistente-pasos-manuales-fase-final)
+- [ ] Banco de pruebas contra el modelo: `pnpm --filter @muninn/assistant bench -- --model qwen3:8b` (y `qwen3:14b` para comparar); apunta
+  aquí cuántos casos pasan y el tiempo, y deja el que mejor vaya como modelo por defecto
+- [ ] Redesplegar la función `mcp` con el catálogo único: `pnpm --filter @muninn/mcp build:edge` y
+  `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` (lleva también lo de Finanzas)
+- [ ] Con Claude conectado por stdio (reiniciando el cliente tras compilar): las mismas herramientas de siempre responden igual
+
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
 > [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →
@@ -186,7 +196,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   (movimientos en céntimos con concepto y fecha: `parseAmount`/`centsFromEuros` en el borde)
 
 ## F4 · Jarvis
+> **Estado:** en curso (sesión del 22 de octubre). Todo se monta sin instalar nada: Ollama y los modelos los instalas tú en la fase final
+> ([gotchas/desktop](gotchas/desktop.md#instalar-ollama-y-el-modelo-del-asistente-pasos-manuales-fase-final)).
 - [ ] Ollama + modelo de 8–14B con tool calling sobre el MCP de Muninn
+  - [x] Cerebro (ADR-0041): el bucle corre en la app con el core y la sesión del usuario y habla con Ollama en `localhost:11434`; catálogo
+    único de herramientas en `@muninn/assistant` compartido con el MCP (que ya no tiene herramientas propias); actor `assistant` con
+    `payload.context` (migración `20261022120000_assistant_actor`, aplicada el 22 de octubre); proveedor de Ollama y guionizado; banco de
+    pruebas en `pnpm test` con el guion ideal
+  - [ ] Elegir el modelo con el banco contra Ollama (`qwen3:8b` por defecto; `qwen3:14b` y `llama3.1:8b` como alternativas) → [Pruebas finales](#pruebas-finales)
 - [ ] Voz: Whisper (STT) + Piper/Kokoro (TTS), todo en local
 - [ ] Noticias: fuentes RSS elegidas + resumen diario
 - [ ] Agentes programados que informan del estado de las tareas
