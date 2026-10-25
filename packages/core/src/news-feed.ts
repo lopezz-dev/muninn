@@ -172,13 +172,124 @@ export type FeedFetchResult =
   | { status: 'not-modified' }
   | { status: 'ok'; feed: ParsedFeed; etag: string | null; lastModified: string | null }
 
+// ─── Solo direcciones públicas (SSRF) ─────────────────────────────────────────
+// La Edge Function descarga URLs que escribe el usuario desde la red de Supabase: sin estas comprobaciones, una fuente
+// podría apuntar a servicios internos (metadatos de la nube, localhost…) y Muninn haría la petición por él.
+
+/** IPv4 privada, local o reservada (también las mapeadas en IPv6). */
+function privateIpv4(ip: string) {
+  const p = ip.split('.').map(Number)
+  if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false
+  const [a = 0, b = 0] = p
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 192 && b === 0) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    a >= 224
+  )
+}
+
+/** ¿Es una dirección IP (v4 o v6) que no es pública? */
+export function isPrivateAddress(address: string) {
+  const ip = address.toLowerCase().replace(/^\[|\]$/g, '')
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(ip)) return privateIpv4(ip)
+  if (!ip.includes(':')) return false
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(ip)?.[1]
+  if (mapped) return privateIpv4(mapped)
+  return (
+    ip === '::' ||
+    ip === '::1' ||
+    /^f[cd][0-9a-f]{0,2}:/.test(ip) ||
+    /^fe[89ab][0-9a-f]?:/.test(ip) ||
+    /^ff[0-9a-f]{0,2}:/.test(ip) ||
+    ip.startsWith('::ffff:')
+  )
+}
+
+/**
+ * Lanza si la URL no es una dirección web pública: solo `http(s)`, puertos 80/443, sin usuario ni contraseña, sin
+ * `localhost`, nombres sin punto ni dominios internos, y sin IPs privadas. Con `resolve` (DNS), también comprueba las
+ * direcciones a las que apunta el nombre.
+ */
+export async function assertPublicUrl(
+  raw: string,
+  resolve?: (hostname: string) => Promise<string[]>,
+): Promise<URL> {
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    throw new Error('La dirección no es válida')
+  }
+  const host = url.hostname
+    .toLowerCase()
+    .replace(/\.$/, '')
+    .replace(/^\[|\]$/g, '')
+  const bad = () => new Error('Solo se pueden leer fuentes con una dirección pública de internet')
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') throw bad()
+  if (url.username || url.password) throw bad()
+  if (url.port && url.port !== '80' && url.port !== '443') throw bad()
+  if (
+    !host ||
+    host === 'localhost' ||
+    /\.(localhost|local|internal|lan|home|arpa)$/.test(host) ||
+    (!host.includes('.') && !host.includes(':')) ||
+    isPrivateAddress(host)
+  ) {
+    throw bad()
+  }
+  if (resolve && !/^[\d.]+$/.test(host) && !host.includes(':')) {
+    const addresses = await resolve(host)
+    if (!addresses.length || addresses.some(isPrivateAddress)) throw bad()
+  }
+  return url
+}
+
+/** Lee el cuerpo como texto sin pasar de `max` bytes (un servidor podría mandar uno infinito). */
+async function readCapped(res: Response, max: number) {
+  const declared = Number(res.headers.get('content-length') ?? 0)
+  if (declared > max) throw new Error('El feed es demasiado grande')
+  if (!res.body) return ''
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let size = 0
+  let text = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    size += value.byteLength
+    if (size > max) {
+      await reader.cancel().catch(() => {})
+      throw new Error('El feed es demasiado grande')
+    }
+    text += decoder.decode(value, { stream: true })
+  }
+  return text + decoder.decode()
+}
+
+export const FEED_MAX_BYTES = 3_000_000
+const MAX_REDIRECTS = 3
+
+export interface FetchFeedOptions {
+  /** Resuelve un nombre a sus IPs (en la Edge Function, `Deno.resolveDns`): así tampoco valen nombres que apuntan dentro. */
+  resolve?: (hostname: string) => Promise<string[]>
+}
+
 /**
  * Descarga una fuente con petición condicional (`If-None-Match` / `If-Modified-Since`): si no ha cambiado, el servidor
- * contesta 304 y no se procesa nada. 10 s como mucho y 3 MB de feed.
+ * contesta 304 y no se procesa nada. 10 s como mucho y 3 MB de feed. Solo direcciones públicas, también tras cada
+ * redirección (que se siguen a mano, como mucho 3).
  */
 export async function fetchFeed(
   source: { url: string; etag: string | null; lastModified: string | null },
   fetchFn: typeof fetch = fetch,
+  options: FetchFeedOptions = {},
 ): Promise<FeedFetchResult> {
   const headers: Record<string, string> = {
     accept:
@@ -187,15 +298,20 @@ export async function fetchFeed(
   }
   if (source.etag) headers['if-none-match'] = source.etag
   if (source.lastModified) headers['if-modified-since'] = source.lastModified
-  const res = await fetchFn(source.url, {
-    headers,
-    signal: AbortSignal.timeout(10_000),
-    redirect: 'follow',
-  })
+  const signal = AbortSignal.timeout(10_000)
+  let target = await assertPublicUrl(source.url, options.resolve)
+  let res: Response
+  for (let hop = 0; ; hop++) {
+    res = await fetchFn(target.toString(), { headers, signal, redirect: 'manual' })
+    const location = res.headers.get('location')
+    if (res.status < 300 || res.status > 399 || res.status === 304 || !location) break
+    if (hop >= MAX_REDIRECTS) throw new Error('Demasiadas redirecciones')
+    await res.body?.cancel().catch(() => {})
+    target = await assertPublicUrl(new URL(location, target).toString(), options.resolve)
+  }
   if (res.status === 304) return { status: 'not-modified' }
   if (!res.ok) throw new Error(`La fuente respondió ${res.status}`)
-  const body = await res.text()
-  if (body.length > 3_000_000) throw new Error('El feed es demasiado grande')
+  const body = await readCapped(res, FEED_MAX_BYTES)
   if (!/<(rss|feed|rdf:RDF)[\s>]/i.test(body)) throw new Error('No parece un feed RSS o Atom')
   return {
     status: 'ok',

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assertPublicUrl,
   createMemoryStore,
   createMuninn,
   decodeEntities,
   fetchFeed,
+  isPrivateAddress,
   parseFeed,
   plainText,
   relatedProjects,
@@ -237,5 +239,73 @@ describe('noticias en el core', () => {
       relatedProjects({ title: 'Firmar apps', summary: 'para huginndb y más' }, projects),
     ).toEqual([projects[0]])
     expect(relatedProjects({ title: 'MuninnX no cuenta', summary: '' }, projects)).toEqual([])
+  })
+})
+
+describe('noticias: solo direcciones públicas (SSRF)', () => {
+  it('rechaza localhost, IPs privadas, puertos raros, credenciales y nombres internos', async () => {
+    for (const url of [
+      'http://localhost/rss',
+      'http://127.0.0.1/rss',
+      'http://169.254.169.254/latest/meta-data',
+      'http://10.0.0.5/feed',
+      'http://192.168.1.10/feed',
+      'http://172.20.0.1/feed',
+      'http://[::1]/feed',
+      'http://[fd00::1]/feed',
+      'http://[::ffff:127.0.0.1]/feed',
+      'https://intranet/feed',
+      'https://db.internal/feed',
+      'https://ejemplo.com:8443/feed',
+      'https://user:pass@ejemplo.com/feed',
+      'ftp://ejemplo.com/feed',
+    ]) {
+      await expect(assertPublicUrl(url), url).rejects.toThrow('dirección pública')
+    }
+    await expect(assertPublicUrl('https://blog.ejemplo.com/rss.xml')).resolves.toBeInstanceOf(URL)
+    await expect(assertPublicUrl('https://93.184.216.34/rss')).resolves.toBeInstanceOf(URL)
+    expect(isPrivateAddress('8.8.8.8')).toBe(false)
+    expect(isPrivateAddress('2606:4700::1111')).toBe(false)
+  })
+
+  it('con DNS, un nombre que apunta dentro tampoco vale', async () => {
+    const resolve = async (h: string) =>
+      h === 'trampa.ejemplo.com' ? ['10.1.2.3'] : ['93.184.216.34']
+    await expect(assertPublicUrl('https://trampa.ejemplo.com/rss', resolve)).rejects.toThrow()
+    await expect(assertPublicUrl('https://bien.ejemplo.com/rss', resolve)).resolves.toBeInstanceOf(
+      URL,
+    )
+  })
+
+  it('las redirecciones se siguen a mano y se comprueban; el tamaño tiene tope', async () => {
+    const calls: string[] = []
+    const redirectTo = (location: string) =>
+      (async (url: string, init: RequestInit) => {
+        calls.push(url)
+        expect(init.redirect).toBe('manual')
+        return url.includes('final')
+          ? new Response(RSS, { status: 200 })
+          : new Response(null, { status: 302, headers: { location } })
+      }) as unknown as typeof fetch
+    const src = { url: 'https://a.ejemplo.com/rss', etag: null, lastModified: null }
+    await expect(fetchFeed(src, redirectTo('http://169.254.169.254/'))).rejects.toThrow(
+      'dirección pública',
+    )
+    const ok = await fetchFeed(src, redirectTo('https://b.ejemplo.com/final'))
+    expect(ok.status).toBe('ok')
+    expect(calls.at(-1)).toBe('https://b.ejemplo.com/final')
+    const huge = (async () =>
+      new Response('x', {
+        status: 200,
+        headers: { 'content-length': '999999999' },
+      })) as unknown as typeof fetch
+    await expect(fetchFeed(src, huge)).rejects.toThrow('demasiado grande')
+  })
+
+  it('no deja añadir una fuente interna', async () => {
+    const app = createMuninn(createMemoryStore())
+    await expect(app.news.sources.create({ url: 'http://localhost:54321/rss' })).rejects.toThrow(
+      ValidationError,
+    )
   })
 })

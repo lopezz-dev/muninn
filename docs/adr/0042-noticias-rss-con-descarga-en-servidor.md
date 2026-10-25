@@ -27,6 +27,10 @@ despliega en esta fase.
 - `POST /news/fetch` con el secreto del cron (`x-muninn-sync-secret`): `pg_cron` **cada hora**; recorre los dueños con fuentes activas
   (service role con `owner_id` explícito) y, al final, limpia lo antiguo.
 - `POST /news/fetch` con la sesión del usuario: el botón «Actualizar» de la app; solo sus fuentes, con RLS.
+- **Solo direcciones públicas (SSRF):** la función descarga URLs que escribe el usuario desde la red de Supabase. Se rechazan `localhost`,
+  IPs privadas o reservadas (también IPv6 y mapeadas), nombres sin punto o internos (`.local`, `.internal`…), credenciales en la URL y
+  puertos que no sean 80/443; con `Deno.resolveDns`, también los nombres que apuntan dentro. Las redirecciones se siguen a mano (3 como
+  mucho) comprobando cada destino, y el cuerpo se corta a 3 MB mientras se lee. Al añadir la fuente ya se avisa.
 - Descarga **condicional** (`If-None-Match`/`If-Modified-Since`: un 304 no procesa nada), 10 s por fuente, 3 MB y 50 artículos como
   mucho. El lector de feeds (`@muninn/core/news`, `news-feed.ts`) entiende RSS 2.0, RSS 1.0 y Atom sin DOM ni dependencias (corre en Deno).
 - **Mientras no esté desplegada**, la app guarda las fuentes y dice la verdad: «Actualizar» avisa de que la descarga aún no está en marcha.

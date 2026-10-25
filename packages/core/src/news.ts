@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 import { ValidationError } from './errors'
-import { fetchFeed, type ParsedFeed } from './news-feed'
+import { assertPublicUrl, type FetchFeedOptions, fetchFeed, type ParsedFeed } from './news-feed'
 import {
   type Activity,
   type CreateNewsSourceInput,
@@ -78,6 +78,10 @@ export function createNews({ store, nowIso, today, parse, log }: NewsContext) {
   /** Añade una fuente. Si ya estaba (aunque archivada), la recupera en vez de duplicarla. */
   async function createSource(input: CreateNewsSourceInput) {
     const data = parse(createNewsSourceInput, input)
+    // Antes de guardarla: solo direcciones públicas (la Edge Function la descargará, ADR-0042).
+    await assertPublicUrl(data.url).catch((err: Error) => {
+      throw new ValidationError(err.message)
+    })
     const existing = (await store.newsSources.list({ includeArchived: true })).find(
       (s) => s.url === data.url,
     )
@@ -214,7 +218,10 @@ export function createNews({ store, nowIso, today, parse, log }: NewsContext) {
    * Descarga ahora las fuentes activas de este usuario, una a una (pocas fuentes; así un feed lento no tumba a los demás).
    * La llama la Edge Function `news`: desde el navegador, la mayoría de los feeds no se dejan leer (CORS).
    */
-  async function refresh(fetchFn: typeof fetch = fetch): Promise<NewsFetchSummary> {
+  async function refresh(
+    fetchFn: typeof fetch = fetch,
+    options: FetchFeedOptions = {},
+  ): Promise<NewsFetchSummary> {
     const sources = (await store.newsSources.list({})).filter((s) => s.enabled)
     const summary: NewsFetchSummary = {
       sources: sources.length,
@@ -224,7 +231,7 @@ export function createNews({ store, nowIso, today, parse, log }: NewsContext) {
     }
     for (const s of sources) {
       try {
-        const r = await fetchFeed(s, fetchFn)
+        const r = await fetchFeed(s, fetchFn, options)
         if (r.status === 'not-modified') {
           summary.notModified++
           await ingest(s.id, { notModified: true })

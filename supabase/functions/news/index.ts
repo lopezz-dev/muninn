@@ -20,6 +20,19 @@ import {
 const env = (name: string) => Deno.env.get(name) ?? ''
 const timeZone = () => env('MUNINN_TIME_ZONE') || 'Europe/Madrid'
 
+/**
+ * Las IPs de un nombre, para no descargar nada que apunte dentro de la red de Supabase (SSRF, ADR-0042). Si el entorno
+ * no tiene `Deno.resolveDns`, quedan las comprobaciones de la URL (sin IPs privadas, ni localhost, ni puertos raros).
+ */
+async function resolve(hostname: string): Promise<string[]> {
+  const [v4, v6] = await Promise.all([
+    Deno.resolveDns(hostname, 'A').catch(() => [] as string[]),
+    Deno.resolveDns(hostname, 'AAAA').catch(() => [] as string[]),
+  ])
+  return [...v4, ...v6]
+}
+const feedOptions = typeof Deno.resolveDns === 'function' ? { resolve } : {}
+
 const admin = () =>
   createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -70,13 +83,13 @@ Deno.serve(async (req: Request) => {
           actor: 'system',
           timeZone: timeZone(),
         })
-        users.push(await m.news.refresh())
+        users.push(await m.news.refresh(fetch, feedOptions))
       }
       return json(200, { users: users.length, results: users, pruned: await pruneNews(db) })
     }
     const m = await userMuninn(req)
     if (!m) return json(401, { error: 'Inicia sesión con tu cuenta de Muninn' })
-    return json(200, await m.news.refresh())
+    return json(200, await m.news.refresh(fetch, feedOptions))
   } catch (err) {
     // Los logs van al panel de Supabase (Edge Functions › news › Logs).
     console.error(err)
