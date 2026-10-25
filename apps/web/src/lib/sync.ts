@@ -23,6 +23,9 @@ export type Table =
   | 'finance_categories'
   | 'finance_transactions'
   | 'finance_subscriptions'
+  | 'news_sources'
+  | 'news_items'
+  | 'news_digests'
 
 export const SYNC_TABLES: Table[] = [
   'projects',
@@ -35,6 +38,9 @@ export const SYNC_TABLES: Table[] = [
   'finance_categories',
   'finance_transactions',
   'finance_subscriptions',
+  'news_sources',
+  'news_items',
+  'news_digests',
 ]
 
 export interface Change {
@@ -84,6 +90,11 @@ export function scopesOf({ table, row, old }: Change): Scope[] {
     case 'finance_transactions':
     case 'finance_subscriptions':
       return ['finance']
+    // Fuentes, artículos (los trae el cron) y el resumen: Noticias se refresca entera.
+    case 'news_sources':
+    case 'news_items':
+    case 'news_digests':
+      return ['news']
   }
 }
 
@@ -91,7 +102,7 @@ export function scopesOf({ table, row, old }: Change): Scope[] {
 const busyKey = (scope: Scope): string | undefined =>
   scope.startsWith('project:')
     ? scope.slice('project:'.length)
-    : scope === 'settings' || scope === 'finance'
+    : scope === 'settings' || scope === 'finance' || scope === 'news'
       ? scope
       : scope.startsWith('note:')
         ? scope
@@ -142,6 +153,8 @@ export function createSync(qc: QueryClient, opts: SyncOptions = {}): Sync {
       void qc.invalidateQueries({ queryKey: ['settings'] })
     } else if (scope === 'finance') {
       void qc.invalidateQueries({ queryKey: ['finance'] })
+    } else if (scope === 'news') {
+      void qc.invalidateQueries({ queryKey: ['news'] })
     }
   }
 

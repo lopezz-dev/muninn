@@ -64,6 +64,7 @@ lateral) y escribe:
 - Una acción, como «nuevo proyecto», «cristal» o «cerrar sesión».
 - Cualquier otra cosa, para preguntársela a Muninn: se abre el [Asistente](11-asistente.md) con tu pregunta ya enviada
   (si el modelo de tu ordenador está listo; si no, la deja escrita).
+- Con Noticias activado, también **Buscar en Noticias** lo que hayas escrito.
 
 Muévete con las flechas, abre con **Intro** y cierra con **Esc**.
 

@@ -4,6 +4,7 @@
  * Node: corre en la app (en diferido), en el MCP y en los tests.
  */
 export * from './agent'
+export * from './digest'
 export * from './prompt'
 export * from './provider'
 export * from './providers/ollama'

@@ -8,6 +8,9 @@ import type {
   FinanceCategory,
   GithubRepoSummary,
   GithubSyncScope,
+  NewsDigest,
+  NewsItem,
+  NewsSource,
   Note,
   OutboxKind,
   Project,
@@ -48,6 +51,15 @@ export interface Store {
    * movimientos no salen. En Supabase lo suma la vista `finance_account_totals`.
    */
   accountTotals(): Promise<{ accountId: string; net: number }[]>
+  /** Noticias (ADR-0042). */
+  newsSources: Collection<NewsSource, { includeArchived?: boolean }>
+  newsItems: NewsItemStore
+  newsDigests: NewsDigestStore
+  /**
+   * Pide la descarga de las fuentes ahora. Solo lo sabe hacer el store de Supabase (se lo pide a la Edge Function `news`,
+   * que es quien puede leer los feeds sin CORS); sin él, la app lo dice.
+   */
+  newsFeeds?: { fetchNow(): Promise<NewsFetchSummary> }
   /**
    * Repos a los que llega el token de la sincronización. Solo lo sabe el store de Supabase (se lo pregunta
    * a la Edge Function `github`, que es quien tiene el token); sin él, la UI pide el repo a mano.
@@ -59,6 +71,37 @@ export interface Store {
     /** Lanza la sincronización ahora: solo la cola de salida o también la reconciliación de los repos. */
     sync(scope: GithubSyncScope): Promise<unknown>
   }
+}
+
+export interface NewsItemStoreQuery {
+  sourceIds?: string[]
+  saved?: boolean
+  unread?: boolean
+  /** Publicadas (o, sin fecha, descargadas) desde entonces. */
+  since?: string
+  search?: string
+  limit?: number
+}
+
+/** Artículos: de los más recientes a los más antiguos (por publicación y, sin ella, por descarga). */
+export interface NewsItemStore extends Omit<Collection<NewsItem, NewsItemStoreQuery>, 'insert'> {
+  /** Inserta los que no estén ya (misma fuente y `guid`) y devuelve solo los nuevos. */
+  insertNew(rows: NewRow<NewsItem>[]): Promise<NewsItem[]>
+}
+
+export interface NewsDigestStore {
+  get(date: string): Promise<NewsDigest | null>
+  /** El más reciente. */
+  latest(): Promise<NewsDigest | null>
+  /** Crea o reemplaza el de esa fecha. */
+  upsert(row: NewRow<NewsDigest>): Promise<NewsDigest>
+}
+
+export interface NewsFetchSummary {
+  sources: number
+  added: number
+  notModified: number
+  errors: { sourceId: string; error: string }[]
 }
 
 export interface OutboxEntry {
