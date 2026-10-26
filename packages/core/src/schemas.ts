@@ -6,7 +6,8 @@ export const projectStatus = z.enum(['active', 'paused', 'archived'])
 export const columnKind = z.enum(['backlog', 'todo', 'in_progress', 'review', 'done'])
 export const taskPriority = z.enum(['none', 'low', 'medium', 'high', 'urgent'])
 export const taskSource = z.enum(['manual', 'github', 'mcp', 'agent'])
-export const actorKind = z.enum(['user', 'mcp', 'github', 'agent', 'system'])
+/** `assistant`: el asistente de la app (ADR-0041); `mcp`, un cliente externo por MCP. */
+export const actorKind = z.enum(['user', 'mcp', 'github', 'agent', 'system', 'assistant'])
 /** Módulos activables (`user_settings.enabled_modules`). */
 export const moduleName = z.enum(['tasks', 'notes', 'github', 'finance', 'news', 'focus'])
 

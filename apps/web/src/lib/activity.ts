@@ -6,11 +6,13 @@ export const actorName = (actor: ActorKind) =>
     ? 'Tú'
     : actor === 'mcp'
       ? 'Claude'
-      : actor === 'agent'
-        ? 'Un agente'
-        : actor === 'github'
-          ? 'GitHub'
-          : 'Muninn'
+      : actor === 'assistant'
+        ? 'El asistente'
+        : actor === 'agent'
+          ? 'Un agente'
+          : actor === 'github'
+            ? 'GitHub'
+            : 'Muninn'
 
 /** [segunda persona (tú), tercera (otro actor)] */
 const VERBS: Record<string, [string, string]> = {

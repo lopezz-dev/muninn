@@ -133,3 +133,14 @@
   «corrijas» a la cifra de ejemplo del lienzo. Ahorro e inversión salen de los traspasos que cruzan de grupo de cuenta (`totalsOf`).
 - Pide los movimientos del primer mes del histórico al último en **una** consulta y reparte en memoria: no llames a `transactions.list`
   por mes.
+
+### El asistente escribe con `withActor`, no con otro store
+
+- **Síntoma:** lo que hace el asistente sale en la actividad como «Tú», o «Deshacer» de un cambio del asistente queda como suyo.
+- **Causa:** el actor se fija al crear el core ([ADR-0007](../adr/0007-registro-de-actividad.md)). El asistente necesita el mismo store (la sesión
+  del usuario) con actor `assistant` y su contexto ([ADR-0041](../adr/0041-asistente-local-con-catalogo-unico.md)).
+- **Solución:** `withActor(app, 'assistant', { activityContext })` devuelve otro core sobre el mismo store; `runAssistant` ya lo hace. Lo que
+  devuelve `activityContext()` se guarda en `payload.context` de cada evento (se lee en cada escritura, así que puede cambiar entre
+  herramientas). «Deshacer» se ejecuta con el core de la UI (`change.undo(app)`), que es `user`.
+- **Ojo:** `withActor` va fuera de `createMuninn` (con un `WeakMap`) porque como método el tipo `Muninn` se referiría a sí mismo. Solo
+  funciona con cores creados por `createMuninn`.

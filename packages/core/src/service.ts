@@ -114,6 +114,11 @@ export interface MuninnOptions {
   now?: () => Date
   /** Zona horaria para calcular "hoy" en fechas de vencimiento. Por defecto, la del sistema. */
   timeZone?: string
+  /**
+   * Contexto que se añade a cada evento de la actividad como `payload.context` (el asistente anota ahí la conversación
+   * y la herramienta, ADR-0041). Se lee en cada escritura: puede cambiar entre llamadas.
+   */
+  activityContext?: () => Record<string, unknown> | undefined
 }
 
 export { ValidationError }
@@ -178,7 +183,13 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return d.toISOString().slice(0, 10)
   }
   const defaultSource: TaskSource =
-    actor === 'mcp' ? 'mcp' : actor === 'agent' ? 'agent' : actor === 'github' ? 'github' : 'manual'
+    actor === 'mcp' || actor === 'assistant'
+      ? 'mcp'
+      : actor === 'agent'
+        ? 'agent'
+        : actor === 'github'
+          ? 'github'
+          : 'manual'
 
   const log = (
     entityType: Activity['entityType'],
@@ -186,7 +197,17 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     action: string,
     projectId: string | null,
     payload: Record<string, unknown> = {},
-  ) => store.activity.insert({ entityType, entityId, action, projectId, actor, payload })
+  ) => {
+    const context = options.activityContext?.()
+    return store.activity.insert({
+      entityType,
+      entityId,
+      action,
+      projectId,
+      actor,
+      payload: context ? { ...payload, context } : payload,
+    })
+  }
 
   const parse = <S extends z.ZodType>(schema: S, value: unknown): z.output<S> => {
     const r = schema.safeParse(value)
@@ -1051,7 +1072,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return store.settings.upsert({ enabledModules: data.enabledModules, preferences })
   }
 
-  return {
+  const api = {
     today,
     projects: {
       list: listProjects,
@@ -1123,4 +1144,23 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     overview,
     recentActivity,
   }
+  origins.set(api, { store, options })
+  return api
+}
+
+/** De qué store y con qué opciones se creó cada core (para `withActor`). */
+const origins = new WeakMap<object, { store: Store; options: MuninnOptions }>()
+
+/**
+ * El mismo core (mismo store, zona y reloj) con otro actor: el asistente de la app escribe como `assistant` y anota su
+ * contexto en la actividad (ADR-0041). Va fuera de `createMuninn` para que su tipo no se refiera a sí mismo.
+ */
+export function withActor(
+  app: Muninn,
+  actor: ActorKind,
+  extra: Pick<MuninnOptions, 'activityContext'> = {},
+): Muninn {
+  const origin = origins.get(app)
+  if (!origin) throw new Error('withActor: este core no se creó con createMuninn')
+  return createMuninn(origin.store, { ...origin.options, ...extra, actor })
 }

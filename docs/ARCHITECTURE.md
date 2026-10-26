@@ -16,7 +16,9 @@
         ▲            ▲                 ▲
    webhooks GitHub   agentes (F4)     cron noticias (F4)
 
-  packages/mcp ── createMuninn(store, { actor: 'mcp' }) ──► Claude Desktop / Claude Code / Codex / Jarvis local (stdio)
+  packages/assistant ── catálogo único de herramientas · bucle · proveedores (Ollama, guion) ──► pantalla Asistente (ADR-0041)
+         ▲                       └─ app ──► http://localhost:11434 (Ollama, solo en el ordenador)
+  packages/mcp ── createMuninn(store, { actor: 'mcp' }) + catálogo ──► Claude Desktop / Claude Code / Codex (stdio)
                └─ http.ts (Streamable HTTP, token del usuario) ── supabase/functions/mcp ──► claude.ai / móvil (ADR-0033)
 
   packages/ui ── tokens.ts → tokens.css (--mn-*) → theme.css (Tailwind v4) ──► apps/web (y por tanto desktop)
@@ -33,7 +35,7 @@
 3. **Multiusuario desde el día uno.** Todas las tablas tienen `owner_id` + RLS. Hoy lo usas tú;
    mañana se puede vender sin rehacer el esquema.
 4. **Todo deja rastro.** Cada cambio escribe en `activity` con el actor (`user`, `mcp`, `github`,
-   `agent`). De ahí salen los resúmenes ("¿qué he hecho esta semana?") y los insights.
+   `agent`, `assistant`). De ahí salen los resúmenes ("¿qué he hecho esta semana?") y los insights.
 
 ## Frontend (`apps/web`)
 
