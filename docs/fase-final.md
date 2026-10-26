@@ -13,9 +13,10 @@ al acabar.
 
 ## 0. Decisiones (tuyas, antes de tocar nada)
 
-- [ ] **Hosting de la web:** aceptar [ADR-0040](adr/0040-pwa-instalable-y-web-push.md) (Vercel) o elegir otro. Hoy está **propuesto**.
-- [ ] **Qué rama se publica:** `main` está por detrás de `develop`. Recomendado: publicar `develop` mientras dura la fase final y pasar a
-  `main` al terminar (paso 9). La otra opción es pasar `develop` → `main` ahora y publicar `main`.
+- [x] **Hosting de la web:** aceptar [ADR-0040](adr/0040-pwa-instalable-y-web-push.md) (Vercel) o elegir otro. *(26 de octubre: Vercel,
+  en el equipo Kodemaru.)*
+- [x] **Qué rama se publica:** `main` está por detrás de `develop`. Recomendado: publicar `develop` mientras dura la fase final y pasar a
+  `main` al terminar (paso 9). La otra opción es pasar `develop` → `main` ahora y publicar `main`. *(Se publica `develop`.)*
 - [ ] **Conector de claude.ai:** pedir ya a Edgar el permiso de la organización para añadir conectores personalizados. Tarda y no depende
   de nada; sin él, el paso 7 se queda a medias.
 
@@ -92,9 +93,14 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 ## 4. Publicar la web (≈ 30 min)
 
 Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales).
-- [ ] Proyecto en Vercel con *Root Directory* `apps/web` y la rama del paso 0.
-- [ ] Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Despliega.
-- [ ] Dominio propio (opcional).
+
+> **26 de octubre:** publicada en **https://muninn-sepia.vercel.app** (proyecto `muninn` del equipo Kodemaru, rama de producción `develop`,
+> primer despliegue de `e17cfec`). Comprobado con `curl` y en el navegador: la URL de producción es pública, `/finanzas` no da 404
+> (redirige al login), el service worker se registra y el build lleva la dirección de Supabase.
+- [x] Proyecto en Vercel con *Root Directory* `apps/web` y la rama del paso 0.
+- [x] Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Despliega.
+- [ ] Dominio propio (opcional). *(Mientras, la de Vercel. Para un nombre más corto, Vercel › Settings › Domains admite otro
+  `*.vercel.app` libre.)*
 - [ ] Supabase › URL Configuration: *Site URL* = la URL publicada, y `https://<tu-url>/**` en *Redirect URLs*. Deja las de `localhost`.
 - [ ] GitHub › la OAuth App de Muninn: *Homepage URL* = la URL publicada (el *callback* no cambia).
 - [ ] Añadir la URL publicada a `OLLAMA_ORIGINS` y reiniciar Ollama.
