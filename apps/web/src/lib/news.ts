@@ -1,7 +1,7 @@
 import type { Muninn, NewsItem, NewsSource } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
-import { fail, isBusy, reason, serial } from './mutations'
+import { fail, isBusy, serial } from './mutations'
 
 /**
  * Noticias (ADR-0042): consultas bajo `['news', …]` (el tiempo real refresca ese prefijo entero) y acciones con
@@ -198,7 +198,10 @@ export function markRead(m: Muninn, qc: QueryClient, item: NewsItem) {
   void run(() => m.news.items.markRead(item.id)).catch(() => {})
 }
 
-/** «Actualizar»: la descarga la hace la Edge Function `news`; sin ella (demo, o aún sin desplegar) se dice. */
+/**
+ * «Actualizar»: la descarga la hace la Edge Function `news`. Sin ella (demo) o si no responde (aún sin desplegar, o sin
+ * red) se dice en palabras; cualquier otro fallo, como un error.
+ */
 export async function refreshNews(m: Muninn, qc: QueryClient) {
   const id = notify.loading('Buscando noticias…', { icon: 'sync' })
   try {
@@ -217,12 +220,18 @@ export async function refreshNews(m: Muninn, qc: QueryClient) {
     )
   } catch (err) {
     notify.dismiss(id)
-    notify.error('Las noticias aún no se descargan desde aquí', {
-      description:
-        err instanceof Error && /servidor/.test(err.message)
-          ? 'En la demo no se descargan feeds.'
-          : `Falta poner en marcha la descarga en el servidor (fase final). ${reason(err) ?? ''}`.trim(),
-    })
+    if (err instanceof Error && err.name === 'ValidationError') {
+      notify.error('Las noticias aún no se descargan desde aquí', {
+        description: 'En la demo no se descargan feeds.',
+      })
+    } else if (err instanceof Error && err.name === 'FunctionsFetchError' && navigator.onLine) {
+      notify.error('Las noticias aún no se descargan desde aquí', {
+        description:
+          'El servidor de Muninn no responde: la descarga aún no está en marcha (fase final).',
+      })
+    } else {
+      fail('No se pudieron buscar noticias', err)
+    }
   } finally {
     settleNews(qc)
   }

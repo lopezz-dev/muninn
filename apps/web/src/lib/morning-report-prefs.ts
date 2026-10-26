@@ -53,13 +53,25 @@ export const nowClock = (d = new Date()) =>
 export const reportDue = (p: MorningReportPrefs, clock: string, today: string) =>
   p.enabled && p.lastDate !== today && clock >= p.time
 
-export async function savePrefs(m: Muninn, qc: QueryClient, next: MorningReportPrefs) {
-  const saved = await serial('settings', () =>
-    m.settings.update({ preferences: { morningReport: { ...next } } }),
-  )
+/**
+ * Guarda un cambio del informe sobre lo último guardado, que se relee dentro de la cola de ajustes: así dos cambios
+ * seguidos (la hora al salir del campo y el interruptor) o el informe que acaba mientras cambias la hora no se pisan.
+ * Devuelve cómo estaba justo antes.
+ */
+export async function savePrefs(
+  m: Muninn,
+  qc: QueryClient,
+  patch: Partial<MorningReportPrefs>,
+): Promise<MorningReportPrefs> {
+  let before = DEFAULT_REPORT
+  const saved = await serial('settings', async () => {
+    before = reportPrefs(await m.settings.get())
+    return m.settings.update({ preferences: { morningReport: { ...before, ...patch } } })
+  })
   qc.setQueryData<UserSettings>(keys.settings, (s) =>
     s ? { ...s, preferences: saved.preferences } : saved,
   )
+  return before
 }
 
 /** Cambia la hora o lo activa/desactiva, con «Deshacer» (ADR-0019). */
@@ -69,11 +81,9 @@ export async function changeReportPrefs(
   patch: Partial<Pick<MorningReportPrefs, 'enabled' | 'time'>>,
   undoing = false,
 ) {
-  const before = reportPrefs(
-    qc.getQueryData<UserSettings>(keys.settings) ?? (await m.settings.get()),
-  )
+  let before: MorningReportPrefs
   try {
-    await savePrefs(m, qc, { ...before, ...patch })
+    before = await savePrefs(m, qc, patch)
   } catch (err) {
     return fail('No se pudo guardar el ajuste', err)
   }

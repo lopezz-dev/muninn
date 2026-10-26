@@ -34,21 +34,18 @@ const MODULES: Record<ModuleName, ModuleInfo> = {
     text: 'Gastos, ingresos, ahorro, inversión y suscripciones',
     icon: 'finance',
     tile: 'bg-project-amber/15 text-project-amber',
-    soon: 'Fase 3',
   },
   github: {
     label: 'GitHub',
     text: 'Issues como tareas y agentes',
     icon: 'github',
     tile: 'bg-project-violet/15 text-project-violet',
-    soon: 'Fase 2',
   },
   news: {
     label: 'Noticias',
     text: 'RSS con resumen local',
     icon: 'news',
     tile: 'bg-project-pink/15 text-project-pink',
-    soon: 'Fase 4',
   },
   focus: {
     label: 'Concentración',

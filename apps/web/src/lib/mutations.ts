@@ -64,11 +64,18 @@ export function rollback(qc: QueryClient, projectId: string, prev: BoardData | u
   settle(qc, projectId)
 }
 
+/** Errores de supabase-js al llamar a una Edge Function: llegan en inglés y sin nada útil para quien usa la app. */
+const EDGE_ERRORS: Record<string, string> = {
+  FunctionsFetchError: 'No se pudo hablar con el servidor de Muninn.',
+  FunctionsRelayError: 'No se pudo hablar con el servidor de Muninn.',
+  FunctionsHttpError: 'El servidor de Muninn respondió con un error.',
+}
+
 export const reason = (err: unknown) =>
   typeof navigator !== 'undefined' && navigator.onLine === false
     ? 'Sin conexión: vuelve a intentarlo cuando la recuperes.'
     : err instanceof Error
-      ? err.message
+      ? (EDGE_ERRORS[err.name] ?? err.message)
       : undefined
 
 export const fail = (title: string, err: unknown) =>

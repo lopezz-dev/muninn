@@ -24,7 +24,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     label: 'Notificaciones',
     icon: 'bell',
     soon: {
-      phase: 'Fase 3',
+      phase: 'Próximamente',
       text: 'Avisos en el móvil antes de cada cobro y cuando un agente termine su trabajo.',
     },
   },

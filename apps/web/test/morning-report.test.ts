@@ -2,7 +2,13 @@ import { createMemoryStore, createMuninn } from '@muninn/core'
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import { generateMorningReport } from '../src/lib/morning-report'
-import { DEFAULT_REPORT, nowClock, reportDue, reportPrefs } from '../src/lib/morning-report-prefs'
+import {
+  changeReportPrefs,
+  DEFAULT_REPORT,
+  nowClock,
+  reportDue,
+  reportPrefs,
+} from '../src/lib/morning-report-prefs'
 
 describe('informe de la mañana', () => {
   it('ajustes validados, desactivado por defecto', () => {
@@ -29,6 +35,17 @@ describe('informe de la mañana', () => {
     expect(reportDue({ ...p, lastDate: '2026-10-22' }, '19:00', '2026-10-22')).toBe(false)
     expect(reportDue({ ...p, enabled: false }, '19:00', '2026-10-22')).toBe(false)
     expect(nowClock(new Date(2026, 9, 22, 7, 5))).toBe('07:05')
+  })
+
+  it('la hora y el interruptor a la vez no se pisan', async () => {
+    // Lo que pasa al cambiar la hora y pulsar el interruptor sin salir del campo: los dos guardados salen juntos.
+    const m = createMuninn(createMemoryStore())
+    const qc = new QueryClient()
+    await Promise.all([
+      changeReportPrefs(m, qc, { time: '20:30' }),
+      changeReportPrefs(m, qc, { enabled: true }),
+    ])
+    expect(reportPrefs(await m.settings.get())).toMatchObject({ enabled: true, time: '20:30' })
   })
 
   it('se guarda como nota, apunta el día y no se repite sin «Hacer ahora»', async () => {
