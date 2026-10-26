@@ -24,7 +24,7 @@ describe('informe de la mañana', () => {
     })
     expect(body).toContain('_Hecho a las 08:30, jueves, 22 de octubre de 2026._')
     expect(body).toContain('**Vencidas (2)**')
-    expect(body).toContain('- Firma y notarización en macOS · HuginnDB · desde el 2026-10-17')
+    expect(body).toContain('- Firma y notarización en macOS · HuginnDB · desde el 17 oct')
     expect(body).toContain('**Para hoy (1)**')
     expect(body).toMatch(/- Vercel Pro · 20,00\s€ · mañana/)
     expect(body).toMatch(/- Netflix · 12,99\s€ · en 3 días/)

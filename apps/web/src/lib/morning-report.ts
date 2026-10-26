@@ -58,7 +58,7 @@ export function generateMorningReport(
       content: intro ? `${intro}\n\n${body}` : body,
       previousNoteId: prefs.lastNoteId,
     })
-    await savePrefs(m, qc, { ...prefs, lastDate: today, lastNoteId: note.id })
+    await savePrefs(m, qc, { lastDate: today, lastNoteId: note.id })
     void qc.invalidateQueries({ queryKey: ['notes'] })
     return note
   })().finally(() => {

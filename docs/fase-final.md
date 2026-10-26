@@ -51,11 +51,12 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 > **26 de octubre, 20:15–20:35** (con tu sesión en el 5174, navegador integrado, sin Ollama y sin la función `news` desplegada).
 > Pasa lo marcado. Lo que necesita Ollama o la función sigue sin marcar.
 >
-> Fallos encontrados:
+> Fallos encontrados (arreglados en el mismo PR que estos resultados):
 > - Ajustes › Módulos sigue mostrando «Llega en la fase 2/3/4» en GitHub, Finanzas y Noticias.
 > - El informe pierde la hora si la cambias y pulsas el interruptor sin salir antes del campo: los dos guardados se pisan.
 > - En el informe, la fecha de las vencidas sale como «desde el 2026-10-19».
-> - «Actualizar» en Noticias enseña el error técnico en inglés («Failed to send a request to the Edge Function»).
+> - «Actualizar» en Noticias enseña el error técnico en inglés («Failed to send a request to the Edge Function»). Pasaba lo
+>   mismo con cualquier error de una Edge Function, también en GitHub.
 
 **Finanzas**
 - [x] Activar Finanzas y crear una cuenta «Prueba final …».

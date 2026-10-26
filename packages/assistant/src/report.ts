@@ -56,6 +56,15 @@ export function minutesLate(scheduled: string, actual: string) {
   return ah * 60 + am - (sh * 60 + sm)
 }
 
+/** «19 oct» de una fecha `AAAA-MM-DD`. */
+export function shortDate(iso: string) {
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${iso}T12:00:00Z`))
+}
+
 export function reportTitle(today: string) {
   const d = new Date(`${today}T12:00:00Z`)
   const day = new Intl.DateTimeFormat('es-ES', {
@@ -87,7 +96,9 @@ export function buildMorningReport(data: MorningReportData): string {
     if (o.overdue.length) {
       out.push('', `**Vencidas (${o.overdue.length})**`)
       for (const t of o.overdue.slice(0, 8))
-        out.push(`- ${t.title} · ${t.projectName} · desde el ${t.dueDate}`)
+        out.push(
+          `- ${t.title} · ${t.projectName}${t.dueDate ? ` · desde el ${shortDate(t.dueDate)}` : ''}`,
+        )
     }
     if (o.dueToday.length) {
       out.push('', `**Para hoy (${o.dueToday.length})**`)
