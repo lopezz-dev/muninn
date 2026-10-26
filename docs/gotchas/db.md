@@ -230,7 +230,8 @@
 
 - **Síntoma:** en Noticias, «Actualizar» dice «Las noticias aún no se descargan desde aquí» y no llegan artículos.
 - **Causa:** la descarga la hace la Edge Function `news` con un cron ([ADR-0042](../adr/0042-noticias-rss-con-descarga-en-servidor.md)), y está
-  preparada pero **sin desplegar**. Las tablas (`20261022140000_news`) ya están aplicadas (22 de octubre, versión alineada).
+  **desplegada desde el 26 de octubre** (cron `muninn-news-fetch`, minuto 7 de cada hora). Si vuelve a pasar, revisa que siga
+  desplegada y sus logs. Las tablas (`20261022140000_news`) ya están aplicadas (22 de octubre, versión alineada).
 - **Solución** (fase final), en este orden:
   1. **Empaquetar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/news/_core/muninn.js`, fuera de git).
   2. **Desplegar** con la CLI (`npx supabase@2 login` una vez):

@@ -147,8 +147,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ### F3 · Finanzas
 > Migración aplicada el 21 de octubre con `apply_migration` (versión alineada a `20261021120000`); RLS comprobada en SQL con una sesión
 > simulada (0 filas ajenas en tablas y vista) y las tres tablas en `supabase_realtime`. El MCP de stdio y el paquete de la Edge están
-> recompilados; la función `mcp` desplegada **no** se ha tocado.
-- [ ] Redesplegar la función `mcp` para que el MCP remoto tenga Finanzas: `pnpm --filter @muninn/mcp build:edge` y
+> recompilados. La función `mcp` se redesplegó el 26 de octubre.
+- [x] Redesplegar la función `mcp` para que el MCP remoto tenga Finanzas: `pnpm --filter @muninn/mcp build:edge` y
   `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` ([gotchas/mcp](gotchas/mcp.md))
 - [ ] Con tu sesión (en el 5174): activar Finanzas, crear una cuenta «Prueba F3 …», apuntar, editar y archivar con «Deshacer», y
   archivar la cuenta al acabar. En la demo (5175) y con SQL dentro de `rollback` pasa el 21 de octubre; con tu sesión no se pudo porque
@@ -162,12 +162,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
 
 ### F4 · Asistente (fase final)
-> El MCP de stdio y el paquete de la Edge están recompilados con el catálogo único; la función `mcp` desplegada **no** se ha tocado. La
+> El MCP de stdio y el paquete de la Edge están recompilados con el catálogo único; la función `mcp` se redesplegó el 26 de octubre. La
 > migración del actor `assistant` está aplicada (versión alineada).
 - [ ] Instalar Ollama, `OLLAMA_ORIGINS` y `ollama pull qwen3:8b`: [gotchas/desktop](gotchas/desktop.md#instalar-ollama-y-el-modelo-del-asistente-pasos-manuales-fase-final)
 - [ ] Banco de pruebas contra el modelo: `pnpm --filter @muninn/assistant bench -- --model qwen3:8b` (y `qwen3:14b` para comparar); apunta
   aquí cuántos casos pasan y el tiempo, y deja el que mejor vaya como modelo por defecto
-- [ ] Redesplegar la función `mcp` con el catálogo único: `pnpm --filter @muninn/mcp build:edge` y
+- [x] Redesplegar la función `mcp` con el catálogo único: `pnpm --filter @muninn/mcp build:edge` y
   `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` (lleva también lo de Finanzas)
 - [ ] Con Claude conectado por stdio (reiniciando el cliente tras compilar): las mismas herramientas de siempre responden igual
 - [ ] Con tu sesión en el ordenador (5174 o la app de escritorio) y Ollama listo: «¿Cómo voy hoy?» responde con tus datos; «Crea una tarea
@@ -181,13 +181,13 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > Tablas aplicadas el 22 de octubre (versión alineada) y RLS comprobada en SQL con `rollback` (el dueño ve lo suyo, otra sesión 0 filas, sin
 > duplicados por `guid`). En la demo (5175, «Prueba F4 …») pasa: activar el módulo, temas, guardadas, pausar fuente con «Deshacer», «Crear
 > tarea» con el título, ⌘K «Buscar en Noticias» y móvil sin scroll horizontal.
-- [ ] Desplegar la función `news` y su cron: [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales) (pasos 1–4)
+- [x] Desplegar la función `news` y su cron: [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales) (pasos 1–4)
 - [ ] Con tu sesión: añadir 2–3 fuentes reales (una Atom, una RSS, una que falle) y «Actualizar»: llegan artículos; la que falla enseña el
   error; volver a «Actualizar» no duplica nada
 - [ ] Con Ollama: abrir Noticias genera «Lo importante de hoy» solo; «Rehacer» lo cambia y «Deshacer» devuelve el anterior; en el iPhone se ve
   el mismo resumen
 - [ ] Con el ordenador apagado una noche: por la mañana, en el iPhone, hay artículos nuevos (el cron funciona sin el ordenador)
-- [ ] Redesplegar `mcp` (lleva `list_news` y `news_digest`)
+- [x] Redesplegar `mcp` (lleva `list_news` y `news_digest`)
 
 ### F4 · Informe de la mañana (fase final)
 > En la demo (5175) pasa el 25 de octubre: activarlo con «Deshacer», «Hacer ahora» crea la nota fijada con actor `assistant`, a las 12:58
@@ -253,7 +253,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Noticias: fuentes RSS elegidas + resumen diario
   - [x] Diseño (ADR-0042): tablas `news_sources`, `news_items` y `news_digests` con RLS y en Realtime (migración `20261022140000_news`,
     aplicada el 22 de octubre), lector RSS/Atom en el core con tests, sin duplicados por `guid`, limpieza a los 30 días de lo no guardado
-  - [x] Edge Function `news` (cron cada hora y «Actualizar» con la sesión) **preparada, sin desplegar**: pasos en
+  - [x] Edge Function `news` (cron cada hora y «Actualizar» con la sesión) **desplegada el 26 de octubre**, con su cron: pasos en
     [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales)
   - [x] Pantalla **Noticias** (lienzo): resumen del día generado en local, temas, guardadas, búsqueda, artículos con «Relacionada con…»,
     «Crear tarea», «Guardar como nota», «Leer luego» y fuentes (añadir, pausar y quitar con «Deshacer»). Guía [Noticias](user/12-noticias.md).
