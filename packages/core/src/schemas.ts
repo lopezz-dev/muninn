@@ -165,6 +165,8 @@ export interface Activity {
     | 'category'
     | 'transaction'
     | 'subscription'
+    | 'news_source'
+    | 'news_digest'
   entityId: string
   action: string
   actor: ActorKind
@@ -503,3 +505,95 @@ export type CreateNoteInput = z.input<typeof createNoteInput>
 export type UpdateNoteInput = z.input<typeof updateNoteInput>
 export type NoteQuery = z.infer<typeof noteQuery>
 export type UpdateSettingsInput = z.input<typeof updateSettingsInput>
+
+// ─── Noticias (ADR-0042) ──────────────────────────────────────────────────────
+
+/** Una fuente RSS o Atom del usuario. `etag`/`lastModified` sirven para la descarga condicional. */
+export interface NewsSource {
+  id: string
+  url: string
+  title: string
+  siteUrl: string | null
+  /** Tema libre para agrupar en la pantalla («IA local», «Rust»). */
+  topic: string | null
+  enabled: boolean
+  etag: string | null
+  lastModified: string | null
+  lastFetchedAt: string | null
+  lastError: string | null
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Un artículo descargado. `guid` es su id estable en la fuente: con él no se repite. */
+export interface NewsItem {
+  id: string
+  sourceId: string
+  guid: string
+  url: string
+  title: string
+  /** Texto plano, recortado (sin HTML). */
+  summary: string
+  author: string | null
+  publishedAt: string | null
+  fetchedAt: string
+  readAt: string | null
+  savedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** El resumen del día, generado en el ordenador con el modelo local. Uno por fecha. */
+export interface NewsDigest {
+  id: string
+  date: string
+  /** Markdown corto (viñetas). */
+  content: string
+  model: string | null
+  itemIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+const httpUrl = z
+  .string()
+  .trim()
+  .max(2000)
+  .regex(/^https?:\/\/[^\s]+$/i, 'Tiene que ser una dirección http(s)')
+
+export const createNewsSourceInput = z.object({
+  url: httpUrl,
+  title: z.string().trim().min(1).max(120).optional(),
+  topic: z.string().trim().min(1).max(40).nullable().optional(),
+})
+
+export const updateNewsSourceInput = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  topic: z.string().trim().min(1).max(40).nullable().optional(),
+  enabled: z.boolean().optional(),
+})
+
+export const newsQuery = z.object({
+  sourceId: z.uuid().optional(),
+  topic: z.string().optional(),
+  /** Solo las guardadas. */
+  saved: z.boolean().optional(),
+  unread: z.boolean().optional(),
+  /** Publicadas (o descargadas) desde esta fecha y hora. */
+  since: z.iso.datetime({ offset: true }).optional(),
+  search: z.string().optional(),
+  limit: z.number().int().min(1).max(500).optional(),
+})
+
+export const saveDigestInput = z.object({
+  date: z.iso.date(),
+  content: z.string().trim().min(1).max(8000),
+  model: z.string().max(120).nullable().optional(),
+  itemIds: z.array(z.uuid()).max(200).optional(),
+})
+
+export type CreateNewsSourceInput = z.input<typeof createNewsSourceInput>
+export type UpdateNewsSourceInput = z.input<typeof updateNewsSourceInput>
+export type NewsQuery = z.input<typeof newsQuery>
+export type SaveDigestInput = z.input<typeof saveDigestInput>

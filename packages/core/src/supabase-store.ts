@@ -1,5 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Activity, GithubRepoSummary, GithubSyncScope, UserSettings } from './schemas'
+import type {
+  Activity,
+  GithubRepoSummary,
+  GithubSyncScope,
+  NewsDigest,
+  NewsItem,
+  NewsSource,
+  UserSettings,
+} from './schemas'
 import {
   type AccountStoreQuery,
   type ActivityLog,
@@ -7,6 +15,10 @@ import {
   type Collection,
   type GithubOutbox,
   type NewRow,
+  type NewsDigestStore,
+  type NewsFetchSummary,
+  type NewsItemStore,
+  type NewsItemStoreQuery,
   type NoteStoreQuery,
   NotFoundError,
   type OutboxEntry,
@@ -246,11 +258,103 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Noticias (ADR-0042, migración 20261022140000_news).
+  const items = col<NewsItem, NewsItemStoreQuery>('news_items', 'Artículo', (qb, q) => {
+    if (q.sourceIds) qb = qb.in('source_id', q.sourceIds)
+    if (q.saved !== undefined)
+      qb = q.saved ? qb.not('saved_at', 'is', null) : qb.is('saved_at', null)
+    if (q.unread) qb = qb.is('read_at', null)
+    // PostgREST no ordena por expresión: sin fecha de publicación cuenta la de descarga (casi la misma).
+    if (q.since)
+      qb = qb.or(`published_at.gte.${q.since},and(published_at.is.null,fetched_at.gte.${q.since})`)
+    if (q.search) {
+      const term = likeTerm(q.search)
+      qb = qb.or(`title.ilike.${term},summary.ilike.${term}`)
+    }
+    qb = qb
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('fetched_at', { ascending: false })
+    return qb.limit(q.limit ?? 200)
+  })
+  const newsItems: NewsItemStore = {
+    get: (id) => items.get(id),
+    list: (q) => items.list(q),
+    update: (id, patch) => items.update(id, patch),
+    remove: (id) => items.remove(id),
+    async insertNew(rows) {
+      if (!rows.length) return []
+      // `ignoreDuplicates`: los que ya están (misma fuente y guid) no se tocan ni se devuelven.
+      const { data, error } = await client
+        .from('news_items')
+        .upsert(
+          rows.map((r) => ({ ...toRow(r), owner_id: ownerId })),
+          { onConflict: 'source_id,guid', ignoreDuplicates: true },
+        )
+        .select('*')
+      if (error) throw error
+      return (data as Row[]).map((r) => fromRow<NewsItem>(r))
+    },
+  }
+  const newsDigests: NewsDigestStore = {
+    async get(date) {
+      const { data, error } = await client
+        .from('news_digests')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .eq('date', date)
+        .maybeSingle()
+      if (error) throw error
+      return data ? fromRow<NewsDigest>(data) : null
+    },
+    async latest() {
+      const { data, error } = await client
+        .from('news_digests')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data ? fromRow<NewsDigest>(data) : null
+    },
+    async upsert(row) {
+      const { data, error } = await client
+        .from('news_digests')
+        .upsert({ ...toRow(row), owner_id: ownerId }, { onConflict: 'owner_id,date' })
+        .select('*')
+        .single()
+      if (error) throw error
+      return fromRow<NewsDigest>(data)
+    },
+  }
+  // La descarga la hace la Edge Function `news` (POST /news/fetch con la sesión del usuario: solo sus fuentes).
+  const newsFeeds = {
+    async fetchNow() {
+      const { data, error } = await client.functions.invoke('news/fetch', {
+        method: 'POST',
+        body: {},
+      })
+      if (error) throw error
+      return data as NewsFetchSummary
+    },
+  }
+
   return {
     activity,
     settings,
     githubOutbox,
     githubRepos,
+    newsSources: col<NewsSource, { includeArchived?: boolean }>(
+      'news_sources',
+      'Fuente',
+      (qb, q) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        return qb.order('title')
+      },
+    ),
+    newsItems,
+    newsDigests,
+    newsFeeds,
     // Finanzas (ADR-0037, migración 20261021120000_finance).
     async accountTotals() {
       const { data, error } = await client
@@ -340,4 +444,38 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       return q.limit ? qb.limit(q.limit) : qb
     }),
   }
+}
+
+/**
+ * Dueños con alguna fuente activa, para el cron de la Edge Function `news` (con la service role, ADR-0042): la descarga
+ * se hace usuario a usuario, cada uno con su store.
+ */
+export async function listNewsOwners(client: Client): Promise<string[]> {
+  const { data, error } = await client
+    .from('news_sources')
+    .select('owner_id')
+    .eq('enabled', true)
+    .is('archived_at', null)
+  if (error) throw error
+  return [...new Set((data as Row[]).map((r) => r.owner_id as string))]
+}
+
+/**
+ * Limpieza del cron (service role, ADR-0042): artículos no guardados de hace más de `itemDays` y resúmenes de hace más
+ * de `digestDays`. Es caché de lo que publican otros, no datos del usuario: lo guardado no se toca nunca.
+ */
+export async function pruneNews(client: Client, { itemDays = 30, digestDays = 120 } = {}) {
+  const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString()
+  const items = await client
+    .from('news_items')
+    .delete({ count: 'exact' })
+    .is('saved_at', null)
+    .lt('fetched_at', ago(itemDays))
+  if (items.error) throw items.error
+  const digests = await client
+    .from('news_digests')
+    .delete({ count: 'exact' })
+    .lt('date', ago(digestDays).slice(0, 10))
+  if (digests.error) throw digests.error
+  return { items: items.count ?? 0, digests: digests.count ?? 0 }
 }

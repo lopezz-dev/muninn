@@ -6,4 +6,4 @@
 
 export * from './github-sync'
 export { createMuninn } from './service'
-export { createSupabaseStore } from './supabase-store'
+export { createSupabaseStore, listNewsOwners, pruneNews } from './supabase-store'

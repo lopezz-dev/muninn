@@ -48,13 +48,13 @@ export function NewTaskDialog({
   // Al abrir, vuelve a empezar: el proyecto y la columna que mande quien lo abre, o el primero.
   useEffect(() => {
     if (!open) return
-    setTitle('')
+    setTitle(preset.title ?? '')
     setPriority('none')
     setDueDate('')
     setError(undefined)
     setProjectId(preset.projectId ?? '')
     setColumnId(preset.columnId ?? '')
-  }, [open, preset.projectId, preset.columnId])
+  }, [open, preset.projectId, preset.columnId, preset.title])
 
   const effectiveProject = projects.some((p) => p.id === projectId) ? projectId : projects[0]?.id
   const board = useQuery({
@@ -76,6 +76,7 @@ export function NewTaskDialog({
       projectId: effectiveProject,
       columnId: effectiveColumn,
       title: clean,
+      description: preset.description,
       priority,
       dueDate: dueDate || null,
     })

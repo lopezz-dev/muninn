@@ -4,6 +4,9 @@ import type {
   ChecklistItem,
   FinanceAccount,
   FinanceCategory,
+  NewsDigest,
+  NewsItem,
+  NewsSource,
   Note,
   Project,
   Subscription,
@@ -18,6 +21,7 @@ import {
   type CategoryStoreQuery,
   type Collection,
   type NewRow,
+  type NewsItemStoreQuery,
   type NoteStoreQuery,
   NotFoundError,
   type OutboxEntry,
@@ -40,6 +44,9 @@ export interface MemorySnapshot {
   financeCategories: FinanceCategory[]
   transactions: Transaction[]
   financeSubscriptions: Subscription[]
+  newsSources: NewsSource[]
+  newsItems: NewsItem[]
+  newsDigests: NewsDigest[]
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -55,6 +62,9 @@ export const emptySnapshot = (): MemorySnapshot => ({
   financeCategories: [],
   transactions: [],
   financeSubscriptions: [],
+  newsSources: [],
+  newsItems: [],
+  newsDigests: [],
 })
 
 /** Lo que tiene un usuario sin fila en `user_settings` (los defaults de la tabla). */
@@ -142,6 +152,10 @@ export function createMemoryStore(
   const categories = toMap(initial.financeCategories ?? [])
   const transactions = toMap(initial.transactions ?? [])
   const subscriptions = toMap(initial.financeSubscriptions ?? [])
+  // Ni los de antes de Noticias.
+  const newsSources = toMap(initial.newsSources ?? [])
+  const newsItems = toMap(initial.newsItems ?? [])
+  const newsDigests = toMap(initial.newsDigests ?? [])
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -157,6 +171,9 @@ export function createMemoryStore(
       financeCategories: [...categories.values()],
       transactions: [...transactions.values()],
       financeSubscriptions: [...subscriptions.values()],
+      newsSources: [...newsSources.values()],
+      newsItems: [...newsItems.values()],
+      newsDigests: [...newsDigests.values()],
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -182,9 +199,75 @@ export function createMemoryStore(
     },
   }
 
+  /** Fecha por la que se ordena un artículo: la de publicación o, sin ella, la de descarga. */
+  const when = (i: NewsItem) => i.publishedAt ?? i.fetchedAt
+  const itemCollection = new MemoryCollection<NewsItem, NewsItemStoreQuery>(
+    'Artículo',
+    newsItems,
+    (rows, q) =>
+      rows
+        .filter((i) => !q.sourceIds || q.sourceIds.includes(i.sourceId))
+        .filter((i) => q.saved === undefined || Boolean(i.savedAt) === q.saved)
+        .filter((i) => !q.unread || !i.readAt)
+        .filter((i) => !q.since || when(i) >= q.since)
+        .filter((i) => !q.search || includesText([i.title, i.summary], q.search))
+        .sort((a, b) => (when(a) < when(b) ? 1 : when(a) > when(b) ? -1 : 0))
+        .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+    changed,
+    now,
+  )
+  const digestOrder = (a: NewsDigest, b: NewsDigest) => (a.date < b.date ? 1 : -1)
+
   return {
     snapshot,
     activity: activityLog,
+    newsSources: new MemoryCollection<NewsSource, { includeArchived?: boolean }>(
+      'Fuente',
+      newsSources,
+      (rows, q) =>
+        rows
+          .filter((x) => q.includeArchived || !x.archivedAt)
+          .sort((a, b) => a.title.localeCompare(b.title, 'es')),
+      changed,
+      now,
+    ),
+    newsItems: {
+      get: (id) => itemCollection.get(id),
+      list: (q) => itemCollection.list(q),
+      update: (id, patch) => itemCollection.update(id, patch),
+      remove: (id) => itemCollection.remove(id),
+      async insertNew(rows) {
+        const seen = new Set([...newsItems.values()].map((i) => `${i.sourceId}|${i.guid}`))
+        const added: NewsItem[] = []
+        for (const row of rows) {
+          const key = `${row.sourceId}|${row.guid}`
+          if (seen.has(key)) continue
+          seen.add(key)
+          added.push(await itemCollection.insert(row))
+        }
+        return added
+      },
+    },
+    newsDigests: {
+      async get(date) {
+        const d = [...newsDigests.values()].find((x) => x.date === date)
+        return d ? structuredClone(d) : null
+      },
+      async latest() {
+        const d = [...newsDigests.values()].sort(digestOrder)[0]
+        return d ? structuredClone(d) : null
+      },
+      async upsert(row) {
+        const current = [...newsDigests.values()].find((x) => x.date === row.date)
+        const ts = now()
+        const full: NewsDigest = current
+          ? { ...current, ...row, updatedAt: ts }
+          : { ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }
+        newsDigests.set(full.id, full)
+        changed()
+        return structuredClone(full)
+      },
+    },
     async accountTotals() {
       const net = new Map<string, number>()
       const add = (id: string, delta: number) => net.set(id, (net.get(id) ?? 0) + delta)

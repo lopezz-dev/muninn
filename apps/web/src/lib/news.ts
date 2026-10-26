@@ -1,0 +1,233 @@
+import type { Muninn, NewsItem, NewsSource } from '@muninn/core'
+import { notify } from '@muninn/ui'
+import { type QueryClient, queryOptions } from '@tanstack/react-query'
+import { fail, isBusy, reason, serial } from './mutations'
+
+/**
+ * Noticias (ADR-0042): consultas bajo `['news', …]` (el tiempo real refresca ese prefijo entero) y acciones con
+ * feedback y «Deshacer» (ADR-0019) por una sola cola (`serial('news')`). Nada se borra: las fuentes se archivan.
+ */
+
+export const NEWS_QUEUE = 'news'
+
+export const newsKeys = {
+  all: ['news'] as const,
+  sources: ['news', 'sources'] as const,
+  items: ['news', 'items'] as const,
+  digest: (date: string) => ['news', 'digest', date] as const,
+}
+
+export const newsSourcesQuery = (m: Muninn) =>
+  queryOptions({ queryKey: newsKeys.sources, queryFn: () => m.news.sources.list() })
+
+/** Los últimos 200 artículos: la pantalla filtra por tema, búsqueda y guardadas en el navegador. */
+export const newsItemsQuery = (m: Muninn) =>
+  queryOptions({ queryKey: newsKeys.items, queryFn: () => m.news.items.list({ limit: 200 }) })
+
+export const newsDigestQuery = (m: Muninn, date: string) =>
+  queryOptions({ queryKey: newsKeys.digest(date), queryFn: () => m.news.digests.get(date) })
+
+/** Fecha por la que se ordena y se cuenta un artículo. */
+export const itemDate = (i: Pick<NewsItem, 'publishedAt' | 'fetchedAt'>) =>
+  i.publishedAt ?? i.fetchedAt
+
+export interface NewsFilter {
+  /** `null`: todas; `'__saved'`: las guardadas; si no, un tema. */
+  tab: string | null
+  search: string
+}
+
+export const SAVED_TAB = '__saved'
+
+const fold = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+
+/** Los artículos que se ven con ese filtro (por tema de su fuente, guardadas y texto). */
+export function filterNews(items: NewsItem[], sources: NewsSource[], f: NewsFilter): NewsItem[] {
+  const topic = new Map(sources.map((s) => [s.id, s.topic]))
+  const needle = fold(f.search.trim())
+  return items.filter(
+    (i) =>
+      (f.tab === null ||
+        (f.tab === SAVED_TAB ? Boolean(i.savedAt) : topic.get(i.sourceId) === f.tab)) &&
+      (!needle || fold(`${i.title} ${i.summary}`).includes(needle)),
+  )
+}
+
+/** Pestañas de temas: los de las fuentes activas, con cuántos artículos tiene cada uno. */
+export function topicTabs(items: NewsItem[], sources: NewsSource[]) {
+  const counts = new Map<string, number>()
+  const topic = new Map(sources.map((s) => [s.id, s.topic]))
+  for (const i of items) {
+    const t = topic.get(i.sourceId)
+    if (t) counts.set(t, (counts.get(t) ?? 0) + 1)
+  }
+  return [...counts].sort((a, b) => a[0].localeCompare(b[0], 'es'))
+}
+
+/** Cuántas han llegado en las últimas 24 horas (el «6 nuevas desde ayer» del diseño). */
+export const newSince = (items: NewsItem[], now = Date.now()) =>
+  items.filter((i) => new Date(itemDate(i)).getTime() >= now - 86_400_000).length
+
+const run = <T>(fn: () => Promise<T>) => serial(NEWS_QUEUE, fn)
+
+export function settleNews(qc: QueryClient) {
+  if (isBusy(NEWS_QUEUE)) return
+  void qc.invalidateQueries({ queryKey: newsKeys.all })
+}
+
+export async function addSource(
+  m: Muninn,
+  qc: QueryClient,
+  input: { url: string; topic?: string | null },
+): Promise<NewsSource | null> {
+  let source: NewsSource
+  try {
+    source = await run(() => m.news.sources.create(input))
+  } catch (err) {
+    fail('No se pudo añadir la fuente', err)
+    return null
+  } finally {
+    settleNews(qc)
+  }
+  notify.success(`Fuente «${source.title}» añadida`, {
+    icon: 'news',
+    description: 'Sus artículos llegan en la próxima descarga',
+    action: {
+      label: 'Deshacer',
+      onClick: async () => {
+        await archiveSource(m, qc, source, { undoing: true })
+      },
+    },
+  })
+  return source
+}
+
+export async function setSourceEnabled(
+  m: Muninn,
+  qc: QueryClient,
+  source: NewsSource,
+  enabled: boolean,
+) {
+  qc.setQueryData<NewsSource[]>(newsKeys.sources, (list) =>
+    list?.map((s) => (s.id === source.id ? { ...s, enabled } : s)),
+  )
+  try {
+    await run(() => m.news.sources.update(source.id, { enabled }))
+  } catch (err) {
+    fail('No se pudo cambiar la fuente', err)
+    return settleNews(qc)
+  }
+  settleNews(qc)
+  notify.success(enabled ? `«${source.title}» activada` : `«${source.title}» en pausa`, {
+    icon: 'news',
+    action: {
+      label: 'Deshacer',
+      onClick: () => void setSourceEnabled(m, qc, { ...source, enabled }, !enabled),
+    },
+  })
+}
+
+export async function archiveSource(
+  m: Muninn,
+  qc: QueryClient,
+  source: NewsSource,
+  opts: { undoing?: boolean } = {},
+) {
+  qc.setQueryData<NewsSource[]>(newsKeys.sources, (list) => list?.filter((s) => s.id !== source.id))
+  try {
+    await run(() => m.news.sources.archive(source.id))
+  } catch (err) {
+    fail('No se pudo quitar la fuente', err)
+    return settleNews(qc)
+  }
+  settleNews(qc)
+  if (opts.undoing) return notify.info('Fuente quitada')
+  notify.success(`«${source.title}» quitada`, {
+    icon: 'archive',
+    description: 'Sus artículos guardados se conservan',
+    action: {
+      label: 'Deshacer',
+      onClick: async () => {
+        try {
+          await run(() => m.news.sources.restore(source.id))
+          notify.info('Fuente recuperada')
+        } catch (err) {
+          fail('No se pudo recuperar', err)
+        }
+        settleNews(qc)
+      },
+    },
+  })
+}
+
+export async function setSaved(
+  m: Muninn,
+  qc: QueryClient,
+  item: NewsItem,
+  saved: boolean,
+  undoing = false,
+) {
+  const savedAt = saved ? new Date().toISOString() : null
+  qc.setQueryData<NewsItem[]>(newsKeys.items, (list) =>
+    list?.map((i) => (i.id === item.id ? { ...i, savedAt } : i)),
+  )
+  try {
+    await run(() => m.news.items.setSaved(item.id, saved))
+  } catch (err) {
+    fail('No se pudo guardar', err)
+    return settleNews(qc)
+  }
+  settleNews(qc)
+  if (undoing) return
+  notify.success(saved ? 'Guardada para leer luego' : 'Ya no está guardada', {
+    icon: 'pin',
+    action: { label: 'Deshacer', onClick: () => void setSaved(m, qc, item, !saved, true) },
+  })
+}
+
+/** Al abrir un artículo: leído, sin aviso (es navegar, no cambiar nada que haya que deshacer). */
+export function markRead(m: Muninn, qc: QueryClient, item: NewsItem) {
+  if (item.readAt) return
+  qc.setQueryData<NewsItem[]>(newsKeys.items, (list) =>
+    list?.map((i) => (i.id === item.id ? { ...i, readAt: new Date().toISOString() } : i)),
+  )
+  void run(() => m.news.items.markRead(item.id)).catch(() => {})
+}
+
+/** «Actualizar»: la descarga la hace la Edge Function `news`; sin ella (demo, o aún sin desplegar) se dice. */
+export async function refreshNews(m: Muninn, qc: QueryClient) {
+  const id = notify.loading('Buscando noticias…', { icon: 'sync' })
+  try {
+    const r = await m.news.fetchNow()
+    notify.dismiss(id)
+    notify.success(
+      r.added
+        ? `${r.added} ${r.added === 1 ? 'artículo nuevo' : 'artículos nuevos'}`
+        : 'No hay nada nuevo',
+      {
+        icon: 'news',
+        description: r.errors.length
+          ? `${r.errors.length} ${r.errors.length === 1 ? 'fuente no respondió' : 'fuentes no respondieron'}`
+          : undefined,
+      },
+    )
+  } catch (err) {
+    notify.dismiss(id)
+    notify.error('Las noticias aún no se descargan desde aquí', {
+      description:
+        err instanceof Error && /servidor/.test(err.message)
+          ? 'En la demo no se descargan feeds.'
+          : `Falta poner en marcha la descarga en el servidor (fase final). ${reason(err) ?? ''}`.trim(),
+    })
+  } finally {
+    settleNews(qc)
+  }
+}
+
+/** Texto de la nota que se crea desde un artículo: resumen y enlace. */
+export const noteFromItem = (item: NewsItem, sourceTitle: string | undefined) =>
+  `${item.summary ? `${item.summary}\n\n` : ''}[Leer en ${sourceTitle ?? 'la fuente'}](${item.url})`

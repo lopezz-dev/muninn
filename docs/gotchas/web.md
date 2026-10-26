@@ -388,3 +388,20 @@
 - **Causa:** el asistente solo pasa al modelo las herramientas de los módulos activos (`toolsFor`, ADR-0028 y ADR-0041). Si el modelo pide una
   de un módulo oculto, el bucle le contesta que el usuario lo tiene desactivado para que se lo diga. El MCP sigue viéndolo todo.
 - **Solución:** activa el módulo en Ajustes › Módulos. No lo «arregles» pasando todo el catálogo.
+
+### Noticias: todo cuelga de `['news', …]` y la cola `news`
+
+- Fuentes, artículos y resumen se refrescan juntos (`scope` `news` del tiempo real) y las escrituras van por `serial('news')` (`lib/news.ts`).
+  Los filtros (tema, guardadas, búsqueda) se aplican en el navegador sobre los 200 últimos: el core solo los lista.
+- El resumen se genera solo la primera vez que se abre Noticias en el día **si** hay artículos recientes y Ollama responde
+  (`lib/news-digest.ts`, una generación a la vez por pestaña). En la demo no se genera (no hay modelo): se ve el texto que lo explica.
+- «Crear tarea» abre el diálogo de siempre con el título y el enlace ya puestos (`openNewTask({ title, description })`).
+
+### Un `import()` dinámico de un paquete que otra pantalla importa estático engorda el arranque
+
+- **Síntoma:** al añadir una pantalla, `pnpm --filter @muninn/web size` sube ~2–3 kB gzip y aparece en el arranque un `dist-*.js` de ~10 kB
+  con utilidades de Radix (`useId`, `useControllableState`…), aunque la pantalla nueva es diferida.
+- **Causa:** `lib/news-digest.ts` hacía `await import('@muninn/assistant')`, que la pantalla Asistente importa de forma estática. Rolldown
+  reparte entonces los módulos compartidos en chunks nuevos y uno de ellos (Radix) acaba colgando del shell.
+- **Solución:** desde código que ya vive en un chunk diferido (una pantalla y sus `lib/`), importa `@muninn/assistant` de forma estática.
+  Antes de abrir el PR, compara `size` con la rama anterior; para encontrar al culpable, quita imports de la pantalla nueva de uno en uno.

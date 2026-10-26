@@ -91,6 +91,16 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         keywords: q,
         run: () => navigate({ to: '/asistente', search: { q } }),
       })
+      if (sectionEnabled('news', modules)) {
+        all.push({
+          id: 'search-news',
+          group: 'ask',
+          label: `Buscar en Noticias: «${q}»`,
+          icon: 'news',
+          keywords: q,
+          run: () => navigate({ to: '/noticias', search: { q } }),
+        })
+      }
     }
     for (const id of NAV_ORDER) {
       if (!sectionEnabled(id, modules)) continue
@@ -261,7 +271,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
                   >
                     {it.group === 'ask' ? (
                       <span className="grid size-[26px] place-items-center rounded-md bg-accent-soft text-accent">
-                        <Icon name="assistant" size={14} />
+                        <Icon name={it.icon} size={14} />
                       </span>
                     ) : it.color ? (
                       <span className="grid size-4 place-items-center">

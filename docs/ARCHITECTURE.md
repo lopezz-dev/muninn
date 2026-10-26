@@ -14,7 +14,7 @@
         │
   Supabase: Postgres + Auth + Realtime + Edge Functions
         ▲            ▲                 ▲
-   webhooks GitHub   agentes (F4)     cron noticias (F4)
+   webhooks GitHub   agentes (F4)     cron noticias (función `news`, ADR-0042)
 
   packages/assistant ── catálogo único de herramientas · bucle · proveedores (Ollama, guion) ──► pantalla Asistente (ADR-0041)
          ▲                       └─ app ──► http://localhost:11434 (Ollama, solo en el ordenador)
@@ -80,6 +80,9 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 | `finance_accounts` | Cuentas (corriente, ahorro, inversión, efectivo…) con su saldo inicial. El saldo **no se guarda**: lo suma la vista `finance_account_totals` ([ADR-0037](adr/0037-modelo-de-datos-de-finanzas.md)). |
 | `finance_categories` | Categorías de gastos o de ingresos; las de serie llevan `key` y se siembran la primera vez. |
 | `finance_transactions` | Movimientos: gasto, ingreso o traspaso entre cuentas, en céntimos y siempre positivos ([ADR-0018](adr/0018-dinero-en-centimos.md)). Ahorrar o invertir es un traspaso. |
+| `news_sources` | Fuentes RSS del usuario, con tema y estado de la última descarga ([ADR-0042](adr/0042-noticias-rss-con-descarga-en-servidor.md)). |
+| `news_items` | Artículos descargados por la Edge Function `news`, sin duplicados por `(source_id, guid)`; los no guardados caducan a los 30 días. |
+| `news_digests` | El resumen del día (uno por fecha), generado en el ordenador con el modelo local. |
 | `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn (`kind = 'state'`, [ADR-0031](adr/0031-sync-github-issues-tareas.md)) o que entraron o salieron de la columna del agente (`kind = 'agent'`, ADR-0032). |
 
 ### Sincronización con GitHub
@@ -107,5 +110,5 @@ dock y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0
 | `notes` | F1 — core listo |
 | `github` (issues → tareas) | F2 |
 | `finance` (gastos, ingresos, ahorro, inversión, suscripciones) | F3 — core listo (ADR-0037) |
-| `news` (RSS + resúmenes) | F4 |
+| `news` (RSS + resúmenes) | F4 — core, función `news` (sin desplegar) y pantalla (ADR-0042) |
 | `focus` (temporizador "isla") | Backlog |

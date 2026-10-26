@@ -103,4 +103,5 @@ args = ["C:/sourcecode/personal_app/packages/mcp/dist/index.js"]
 | `get_task`: con subtareas y notas | `create_note`, `update_note` |
 | `list_columns`, `list_notes`, `recent_activity` | |
 | `list_finance_accounts`, `list_transactions`, `finance_month_report` | `create_transaction`, `update_transaction`, `archive_transaction` |
+| `list_news`, `news_digest` (con Noticias) | |
 | `list_finance_categories`, `list_subscriptions` | cuentas, categorías y suscripciones: crear, editar, apuntar o saltar un cobro, archivar |

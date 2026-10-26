@@ -173,6 +173,18 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   escritorio (Tauri), lo mismo (comprueba que `OLLAMA_ORIGINS` admite `tauri.localhost`)
 - [ ] En el iPhone: la pantalla dice que el asistente usa el modelo del ordenador y no intenta conectar
 
+### F4 · Noticias (fase final)
+> Tablas aplicadas el 22 de octubre (versión alineada) y RLS comprobada en SQL con `rollback` (el dueño ve lo suyo, otra sesión 0 filas, sin
+> duplicados por `guid`). En la demo (5175, «Prueba F4 …») pasa: activar el módulo, temas, guardadas, pausar fuente con «Deshacer», «Crear
+> tarea» con el título, ⌘K «Buscar en Noticias» y móvil sin scroll horizontal.
+- [ ] Desplegar la función `news` y su cron: [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales) (pasos 1–4)
+- [ ] Con tu sesión: añadir 2–3 fuentes reales (una Atom, una RSS, una que falle) y «Actualizar»: llegan artículos; la que falla enseña el
+  error; volver a «Actualizar» no duplica nada
+- [ ] Con Ollama: abrir Noticias genera «Lo importante de hoy» solo; «Rehacer» lo cambia y «Deshacer» devuelve el anterior; en el iPhone se ve
+  el mismo resumen
+- [ ] Con el ordenador apagado una noche: por la mañana, en el iPhone, hay artículos nuevos (el cron funciona sin el ordenador)
+- [ ] Redesplegar `mcp` (lleva `list_news` y `news_digest`)
+
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
 > [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →
@@ -217,6 +229,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [ ] Elegir el modelo con el banco contra Ollama (`qwen3:8b` por defecto; `qwen3:14b` y `llama3.1:8b` como alternativas) → [Pruebas finales](#pruebas-finales)
 - [ ] Voz: Whisper (STT) + Piper/Kokoro (TTS), todo en local
 - [ ] Noticias: fuentes RSS elegidas + resumen diario
+  - [x] Diseño (ADR-0042): tablas `news_sources`, `news_items` y `news_digests` con RLS y en Realtime (migración `20261022140000_news`,
+    aplicada el 22 de octubre), lector RSS/Atom en el core con tests, sin duplicados por `guid`, limpieza a los 30 días de lo no guardado
+  - [x] Edge Function `news` (cron cada hora y «Actualizar» con la sesión) **preparada, sin desplegar**: pasos en
+    [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales)
+  - [x] Pantalla **Noticias** (lienzo): resumen del día generado en local, temas, guardadas, búsqueda, artículos con «Relacionada con…»,
+    «Crear tarea», «Guardar como nota», «Leer luego» y fuentes (añadir, pausar y quitar con «Deshacer»). Guía [Noticias](user/12-noticias.md).
+    Sin «Escuchar» del diseño: llega con la voz (bloque E)
+  - [x] Asistente y MCP: `list_news` y `news_digest` (solo lectura); ⌘K «Buscar en Noticias»
 - [ ] Agentes programados que informan del estado de las tareas
 
 ## Acceso y seguridad
@@ -248,7 +268,7 @@ más o menos en este orden:
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras
 - Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
-- Buscador ⌘K sobre tareas, notas y noticias, y acción «Nueva nota» (hoy: secciones, proyectos y acciones)
+- Buscador ⌘K sobre tareas y notas, y acción «Nueva nota» (hoy: secciones, proyectos, acciones y «Buscar en Noticias»)
 - Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional)
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS

@@ -225,3 +225,42 @@
   cobro dos veces a la vez da `23505`, pero tras archivarlo («Deshacer») se puede volver a apuntar. Si añades otra forma de crear cobros
   (un cron que apunte solo), cuenta con ese índice en lugar de comprobar antes en el cliente.
 - **Ref:** [ADR-0038](../adr/0038-suscripciones-avisan-y-se-confirman.md), migración `20261021140000_finance_subscriptions`
+
+### Noticias: descarga con la Edge Function (pasos manuales)
+
+- **Síntoma:** en Noticias, «Actualizar» dice «Las noticias aún no se descargan desde aquí» y no llegan artículos.
+- **Causa:** la descarga la hace la Edge Function `news` con un cron ([ADR-0042](../adr/0042-noticias-rss-con-descarga-en-servidor.md)), y está
+  preparada pero **sin desplegar**. Las tablas (`20261022140000_news`) ya están aplicadas (22 de octubre, versión alineada).
+- **Solución** (fase final), en este orden:
+  1. **Empaquetar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/news/_core/muninn.js`, fuera de git).
+  2. **Desplegar** con la CLI (`npx supabase@2 login` una vez):
+     `npx supabase@2 functions deploy news --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. `--no-verify-jwt` porque el cron no
+     manda JWT; la función comprueba su secreto o la sesión. Usa los secretos que ya existen: `MUNINN_SYNC_SECRET` (el mismo del cron de
+     GitHub) y, opcional, `MUNINN_TIME_ZONE`. `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase.
+  3. **Probar a mano:** `curl -X POST -H "x-muninn-sync-secret: <MUNINN_SYNC_SECRET>" https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/news/fetch`
+     responde `{ users, results: [{ sources, added, notModified, errors }], pruned }`. Sin secreto ni sesión, 401.
+  4. **Cron cada hora** (en el SQL Editor; `pg_cron`, `pg_net` y el secreto `muninn_sync_secret` del Vault ya existen por GitHub):
+     ```sql
+     select cron.schedule('muninn-news-fetch', '7 * * * *', $$
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/news/fetch',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 60000
+       );
+     $$);
+     ```
+  5. **En la app:** activa Noticias (Ajustes › Módulos), añade una fuente y pulsa «Actualizar»: llegan los artículos y la fuente pierde el
+     aviso en rojo. Los errores de una fuente se ven bajo su nombre (`news_sources.last_error`); los de la función, en **Edge Functions ›
+     news › Logs**.
+- **Ojo:** el cron borra los artículos **no guardados** de más de 30 días y los resúmenes de más de 120 (`pruneNews`). Es la única limpieza
+  automática de datos de usuario: si cambias los plazos, cambia también el ADR.
+
+### Noticias: un artículo repetido no entra, aunque cambie el título
+
+- `news_items` es único por `(source_id, guid)`: si la fuente edita un artículo (título o resumen), Muninn conserva el primero. Es a
+  propósito (el `guid` es lo estable). Si una fuente no da `guid` ni `id`, el enlace hace de id: si cambia el enlace, sale otro artículo.

@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./supabase": "./src/supabase-store.ts",
     "./file-store": "./src/file-store.ts",
-    "./github": "./src/github-sync.ts"
+    "./github": "./src/github-sync.ts",
+    "./news": "./src/news-feed.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

@@ -35,6 +35,9 @@ describe('qué refresca cada cambio', () => {
   })
 
   it('finanzas: cualquier tabla refresca Finanzas entera', () => {
+    for (const t of ['news_sources', 'news_items', 'news_digests'] as const) {
+      expect(scopesOf(c(t, { id: 'x' }))).toEqual(['news'])
+    }
     for (const t of ['finance_accounts', 'finance_categories', 'finance_transactions'] as const) {
       expect(scopesOf(c(t, { id: 'x' }))).toEqual(['finance'])
     }

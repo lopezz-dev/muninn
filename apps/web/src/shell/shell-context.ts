@@ -4,6 +4,9 @@ import { createContext, useContext } from 'react'
 export interface NewTaskPreset {
   projectId?: string
   columnId?: string
+  /** Título y descripción ya escritos (p. ej. «Crear tarea» desde una noticia). */
+  title?: string
+  description?: string
 }
 
 /** Acciones globales del shell que cualquier pantalla puede disparar. */

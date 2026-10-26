@@ -144,3 +144,15 @@
   herramientas). «Deshacer» se ejecuta con el core de la UI (`change.undo(app)`), que es `user`.
 - **Ojo:** `withActor` va fuera de `createMuninn` (con un `WeakMap`) porque como método el tipo `Muninn` se referiría a sí mismo. Solo
   funciona con cores creados por `createMuninn`.
+
+### Noticias: `ingest` no deja actividad y `refresh` va fuente a fuente
+
+- `m.news.ingest` (lo usa la Edge Function cada hora) no escribe en `activity`: sería ruido. Las acciones del usuario (fuentes,
+  resumen) sí. `m.news.refresh(fetch)` descarga **de una en una**: un feed lento no tumba a los demás y su error queda en `lastError`.
+- El lector (`news-feed.ts`) no es un parser XML completo: saca título, enlace, id, fecha, autor y un resumen en texto plano (sin HTML).
+  Si un feed real se lee mal, añade su XML como caso en `test/news.test.ts` antes de tocar las expresiones.
+- La UI no importa valores del core: lo que necesita (`relatedProjects`) está en `m.news.related`.
+- **Nunca** llames a `fetch` con la URL de una fuente sin pasar por `fetchFeed`: es la que comprueba que la dirección es pública, también tras
+  cada redirección (`assertPublicUrl`, con tests). Desde la Edge Function, pásale `resolve` (DNS) para que tampoco valgan nombres que
+  apuntan a IPs internas. Si una fuente legítima usa otro puerto, la regla es a propósito: no la relajes sin otro ADR.
+- **Ref:** [ADR-0042](../adr/0042-noticias-rss-con-descarga-en-servidor.md)

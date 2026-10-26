@@ -178,9 +178,17 @@ const assistantRoute = createRoute({
   component: screen(() => import('./screens/Asistente'), 'Asistente'),
 })
 
+export interface NewsSearch {
+  /** Búsqueda que llega desde el buscador ⌘K. */
+  q?: string
+}
+
 const newsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'noticias',
+  validateSearch: (search: Record<string, unknown>): NewsSearch => ({
+    q: typeof search.q === 'string' && search.q.trim() ? search.q.slice(0, 200) : undefined,
+  }),
   component: screen(() => import('./screens/Noticias'), 'Noticias'),
 })
 
