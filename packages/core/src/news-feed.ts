@@ -195,21 +195,50 @@ function privateIpv4(ip: string) {
   )
 }
 
-/** ¿Es una dirección IP (v4 o v6) que no es pública? */
+/** Los 8 grupos de 16 bits de una IPv6 (con `::` y un IPv4 al final, si lo trae); `null` si no lo es. */
+function ipv6Groups(ip: string): number[] | null {
+  let text = ip
+  const v4 = /(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(text)
+  if (v4) {
+    const [, p1 = 0, p2 = 0, p3 = 0, p4 = 0] = v4.map(Number)
+    if ([p1, p2, p3, p4].some((n) => n > 255)) return null
+    const hi = ((p1 << 8) | p2).toString(16)
+    const lo = ((p3 << 8) | p4).toString(16)
+    text = `${text.slice(0, -v4[0].length)}${hi}:${lo}`
+  }
+  const halves = text.split('::')
+  if (halves.length > 2) return null
+  const part = (s: string | undefined) => (s ? s.split(':') : [])
+  const head = part(halves[0])
+  const tail = part(halves[1])
+  const missing = 8 - head.length - tail.length
+  if (halves.length === 1 ? missing !== 0 : missing < 1) return null
+  const groups = [...head, ...Array<string>(halves.length === 2 ? missing : 0).fill('0'), ...tail]
+  if (groups.some((g) => !/^[0-9a-f]{1,4}$/.test(g))) return null
+  return groups.map((g) => Number.parseInt(g, 16))
+}
+
+const ipv4Of = (hi: number, lo: number) => `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`
+
+/**
+ * ¿Es una dirección IP (v4 o v6) que no es pública? En IPv6 solo vale el unicast global (`2000::/3`), sin Teredo ni
+ * documentación; si lleva una IPv4 dentro (NAT64 `64:ff9b::/96`, 6to4 `2002::/16`), cuenta la IPv4. Lo que no se
+ * entiende como IP, por si acaso, tampoco vale.
+ */
 export function isPrivateAddress(address: string) {
   const ip = address.toLowerCase().replace(/^\[|\]$/g, '')
   if (/^\d+\.\d+\.\d+\.\d+$/.test(ip)) return privateIpv4(ip)
   if (!ip.includes(':')) return false
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(ip)?.[1]
-  if (mapped) return privateIpv4(mapped)
-  return (
-    ip === '::' ||
-    ip === '::1' ||
-    /^f[cd][0-9a-f]{0,2}:/.test(ip) ||
-    /^fe[89ab][0-9a-f]?:/.test(ip) ||
-    /^ff[0-9a-f]{0,2}:/.test(ip) ||
-    ip.startsWith('::ffff:')
-  )
+  const g = ipv6Groups(ip)
+  if (!g) return true
+  const [a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g7 = 0, g8 = 0] = g
+  if (a === 0x64 && b === 0xff9b && c === 0 && d === 0 && e === 0 && f === 0) {
+    return privateIpv4(ipv4Of(g7, g8))
+  }
+  if (a === 0x2002) return privateIpv4(ipv4Of(b, c))
+  // Fuera de 2000::/3 quedan ::1, las IPv4 mapeadas o «compatibles» (::ffff:…, ::7f00:1), fc00::/7, fe80::/10, ff00::/8…
+  if ((a & 0xe000) !== 0x2000) return true
+  return a === 0x2001 && (b === 0 || b === 0xdb8)
 }
 
 /**
@@ -277,8 +306,11 @@ export const FEED_MAX_BYTES = 3_000_000
 const MAX_REDIRECTS = 3
 
 export interface FetchFeedOptions {
-  /** Resuelve un nombre a sus IPs (en la Edge Function, `Deno.resolveDns`): así tampoco valen nombres que apuntan dentro. */
-  resolve?: (hostname: string) => Promise<string[]>
+  /**
+   * Resuelve un nombre a sus IPs (en la Edge Function, `Deno.resolveDns`): así tampoco valen nombres que apuntan dentro.
+   * Es obligatorio a propósito: sin DNS no se descarga nada (si no puede resolver, que lance o devuelva `[]`).
+   */
+  resolve: (hostname: string) => Promise<string[]>
 }
 
 /**
@@ -288,8 +320,8 @@ export interface FetchFeedOptions {
  */
 export async function fetchFeed(
   source: { url: string; etag: string | null; lastModified: string | null },
-  fetchFn: typeof fetch = fetch,
-  options: FetchFeedOptions = {},
+  fetchFn: typeof fetch,
+  options: FetchFeedOptions,
 ): Promise<FeedFetchResult> {
   const headers: Record<string, string> = {
     accept:

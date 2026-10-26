@@ -12,6 +12,9 @@ import {
   ValidationError,
 } from '../src'
 
+/** DNS falso: todo nombre apunta a una IP pública. */
+const dns = { resolve: async () => ['93.184.216.34'] }
+
 const RSS = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 <channel>
@@ -101,11 +104,13 @@ describe('lector de feeds', () => {
         return new Response(status === 304 ? null : body, { status, headers })
       }) as unknown as typeof fetch
     const src = { url: 'https://x.test/rss', etag: '"abc"', lastModified: null }
-    expect(await fetchFeed(src, fake(304))).toEqual({ status: 'not-modified' })
+    expect(await fetchFeed(src, fake(304), dns)).toEqual({ status: 'not-modified' })
     expect(seen[0]?.['if-none-match']).toBe('"abc"')
-    await expect(fetchFeed(src, fake(500))).rejects.toThrow('500')
-    await expect(fetchFeed(src, fake(200, '<html></html>'))).rejects.toThrow('No parece un feed')
-    const ok = await fetchFeed(src, fake(200, RSS, { etag: '"def"' }))
+    await expect(fetchFeed(src, fake(500), dns)).rejects.toThrow('500')
+    await expect(fetchFeed(src, fake(200, '<html></html>'), dns)).rejects.toThrow(
+      'No parece un feed',
+    )
+    const ok = await fetchFeed(src, fake(200, RSS, { etag: '"def"' }), dns)
     expect(ok.status === 'ok' && ok.etag).toBe('"def"')
   })
 })
@@ -223,7 +228,7 @@ describe('noticias en el core', () => {
       url.includes('broken')
         ? new Response('no', { status: 404 })
         : new Response(RSS, { status: 200 })) as unknown as typeof fetch
-    const summary = await app.news.refresh(fetchFn)
+    const summary = await app.news.refresh(fetchFn, dns)
     expect(summary).toMatchObject({ sources: 2, added: 2, notModified: 0 })
     expect(summary.errors).toEqual([{ sourceId: broken.id, error: 'La fuente respondió 404' }])
     await expect(app.news.fetchNow()).rejects.toThrow('servidor')
@@ -254,6 +259,11 @@ describe('noticias: solo direcciones públicas (SSRF)', () => {
       'http://[::1]/feed',
       'http://[fd00::1]/feed',
       'http://[::ffff:127.0.0.1]/feed',
+      'http://[::127.0.0.1]/feed',
+      'http://[64:ff9b::169.254.169.254]/feed',
+      'http://[2002:a00:1::1]/feed',
+      'http://[2001:0:4136:e378::1]/feed',
+      'http://[fec0::1]/feed',
       'https://intranet/feed',
       'https://db.internal/feed',
       'https://ejemplo.com:8443/feed',
@@ -266,6 +276,51 @@ describe('noticias: solo direcciones públicas (SSRF)', () => {
     await expect(assertPublicUrl('https://93.184.216.34/rss')).resolves.toBeInstanceOf(URL)
     expect(isPrivateAddress('8.8.8.8')).toBe(false)
     expect(isPrivateAddress('2606:4700::1111')).toBe(false)
+  })
+
+  it('IPv6: solo unicast global, y las IPv4 que van dentro cuentan como IPv4', () => {
+    for (const ip of [
+      '::',
+      '::1',
+      '::7f00:1',
+      '::ffff:7f00:1',
+      '::ffff:8.8.8.8',
+      '64:ff9b::a9fe:a9fe',
+      '64:ff9b:1::1',
+      '2002:7f00:1::',
+      '2002:c0a8:101::1',
+      '2001::1',
+      '2001:db8::1',
+      'fd12:3456::1',
+      'fe80::1',
+      'ff02::1',
+      '1::2::3',
+      'zz::1',
+    ]) {
+      expect(isPrivateAddress(ip), ip).toBe(true)
+    }
+    for (const ip of ['64:ff9b::808:808', '64:ff9b::8.8.8.8', '2002:808:808::1', '2a00:1450::1']) {
+      expect(isPrivateAddress(ip), ip).toBe(false)
+    }
+  })
+
+  it('sin DNS no se descarga nada', async () => {
+    let fetched = false
+    const fetchFn = (async () => {
+      fetched = true
+      return new Response(RSS, { status: 200 })
+    }) as unknown as typeof fetch
+    const src = { url: 'https://blog.ejemplo.com/rss', etag: null, lastModified: null }
+    const noDns = {
+      resolve: async (): Promise<string[]> => {
+        throw new Error('Este servidor no puede comprobar a qué dirección apunta la fuente')
+      },
+    }
+    await expect(fetchFeed(src, fetchFn, noDns)).rejects.toThrow('no puede comprobar')
+    await expect(fetchFeed(src, fetchFn, { resolve: async () => [] })).rejects.toThrow(
+      'dirección pública',
+    )
+    expect(fetched).toBe(false)
   })
 
   it('con DNS, un nombre que apunta dentro tampoco vale', async () => {
@@ -288,10 +343,10 @@ describe('noticias: solo direcciones públicas (SSRF)', () => {
           : new Response(null, { status: 302, headers: { location } })
       }) as unknown as typeof fetch
     const src = { url: 'https://a.ejemplo.com/rss', etag: null, lastModified: null }
-    await expect(fetchFeed(src, redirectTo('http://169.254.169.254/'))).rejects.toThrow(
+    await expect(fetchFeed(src, redirectTo('http://169.254.169.254/'), dns)).rejects.toThrow(
       'dirección pública',
     )
-    const ok = await fetchFeed(src, redirectTo('https://b.ejemplo.com/final'))
+    const ok = await fetchFeed(src, redirectTo('https://b.ejemplo.com/final'), dns)
     expect(ok.status).toBe('ok')
     expect(calls.at(-1)).toBe('https://b.ejemplo.com/final')
     const huge = (async () =>
@@ -299,7 +354,7 @@ describe('noticias: solo direcciones públicas (SSRF)', () => {
         status: 200,
         headers: { 'content-length': '999999999' },
       })) as unknown as typeof fetch
-    await expect(fetchFeed(src, huge)).rejects.toThrow('demasiado grande')
+    await expect(fetchFeed(src, huge, dns)).rejects.toThrow('demasiado grande')
   })
 
   it('no deja añadir una fuente interna', async () => {
