@@ -87,4 +87,6 @@ arriba en la lista de conversaciones del Asistente.
 Se guardan **solo en este dispositivo** (las últimas 30) y se borran al cerrar sesión. No viajan a tu cuenta. Lo que el
 asistente cambia, en cambio, sí está en tu cuenta, como cualquier otro cambio.
 
-> **Próximamente:** hablarle con la voz (mantener pulsado para dictar y que te conteste en voz alta), también en local.
+> **Próximamente:** hablarle con la voz en la app de escritorio (mantener pulsado el micrófono para dictar, y que te conteste en voz
+> alta), también en local. En el iPhone podrás escuchar el resumen y el informe con la voz del propio teléfono; para dictar, usa el
+> micrófono del teclado.

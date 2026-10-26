@@ -52,3 +52,27 @@
 - **Ojo:** el contexto (16384 tokens) lo pide la app en cada llamada (`num_ctx`): no hace falta `OLLAMA_CONTEXT_LENGTH`. El modelo se queda
   10 minutos en la VRAM tras usarlo (`keep_alive`); si un juego necesita la GPU, `ollama stop qwen3:8b`. Los registros están en
   `%LOCALAPPDATA%\Ollama\server.log`.
+
+### Instalar la voz: whisper.cpp y Piper (pasos manuales, cuando se implemente)
+
+- **Síntoma:** no hay botón de micrófono, o Ajustes › Voz dice «No encuentro el dictado en este ordenador».
+- **Causa:** la voz es local y va en dos servicios aparte que no vienen con Muninn ([ADR-0044](../adr/0044-voz-local-whisper-y-piper.md),
+  **propuesto**: aún no implementado). Nada de esto está instalado.
+- **Solución** (Windows 11; carpeta de trabajo `%USERPROFILE%\.muninn\voz`, fuera del repo):
+  1. **Dictado (whisper.cpp).** Descarga `whisper-bin-win-cuda-12.4.0-x64.zip` de https://github.com/ggml-org/whisper.cpp/releases (v1.9.5 el
+     26-10-2026) y descomprímelo en `%USERPROFILE%\.muninn\voz\whisper`. Modelo (574 MB):
+     ```powershell
+     Invoke-WebRequest https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin -OutFile $env:USERPROFILE\.muninn\voz\ggml-large-v3-turbo-q5_0.bin
+     ```
+     Arranca: `& "$env:USERPROFILE\.muninn\voz\whisper\whisper-server.exe" -m "$env:USERPROFILE\.muninn\voz\ggml-large-v3-turbo-q5_0.bin" -l es --host 127.0.0.1 --port 8178`.
+     Prueba: `curl.exe -F file=@prueba.wav -F response_format=json http://127.0.0.1:8178/inference`.
+  2. **Si la GPU falla** (la RTX 5070 es Blackwell y la build de CUDA 12.4 puede no traer su código): usa `whisper-bin-x64.zip` (CPU) con
+     `ggml-small.bin` (488 MB, misma URL cambiando el nombre), que para frases cortas va bien en CPU.
+  3. **Python** (para Piper): `winget install -e --id Python.Python.3.12` y abre una terminal nueva.
+  4. **Voz (Piper):** `python -m pip install "piper-tts[http]"`, `python -m piper.download_voices es_ES-davefx-medium --data-dir "$env:USERPROFILE\.muninn\voz\piper"`
+     y arranca `python -m piper.http_server -m es_ES-davefx-medium --data-dir "$env:USERPROFILE\.muninn\voz\piper" --host 127.0.0.1 --port 5002`.
+     Prueba: `curl.exe -X POST -H "Content-Type: application/json" -d '{\"text\":\"Hola, soy Muninn\"}' -o hola.wav http://127.0.0.1:5002/synthesize`.
+     Escucha otras voces en https://rhasspy.github.io/piper-samples antes de elegir.
+  5. **Que arranquen solos:** un acceso directo a cada comando en `shell:startup` (Win + R) o una tarea programada «Al iniciar sesión».
+- **Ojo:** la GPU la comparten Ollama y Whisper. Con `qwen3:8b` y large-v3-turbo-q5_0 cabe en 12 GB; con `qwen3:14b`, pasa Whisper a CPU.
+  Piper va en CPU y es GPL-3.0: úsalo como programa aparte, no lo metas en el instalador sin revisar la licencia.
