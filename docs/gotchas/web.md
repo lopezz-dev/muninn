@@ -416,3 +416,12 @@
   `lib/morning-report-prefs.ts` (sin `@muninn/assistant`, para que Ajustes no lo cargue); la generación, en `lib/morning-report.ts`.
 - **Ojo:** la página de Ajustes importa la generación con `import()` dinámico solo al pulsar «Hacer ahora». Si un día lo importas de forma
   estática allí, mide `size`.
+
+### Ajustes en `preferences`: el cambio se calcula dentro de la cola
+
+- **Síntoma:** un ajuste vuelve a su valor anterior al tocar otro justo después (p. ej. cambias la hora del informe y pulsas el interruptor
+  sin salir del campo: el aviso dice «a las 20:29» y luego «cada día a las 08:30»).
+- **Causa:** `m.settings.update` fusiona por clave de `preferences`, pero cada clave (`morningReport`…) se guarda entera. Si dos cambios leen
+  el estado antes de escribir, el segundo escribe la copia vieja y pisa al primero; `serial` ordena las escrituras, no las lecturas.
+- **Solución:** lee lo guardado **dentro** de `serial('settings', …)` y aplica solo tu parche, como `savePrefs` en `lib/morning-report-prefs.ts`
+  (con test en `test/morning-report.test.ts`). Lo mismo para cualquier otra clave de `preferences` con varios campos.
