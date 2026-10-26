@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Solo lo que ve alguien sin sesión. La documentación (/documentacion/…) no está porque hoy pide sesión o modo
+  demo: sin ellos redirige a /login (ver ADR-0045). Si cambia el dominio, cambia también index.html y robots.txt.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://muninn-sepia.vercel.app/login</loc>
+  </url>
+</urlset>

@@ -1,0 +1,75 @@
+<!doctype html>
+<!--
+  Imagen social (Open Graph, 1200×630) de `public/og-image.jpg`. Lleva texto en Geist, así que se dibuja en el
+  navegador y no en `icons.mjs`. Para regenerarla: `pnpm dev`, abre /scripts/og-image.html, pulsa «Descargar»
+  y guárdala como `apps/web/public/og-image.jpg`. JPEG y no PNG: con los degradados, el PNG pesa 500 kB.
+-->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Imagen social · Muninn</title>
+    <style>
+      body { margin: 24px; background: #08090b; color: #a3a9b2; font: 14px system-ui; }
+      canvas { display: block; max-width: 100%; height: auto; margin-bottom: 12px; }
+      a { color: #f2a93b; }
+    </style>
+  </head>
+  <body>
+    <canvas id="og" width="1200" height="630"></canvas>
+    <button type="button" id="download">Descargar</button>
+    <script type="module">
+      import '@muninn/ui/fonts.css'
+
+      // Colores de `packages/ui/src/tokens.ts` (bg, fg, fg-muted, fg-subtle y el fondo del modo cristal).
+      const canvas = document.getElementById('og')
+      const ctx = canvas.getContext('2d')
+      const { width: W, height: H } = canvas
+
+      await Promise.all([
+        document.fonts.load('600 120px "Geist Variable"'),
+        document.fonts.load('400 44px "Geist Variable"'),
+      ])
+      const logo = new Image()
+      logo.src = '/favicon.svg'
+      await logo.decode()
+
+      ctx.fillStyle = '#0C0D10'
+      ctx.fillRect(0, 0, W, H)
+      const glow = (x, y, r, color) => {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+        g.addColorStop(0, color)
+        g.addColorStop(1, 'transparent')
+        ctx.fillStyle = g
+        ctx.fillRect(0, 0, W, H)
+      }
+      glow(140, -60, 760, 'rgba(242, 169, 59, 0.16)')
+      glow(1200, 700, 640, 'rgba(91, 141, 239, 0.12)')
+
+      const x = 96
+      ctx.drawImage(logo, x, 112, 132, 132)
+
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillStyle = '#ECEDEF'
+      ctx.font = '600 120px "Geist Variable"'
+      ctx.letterSpacing = '-3px'
+      ctx.fillText('Muninn', x - 6, 382)
+
+      ctx.letterSpacing = '0px'
+      ctx.fillStyle = '#A3A9B2'
+      ctx.font = '400 44px "Geist Variable"'
+      ctx.fillText('Tu sistema operativo personal', x, 448)
+
+      ctx.fillStyle = '#8A9099'
+      ctx.font = '400 28px "Geist Variable"'
+      ctx.fillText('Proyectos · Tareas · Notas · Finanzas · GitHub · Noticias · Asistente', x, 514)
+
+      document.getElementById('download').addEventListener('click', () => {
+        const a = document.createElement('a')
+        a.download = 'og-image.jpg'
+        a.href = canvas.toDataURL('image/jpeg', 0.9)
+        a.click()
+      })
+      window.ogReady = true
+    </script>
+  </body>
+</html>

@@ -273,6 +273,8 @@
   deja en el arranque envueltos en su `import`/`export`. No es código nuevo, es el envoltorio.
 - **Solución:** nada que arreglar; solo no confundirlo con una dependencia nueva. Compara el nombre de los chunks
   antes y después.
+- Algo parecido pasa con un módulo pequeño que comparten dos pantallas diferidas (`lib/seo.ts`, para el login y las guías). Va en un chunk
+  aparte, y su nombre entra en el mapa de precarga del chunk de entrada: unos 30 bytes, sin cambio en gzip.
 
 ### Notas: un editor por nota y autoguardado sin pérdidas
 
@@ -439,3 +441,35 @@
   equipo explícitos, p. ej. `vercel api "/v9/projects/prj_9QxS82caEAdwuyXwXcfAVLFImmZL?teamId=team_KBorOe6hUDxwOXVixaaqDdwf"`. La rama de
   producción se cambia con `PATCH /v9/projects/<id>/branch` (`{"branch":"main"}` al pasar a `main`, paso 9 de la [fase final](../fase-final.md)).
 - **Ojo:** no rebajes la protección del equipo para «abrir» una URL de despliegue: la de producción ya es pública y la app pide su login.
+
+### Iconos y favicon salen del logo: si cambia el logo, regenéralos
+
+- **Síntoma:** la pestaña, la PWA instalada o el icono de iOS enseñan un logo distinto del de la app.
+- **Causa:** `public/favicon.*`, `apple-touch-icon.png` e `icon-*.png` son ficheros generados. La geometría y los colores del logo
+  (`shell/Logo.tsx`) están copiados en `scripts/icons.mjs`, que no lee el componente. La imagen social (`og-image.jpg`) lleva texto
+  en Geist y se dibuja aparte, en el navegador.
+- **Solución:**
+  - Cambia la geometría en `scripts/icons.mjs` y ejecuta `pnpm --filter @muninn/web icons`. No necesita dependencias: escribe los
+    PNG y el ICO con `zlib`.
+  - Para la imagen social, con `pnpm dev`, abre `/scripts/og-image.html`, pulsa «Descargar» y guárdala en `public/og-image.jpg`.
+  - Los `maskable` y el de iOS llenan el cuadrado, sin esquinas transparentes: iOS pinta de negro la transparencia, y Android
+    recorta los `maskable` con su forma. El pájaro cabe en la zona segura (radio del 40 %).
+  - El navegador y el service worker guardan el favicon en caché: para ver el nuevo, recarga forzando o abre una ventana privada.
+  - Los iconos de escritorio (`apps/desktop/src-tauri/icons`) siguen siendo los provisionales.
+- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md)
+
+### Metas por página: `usePageMeta`, sin canónica fija
+
+- **Síntoma:** al compartir un enlace de una guía, la tarjeta dice «Muninn · Tu sistema operativo personal» y no el título de la guía.
+  O Google trata todas las rutas como la misma página.
+- **Causa:** todas las rutas sirven el mismo `index.html`. Las tarjetas (WhatsApp, Slack, X…) no ejecutan JavaScript y solo leen las
+  metas de ese HTML, que son las de toda la app. Un `<link rel="canonical">` fijo allí diría que cada ruta es la portada.
+- **Solución:**
+  - Las páginas públicas llaman a `usePageMeta({ title, description })` (`lib/seo.ts`). Pone el título, la descripción, `og:*`,
+    `twitter:*` y la canónica (la ruta sin `?…` ni `#…`), y al salir los devuelve a como estaban. Eso lo leen Google y los
+    buscadores que ejecutan JavaScript.
+  - Las pantallas privadas siguen con `PageHeader`, que solo cambia el título.
+  - Que las tarjetas lleven el título de la guía necesitaría prerender (propuesta del ADR-0045).
+  - El dominio de producción está escrito en `index.html`, `public/robots.txt` y `public/sitemap.xml`: si cambia, cámbialo en los tres.
+- **Ojo en tests:** en jsdom, `document.head.innerHTML = …` también borra el `<title>`; pon `document.title` después.
+- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md)

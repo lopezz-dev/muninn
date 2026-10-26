@@ -18,6 +18,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@muninn/web", "dev", "--port", "5175"],
       "port": 5175
+    },
+    {
+      "name": "web-preview-4173",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@muninn/web", "preview", "--port", "4173", "--strictPort"],
+      "port": 4173
     }
   ]
 }
