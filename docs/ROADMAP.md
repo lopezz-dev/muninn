@@ -222,8 +222,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   (movimientos en céntimos con concepto y fecha: `parseAmount`/`centsFromEuros` en el borde)
 
 ## F4 · Jarvis
-> **Estado:** en curso (sesión del 22 de octubre). Todo se monta sin instalar nada: Ollama y los modelos los instalas tú en la fase final
-> ([gotchas/desktop](gotchas/desktop.md#instalar-ollama-y-el-modelo-del-asistente-pasos-manuales-fase-final)).
+> **Estado:** en curso. La sesión del 22–26 de octubre deja cerebro, Asistente, Noticias e informe de la mañana en código, en PRs apilados
+> [#35](https://github.com/lopezz-dev/muninn/pull/35) → [#36](https://github.com/lopezz-dev/muninn/pull/36) →
+> [#37](https://github.com/lopezz-dev/muninn/pull/37) → [#38](https://github.com/lopezz-dev/muninn/pull/38) → el de la voz (fusionar en ese orden con
+> merge commit), y la voz solo diseñada (ADR-0044, propuesto). Nada instalado ni desplegado: Ollama, los modelos, la función `news` y la voz
+> son de la fase final ([gotchas/desktop](gotchas/desktop.md#instalar-ollama-y-el-modelo-del-asistente-pasos-manuales-fase-final),
+> [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales)).
 - [ ] Ollama + modelo de 8–14B con tool calling sobre el MCP de Muninn
   - [x] Cerebro (ADR-0041): el bucle corre en la app con el core y la sesión del usuario y habla con Ollama en `localhost:11434`; catálogo
     único de herramientas en `@muninn/assistant` compartido con el MCP (que ya no tiene herramientas propias); actor `assistant` con
@@ -236,6 +240,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     siempre local (Claude se usa por MCP) y el proveedor en la nube queda como opción futura (ADR-0041)
   - [ ] Elegir el modelo con el banco contra Ollama (`qwen3:8b` por defecto; `qwen3:14b` y `llama3.1:8b` como alternativas) → [Pruebas finales](#pruebas-finales)
 - [ ] Voz: Whisper (STT) + Piper/Kokoro (TTS), todo en local
+  - [x] Diseño en ADR-0044 (**propuesto**): whisper.cpp (`whisper-server`, large-v3-turbo-q5_0) y Piper (`es_ES-davefx-medium`) como
+    servicios locales aparte que llama la app de escritorio desde Rust (sin CORS); mantener para hablar con el texto en el campo sin enviar;
+    en web/iPhone, sin dictado propio (la Web Speech API no es local) y «Escuchar» con `speechSynthesis` del dispositivo. Pasos de
+    instalación en [gotchas/desktop](gotchas/desktop.md#instalar-la-voz-whispercpp-y-piper-pasos-manuales-cuando-se-implemente)
+  - [ ] Implementarlo (comandos de Tauri, grabación a WAV, botón de mantener, «Escuchar» en Noticias y en el informe). No entró en la sesión
+    del 22–26 de octubre por tiempo; necesita además instalar Python, Piper y whisper.cpp en tu equipo (tuyo) para probarlo
 - [ ] Noticias: fuentes RSS elegidas + resumen diario
   - [x] Diseño (ADR-0042): tablas `news_sources`, `news_items` y `news_digests` con RLS y en Realtime (migración `20261022140000_news`,
     aplicada el 22 de octubre), lector RSS/Atom en el core con tests, sin duplicados por `guid`, limpieza a los 30 días de lo no guardado
