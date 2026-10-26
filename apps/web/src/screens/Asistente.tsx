@@ -1,6 +1,7 @@
 import { createOllamaProvider } from '@muninn/assistant'
 import { Button, Card, cn, Dialog, Icon, IconButton, icons, SheetContent } from '@muninn/ui'
-import { getRouteApi } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { getRouteApi, Link } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Page, PageHeader } from '../components/Page'
 import { useAssistantChat } from '../lib/assistant-chat'
@@ -10,7 +11,9 @@ import { useAssistantPrefs } from '../lib/assistant-settings'
 import { isHandheld, useProviderStatus } from '../lib/assistant-status'
 import { timeAgo } from '../lib/dates'
 import { useEnabledModules } from '../lib/modules'
+import { reportPrefs } from '../lib/morning-report-prefs'
 import { useAuth, useMuninn } from '../lib/muninn'
+import { settingsQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
 import { BrainChip, ModelState } from './asistente/ModelState'
 import { Reply, UserBubble } from './asistente/TurnView'
@@ -30,12 +33,15 @@ function ConversationList({
   onSelect,
   onNew,
   disabled,
+  report,
 }: {
   conversations: Conversation[]
   currentId: string | null
   onSelect: (id: string) => void
   onNew: () => void
   disabled: boolean
+  /** El último informe de la mañana (ADR-0043): arriba, como «automático». */
+  report: { noteId: string; date: string } | null
 }) {
   const groups = useMemo(() => {
     const out = new Map<string, Conversation[]>()
@@ -51,6 +57,19 @@ function ConversationList({
         <icons.plus size={15} />
         Nueva conversación
       </Button>
+      {report ? (
+        <Link
+          to="/notas/$noteId"
+          params={{ noteId: report.noteId }}
+          className="flex flex-col gap-0.5 rounded-md px-3 py-2 text-[13.5px] text-fg outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          <span className="flex items-center gap-1.5 truncate">
+            <Icon name="clock" size={13} className="text-accent" />
+            Informe de la mañana
+          </span>
+          <span className="text-xs text-fg-subtle">{report.date} · automático</span>
+        </Link>
+      ) : null}
       {groups.length === 0 ? (
         <p className="px-3 py-2 text-sm text-fg-subtle">
           Aquí quedarán tus conversaciones, solo en este dispositivo.
@@ -94,6 +113,7 @@ export function Asistente() {
   const m = useMuninn()
   const auth = useAuth()
   const prefs = useAssistantPrefs()
+  const report = reportPrefs(useQuery(settingsQuery(m)).data)
   const modules = useEnabledModules()
   const desktop = useIsDesktop()
   const { q } = route.useSearch()
@@ -165,6 +185,11 @@ export function Asistente() {
 
   const list = (
     <ConversationList
+      report={
+        report.lastNoteId && report.lastDate
+          ? { noteId: report.lastNoteId, date: report.lastDate }
+          : null
+      }
       conversations={chat.conversations}
       currentId={chat.current?.id ?? null}
       disabled={chat.running}

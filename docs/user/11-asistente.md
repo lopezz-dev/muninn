@@ -69,6 +69,19 @@ Si algo falta, la pantalla te dice qué es y cómo arreglarlo:
 En **Ajustes › Asistente e IA** puedes cambiar la dirección de Ollama (casi nunca hace falta) y el modelo, y pulsar
 **Probar conexión**.
 
+## Informe de la mañana
+
+Si lo activas en **Ajustes › Asistente e IA**, cada día a la hora que elijas Muninn te prepara un informe con tus tareas
+vencidas, las de hoy y las que tienes en curso, los cobros de los próximos días y el resumen de [Noticias](12-noticias.md).
+Se guarda como una **nota fijada** («Informe de la mañana · jueves, 22 oct»), así lo lees en cualquier dispositivo, y sale
+arriba en la lista de conversaciones del Asistente.
+
+- Lo prepara **el ordenador** que tenga Muninn abierto a esa hora. Si estaba apagado, lo hace en cuanto abras Muninn ese día y
+  te lo dice en la primera línea. Los días que no abras Muninn, no hay informe.
+- Las cifras y las tareas salen tal cual de tus datos. Si el modelo está listo, añade arriba una o dos frases con lo más importante.
+- **Hacer ahora** prepara uno en el momento, para ver cómo queda.
+- Está **desactivado** al principio: crea una nota cada día y eso lo decides tú.
+
 ## Tus conversaciones
 
 Se guardan **solo en este dispositivo** (las últimas 30) y se borran al cerrar sesión. No viajan a tu cuenta. Lo que el

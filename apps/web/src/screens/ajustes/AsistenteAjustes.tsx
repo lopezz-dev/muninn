@@ -1,6 +1,6 @@
-import { Button, Card, Icon, notify, TextField } from '@muninn/ui'
-import { useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Button, Card, Icon, notify, Switch, TextField } from '@muninn/ui'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
 import {
   DEFAULT_ASSISTANT,
@@ -8,7 +8,11 @@ import {
   saveAssistantPrefs,
   useAssistantPrefs,
 } from '../../lib/assistant-settings'
+import { useEnabledModules } from '../../lib/modules'
+import { changeReportPrefs, reportPrefs } from '../../lib/morning-report-prefs'
 import { useAuth, useMuninn } from '../../lib/muninn'
+import { fail } from '../../lib/mutations'
+import { settingsQuery } from '../../lib/queries'
 
 function Row({
   title,
@@ -158,6 +162,93 @@ export function AsistenteAjustes() {
           </Link>
         </p>
       </Card>
+      <MorningReportCard />
     </div>
+  )
+}
+
+/**
+ * Informe de la mañana (ADR-0043): activarlo, la hora y «Hacer ahora». Se prepara en el ordenador que tenga Muninn abierto
+ * a esa hora (o al abrirlo después) y se guarda como nota fijada.
+ */
+function MorningReportCard() {
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const navigate = useNavigate()
+  const modules = useEnabledModules()
+  const prefs = reportPrefs(useQuery(settingsQuery(m)).data)
+  const [time, setTime] = useState(prefs.time)
+  const [busy, setBusy] = useState(false)
+  useEffect(() => setTime(prefs.time), [prefs.time])
+
+  const now = async () => {
+    setBusy(true)
+    const id = notify.loading('Preparando tu informe…', { icon: 'assistant' })
+    try {
+      // Diferido: lleva @muninn/assistant, que Ajustes no necesita para nada más.
+      const { generateMorningReport } = await import('../../lib/morning-report')
+      const note = await generateMorningReport(m, qc, { modules, force: true })
+      notify.dismiss(id)
+      if (note) {
+        notify.success('Informe listo', {
+          icon: 'assistant',
+          id: `morning-report-${note.id}`,
+          action: {
+            label: 'Abrir',
+            onClick: () => void navigate({ to: '/notas/$noteId', params: { noteId: note.id } }),
+          },
+        })
+      }
+    } catch (err) {
+      notify.dismiss(id)
+      fail('No se pudo preparar el informe', err)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card className="px-[18px] py-1.5">
+      <Row
+        title="Informe de la mañana"
+        description="Cada día, tus tareas de hoy y vencidas, los cobros próximos y el resumen de noticias, en una nota fijada."
+      >
+        <Switch
+          checked={prefs.enabled}
+          aria-label="Informe de la mañana"
+          onCheckedChange={(enabled) => void changeReportPrefs(m, qc, { enabled })}
+        />
+      </Row>
+      <Row
+        title="Hora"
+        description="Si a esa hora el ordenador está apagado, se hace al abrir Muninn ese día (y lo dice)."
+      >
+        <TextField
+          label="Hora del informe"
+          hideLabel
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          onBlur={() => {
+            if (/^\d{2}:\d{2}$/.test(time) && time !== prefs.time)
+              void changeReportPrefs(m, qc, { time })
+          }}
+          className="w-32"
+        />
+      </Row>
+      <Row
+        title="Hacer ahora"
+        description={
+          prefs.lastDate
+            ? `El último es del ${prefs.lastDate}. Si ya hay uno hoy, se hace otro.`
+            : 'Para ver cómo queda. Usa el modelo de este ordenador si está listo.'
+        }
+      >
+        <Button onClick={now} disabled={busy}>
+          <Icon name="assistant" size={14} />
+          {busy ? 'Preparando…' : 'Hacer ahora'}
+        </Button>
+      </Row>
+    </Card>
   )
 }
