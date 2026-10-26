@@ -17,6 +17,7 @@ se renderizan tal cual, así que se escriben pensando en la persona usuaria, no 
 | 8 | [Moverte por Muninn](08-moverte-por-muninn.md) | parcial |
 | 9 | [GitHub](09-github.md) | parcial |
 | 10 | [Finanzas](10-finanzas.md) | parcial |
+| 11 | [Asistente](11-asistente.md) | parcial |
 
 ## Cómo se escribe una página
 

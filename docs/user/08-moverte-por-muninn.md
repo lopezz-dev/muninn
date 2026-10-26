@@ -62,12 +62,12 @@ lateral) y escribe:
 
 - El nombre de una sección o de un proyecto, para ir directamente. Da igual que pongas tildes o mayúsculas.
 - Una acción, como «nuevo proyecto», «cristal» o «cerrar sesión».
-- Cualquier otra cosa, para preguntársela a Muninn.
+- Cualquier otra cosa, para preguntársela a Muninn: se abre el [Asistente](11-asistente.md) con tu pregunta ya enviada
+  (si el modelo de tu ordenador está listo; si no, la deja escrita).
 
 Muévete con las flechas, abre con **Intro** y cierra con **Esc**.
 
-> **Próximamente:** buscar también en tareas, notas y noticias. Y que el asistente responda: llega en la
-> fase 4.
+> **Próximamente:** buscar también en tareas y notas.
 
 ## Crear un proyecto
 

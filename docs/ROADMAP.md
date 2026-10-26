@@ -166,6 +166,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Redesplegar la función `mcp` con el catálogo único: `pnpm --filter @muninn/mcp build:edge` y
   `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` (lleva también lo de Finanzas)
 - [ ] Con Claude conectado por stdio (reiniciando el cliente tras compilar): las mismas herramientas de siempre responden igual
+- [ ] Con tu sesión en el ordenador (5174 o la app de escritorio) y Ollama listo: «¿Cómo voy hoy?» responde con tus datos; «Crea una tarea
+  «Prueba F4 …» en <proyecto>» la crea con «El asistente» en su historial y «Deshacer» la archiva. Archívala al acabar. En la demo (5175)
+  pasa el 22 de octubre: resumen, gasto con «Deshacer» (actividad `assistant` → `user`), ⌘K con `?q=` y el módulo desactivado
+- [ ] Sin Ollama abierto: sale «No encuentro Ollama…» con los pasos y, al abrirlo, el punto se pone verde solo (≤ 8 s); en la app de
+  escritorio (Tauri), lo mismo (comprueba que `OLLAMA_ORIGINS` admite `tauri.localhost`)
+- [ ] En el iPhone: la pantalla dice que el asistente usa el modelo del ordenador y no intenta conectar
 
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
@@ -203,6 +209,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     único de herramientas en `@muninn/assistant` compartido con el MCP (que ya no tiene herramientas propias); actor `assistant` con
     `payload.context` (migración `20261022120000_assistant_actor`, aplicada el 22 de octubre); proveedor de Ollama y guionizado; banco de
     pruebas en `pnpm test` con el guion ideal
+  - [x] Pantalla **Asistente** (lienzo): conversación en streaming, chips de las herramientas usadas, «Ha cambiado» con «Abrir» y
+    «Deshacer», ⌘K «Preguntar a Muninn» (`?q=`, se envía solo), estados «Ollama no responde», «Falta el modelo» y «en el móvil no hay
+    modelo» con los pasos, historial de las últimas 30 conversaciones en el dispositivo y Ajustes › Asistente e IA (dirección y modelo).
+    En la demo responde con un guion. Guía [Asistente](user/11-asistente.md). Sin el selector «Local · Claude» del diseño: el cerebro es
+    siempre local (Claude se usa por MCP) y el proveedor en la nube queda como opción futura (ADR-0041)
   - [ ] Elegir el modelo con el banco contra Ollama (`qwen3:8b` por defecto; `qwen3:14b` y `llama3.1:8b` como alternativas) → [Pruebas finales](#pruebas-finales)
 - [ ] Voz: Whisper (STT) + Piper/Kokoro (TTS), todo en local
 - [ ] Noticias: fuentes RSS elegidas + resumen diario
