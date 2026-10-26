@@ -219,8 +219,8 @@ export function createNews({ store, nowIso, today, parse, log }: NewsContext) {
    * La llama la Edge Function `news`: desde el navegador, la mayoría de los feeds no se dejan leer (CORS).
    */
   async function refresh(
-    fetchFn: typeof fetch = fetch,
-    options: FetchFeedOptions = {},
+    fetchFn: typeof fetch,
+    options: FetchFeedOptions,
   ): Promise<NewsFetchSummary> {
     const sources = (await store.newsSources.list({})).filter((s) => s.enabled)
     const summary: NewsFetchSummary = {

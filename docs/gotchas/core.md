@@ -153,6 +153,15 @@
   Si un feed real se lee mal, añade su XML como caso en `test/news.test.ts` antes de tocar las expresiones.
 - La UI no importa valores del core: lo que necesita (`relatedProjects`) está en `m.news.related`.
 - **Nunca** llames a `fetch` con la URL de una fuente sin pasar por `fetchFeed`: es la que comprueba que la dirección es pública, también tras
-  cada redirección (`assertPublicUrl`, con tests). Desde la Edge Function, pásale `resolve` (DNS) para que tampoco valgan nombres que
-  apuntan a IPs internas. Si una fuente legítima usa otro puerto, la regla es a propósito: no la relajes sin otro ADR.
+  cada redirección (`assertPublicUrl`, con tests). `resolve` (DNS) es **obligatorio** en `fetchFeed` y `refresh` para que tampoco valgan
+  nombres que apuntan a IPs internas; si el entorno no puede resolver, `resolve` lanza y la fuente queda con ese error: nunca pases un
+  resolver que devuelva una IP fija para «que funcione». Si una fuente legítima usa otro puerto, la regla es a propósito: no la relajes
+  sin otro ADR.
+- En IPv6 solo vale el unicast global (`2000::/3`); NAT64 y 6to4 se juzgan por la IPv4 que llevan dentro. Las IPv4 mapeadas
+  (`::ffff:…`) no valen nunca, ni con IP pública: no hacen falta para leer feeds.
+- **Riesgo que queda (rebinding DNS):** `fetch` vuelve a resolver el nombre después de la comprobación, así que un DNS malicioso con TTL 0
+  podría contestar una IP pública a `resolve` y una interna a `fetch`. Deno no deja fijar la IP conectando con el nombre original (SNI),
+  así que no se puede cerrar del todo en código. Lo acotan: el cuerpo tiene que parecer un RSS/Atom, solo se guardan título, enlace y
+  resumen en texto, sin cabeceras ni credenciales, 10 s y 3 MB. Si algún día hace falta cerrarlo, la vía es un proxy de salida que
+  bloquee rangos privados (ADR nuevo).
 - **Ref:** [ADR-0042](../adr/0042-noticias-rss-con-descarga-en-servidor.md)

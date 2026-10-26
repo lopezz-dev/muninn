@@ -22,16 +22,19 @@ const timeZone = () => env('MUNINN_TIME_ZONE') || 'Europe/Madrid'
 
 /**
  * Las IPs de un nombre, para no descargar nada que apunte dentro de la red de Supabase (SSRF, ADR-0042). Si el entorno
- * no tiene `Deno.resolveDns`, quedan las comprobaciones de la URL (sin IPs privadas, ni localhost, ni puertos raros).
+ * no tiene `Deno.resolveDns`, no se descarga nada: cada fuente queda con este error en vez de saltarse la comprobación.
  */
 async function resolve(hostname: string): Promise<string[]> {
+  if (typeof Deno.resolveDns !== 'function') {
+    throw new Error('Este servidor no puede comprobar a qué dirección apunta la fuente')
+  }
   const [v4, v6] = await Promise.all([
     Deno.resolveDns(hostname, 'A').catch(() => [] as string[]),
     Deno.resolveDns(hostname, 'AAAA').catch(() => [] as string[]),
   ])
   return [...v4, ...v6]
 }
-const feedOptions = typeof Deno.resolveDns === 'function' ? { resolve } : {}
+const feedOptions = { resolve }
 
 const admin = () =>
   createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
