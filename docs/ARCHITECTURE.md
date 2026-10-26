@@ -110,5 +110,5 @@ dock y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0
 | `notes` | F1 — core listo |
 | `github` (issues → tareas) | F2 |
 | `finance` (gastos, ingresos, ahorro, inversión, suscripciones) | F3 — core listo (ADR-0037) |
-| `news` (RSS + resúmenes) | F4 — core, función `news` (sin desplegar) y pantalla (ADR-0042) |
+| `news` (RSS + resúmenes) | F4 — core, función `news` (desplegada, con cron) y pantalla (ADR-0042) |
 | `focus` (temporizador "isla") | Backlog |

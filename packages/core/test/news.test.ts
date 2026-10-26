@@ -317,8 +317,9 @@ describe('noticias: solo direcciones públicas (SSRF)', () => {
       },
     }
     await expect(fetchFeed(src, fetchFn, noDns)).rejects.toThrow('no puede comprobar')
+    // Un nombre que no existe: el DNS no devuelve nada y se dice así, no como «dirección no pública».
     await expect(fetchFeed(src, fetchFn, { resolve: async () => [] })).rejects.toThrow(
-      'dirección pública',
+      'No encuentro blog.ejemplo.com',
     )
     expect(fetched).toBe(false)
   })

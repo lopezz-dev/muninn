@@ -275,7 +275,10 @@ export async function assertPublicUrl(
   }
   if (resolve && !/^[\d.]+$/.test(host) && !host.includes(':')) {
     const addresses = await resolve(host)
-    if (!addresses.length || addresses.some(isPrivateAddress)) throw bad()
+    // Sin IPs el nombre no existe (o el DNS no contesta): no se descarga, pero el motivo es otro.
+    if (!addresses.length)
+      throw new Error(`No encuentro ${host}: revisa que la dirección esté bien escrita`)
+    if (addresses.some(isPrivateAddress)) throw bad()
   }
   return url
 }

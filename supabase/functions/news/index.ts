@@ -1,7 +1,7 @@
 // Edge Function de Supabase (Deno): descarga las fuentes RSS de Noticias (ADR-0042). Corre con el ordenador apagado.
 // Toda la lógica está en @muninn/core (`news.ts` y `news-feed.ts`, con tests); aquí solo se leen secretos y se enruta.
 // Antes de desplegar: `pnpm --filter @muninn/core build:edge` (genera ./_core/muninn.js). Pasos completos en
-// docs/gotchas/db.md, «Noticias: descarga con la Edge Function (pasos manuales)». **No está desplegada.**
+// docs/gotchas/db.md, «Noticias: descarga con la Edge Function (pasos manuales)». Desplegada el 26-10-2026.
 //
 //   POST /functions/v1/news/fetch  ← pg_cron cada hora (cabecera x-muninn-sync-secret): todas las fuentes activas de
 //                                     todos los usuarios y la limpieza de lo antiguo; o la app con la sesión del

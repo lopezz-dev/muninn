@@ -10,8 +10,8 @@ status: parcial
 **Noticias** junta en un sitio lo que publican los blogs y webs que sigues (por **RSS**) y te prepara cada día un resumen
 con lo más importante. Actívala en **Ajustes › Módulos › Noticias**.
 
-> **Estado:** puedes añadir tus fuentes y la pantalla está lista, pero la **descarga automática de artículos todavía no
-> está en marcha** (falta ponerla en el servidor). Hasta entonces no llegarán artículos y «Actualizar» te lo dirá.
+> **Estado:** la descarga de artículos ya funciona: cada hora y al pulsar «Actualizar». El **resumen del día** necesita el
+> modelo del asistente instalado en tu ordenador; sin él, ves los artículos pero no el resumen.
 
 ## Añadir una fuente
 

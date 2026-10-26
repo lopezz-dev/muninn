@@ -32,13 +32,23 @@ Pasos en [gotchas/desktop › Instalar Ollama](gotchas/desktop.md#instalar-ollam
 ## 2. Desplegar en Supabase (≈ 15 min)
 
 Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo único, `list_news`, `news_digest`).
-- [ ] Empaquetar: `pnpm --filter @muninn/core build:edge` y `pnpm --filter @muninn/mcp build:edge`.
-- [ ] **`news`:** desplegar, probar con `curl` y programar el cron cada hora. Son los pasos 2 a 4 de
+
+> **Desplegadas el 26 de octubre** `news` (con el cron `muninn-news-fetch`, minuto 7 de cada hora) y `mcp` (catálogo único, Finanzas
+> y Noticias). Comprobado:
+> - `news`: sin secreto da 401. Lanzada desde SQL como el cron (con el secreto del Vault), con las tres fuentes «Prueba final» recuperadas
+>   un momento: llegan 20 artículos de tauri.app y 4 de This Week in Rust, así que el DNS resuelve dentro de la función. La inventada
+>   queda con su error. La segunda vez añade 0 y las dos reales contestan 304. Las fuentes vuelven a estar archivadas.
+> - `mcp`: sin token da 401 con `resource_metadata`; metadatos 200, GET 405, token inventado 401 y `Origin` ajeno 403.
+> - Para un dominio que no existe, el error decía «Solo se pueden leer fuentes con una dirección pública de internet», que confundía.
+>   Arreglado y redesplegado el mismo día: ahora dice «No encuentro feeds.prueba-final-muninn.com: revisa que la dirección esté bien
+>   escrita» (comprobado con la fuente inventada).
+- [x] Empaquetar: `pnpm --filter @muninn/core build:edge` y `pnpm --filter @muninn/mcp build:edge`.
+- [x] **`news`:** desplegar, probar con `curl` y programar el cron cada hora. Son los pasos 2 a 4 de
   [gotchas/db › Noticias](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales).
-- [ ] **`mcp`:** `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. Después, el `curl` sin
+- [x] **`mcp`:** `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. Después, el `curl` sin
   token tiene que seguir dando 401 con `resource_metadata` ([gotchas/mcp › MCP remoto](gotchas/mcp.md#mcp-remoto-pasos-manuales), paso 2).
 - [ ] MCP remoto con token, que caduca a la hora: paso 3 de gotchas/mcp. «¿Cómo voy hoy?» responde con tus datos; con el token caducado da 401.
-- [ ] La función `github` no hace falta volver a desplegarla: el empaquetado la regenera, pero no ha cambiado nada que use.
+- [x] La función `github` no hace falta volver a desplegarla: el empaquetado la regenera, pero no ha cambiado nada que use.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
@@ -101,7 +111,7 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
 - [x] Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Despliega.
 - [ ] Dominio propio (opcional). *(Mientras, la de Vercel. Para un nombre más corto, Vercel › Settings › Domains admite otro
   `*.vercel.app` libre.)*
-- [ ] Supabase › URL Configuration: *Site URL* = la URL publicada, y `https://<tu-url>/**` en *Redirect URLs*. Deja las de `localhost`.
+- [x] Supabase › URL Configuration: *Site URL* = la URL publicada, y `https://<tu-url>/**` en *Redirect URLs*. Deja las de `localhost`.
 - [ ] GitHub › la OAuth App de Muninn: *Homepage URL* = la URL publicada (el *callback* no cambia).
 - [ ] Añadir la URL publicada a `OLLAMA_ORIGINS` y reiniciar Ollama.
 - [ ] Comprobar:
