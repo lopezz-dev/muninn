@@ -6,6 +6,7 @@
 | [ROADMAP.md](ROADMAP.md) | Todos | Fases y estado |
 | [adr/](adr/README.md) | Desarrollo y agentes | **Decisiones** de arquitectura y su porqué, indexadas por área |
 | [gotchas/](gotchas/README.md) | Desarrollo y agentes | **Trampas** no obvias por área: síntoma, causa y solución |
+| [fase-final.md](fase-final.md) | Alex | Pasos manuales (instalar, desplegar, publicar) y pruebas finales, en orden |
 | [pruebas-iphone.md](pruebas-iphone.md) | Desarrollo | Lista de comprobación a mano en un iPhone real (teclado, gestos, sin conexión) |
 | [user/](user/README.md) | Quien usa la app | Guías de uso; fuente de la sección Documentación de la app |
 

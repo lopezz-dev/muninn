@@ -76,6 +76,10 @@
 Pila única de lo que hay que comprobar **a mano** (no se puede verificar desde el ordenador o necesita secretos y despliegues). Cada bloque
 que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. Marca cada línea al pasarla y abre una tarea si algo falla.
 
+> **Para pasarla, sigue [fase-final.md](fase-final.md):** la misma pila más los pasos de instalar, desplegar y publicar, en el orden en que
+> conviene hacerlos (cada paso deja listo lo que necesita el siguiente). Las secciones de abajo guardan el detalle y lo ya comprobado; se ponen
+> al día al acabar la fase final.
+
 ### F1 · iPhone
 - [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) entera (instalar, teclado de iOS, gestos del tablero, sin conexión) y corregir lo que falle
 
@@ -222,12 +226,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   (movimientos en céntimos con concepto y fecha: `parseAmount`/`centsFromEuros` en el borde)
 
 ## F4 · Jarvis
-> **Estado:** en curso. La sesión del 22–26 de octubre deja cerebro, Asistente, Noticias e informe de la mañana en código, en PRs apilados
-> [#35](https://github.com/lopezz-dev/muninn/pull/35) → [#36](https://github.com/lopezz-dev/muninn/pull/36) →
-> [#37](https://github.com/lopezz-dev/muninn/pull/37) → [#38](https://github.com/lopezz-dev/muninn/pull/38) → el de la voz (fusionar en ese orden con
-> merge commit), y la voz solo diseñada (ADR-0044, propuesto). Nada instalado ni desplegado: Ollama, los modelos, la función `news` y la voz
-> son de la fase final ([gotchas/desktop](gotchas/desktop.md#instalar-ollama-y-el-modelo-del-asistente-pasos-manuales-fase-final),
-> [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales)).
+> **Estado:** en código, salvo la voz. Cerebro, Asistente, Noticias e informe de la mañana están en `develop` desde el 26 de octubre
+> ([#35](https://github.com/lopezz-dev/muninn/pull/35) a [#38](https://github.com/lopezz-dev/muninn/pull/38), más el arreglo de SSRF de
+> Noticias en [#40](https://github.com/lopezz-dev/muninn/pull/40)); la voz, solo diseñada en [#39](https://github.com/lopezz-dev/muninn/pull/39)
+> (ADR-0044, propuesto). Nada instalado ni desplegado: Ollama, el modelo, las funciones `news` y `mcp` y las pruebas con tu sesión van en la
+> [fase final](fase-final.md) (pasos 1–3 y 5–8). No se cierra hasta elegir el modelo con el banco y decidir qué hacer con la voz.
 - [ ] Ollama + modelo de 8–14B con tool calling sobre el MCP de Muninn
   - [x] Cerebro (ADR-0041): el bucle corre en la app con el core y la sesión del usuario y habla con Ollama en `localhost:11434`; catálogo
     único de herramientas en `@muninn/assistant` compartido con el MCP (que ya no tiene herramientas propias); actor `assistant` con
