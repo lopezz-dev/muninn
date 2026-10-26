@@ -185,6 +185,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Con el ordenador apagado una noche: por la mañana, en el iPhone, hay artículos nuevos (el cron funciona sin el ordenador)
 - [ ] Redesplegar `mcp` (lleva `list_news` y `news_digest`)
 
+### F4 · Informe de la mañana (fase final)
+> En la demo (5175) pasa el 25 de octubre: activarlo con «Deshacer», «Hacer ahora» crea la nota fijada con actor `assistant`, a las 12:58
+> dice que a las 08:30 no estaba abierto, y sale arriba en el Asistente.
+- [ ] Con tu sesión en el ordenador: activarlo para dentro de 2 minutos con Muninn abierto; llega el aviso «Tu informe de la mañana está
+  listo», la nota está fijada y lleva la entradilla del modelo (con Ollama) y el resumen de noticias
+- [ ] Al día siguiente, con el ordenador apagado a esa hora: al abrir Muninn se hace solo y dice a qué hora; el de ayer ya no está fijado
+- [ ] En el iPhone: el informe se lee en Notas y en el Asistente, y el iPhone no genera ninguno
+
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
 > [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →
@@ -238,6 +246,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     Sin «Escuchar» del diseño: llega con la voz (bloque E)
   - [x] Asistente y MCP: `list_news` y `news_digest` (solo lectura); ⌘K «Buscar en Noticias»
 - [ ] Agentes programados que informan del estado de las tareas
+  - [x] Informe de la mañana (ADR-0043): a la hora elegida (Ajustes › Asistente e IA, desactivado por defecto) el ordenador prepara tareas
+    vencidas, de hoy y en curso, cobros de 7 días y el resumen de noticias (más una entradilla del modelo si está) y lo guarda como **nota
+    fijada** con actor `assistant`. Si el ordenador estaba apagado, se hace al abrir Muninn ese día y lo dice; no recupera días pasados.
+    Sale arriba en la lista del Asistente. Probado en la demo y con tests
+  - [ ] Otros agentes (p. ej. resumen semanal, avisos de tareas atascadas): fuera de esta sesión; el mismo esquema sirve
 
 ## Acceso y seguridad
 Hoy se entra con un código por correo o con GitHub ([ADR-0022](adr/0022-auth-y-sesion.md)). Siguientes pasos,

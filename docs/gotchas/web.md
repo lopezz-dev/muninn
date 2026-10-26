@@ -405,3 +405,14 @@
   reparte entonces los módulos compartidos en chunks nuevos y uno de ellos (Radix) acaba colgando del shell.
 - **Solución:** desde código que ya vive en un chunk diferido (una pantalla y sus `lib/`), importa `@muninn/assistant` de forma estática.
   Antes de abrir el PR, compara `size` con la rama anterior; para encontrar al culpable, quita imports de la pantalla nueva de uno en uno.
+
+### Informe de la mañana: el programador solo se carga si está activado
+
+- **Síntoma:** el informe no se hace a su hora aunque Muninn está abierto; o el iPhone no genera ninguno.
+- **Causa:** `AppShell` solo monta `MorningReportRunner` (chunk propio, con `@muninn/assistant`) si `preferences.morningReport.enabled`, y el
+  runner no hace nada en móviles (`isHandheld`): lo prepara el ordenador ([ADR-0043](../adr/0043-informe-de-la-manana-en-local.md)). Mira cada
+  minuto y compara la hora local `HH:MM` con la elegida.
+- **Solución:** para probarlo, pon la hora un par de minutos más tarde o usa «Hacer ahora» (Ajustes › Asistente e IA). Los ajustes viven en
+  `lib/morning-report-prefs.ts` (sin `@muninn/assistant`, para que Ajustes no lo cargue); la generación, en `lib/morning-report.ts`.
+- **Ojo:** la página de Ajustes importa la generación con `import()` dinámico solo al pulsar «Hacer ahora». Si un día lo importas de forma
+  estática allí, mide `size`.

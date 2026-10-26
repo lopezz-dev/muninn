@@ -1,7 +1,10 @@
 import { cn } from '@muninn/ui'
+import { useQuery } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEnabledModules } from '../lib/modules'
+import { useMuninn } from '../lib/muninn'
+import { settingsQuery } from '../lib/queries'
 import { Dock } from './Dock'
 import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
@@ -15,6 +18,10 @@ const CommandPalette = lazy(() =>
 const ModuleOff = lazy(() => import('./ModuleOff').then((m) => ({ default: m.ModuleOff })))
 const OfflineNotice = lazy(() =>
   import('./OfflineNotice').then((m) => ({ default: m.OfflineNotice })),
+)
+// Solo se descarga si el informe de la mañana está activado (ADR-0043): lleva @muninn/assistant.
+const MorningReportRunner = lazy(() =>
+  import('./MorningReportRunner').then((m) => ({ default: m.MorningReportRunner })),
 )
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
@@ -47,6 +54,9 @@ export function AppShell() {
   )
   const mainRef = useRef<HTMLElement>(null)
   const modules = useEnabledModules()
+  const settings = useQuery(settingsQuery(useMuninn())).data
+  const reportOn =
+    (settings?.preferences.morningReport as { enabled?: unknown } | undefined)?.enabled === true
   const tasksOn = sectionEnabled('projects', modules)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
@@ -140,6 +150,11 @@ export function AppShell() {
         />
         <OfflineNotice />
       </Suspense>
+      {reportOn ? (
+        <Suspense fallback={null}>
+          <MorningReportRunner />
+        </Suspense>
+      ) : null}
       {newProject.loaded ? (
         <Suspense fallback={null}>
           <NewProjectDialog
