@@ -48,31 +48,45 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 - [ ] «He gastado 24,90 en el cine» apunta un gasto en la cuenta corriente, con la categoría Ocio.
 - [ ] «¿Cuánto tengo?» da los mismos saldos que la app.
 
+> **26 de octubre, 20:15–20:35** (con tu sesión en el 5174, navegador integrado, sin Ollama y sin la función `news` desplegada).
+> Pasa lo marcado. Lo que necesita Ollama o la función sigue sin marcar.
+>
+> Fallos encontrados:
+> - Ajustes › Módulos sigue mostrando «Llega en la fase 2/3/4» en GitHub, Finanzas y Noticias.
+> - El informe pierde la hora si la cambias y pulsas el interruptor sin salir antes del campo: los dos guardados se pisan.
+> - En el informe, la fecha de las vencidas sale como «desde el 2026-10-19».
+> - «Actualizar» en Noticias enseña el error técnico en inglés («Failed to send a request to the Edge Function»).
+
 **Finanzas**
-- [ ] Activar Finanzas y crear una cuenta «Prueba final …».
-- [ ] Apuntar, editar y archivar movimientos con «Deshacer».
-- [ ] Crear una suscripción «Prueba final …» con el cobro mañana: sale en Inicio › «Próximos cobros».
-- [ ] «Apuntar» la suscripción crea el gasto con el icono de repetición, y «Deshacer» lo quita.
-- [ ] Al acabar, archivar la cuenta y la suscripción.
+- [x] Activar Finanzas y crear una cuenta «Prueba final …».
+- [x] Apuntar, editar y archivar movimientos con «Deshacer». También el saldo: 100 − 24,90 = 75,10 €.
+- [x] Crear una suscripción «Prueba final …» con el cobro mañana: sale en Inicio › «Próximos cobros».
+- [x] «Apuntar» la suscripción crea el gasto con el icono de repetición, y «Deshacer» lo quita.
+- [x] Al acabar, archivar la cuenta y la suscripción.
 
 **Asistente**
 - [ ] «¿Cómo voy hoy?» responde con tus datos.
 - [ ] «Crea una tarea «Prueba final …» en <proyecto>» la crea con «El asistente» en su historial.
 - [ ] «Deshacer» archiva esa tarea.
-- [ ] Cierra Ollama: sale «No encuentro Ollama…» con los pasos. Al abrirlo, el punto se pone verde solo en 8 s o menos.
+- [ ] Cierra Ollama: sale «No encuentro Ollama…» con los pasos. Al abrirlo, el punto se pone verde solo en 8 s o menos. *(El
+  mensaje y los pasos salen bien, comprobado sin Ollama; falta lo de ponerse verde.)*
 - [ ] Lo mismo en la app de escritorio. Si no conecta, revisa que `OLLAMA_ORIGINS` incluya `tauri.localhost`.
 
 **Noticias**
-- [ ] Activar Noticias y añadir 2–3 fuentes reales: una Atom, una RSS y una que falle.
-- [ ] «Actualizar»: llegan artículos y la fuente que falla enseña el error.
+- [x] Activar Noticias y añadir 2–3 fuentes reales: una Atom, una RSS y una que falle.
+- [ ] «Actualizar»: llegan artículos y la fuente que falla enseña el error. *(Sin la función desplegada avisa «Las noticias aún no se
+  descargan desde aquí», como debe; repetir tras el paso 2.)*
 - [ ] Volver a pulsar «Actualizar» no duplica nada.
 - [ ] Con Ollama, al abrir Noticias se genera solo «Lo importante de hoy».
 - [ ] «Rehacer» cambia el resumen y «Deshacer» devuelve el anterior.
 
 **Informe de la mañana**
-- [ ] Activarlo para dentro de 2 minutos con Muninn abierto: llega el aviso «Tu informe de la mañana está listo».
-- [ ] La nota está fijada y lleva la entradilla del modelo y el resumen de noticias.
-- [ ] Antes de terminar el día, déjalo a tu hora de verdad (p. ej. 08:30). Lo necesitas para el paso 8.
+- [x] Activarlo para dentro de 2 minutos con Muninn abierto: llega el aviso «Tu informe de la mañana está listo». **Primero pon la hora
+  y sal del campo, y después activa el interruptor.** Si lo activas con una hora ya pasada, se hace al momento (lo recupera, como en el
+  paso 8) y ese día ya no vuelve a saltar.
+- [ ] La nota está fijada y lleva la entradilla del modelo y el resumen de noticias. *(Fijada, con actor `assistant`, «Hecho a las
+  20:27…», vencidas y cobros; falta la entradilla y las noticias, que necesitan Ollama y la función.)*
+- [x] Antes de terminar el día, déjalo a tu hora de verdad (p. ej. 08:30). Lo necesitas para el paso 8. *(Activado a las 08:30.)*
 
 ## 4. Publicar la web (≈ 30 min)
 
