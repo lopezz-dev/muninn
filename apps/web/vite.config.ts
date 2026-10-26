@@ -19,6 +19,8 @@ export default defineConfig({
     VitePWA({
       disable: isTauri,
       registerType: 'autoUpdate',
+      // Iconos de `index.html` (los del manifiesto ya entran solos): la pestaña lleva el logo también sin conexión.
+      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       // Avisos Web Push (ADR-0040): `public/push-sw.js` solo escucha `push` y `notificationclick`.
       workbox: { importScripts: ['push-sw.js'] },
       manifest: {
@@ -28,14 +30,27 @@ export default defineConfig({
         short_name: 'Muninn',
         description: 'Tu sistema operativo personal',
         lang: 'es',
+        categories: ['productivity', 'finance'],
         theme_color: '#0C0D10',
         background_color: '#0C0D10',
         display: 'standalone',
         start_url: '/',
+        // Generados desde el logo (`scripts/icons.mjs`). Los `maskable` llenan el cuadrado: el sistema los recorta.
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          {
+            src: '/icon-maskable-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: '/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
         ],
       },
     }),

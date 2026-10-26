@@ -9,6 +9,7 @@ import {
   signInWithGitHub,
   verifyEmailCode,
 } from '../lib/login-actions'
+import { usePageMeta } from '../lib/seo'
 import { forgetUserData } from '../lib/session'
 import { Logo } from '../shell/Logo'
 
@@ -57,8 +58,13 @@ export function Login() {
   const [resendIn, startCountdown] = useCountdown()
   const [github, setGithub] = useState(false)
 
+  usePageMeta({
+    title: 'Iniciar sesión',
+    description:
+      'Entra en Muninn, tu sistema operativo personal, con un código por correo o con GitHub. O pruébalo sin cuenta en modo demo.',
+  })
+
   useEffect(() => {
-    document.title = 'Iniciar sesión · Muninn'
     if (!hasSupabase) return
     // Se adelanta la descarga de supabase-js mientras se escribe el correo.
     loadSupabase().catch(() => {})

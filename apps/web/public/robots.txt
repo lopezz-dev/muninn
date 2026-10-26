@@ -1,0 +1,14 @@
+# Lo público es la entrada (/login) y la documentación; el resto pide sesión y redirige a /login.
+User-agent: *
+Disallow: /proyectos
+Disallow: /notas
+Disallow: /finanzas
+Disallow: /asistente
+Disallow: /noticias
+Disallow: /github
+Disallow: /mas
+Disallow: /ajustes
+Disallow: /dev/
+Disallow: /oauth/
+
+Sitemap: https://muninn-sepia.vercel.app/sitemap.xml

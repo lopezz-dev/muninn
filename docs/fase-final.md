@@ -117,7 +117,10 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
 - [ ] Comprobar:
   - abrir `https://<tu-url>/finanzas` y recargar no da 404;
   - entrar con el código del correo funciona;
-  - entrar con GitHub vuelve a la URL publicada.
+  - entrar con GitHub vuelve a la URL publicada;
+  - la pestaña lleva el logo, `/robots.txt` y `/sitemap.xml` se abren, y al pegar la URL en un chat sale la tarjeta con la imagen
+    (ADR-0045).
+- [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`.
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
   local», acéptalo.
 

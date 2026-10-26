@@ -29,7 +29,7 @@ Muninn se instala desde Safari como una app más, sin pasar por la App Store:
 1. Abre la dirección de Muninn en **Safari**.
 2. Pulsa el botón **Compartir** (el cuadrado con la flecha).
 3. Elige **Añadir a pantalla de inicio**.
-4. Abre Muninn desde el icono nuevo. Para recibir **notificaciones**, actívalas desde los ajustes de
+4. Abre Muninn desde el icono nuevo, el del cuervo sobre fondo ámbar. Para recibir **notificaciones**, actívalas desde los ajustes de
    la app: en iPhone solo funcionan cuando está instalada así (iOS 16.4 o superior).
 
 ## Android

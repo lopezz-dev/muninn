@@ -3,6 +3,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { EmptyState } from '../components/Page'
 import { docLink, neighbours } from '../lib/docs'
+import { usePageMeta } from '../lib/seo'
 import { Markdown } from '../markdown/Markdown'
 import { outline, slugify } from '../markdown/outline'
 import { DOCS } from './docs/content'
@@ -83,9 +84,10 @@ export function DocPagina() {
   const toc = useMemo(() => outline(body), [body])
   const active = useActiveHeading(toc.map((t) => t.id))
 
-  useEffect(() => {
-    document.title = `${doc?.title ?? 'Documentación'} · Muninn`
-  }, [doc])
+  usePageMeta({
+    title: doc?.title ?? 'Documentación',
+    description: doc?.description || undefined,
+  })
 
   if (!doc) {
     return (

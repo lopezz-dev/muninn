@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "size": "vite build && node scripts/size.mjs"
+    "size": "vite build && node scripts/size.mjs",
+    "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",
