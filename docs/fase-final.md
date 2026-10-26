@@ -33,12 +33,15 @@ Pasos en [gotchas/desktop › Instalar Ollama](gotchas/desktop.md#instalar-ollam
 
 Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo único, `list_news`, `news_digest`).
 
-> **Desplegadas el 26 de octubre** `news` (con el cron `muninn-news-fetch`, minuto 7 de cada hora) y `mcp` (catálogo único, Finanzas y Noticias). Comprobado:
+> **Desplegadas el 26 de octubre** `news` (con el cron `muninn-news-fetch`, minuto 7 de cada hora) y `mcp` (catálogo único, Finanzas
+> y Noticias). Comprobado:
 > - `news`: sin secreto da 401. Lanzada desde SQL como el cron (con el secreto del Vault), con las tres fuentes «Prueba final» recuperadas
 >   un momento: llegan 20 artículos de tauri.app y 4 de This Week in Rust, así que el DNS resuelve dentro de la función. La inventada
 >   queda con su error. La segunda vez añade 0 y las dos reales contestan 304. Las fuentes vuelven a estar archivadas.
 > - `mcp`: sin token da 401 con `resource_metadata`; metadatos 200, GET 405, token inventado 401 y `Origin` ajeno 403.
-> - Para un dominio que no existe, el error dice «Solo se pueden leer fuentes con una dirección pública de internet», que confunde.
+> - Para un dominio que no existe, el error decía «Solo se pueden leer fuentes con una dirección pública de internet», que confundía.
+>   Arreglado y redesplegado el mismo día: ahora dice «No encuentro feeds.prueba-final-muninn.com: revisa que la dirección esté bien
+>   escrita» (comprobado con la fuente inventada).
 - [x] Empaquetar: `pnpm --filter @muninn/core build:edge` y `pnpm --filter @muninn/mcp build:edge`.
 - [x] **`news`:** desplegar, probar con `curl` y programar el cron cada hora. Son los pasos 2 a 4 de
   [gotchas/db › Noticias](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales).
