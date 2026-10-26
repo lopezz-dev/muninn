@@ -1,6 +1,6 @@
 # ADR-0040: PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado en parte: el hosting en Vercel (26-10-2026, publicada en `muninn-sepia.vercel.app`). Web Push sigue propuesto.
 - **Fecha:** 2026-10-22
 - **Área:** web, db, ci
 

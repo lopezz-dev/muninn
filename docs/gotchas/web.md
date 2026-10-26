@@ -348,7 +348,9 @@
 
 - **Síntoma:** no se puede instalar Muninn en el iPhone, ni conectar el MCP con OAuth desde otro dispositivo, ni recibir avisos push.
 - **Causa:** la web solo existe en `localhost`; publicarla, el dominio, los secretos y los despliegues no se pueden hacer desde el código
-  ([ADR-0040](../adr/0040-pwa-instalable-y-web-push.md), **propuesto**: confirma el hosting antes de seguir).
+  ([ADR-0040](../adr/0040-pwa-instalable-y-web-push.md): hosting en Vercel aceptado; Web Push, propuesto).
+- **Estado (26-10-2026):** pasos 1 y 2 hechos. Proyecto `muninn` del equipo Kodemaru, rama de producción `develop`, en
+  `https://muninn-sepia.vercel.app`. Faltan los pasos 3 (opcional), 4 y 5.
 - **Solución (publicar, con Vercel):**
   1. Vercel › **Add New › Project** › importa `lopezz-dev/muninn`. **Root Directory** = `apps/web` (deja marcado *Include files outside the
      root directory*). `apps/web/vercel.json` ya trae el build, el *fallback* a `index.html` y las cabeceras de caché del service worker.
@@ -425,3 +427,15 @@
   el estado antes de escribir, el segundo escribe la copia vieja y pisa al primero; `serial` ordena las escrituras, no las lecturas.
 - **Solución:** lee lo guardado **dentro** de `serial('settings', …)` y aplica solo tu parche, como `savePrefs` en `lib/morning-report-prefs.ts`
   (con test en `test/morning-report.test.ts`). Lo mismo para cualquier otra clave de `preferences` con varios campos.
+
+### Vercel: qué URL es pública y cómo se toca el proyecto
+
+- **Síntoma:** una URL de despliegue (`muninn-<hash>-kodemaru.vercel.app`) redirige al login de Vercel; o el MCP de Vercel contesta
+  `403 forbidden` al crear o cambiar el proyecto.
+- **Causa:** la protección por defecto del equipo Kodemaru es *Vercel Authentication* en `all_except_custom_domains`: las URLs de cada
+  despliegue y de rama piden sesión de Vercel, pero los dominios del proyecto (`muninn-sepia.vercel.app` y los que añadas) son públicos.
+  El conector MCP de Vercel no tiene permiso de escritura en ese equipo; la CLI (`vercel`, con sesión en este equipo) sí.
+- **Solución:** comparte y prueba siempre la URL de producción, no la del despliegue. Para cambiar el proyecto usa la CLI con el id y el
+  equipo explícitos, p. ej. `vercel api "/v9/projects/prj_9QxS82caEAdwuyXwXcfAVLFImmZL?teamId=team_KBorOe6hUDxwOXVixaaqDdwf"`. La rama de
+  producción se cambia con `PATCH /v9/projects/<id>/branch` (`{"branch":"main"}` al pasar a `main`, paso 9 de la [fase final](../fase-final.md)).
+- **Ojo:** no rebajes la protección del equipo para «abrir» una URL de despliegue: la de producción ya es pública y la app pide su login.

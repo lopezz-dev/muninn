@@ -204,9 +204,10 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > diseño de la PWA con Web Push en [#34](https://github.com/lopezz-dev/muninn/pull/34). Primero se monta toda la app **sin publicar**:
 > publicar la web, los avisos push (que necesitan la web publicada) y la pila [Pruebas finales](#pruebas-finales) quedan para la fase final.
 - [ ] PWA instalable en iPhone con Web Push (iOS 16.4+)
-  - [x] Diseño en ADR-0040 (**propuesto**: hosting en Vercel, `push-sw.js`, suscripciones por dispositivo, Edge Function `push` con cron y
-    VAPID); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
-  - [ ] Publicar la web (tuyo: [gotchas/web](gotchas/web.md) › «Publicar la PWA y activar Web Push»): **fase final**, se monta todo antes
+  - [x] Diseño en ADR-0040 (hosting en Vercel **aceptado** el 26 de octubre; `push-sw.js`, suscripciones por dispositivo, Edge Function
+    `push` con cron y VAPID, **propuesto**); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
+  - [x] Publicar la web: **https://muninn-sepia.vercel.app** desde el 26 de octubre (equipo Kodemaru, rama `develop` mientras dura la fase
+    final). Falta la *Site URL* de Supabase y probarla en el iPhone: [fase final](fase-final.md), pasos 4 y 5
   - [ ] Implementar la suscripción (Ajustes › Notificaciones), la tabla `push_subscriptions` y la función `push`: **fase final** (necesita la
     web publicada y claves VAPID para probarse de verdad)
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
