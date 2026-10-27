@@ -120,7 +120,8 @@ jobs:
 
       # Sube los instaladores firmados y `latest.json` a la release que acaba de crear release-please.
       # Las tres plataformas escriben en el mismo `latest.json`: `retryAttempts` cubre la carrera al fusionarlo.
-      - uses: tauri-apps/tauri-action@v0
+      # Fijada a un commit: recibe la clave de firma, y una etiqueta (`v0`) podría moverse a otro código.
+      - uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # action-v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}

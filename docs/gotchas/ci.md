@@ -114,3 +114,9 @@
   resuelve en menos (52 s, y el PR se abrió 10 s antes de la cancelación). Muninn mueve a «Revisión» cualquier PR abierto del agente.
 - **Solución:** el paso «Cerrar el PR si sacaste la tarea» del workflow: antes de quitar la etiqueta, si ya no está (la quitó Muninn), cierra
   los PRs abiertos de `agent/issue-<n>`, y el webhook devuelve la tarea a «Por hacer». La rama se queda; bórrala a mano si quieres.
+
+### `tauri-action` va fijada a un commit
+
+- **Por qué:** recibe `TAURI_SIGNING_PRIVATE_KEY`. Con `@v0`, quien controlase esa etiqueta podría cambiar el código que ve la clave.
+- **Cómo subirla:** busca el commit de la nueva versión (`gh api repos/tauri-apps/tauri-action/git/ref/tags/action-vX.Y.Z`), revisa
+  sus cambios y sustituye el SHA y el comentario `# action-vX.Y.Z` en `release.yml`. La 1.0 cambia entradas: léete sus notas antes.
