@@ -9,7 +9,9 @@ export interface ToolCall {
 }
 
 export type ChatMessage =
-  | { role: 'system' | 'user'; content: string }
+  | { role: 'system'; content: string }
+  /** `images`: imágenes en base64 (sin el prefijo `data:`), para modelos con visión. */
+  | { role: 'user'; content: string; images?: string[] }
   | { role: 'assistant'; content: string; toolCalls?: ToolCall[] }
   | { role: 'tool'; content: string; toolName: string }
 
@@ -44,6 +46,8 @@ export interface ChatProvider {
   readonly label: string
   status(signal?: AbortSignal): Promise<ProviderStatus>
   chat(request: ChatRequest): AsyncIterable<ChatChunk>
+  /** ¿El modelo ve imágenes? Sin este método, se da por hecho que no. */
+  vision?(signal?: AbortSignal): Promise<boolean>
 }
 
 /** Fallo del proveedor (red, modelo, respuesta rara): corta el turno y se enseña tal cual. */

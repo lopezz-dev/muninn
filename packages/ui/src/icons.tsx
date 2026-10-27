@@ -24,6 +24,7 @@ import {
   House,
   IconContext,
   type IconProps,
+  ImageSquare,
   Info,
   Kanban,
   Keyboard,
@@ -33,6 +34,7 @@ import {
   Newspaper,
   Note,
   Palette,
+  Paperclip,
   PaperPlaneTilt,
   Plus,
   PushPin,
@@ -101,6 +103,8 @@ export const icons = {
   keyboard: Keyboard,
   info: Info,
   warning: WarningCircle,
+  image: ImageSquare,
+  attach: Paperclip,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons

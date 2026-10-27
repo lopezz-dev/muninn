@@ -45,6 +45,8 @@ export function toOllamaMessages(messages: ChatMessage[]) {
       }
     }
     if (m.role === 'tool') return { role: 'tool', content: m.content, tool_name: m.toolName }
+    if (m.role === 'user' && m.images?.length)
+      return { role: 'user', content: m.content, images: m.images }
     return { role: m.role, content: m.content }
   })
 }
@@ -117,6 +119,23 @@ export function createOllamaProvider(options: OllamaOptions = {}): ChatProvider 
       : { state: 'no-model', model, models }
   }
 
+  /** `/api/show` dice qué sabe hacer el modelo: `vision` si acepta imágenes (gemma3, qwen2.5vl, llama3.2-vision…). */
+  async function vision(signal?: AbortSignal) {
+    try {
+      const res = await doFetch(`${base}/api/show`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model }),
+        signal: signal ?? AbortSignal.timeout(2500),
+      })
+      if (!res.ok) return false
+      const body = (await res.json()) as { capabilities?: string[] }
+      return body.capabilities?.includes('vision') ?? false
+    } catch {
+      return false
+    }
+  }
+
   async function* chat(request: ChatRequest): AsyncIterable<ChatChunk> {
     let res: Response
     try {
@@ -169,5 +188,5 @@ export function createOllamaProvider(options: OllamaOptions = {}): ChatProvider 
     if (calls.length) yield { type: 'tool_calls', calls }
   }
 
-  return { id: 'ollama', label: `Local · Ollama · ${model}`, status, chat }
+  return { id: 'ollama', label: `Local · Ollama · ${model}`, status, chat, vision }
 }

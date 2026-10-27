@@ -26,11 +26,25 @@ dock del móvil y en el buscador (**Ctrl K** o **⌘ K**, escribe tu pregunta y 
 Llama a las cosas por su nombre (proyectos, columnas, cuentas, categorías) y di los importes en euros, como los
 escribirías tú.
 
+## Imágenes
+
+Puedes enseñarle hasta **4 imágenes** por mensaje: con el clip, arrastrándolas a la caja de escribir o pegándolas
+(**Ctrl V**). Por ejemplo, la foto de un ticket con *«apunta este gasto»* o una captura con *«crea una tarea con esto»*.
+
+- Se reducen antes de enviarlas (una foto de varios MB se queda en unos cientos de KB) y **no salen de tu ordenador**:
+  van al modelo local y se guardan en el historial de este dispositivo.
+- Hace falta un **modelo con visión** en Ollama, como `gemma3`, `qwen2.5vl` o `llama3.2-vision`
+  (`ollama pull gemma3` y elígelo en **Ajustes › Asistente e IA**). Si el tuyo no ve imágenes, la pantalla te lo avisa y
+  no deja enviarlas.
+- El modelo ve las imágenes en el mensaje en que las mandas. Si en otro mensaje quieres que vuelva a mirarlas, adjúntalas
+  otra vez.
+
 ## Qué ves en la conversación
 
 - **Las herramientas que ha usado**, como pequeñas etiquetas encima de la respuesta (por ejemplo `overview` o
   `create_task`). Una con ✓ fue bien; con ✗, falló y el asistente lo intentó de otra forma.
-- **La respuesta**, que aparece mientras se escribe.
+- **La respuesta**, que aparece mientras se escribe. Mientras piensa, el logo de Muninn late y una frase con un brillo
+  de tu color de acento te dice que está en ello («Atando cabos…», «Echando cuentas…»).
 - **Qué ha cambiado**, si ha tocado tus datos, con un enlace para **Abrir** cada cosa y el botón **Deshacer**, que lo
   devuelve todo a como estaba. También te sale un aviso arriba con «Deshacer».
 

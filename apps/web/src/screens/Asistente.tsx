@@ -1,5 +1,5 @@
 import { createOllamaProvider } from '@muninn/assistant'
-import { Button, Card, cn, Dialog, Icon, IconButton, icons, SheetContent } from '@muninn/ui'
+import { Button, cn, Dialog, Icon, IconButton, icons, notify, SheetContent } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
@@ -7,6 +7,7 @@ import { Page, PageHeader } from '../components/Page'
 import { useAssistantChat } from '../lib/assistant-chat'
 import { DEMO_EXAMPLES, demoProvider } from '../lib/assistant-demo'
 import { type Conversation, groupOf } from '../lib/assistant-history'
+import { imageToDataUrl, MAX_IMAGES } from '../lib/assistant-images'
 import { useAssistantPrefs } from '../lib/assistant-settings'
 import { isHandheld, useProviderStatus } from '../lib/assistant-status'
 import { timeAgo } from '../lib/dates'
@@ -15,6 +16,7 @@ import { reportPrefs } from '../lib/morning-report-prefs'
 import { useAuth, useMuninn } from '../lib/muninn'
 import { settingsQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
+import { Logo } from '../shell/Logo'
 import { BrainChip, ModelState } from './asistente/ModelState'
 import { Reply, UserBubble } from './asistente/TurnView'
 
@@ -165,10 +167,55 @@ export function Asistente() {
     end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [turns.length, lastText])
 
+  // Imágenes adjuntas (ADR-0048): reducidas en el navegador; solo si el modelo tiene visión se pueden mandar.
+  const [images, setImages] = useState<string[]>([])
+  const [dragging, setDragging] = useState(false)
+  const [vision, setVision] = useState<boolean | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    setVision(null)
+    if (!ready || !provider) return
+    let live = true
+    void (provider.vision?.() ?? Promise.resolve(false)).then((v) => {
+      if (live) setVision(v)
+    })
+    return () => {
+      live = false
+    }
+  }, [ready, provider])
+
+  const attach = async (files: FileList | File[]) => {
+    const list = [...files].filter((f) => f.type.startsWith('image/'))
+    if (!list.length) return
+    const room = MAX_IMAGES - images.length
+    if (list.length > room)
+      notify.info(`Como mucho ${MAX_IMAGES} imágenes por mensaje`, { icon: 'image' })
+    const added: string[] = []
+    for (const f of list.slice(0, Math.max(0, room))) {
+      try {
+        added.push(await imageToDataUrl(f))
+      } catch (err) {
+        notify.error(err instanceof Error ? err.message : 'No se pudo adjuntar la imagen')
+      }
+    }
+    if (added.length) setImages((l) => [...l, ...added].slice(0, MAX_IMAGES))
+    input.current?.focus()
+  }
+
+  const canSend =
+    ready &&
+    !chat.running &&
+    (draft.trim() !== '' || images.length > 0) &&
+    !(images.length > 0 && !vision)
   const submit = (text = draft) => {
-    if (!text.trim() || chat.running || !ready) return
-    void chat.send(text)
+    if (!ready || chat.running) return
+    // Las sugerencias se mandan sin imágenes; lo escrito, con las adjuntas (si el modelo las ve).
+    const withImages = text === draft && images.length > 0
+    if (withImages && !vision) return
+    if (!text.trim() && !withImages) return
+    void chat.send(text, withImages ? images : [])
     setDraft('')
+    if (withImages) setImages([])
     input.current?.focus()
   }
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -203,8 +250,8 @@ export function Asistente() {
   const suggestions = demo ? DEMO_EXAMPLES : SUGGESTIONS
 
   return (
-    <Page className="max-w-[1180px]">
-      <div className="flex gap-6">
+    <Page>
+      <div className="flex flex-1 gap-6">
         {desktop ? (
           <aside className="hidden w-[250px] shrink-0 lg:block">
             <div className="sticky top-7 max-h-[calc(100dvh-3.5rem)] overflow-y-auto pr-1">
@@ -252,90 +299,171 @@ export function Asistente() {
 
           <ModelState status={status} url={prefs.ollamaUrl} onRetry={retry} />
 
-          {turns.length ? (
-            <div className="flex flex-col gap-6" aria-live="polite" aria-busy={chat.running}>
-              {turns.map((t, i) =>
-                t.role === 'user' ? (
-                  <UserBubble key={t.id} text={t.text} />
-                ) : (
-                  <Reply
-                    key={t.id}
-                    turn={t}
-                    running={chat.running && i === turns.length - 1}
-                    canUndo={chat.canUndo(t.id)}
-                    onUndo={() => chat.current && void chat.undo(chat.current.id, t.id)}
-                  />
-                ),
-              )}
-            </div>
-          ) : ready ? (
-            <Card className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-              <span className="grid size-12 place-items-center rounded-lg bg-accent-soft text-accent">
-                <Icon name="assistant" size={24} />
-              </span>
-              <h2 className="text-lg font-semibold">¿En qué te ayudo?</h2>
-              <p className="max-w-md text-sm text-fg-muted text-pretty">
-                Puedo consultar y cambiar tus proyectos, tareas, notas y finanzas: crear, mover,
-                completar y archivar. Nunca borro nada.
-              </p>
-            </Card>
-          ) : null}
-          <div ref={end} />
-
-          <div
-            className={cn(
-              'glass sticky z-10 -mx-2 flex flex-col gap-2.5 rounded-lg px-2 pt-2 pb-2',
-              'bottom-[calc(env(safe-area-inset-bottom)+96px)] md:bottom-4',
-            )}
-          >
-            {!turns.length && ready ? (
-              <div className="flex flex-wrap gap-1.5">
-                {suggestions.map((s) => (
-                  <Button key={s} size="sm" variant="secondary" onClick={() => submit(s)}>
-                    {s}
-                  </Button>
-                ))}
+          {/* La conversación va en una columna de lectura (~75 caracteres por línea), como en los chats. */}
+          <div className="mx-auto flex w-full max-w-[780px] flex-1 flex-col gap-5">
+            {turns.length ? (
+              <div className="flex flex-col gap-7" aria-live="polite" aria-busy={chat.running}>
+                {turns.map((t, i) =>
+                  t.role === 'user' ? (
+                    <UserBubble key={t.id} text={t.text} images={t.images} />
+                  ) : (
+                    <Reply
+                      key={t.id}
+                      turn={t}
+                      running={chat.running && i === turns.length - 1}
+                      canUndo={chat.canUndo(t.id)}
+                      onUndo={() => chat.current && void chat.undo(chat.current.id, t.id)}
+                    />
+                  ),
+                )}
+              </div>
+            ) : ready ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
+                <Logo className="size-14 drop-shadow-[0_8px_24px_var(--mn-color-accent-soft)]" />
+                <div className="flex flex-col gap-1.5">
+                  <h2 className="text-2xl font-semibold tracking-tight">¿En qué te ayudo?</h2>
+                  <p className="max-w-md text-[15px] text-fg-muted text-pretty">
+                    Consulto y cambio tus proyectos, tareas, notas y finanzas: crear, mover,
+                    completar y archivar. Nunca borro nada.
+                  </p>
+                </div>
+                <div className="mt-2 grid w-full max-w-xl gap-2 sm:grid-cols-2">
+                  {suggestions.map((sug) => (
+                    <button
+                      key={sug}
+                      type="button"
+                      onClick={() => submit(sug)}
+                      className="cursor-pointer rounded-lg border border-border bg-surface px-3.5 py-3 text-left text-sm text-fg-muted transition-[background-color,color,border-color,scale] duration-150 ease-out hover:border-border-strong hover:bg-surface-hover hover:text-fg active:scale-[0.98]"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
-            <div className="flex items-end gap-2 rounded-md border border-border-strong bg-surface-sunken py-2 pr-2 pl-3.5 focus-within:border-accent">
-              <label htmlFor="asistente-mensaje" className="sr-only">
-                Mensaje
-              </label>
-              <textarea
-                id="asistente-mensaje"
-                ref={input}
-                rows={2}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={onKey}
-                disabled={!ready}
-                placeholder={
-                  ready ? 'Pregunta o pide algo a Muninn…' : 'El asistente no está disponible aquí'
-                }
-                className="max-h-40 min-h-11 flex-1 resize-none bg-transparent text-base leading-normal text-fg outline-none placeholder:text-fg-faint disabled:cursor-not-allowed"
-              />
-              {chat.running ? (
-                <IconButton
-                  aria-label="Detener"
-                  icon={<Icon name="close" size={17} />}
-                  variant="secondary"
-                  size="lg"
-                  onClick={chat.stop}
-                />
+            <div ref={end} />
+
+            <div
+              className={cn(
+                // mt-auto: con pocos mensajes, la caja de escribir baja al pie de la pantalla.
+                'glass sticky z-10 -mx-2 mt-auto flex flex-col gap-2 rounded-xl px-2 pt-2 pb-2',
+                'bottom-[calc(env(safe-area-inset-bottom)+96px)] md:bottom-4',
+              )}
+            >
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: soltar imágenes es un atajo; el clip hace lo mismo */}
+              <div
+                onDragOver={(e) => {
+                  if (!ready || !e.dataTransfer.types.includes('Files')) return
+                  e.preventDefault()
+                  setDragging(true)
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setDragging(false)
+                  void attach(e.dataTransfer.files)
+                }}
+                className={cn(
+                  'flex flex-col gap-2 rounded-xl border bg-surface-sunken p-2 transition-colors focus-within:border-accent',
+                  dragging ? 'border-accent bg-accent-soft' : 'border-border-strong',
+                )}
+              >
+                {images.length ? (
+                  <ul aria-label="Imágenes adjuntas" className="flex flex-wrap gap-2 px-1 pt-1">
+                    {images.map((src, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: se quitan por posición
+                      <li key={i} className="relative">
+                        <img
+                          src={src}
+                          alt={`Imagen ${i + 1}`}
+                          className="size-16 rounded-lg border border-border object-cover"
+                        />
+                        <button
+                          type="button"
+                          aria-label={`Quitar la imagen ${i + 1}`}
+                          onClick={() => setImages((l) => l.filter((_, j) => j !== i))}
+                          className="absolute -top-1.5 -right-1.5 grid size-5 cursor-pointer place-items-center rounded-full border border-border-strong bg-surface-raised text-fg-muted hover:text-fg"
+                        >
+                          <icons.close size={11} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="flex items-end gap-1.5">
+                  <input
+                    ref={fileInput}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      if (e.target.files) void attach(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                  <IconButton
+                    aria-label="Adjuntar imágenes"
+                    icon={<Icon name="attach" size={18} />}
+                    size="lg"
+                    disabled={!ready || chat.running || images.length >= MAX_IMAGES}
+                    onClick={() => fileInput.current?.click()}
+                    className="text-fg-subtle"
+                  />
+                  <label htmlFor="asistente-mensaje" className="sr-only">
+                    Mensaje
+                  </label>
+                  <textarea
+                    id="asistente-mensaje"
+                    ref={input}
+                    rows={1}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={onKey}
+                    onPaste={(e) => {
+                      if (e.clipboardData.files.length) {
+                        e.preventDefault()
+                        void attach(e.clipboardData.files)
+                      }
+                    }}
+                    disabled={!ready}
+                    placeholder={ready ? 'Pregunta o pide algo…' : 'Aquí no está disponible'}
+                    className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-base leading-normal text-fg outline-none [field-sizing:content] placeholder:text-fg-faint disabled:cursor-not-allowed"
+                  />
+                  {chat.running ? (
+                    <IconButton
+                      aria-label="Detener"
+                      icon={<Icon name="close" size={17} />}
+                      variant="secondary"
+                      size="lg"
+                      onClick={chat.stop}
+                    />
+                  ) : (
+                    <IconButton
+                      aria-label="Enviar"
+                      icon={<Icon name="send" size={17} />}
+                      variant="primary"
+                      size="lg"
+                      disabled={!canSend}
+                      onClick={() => submit()}
+                    />
+                  )}
+                </div>
+              </div>
+              {images.length && vision === false ? (
+                <p role="status" className="flex items-start gap-2 px-1 text-xs text-fg-muted">
+                  <Icon name="warning" size={14} className="mt-px shrink-0 text-accent" />
+                  {demo
+                    ? 'La demo no ve imágenes: no hay modelo detrás.'
+                    : `«${prefs.model}» no ve imágenes. Elige un modelo con visión (gemma3, qwen2.5vl, llama3.2-vision) en Ajustes › Asistente e IA.`}
+                </p>
               ) : (
-                <IconButton
-                  aria-label="Enviar"
-                  icon={<Icon name="send" size={17} />}
-                  variant="primary"
-                  size="lg"
-                  disabled={!ready || !draft.trim()}
-                  onClick={() => submit()}
-                />
+                <span className="hidden text-center text-xs text-fg-faint md:block">
+                  Muninn puede crear, mover y archivar, pero nunca borra. Todo queda en la
+                  actividad.
+                </span>
               )}
             </div>
-            <span className="hidden text-center text-xs text-fg-faint md:block">
-              Muninn puede crear, mover y archivar, pero nunca borra. Todo queda en la actividad.
-            </span>
           </div>
         </section>
       </div>

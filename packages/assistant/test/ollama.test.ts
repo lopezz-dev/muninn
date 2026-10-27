@@ -109,4 +109,24 @@ describe('proveedor Ollama', () => {
       { name: 'a', arguments: { x: 2 } },
     ])
   })
+
+  it('manda las imágenes del usuario y sabe si el modelo las ve', async () => {
+    expect(toOllamaMessages([{ role: 'user', content: '¿Qué es?', images: ['aGk='] }])).toEqual([
+      { role: 'user', content: '¿Qué es?', images: ['aGk='] },
+    ])
+    // Sin imágenes no se manda el campo.
+    expect(toOllamaMessages([{ role: 'user', content: 'hola', images: [] }])).toEqual([
+      { role: 'user', content: 'hola' },
+    ])
+    const show = (capabilities: string[]) =>
+      (async () => Response.json({ capabilities })) as unknown as typeof fetch
+    const ve = createOllamaProvider({ model: 'gemma3', fetch: show(['completion', 'vision']) })
+    const ciego = createOllamaProvider({ model: 'qwen3:8b', fetch: show(['completion', 'tools']) })
+    expect(await ve.vision?.()).toBe(true)
+    expect(await ciego.vision?.()).toBe(false)
+    const caido = (async () => {
+      throw new Error('ECONNREFUSED')
+    }) as unknown as typeof fetch
+    expect(await createOllamaProvider({ fetch: caido }).vision?.()).toBe(false)
+  })
 })

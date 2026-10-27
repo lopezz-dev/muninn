@@ -18,6 +18,7 @@ import {
   titleFrom,
   upsertConversation,
 } from './assistant-history'
+import { base64Of } from './assistant-images'
 import { reason } from './mutations'
 
 /** Turnos anteriores que se le mandan al modelo (solo texto): con 16k de contexto, los últimos bastan. */
@@ -26,7 +27,13 @@ export const HISTORY_TURNS = 10
 const uid = () => crypto.randomUUID()
 const now = () => new Date().toISOString()
 
-/** El historial para el modelo: preguntas y respuestas, sin herramientas ni turnos con error. */
+/** Lo que se pregunta si el usuario manda solo imágenes. */
+export const IMAGE_ONLY_QUESTION = '¿Qué ves en la imagen?'
+
+/**
+ * El historial para el modelo: preguntas y respuestas, sin herramientas ni turnos con error. Solo texto: las imágenes
+ * viajan una vez, en su turno (ADR-0048).
+ */
 export function historyFor(turns: Turn[]): ChatMessage[] {
   return turns
     .filter((t) => t.text.trim() && !t.error)
@@ -128,8 +135,9 @@ export function useAssistantChat({ app, provider, userKey, modules }: Options) {
   )
 
   const send = useCallback(
-    async (text: string) => {
-      const question = text.trim()
+    async (text: string, images: string[] = []) => {
+      // Una imagen sola también vale: el modelo recibe una pregunta por defecto.
+      const question = text.trim() || (images.length ? IMAGE_ONLY_QUESTION : '')
       if (!question || running || !provider) return
       const prior = current?.turns ?? []
       const conv: Conversation = current ?? {
@@ -139,7 +147,13 @@ export function useAssistantChat({ app, provider, userKey, modules }: Options) {
         updatedAt: now(),
         turns: [],
       }
-      const userTurn: Turn = { id: uid(), role: 'user', text: question, createdAt: now() }
+      const userTurn: Turn = {
+        id: uid(),
+        role: 'user',
+        text: question,
+        createdAt: now(),
+        ...(images.length ? { images } : {}),
+      }
       const reply: Turn = { id: uid(), role: 'assistant', text: '', createdAt: now(), tools: [] }
       setConversations((list) =>
         upsertConversation(list, { ...conv, updatedAt: now(), turns: [...prior, userTurn, reply] }),
@@ -150,7 +164,10 @@ export function useAssistantChat({ app, provider, userKey, modules }: Options) {
       abort.current = controller
       const changes: Change[] = []
       try {
-        await runAssistant([...historyFor(prior), { role: 'user', content: question }], {
+        const ask: ChatMessage = images.length
+          ? { role: 'user', content: question, images: images.map(base64Of) }
+          : { role: 'user', content: question }
+        await runAssistant([...historyFor(prior), ask], {
           provider,
           app,
           conversationId: conv.id,

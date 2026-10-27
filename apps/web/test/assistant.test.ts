@@ -1,7 +1,7 @@
 import { runAssistant } from '@muninn/assistant'
 import { createMemoryStore, createMuninn } from '@muninn/core'
 import { describe, expect, it } from 'vitest'
-import { applyRun, HISTORY_TURNS, historyFor } from '../src/lib/assistant-chat'
+import { applyRun, HISTORY_TURNS, historyFor, IMAGE_ONLY_QUESTION } from '../src/lib/assistant-chat'
 import { demoProvider } from '../src/lib/assistant-demo'
 import {
   type Conversation,
@@ -10,7 +10,9 @@ import {
   titleFrom,
   upsertConversation,
 } from '../src/lib/assistant-history'
+import { base64Of } from '../src/lib/assistant-images'
 import { assistantPrefs, DEFAULT_ASSISTANT, normalizeUrl } from '../src/lib/assistant-settings'
+import { THINKING_PHRASES, TOOL_PHRASES } from '../src/screens/asistente/TurnView'
 
 const conv = (id: string, updatedAt: string): Conversation => ({
   id,
@@ -80,6 +82,34 @@ describe('chat', () => {
     const h = historyFor(turns)
     expect(h).toHaveLength(HISTORY_TURNS)
     expect(h.some((m) => m.content === 'roto')).toBe(false)
+  })
+
+  it('las imágenes de turnos anteriores no se vuelven a mandar (ADR-0048)', () => {
+    const h = historyFor([
+      {
+        id: '1',
+        role: 'user',
+        text: IMAGE_ONLY_QUESTION,
+        images: ['data:image/jpeg;base64,aGk='],
+        createdAt: '',
+      },
+      { id: '2', role: 'assistant', text: 'Un ticket de 24,90 €.', createdAt: '' },
+    ])
+    expect(h).toEqual([
+      { role: 'user', content: IMAGE_ONLY_QUESTION },
+      { role: 'assistant', content: 'Un ticket de 24,90 €.' },
+    ])
+    expect(base64Of('data:image/jpeg;base64,aGk=')).toBe('aGk=')
+  })
+
+  it('frases de «pensando»: cortas, sin repetir y acabadas en «…»', () => {
+    for (const list of [THINKING_PHRASES, TOOL_PHRASES]) {
+      expect(new Set(list).size).toBe(list.length)
+      for (const p of list) {
+        expect(p.endsWith('…')).toBe(true)
+        expect(p.length).toBeLessThanOrEqual(24)
+      }
+    }
   })
 
   it('aplica los eventos de herramientas por id', () => {
