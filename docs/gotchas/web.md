@@ -470,6 +470,30 @@
     buscadores que ejecutan JavaScript.
   - Las pantallas privadas siguen con `PageHeader`, que solo cambia el título.
   - Que las tarjetas lleven el título de la guía necesitaría prerender (propuesta del ADR-0045).
-  - El dominio de producción está escrito en `index.html`, `public/robots.txt` y `public/sitemap.xml`: si cambia, cámbialo en los tres.
+  - El dominio de producción está escrito a mano en el repo: si cambia, sigue [Cambiar el dominio de la web](#cambiar-el-dominio-de-la-web-lista-completa).
 - **Ojo en tests:** en jsdom, `document.head.innerHTML = …` también borra el `<title>`; pon `document.title` después.
 - **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md)
+
+### Cambiar el dominio de la web: lista completa
+
+- **Síntoma:** tras pasar a un dominio propio (o a otro `*.vercel.app`), la tarjeta al compartir enseña la URL vieja, los buscadores
+  siguen el sitemap viejo, entrar con GitHub vuelve al dominio anterior o el Asistente de la web no llega a Ollama.
+- **Causa:** la URL de producción (hoy `https://muninn-sepia.vercel.app`) no sale de una variable. Las tarjetas y los buscadores no
+  ejecutan JavaScript, así que va escrita a mano en el repo; y además está configurada en varios servicios.
+- **Solución:** al cambiarla, repasa todo esto (y busca la vieja con `git grep muninn-sepia`).
+  - **En el repo**, en un PR a `develop`:
+    - `apps/web/index.html`: `og:url`, `og:image` y `twitter:image`;
+    - `apps/web/public/robots.txt`: la línea `Sitemap:`;
+    - `apps/web/public/sitemap.xml`: cada `<loc>`;
+    - la URL en los docs que la citan: `ROADMAP.md`, `fase-final.md`, ADR-0040 y la entrada «Vercel: qué URL es pública» de aquí.
+  - **Fuera del repo** (a mano, cada uno en su panel):
+    - Vercel › *Settings › Domains*: añadir el dominio (el `*.vercel.app` puede quedarse como alias);
+    - Supabase › *Authentication › URL Configuration*: *Site URL* y `https://<dominio>/**` en *Redirect URLs* (el OAuth del MCP,
+      `/oauth/consent`, depende de la *Site URL*, ADR-0036);
+    - GitHub › la OAuth App de Muninn: *Homepage URL* (el *callback* es de Supabase y no cambia);
+    - `OLLAMA_ORIGINS` en cada ordenador que use el Asistente desde la web, y reiniciar Ollama;
+    - el secreto `MUNINN_MCP_ALLOWED_ORIGINS` de la función `mcp`, si incluye la URL de la web;
+    - Search Console (cuando esté dado de alta): añadir la propiedad nueva y volver a enviar `sitemap.xml`.
+  - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
+    Las apps instaladas (PWA) de la URL vieja no se mudan solas: hay que instalarlas otra vez desde la nueva.
+- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)

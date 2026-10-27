@@ -110,7 +110,8 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
 - [x] Proyecto en Vercel con *Root Directory* `apps/web` y la rama del paso 0.
 - [x] Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Despliega.
 - [ ] Dominio propio (opcional). *(Mientras, la de Vercel. Para un nombre más corto, Vercel › Settings › Domains admite otro
-  `*.vercel.app` libre.)*
+  `*.vercel.app` libre.)* Al cambiarlo, sigue [la lista de gotchas/web](gotchas/web.md#cambiar-el-dominio-de-la-web-lista-completa):
+  la URL está escrita en el repo y en varios servicios.
 - [x] Supabase › URL Configuration: *Site URL* = la URL publicada, y `https://<tu-url>/**` en *Redirect URLs*. Deja las de `localhost`.
 - [ ] GitHub › la OAuth App de Muninn: *Homepage URL* = la URL publicada (el *callback* no cambia).
 - [ ] Añadir la URL publicada a `OLLAMA_ORIGINS` y reiniciar Ollama.
@@ -119,8 +120,8 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
   - entrar con el código del correo funciona;
   - entrar con GitHub vuelve a la URL publicada;
   - la pestaña lleva el logo, `/robots.txt` y `/sitemap.xml` se abren, y al pegar la URL en un chat sale la tarjeta con la imagen
-    (ADR-0045).
-- [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`.
+    (ADR-0045). *(Hecho el 27 de octubre: la tarjeta sale bien en WhatsApp y los ficheros responden en producción.)*
+- [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`. *(Más adelante.)*
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
   local», acéptalo.
 
