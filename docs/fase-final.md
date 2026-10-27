@@ -175,6 +175,45 @@ Ya con la *Site URL* publicada:
 - [ ] Archivar los datos «Prueba final …» (tareas, cuentas, suscripción) y quitar las fuentes de prueba que no quieras.
 - [ ] Poner al día el ROADMAP: marcar en Pruebas finales lo que ha pasado, apuntar el resultado del banco y abrir tareas con lo que falló.
 - [ ] Pasar `develop` → `main` (tuyo) y, si en el paso 0 publicaste `develop`, cambiar en Vercel la *Production Branch* a `main`.
+  release-please abrirá un Release PR: **no lo fusiones** hasta acabar los pasos 1–4 del 10, o la release de escritorio fallará.
+
+## 10. Repo público y primera versión de escritorio (≈ 1 h, la mitad esperando a GitHub Actions)
+
+Decisiones en [ADR-0046](adr/0046-repo-publico-con-licencia-mit.md) (repo público) y [ADR-0047](adr/0047-actualizaciones-de-escritorio-firmadas.md)
+(actualizador). Hasta ahora la app de escritorio solo se puede compilar a mano; esto publica la primera versión instalable y deja listas las
+actualizaciones.
+
+1. **Hacer público el repo.**
+   - [ ] Antes, repasa por encima las issues y los PRs (también se verán) y los registros de Actions. El historial de código ya está
+     revisado: no hay secretos.
+   - [ ] GitHub › `lopezz-dev/muninn` › **Settings › General › Danger Zone › Change visibility › Public**.
+   - [ ] **Settings › Advanced Security:** activa *Private vulnerability reporting*, *Secret scanning* y *Push protection*.
+2. **Clave de firma del actualizador** (en PowerShell, en la raíz del repo):
+   - [ ] `pnpm --filter @muninn/desktop tauri signer generate -w $HOME\.tauri\muninn.key`. Elige una contraseña.
+   - [ ] Guarda `muninn.key` y la contraseña en tu gestor de contraseñas. **Si se pierden, ninguna instalación aceptará más
+     actualizaciones** y habrá que reinstalar a mano en cada equipo.
+3. **Secretos en GitHub:**
+   - [ ] `Get-Content $HOME\.tauri\muninn.key -Raw | gh secret set TAURI_SIGNING_PRIVATE_KEY -R lopezz-dev/muninn`
+   - [ ] `gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD -R lopezz-dev/muninn` (te pide la contraseña sin mostrarla).
+4. **Clave pública en la app:**
+   - [ ] Copia el contenido de `$HOME\.tauri\muninn.key.pub` (una línea; no es secreta) en `plugins.updater.pubkey` de
+     `apps/desktop/src-tauri/tauri.conf.json`, en lugar de `PENDIENTE_CLAVE_PUBLICA_DE_TAURI_SIGNER_GENERATE`. PR a `develop` con
+     `chore(desktop): clave pública del actualizador` (o pásale el `.pub` a Claude y que lo haga). Después, `develop` → `main` otra vez.
+5. **Publicar:**
+   - [ ] Fusiona el Release PR de release-please (`chore(main): release 0.x.0`).
+   - [ ] En **Actions › Release**, en verde: `release-please`, `back-merge` y los tres `desktop` (macOS es el que más tarda).
+   - [ ] En la release: `Muninn_<versión>_x64-setup.exe`, el `.dmg`, `Muninn.app.tar.gz`, el `.AppImage`, el `.deb` y el `.rpm`, un `.sig`
+     junto a cada instalador que se actualiza, y `latest.json` con una `signature` no vacía en cada plataforma.
+   - [ ] Sin sesión (otra ventana o `curl -L https://github.com/lopezz-dev/muninn/releases/latest/download/latest.json`) se descarga
+     `latest.json`: el repo es público de verdad.
+6. **Instalar en Windows:**
+   - [ ] Si tienes una versión compilada a mano, desinstálala (Configuración › Aplicaciones). Esa no se actualiza nunca.
+   - [ ] Instala el `-setup.exe` siguiendo [la guía](user/02-instalacion.md#windows) y entra con tu cuenta. En la barra lateral sale la versión
+     publicada.
+7. **Probar la actualización**, cuando salga la siguiente versión (cualquier `fix` que llegue a `main` y su Release PR):
+   - [ ] Al abrir Muninn sale «Hay una versión nueva · Reiniciar» con el número nuevo. Pulsa **Reiniciar**: se instala sin pedir
+     administrador, Muninn se vuelve a abrir y la barra lateral enseña la versión nueva. Sigues con la sesión iniciada.
+   - [ ] Sin conexión, al abrir no sale ningún aviso ni error.
 
 ## Después (trabajo de código que necesita lo anterior)
 

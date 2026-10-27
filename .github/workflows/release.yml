@@ -2,7 +2,8 @@ name: Release
 
 # Flujo: develop → PR a main → release-please abre/actualiza un "Release PR" con versión y CHANGELOG
 # a partir de los conventional commits → al mergearlo se crea el tag + GitHub Release
-# y se compilan los instaladores de Windows, Linux y macOS.
+# y se compilan los instaladores de Windows, Linux y macOS, firmados para el actualizador junto a `latest.json`
+# (ADR-0047). Las apps instaladas leen ese `latest.json` de la última release al abrirse.
 on:
   push:
     branches: [main]
@@ -51,7 +52,7 @@ jobs:
             args: ''
           - platform: ubuntu-22.04
             args: ''
-          # macOS cuesta x10 minutos en repos privados: solo se compila al publicar.
+          # macOS solo se compila al publicar (en un repo privado sus minutos cuentan ×10).
           - platform: macos-latest
             args: --target universal-apple-darwin
     runs-on: ${{ matrix.platform }}
@@ -94,13 +95,39 @@ jobs:
             echo "::warning::Sin secretos de Apple: el .dmg se publicará sin firmar ni notarizar."
           fi
 
+      # Sin clave no hay actualización posible (ADR-0047): mejor parar que publicar instaladores que nadie verifica.
+      - name: Comprobar la clave de firma del actualizador
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::Falta el secreto TAURI_SIGNING_PRIVATE_KEY (pasos en docs/fase-final.md)."
+            exit 1
+          fi
+          if grep -q 'PENDIENTE_CLAVE_PUBLICA' apps/desktop/src-tauri/tauri.conf.json; then
+            echo "::error::plugins.updater.pubkey de tauri.conf.json sigue sin la clave pública."
+            exit 1
+          fi
+
       - run: pnpm install --frozen-lockfile
 
+      # Solo aquí: en local `tauri build` exigiría la clave privada para firmar.
+      - name: Generar los artefactos del actualizador
+        shell: bash
+        run: |
+          node -e "const f='apps/desktop/src-tauri/tauri.conf.json',fs=require('fs'),c=JSON.parse(fs.readFileSync(f));c.bundle.createUpdaterArtifacts=true;fs.writeFileSync(f,JSON.stringify(c,null,2))"
+
+      # Sube los instaladores firmados y `latest.json` a la release que acaba de crear release-please.
+      # Las tres plataformas escriben en el mismo `latest.json`: `retryAttempts` cubre la carrera al fusionarlo.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tagName: ${{ needs.release-please.outputs.tag_name }}
           releaseName: Muninn ${{ needs.release-please.outputs.tag_name }}
+          retryAttempts: 3
           args: ${{ matrix.args }}

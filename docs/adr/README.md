@@ -121,11 +121,14 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
 - [ADR-0041](0041-asistente-local-con-catalogo-unico.md) — Asistente con modelo local (Ollama) en la app, con un catálogo único de herramientas compartido con el MCP
 - [ADR-0044](0044-voz-local-whisper-y-piper.md) — Voz en local: whisper.cpp para dictar y Piper para hablar, como procesos aparte en el escritorio *(propuesto)*
+- [ADR-0047](0047-actualizaciones-de-escritorio-firmadas.md) — Actualizaciones de escritorio firmadas, publicadas en la GitHub Release y aplicadas con «Reiniciar»
 
 ### ci
-- [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please
+- [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please *(el repo privado y el updater pendiente, reemplazados por ADR-0046 y ADR-0047)*
 - [ADR-0040](0040-pwa-instalable-y-web-push.md) — PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron *(hosting aceptado; Web Push, propuesto)*
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
+- [ADR-0046](0046-repo-publico-con-licencia-mit.md) — El repositorio es público, con licencia MIT y política de seguridad
+- [ADR-0047](0047-actualizaciones-de-escritorio-firmadas.md) — Actualizaciones de escritorio firmadas, publicadas en la GitHub Release y aplicadas con «Reiniciar»
 
 ### tooling
 - [ADR-0001](0001-monorepo-pnpm-turborepo.md) — Monorepo con pnpm y Turborepo
@@ -135,3 +138,4 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 ### docs
 - [ADR-0013](0013-sistema-de-documentacion.md) — Sistema de documentación: ADRs, gotchas y docs de usuario
 - [ADR-0027](0027-documentacion-en-la-app-desde-docs-user.md) — La sección Documentación se genera con `docs/user/*.md` importados al compilar
+- [ADR-0046](0046-repo-publico-con-licencia-mit.md) — El repositorio es público, con licencia MIT y política de seguridad

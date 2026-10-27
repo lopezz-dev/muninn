@@ -1,6 +1,7 @@
 # ADR-0010: Ramas `main`/`develop`, Conventional Commits y release-please
 
-- **Estado:** Aceptado
+- **Estado:** Aceptado · en parte reemplazado por [ADR-0046](0046-repo-publico-con-licencia-mit.md) (repo público) y
+  [ADR-0047](0047-actualizaciones-de-escritorio-firmadas.md) (actualizador)
 - **Fecha:** 2026-10-19
 - **Área:** ci
 

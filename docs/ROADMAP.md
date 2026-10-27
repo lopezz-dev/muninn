@@ -197,6 +197,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Al día siguiente, con el ordenador apagado a esa hora: al abrir Muninn se hace solo y dice a qué hora; el de ayer ya no está fijado
 - [ ] En el iPhone: el informe se lee en Notas y en el Asistente, y el iPhone no genera ninguno
 
+### Escritorio · primera versión y actualizaciones (ADR-0046, ADR-0047)
+> Código, CI y documentación listos el 27 de octubre (tests del aviso y `cargo check` en verde). Falta todo lo que necesita la clave de firma,
+> el repo público y una release: [paso 10 de la fase final](fase-final.md#10-repo-público-y-primera-versión-de-escritorio).
+- [ ] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
+- [ ] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
+- [ ] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
+- [ ] Sin conexión, al abrir no sale ningún aviso
+
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
 > [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →
@@ -303,5 +311,4 @@ más o menos en este orden:
   junto con la landing page; entonces, añadirlas a `sitemap.xml` y dar de alta Search Console
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")
-- Auto-updater de escritorio (requiere publicar binarios en un repo público o endpoint propio)
 - Migración a servidor propio (Supabase self-hosted)
