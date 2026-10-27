@@ -45,16 +45,18 @@ Al guardar sale un aviso con **Deshacer**, por si te equivocas.
 
 ## Ver y buscar
 
-- **Resumen**: el mes de un vistazo (cambia de mes con las flechas):
-  - **Ingresos** y **gastos**, comparados con el mes anterior.
+- **Resumen**: el mes de un vistazo. Cambia de mes con las flechas, o pulsa el nombre del mes para saltar a cualquier mes y año:
+  - **Ingresos** y **gastos**, comparados con el mes anterior en porcentaje. Si el anterior casi no tenía datos (por ejemplo, el
+    primer mes que apuntas), en vez de un porcentaje enorme verás cuánto hubo: «En septiembre: 9,95 €».
   - **Ahorro** e **inversión**: lo que pasaste ese mes a tus huchas y a tus cuentas de inversión (si sacaste, resta).
   - **Tasa de ahorro**: la parte de lo que entró que **no gastaste** ((ingresos − gastos) ÷ ingresos). Incluye lo que apartaste y lo
     que se quedó en la cuenta; **Libre** dice cuánto se quedó sin apartar.
   - **En qué se va el dinero** (gasto por categoría) y los **últimos 6 meses** de ingresos y gastos (pasa el ratón por una barra para
     ver las cifras).
   - Tus cuentas con su saldo, tus suscripciones y los últimos movimientos.
-- **Movimientos**: los del mes, agrupados por día y con el total de cada día. Cambia de mes con las flechas y filtra por texto,
-  tipo, categoría o cuenta. Si filtras una cuenta, los traspasos salen con signo: lo que sale (−) y lo que entra (+).
+- **Movimientos**: los del mes, agrupados por día y con el total de cada día. Cambia de mes igual que en el Resumen y filtra por texto,
+  tipo, categoría o cuenta. En el móvil, el tipo, la categoría y la cuenta están tras el botón de filtro (el embudo), junto a la
+  búsqueda. Si filtras una cuenta, los traspasos salen con signo: lo que sale (−) y lo que entra (+).
 
 ## Editar y archivar
 
@@ -66,6 +68,10 @@ movimientos se conservan; una categoría archivada deja de ofrecerse, pero los m
 
 Empiezas con unas de serie (Vivienda, Supermercado, Suscripciones, Transporte, Restaurantes, Ocio, Salud, Otros; y Nómina,
 Facturas y Otros ingresos). En **Cuentas** puedes renombrarlas, cambiarles el color, archivarlas o crear las tuyas.
+
+Para **ordenarlas** a tu gusto, arrástralas por el asa de la izquierda (⠿). Con el teclado: ve al asa con Tab, pulsa Espacio o
+Enter, muévela con las flechas y vuelve a pulsar para soltarla. Gastos e ingresos se ordenan por separado, y en ese orden te salen
+al apuntar un movimiento y en los filtros. Sale un aviso con **Deshacer**.
 
 ## Suscripciones
 

@@ -1,8 +1,63 @@
 import type { ChangeTarget, ToolRun } from '@muninn/assistant'
 import { Button, cn, Icon } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import type { Turn } from '../../lib/assistant-history'
 import { Markdown } from '../../markdown/Markdown'
+import { Logo } from '../../shell/Logo'
+
+/**
+ * Frases del estado «pensando»: rotan mientras el modelo trabaja. Muninn es el cuervo de la memoria de Odín: algunas
+ * guiñan a eso. Las de `TOOL_PHRASES` salen cuando ya está usando herramientas.
+ */
+export const THINKING_PHRASES = [
+  'Pensando…',
+  'Ordenando ideas…',
+  'Recordando…',
+  'Atando cabos…',
+  'Hilando fino…',
+  'Consultando a Hugin…',
+  'Batiendo las alas…',
+  'Repasando tu día…',
+]
+export const TOOL_PHRASES = [
+  'Mirando tus datos…',
+  'Echando cuentas…',
+  'Repasando tus tareas…',
+  'Poniendo orden…',
+  'Tomando nota…',
+]
+const PHRASE_MS = 2400
+
+/** «Pensando…» con una ola del color de acento y frases que cambian (empieza en una al azar). */
+export function Thinking({ working }: { working: boolean }) {
+  const list = working ? TOOL_PHRASES : THINKING_PHRASES
+  const [i, setI] = useState(() => Math.floor(Math.random() * list.length))
+  useEffect(() => {
+    const t = setInterval(() => setI((n) => n + 1), PHRASE_MS)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <p className="text-[15px] font-medium" aria-live="polite">
+      <span className="mn-shimmer">{list[i % list.length]}</span>
+    </p>
+  )
+}
+
+/** Avatar del asistente: la marca de Muninn (sigue al color de acento). Late mientras piensa. */
+export function MuninnAvatar({ busy }: { busy?: boolean }) {
+  return (
+    <span className="relative grid size-7 shrink-0 place-items-center">
+      {busy ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 animate-ping rounded-md bg-accent/30 [animation-duration:1.6s] motion-reduce:hidden"
+        />
+      ) : null}
+      <Logo className="relative size-7" />
+    </span>
+  )
+}
 
 /** El chip de una herramienta: nombre técnico (como en el diseño), detalle y si fue bien. */
 function ToolChip({ run }: { run: ToolRun }) {
@@ -67,10 +122,30 @@ function TargetLink({ target }: { target: ChangeTarget }) {
   }
 }
 
-export function UserBubble({ text }: { text: string }) {
+export function UserBubble({ text, images }: { text: string; images?: string[] }) {
   return (
-    <div className="max-w-[84%] self-end whitespace-pre-wrap break-words rounded-md bg-surface-raised px-3.5 py-2.5 text-base leading-relaxed md:max-w-[80%]">
-      {text}
+    <div className="flex max-w-[86%] flex-col items-end gap-1.5 self-end md:max-w-[75%]">
+      {images?.length ? (
+        <ul aria-label="Imágenes" className="flex flex-wrap justify-end gap-1.5">
+          {images.map((src, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: las imágenes de un mensaje no cambian
+            <li key={i}>
+              <a href={src} target="_blank" rel="noreferrer" className="block">
+                <img
+                  src={src}
+                  alt={`Imagen ${i + 1} adjunta`}
+                  className="max-h-44 max-w-56 rounded-lg border border-border object-cover"
+                />
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {text ? (
+        <div className="whitespace-pre-wrap break-words rounded-2xl rounded-br-md border border-border-subtle bg-surface-raised px-4 py-2.5 text-[15px] leading-relaxed text-fg">
+          {text}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -88,11 +163,9 @@ export function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
   const changes = turn.changes ?? []
   const undone = changes.length > 0 && changes.every((c) => c.undone)
   return (
-    <div className="flex gap-3">
-      <span className="grid size-7 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
-        <Icon name="assistant" size={16} />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
+    <div className="flex gap-3.5">
+      <MuninnAvatar busy={running && !turn.text} />
+      <div className="flex min-w-0 flex-1 flex-col gap-3 pt-0.5">
         {tools.length ? (
           <ul aria-label="Herramientas usadas" className="flex flex-wrap gap-1.5">
             {tools.map((t) => (
@@ -103,13 +176,10 @@ export function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
           </ul>
         ) : null}
         {turn.text ? (
-          <div className="text-base leading-relaxed text-fg">
-            <Markdown source={turn.text} />
-          </div>
+          // El Markdown de las notas va en gris de lectura; aquí, el texto principal (se leía apagado).
+          <Markdown source={turn.text} className="text-[15px] leading-[1.7] text-fg" />
         ) : running ? (
-          <p className="text-sm text-fg-subtle" aria-live="polite">
-            {tools.length ? 'Trabajando…' : 'Pensando…'}
-          </p>
+          <Thinking working={tools.length > 0} />
         ) : null}
         {changes.length ? (
           <div className="overflow-hidden rounded-md border border-border bg-surface-sunken">

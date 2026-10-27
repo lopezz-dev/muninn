@@ -29,6 +29,7 @@ import { createNote } from '../lib/note-actions'
 import { projectsQuery } from '../lib/queries'
 import { Markdown } from '../markdown/Markdown'
 import { useShell } from '../shell/shell-context'
+import { SuggestedSourcesButton } from './noticias/SuggestedSources'
 
 const route = getRouteApi('/_app/noticias')
 
@@ -258,6 +259,10 @@ function Sources({ sources }: { sources: NewsSource[] }) {
           Aún no sigues ninguna fuente. Añade la primera abajo.
         </p>
       )}
+      <div className="mt-3 flex flex-col gap-1.5 border-t border-border-subtle pt-3">
+        <SuggestedSourcesButton sources={sources} />
+        <p className="text-xs text-fg-subtle">Medios, organismos y blogs técnicos, por temas.</p>
+      </div>
       <form
         onSubmit={submit}
         className="mt-3 flex flex-col gap-2.5 border-t border-border-subtle pt-3"
@@ -424,6 +429,15 @@ export function Noticias() {
             <EmptyState
               icon="news"
               title={sources.length ? 'Aún no han llegado artículos' : 'Elige tus fuentes'}
+              actions={
+                sources.length ? undefined : (
+                  <SuggestedSourcesButton
+                    sources={sources}
+                    variant="primary"
+                    label="Ver fuentes oficiales"
+                  />
+                )
+              }
             >
               {sources.length
                 ? 'El servidor de Muninn descarga tus fuentes cada hora. Si acabas de añadirlas, prueba «Actualizar» en un rato.'

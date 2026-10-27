@@ -4,6 +4,7 @@ import {
   createMemoryStore,
   createMuninn,
   decodeEntities,
+  feedCharset,
   fetchFeed,
   isPrivateAddress,
   parseFeed,
@@ -112,6 +113,29 @@ describe('lector de feeds', () => {
     )
     const ok = await fetchFeed(src, fake(200, RSS, { etag: '"def"' }), dns)
     expect(ok.status === 'ok' && ok.etag).toBe('"def"')
+  })
+
+  it('respeta la codificación del feed (el BOE va en ISO-8859-1)', async () => {
+    const xml = `<?xml version="1.0" encoding="ISO-8859-1"?><rss version="2.0"><channel><title>BOE</title>
+      <item><title>Real Decreto sobre la campaña de vacunación</title><link>https://boe.es/1</link></item></channel></rss>`
+    // Cada carácter, un byte: así viaja un feed en latin-1.
+    const latin1 = Uint8Array.from(xml, (c) => c.charCodeAt(0))
+    const src = { url: 'https://x.test/rss', etag: null, lastModified: null }
+    const fetchFn = (async () =>
+      new Response(latin1, {
+        status: 200,
+        headers: { 'content-type': 'text/xml' },
+      })) as unknown as typeof fetch
+    const res = await fetchFeed(src, fetchFn, dns)
+    expect(res.status === 'ok' && res.feed.items[0]?.title).toBe(
+      'Real Decreto sobre la campaña de vacunación',
+    )
+    // La cabecera manda sobre la declaración XML.
+    expect(feedCharset('text/xml; charset=ISO-8859-1', '<?xml encoding="UTF-8"?>')).toBe(
+      'windows-1252',
+    )
+    expect(feedCharset(null, '<?xml version="1.0"?>')).toBe('utf-8')
+    expect(feedCharset('text/xml; charset=nope', '')).toBe('utf-8')
   })
 })
 

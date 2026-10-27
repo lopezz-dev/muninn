@@ -201,7 +201,8 @@ export function Inicio() {
   )
 
   return (
-    <Page>
+    // lg: el panel mide la ventana; cada tarjeta lleva el scroll de su lista (ADR-0050).
+    <Page className="lg:min-h-0">
       <PageHeader
         title={name ? `${greeting(now.getHours())}, ${name}` : greeting(now.getHours())}
         description={
@@ -289,8 +290,8 @@ export function Inicio() {
               Crea la primera y aparecerá aquí cuando venza hoy, esté en curso o la termines.
             </EmptyState>
           ) : (
-            <section className="grid gap-3 lg:grid-cols-3">
-              <Card className="flex flex-col lg:col-span-2">
+            <section className="grid gap-3 lg:min-h-[180px] lg:flex-1 lg:grid-cols-3">
+              <Card className="flex flex-col lg:col-span-2 lg:min-h-0">
                 <CardHeader
                   title="Mis tareas"
                   description="Vencidas, de hoy y las que has hecho hoy"
@@ -308,28 +309,28 @@ export function Inicio() {
                       : ' Cuando pongas fechas a tus tareas, aparecerán aquí por urgencia.'}
                   </p>
                 ) : (
-                  <ul>
+                  <ul className="min-h-0 overflow-y-auto">
                     {rows(todayTasks)}
                     {rows(doneToday, true)}
                   </ul>
                 )}
               </Card>
 
-              <Card className="flex flex-col">
+              <Card className="flex flex-col lg:min-h-0">
                 <CardHeader title="En curso" description="Lo que tienes entre manos" />
                 {data.inProgress.length === 0 ? (
                   <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
                     Ninguna tarea en curso. Mueve una a «En curso» en su tablero.
                   </p>
                 ) : (
-                  <ul>{rows(data.inProgress)}</ul>
+                  <ul className="min-h-0 overflow-y-auto">{rows(data.inProgress)}</ul>
                 )}
               </Card>
             </section>
           )}
 
-          <section className="grid gap-3 lg:grid-cols-3">
-            <Card className="flex flex-col gap-3.5 p-4">
+          <section className="grid gap-3 lg:min-h-[180px] lg:flex-1 lg:grid-cols-3">
+            <Card className="flex flex-col gap-3.5 overflow-y-auto p-4 lg:min-h-0">
               <div className="flex items-center">
                 <h2 className="text-md font-semibold">Proyectos</h2>
                 <Link
@@ -385,14 +386,17 @@ export function Inicio() {
                       className="flex h-full flex-col items-center justify-end gap-1.5"
                     >
                       <span className="text-2xs text-fg-subtle tabular">{d.count || ''}</span>
-                      <div
-                        title={`${d.count} hechas`}
-                        className={cn(
-                          'w-full rounded-xs',
-                          isToday ? 'bg-accent' : 'bg-border-strong',
-                        )}
-                        style={{ height: `${Math.max(4, (d.count / weekMax) * 84)}px` }}
-                      />
+                      {/* Las barras crecen con la tarjeta: alto en % del hueco libre, mínimo 4 px. */}
+                      <div className="flex min-h-[84px] w-full flex-1 items-end">
+                        <div
+                          title={`${d.count} hechas`}
+                          className={cn(
+                            'min-h-1 w-full rounded-xs',
+                            isToday ? 'bg-accent' : 'bg-border-strong',
+                          )}
+                          style={{ height: `${(d.count / weekMax) * 100}%` }}
+                        />
+                      </div>
                       <span
                         className={cn(
                           'text-[11.5px]',
@@ -407,14 +411,14 @@ export function Inicio() {
               </div>
             </Card>
 
-            <Card className="flex flex-col">
+            <Card className="flex flex-col lg:min-h-0">
               <CardHeader title="Próximos días" description="Lo que vence en la próxima semana" />
               {data.upcoming.length === 0 ? (
                 <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
                   Nada vence en los próximos 7 días.
                 </p>
               ) : (
-                <ul>
+                <ul className="min-h-0 overflow-y-auto">
                   {data.upcoming.slice(0, 6).map((t) => (
                     <li
                       key={t.id}

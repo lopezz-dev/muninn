@@ -26,7 +26,8 @@ Al pie de la barra está tu cuenta, con tu nombre y tu foto (o tus iniciales). P
 En pantallas pequeñas la barra lateral se convierte en un dock flotante con cinco pestañas: **Inicio**,
 **Proyectos**, **Asistente** (en el centro), **Finanzas** y **Más**. La burbuja de color marca dónde estás.
 
-En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, tu cuenta, el buscador y los ajustes.
+En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, tu cuenta, el buscador y los ajustes. En el móvil,
+**Ajustes** es una lista: toca una sección para abrirla y **‹ Ajustes** para volver.
 
 ## Inicio
 

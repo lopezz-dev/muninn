@@ -18,6 +18,8 @@ export interface Turn {
   role: 'user' | 'assistant'
   text: string
   createdAt: string
+  /** Imágenes del usuario, ya reducidas (`data:image/jpeg;base64,…`). Solo viajan al modelo en su turno (ADR-0051). */
+  images?: string[]
   tools?: ToolRun[]
   changes?: ChangeView[]
   /** El turno se cortó con un error (Ollama apagado a mitad, etc.). */

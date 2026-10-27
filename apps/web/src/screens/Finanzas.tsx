@@ -7,6 +7,7 @@ import {
   Icon,
   IconButton,
   icons,
+  MonthPicker,
   SegmentedControl,
   SheetContent,
 } from '@muninn/ui'
@@ -71,12 +72,16 @@ export function Finanzas() {
         onClick={() => setMonth((mo) => shiftMonth(mo, -1))}
         className="size-11 md:size-8"
       />
-      <span
-        className="min-w-[100px] text-center text-sm font-medium md:min-w-[120px]"
-        aria-live="polite"
-      >
-        {monthLabel(month)}
-      </span>
+      <MonthPicker value={month} onChange={setMonth} current={today.slice(0, 7)}>
+        <button
+          type="button"
+          aria-label={`Elegir mes: ${monthLabel(month)}`}
+          className="inline-flex h-11 min-w-[100px] cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent data-[state=open]:bg-surface-hover md:h-8 md:min-w-[120px]"
+        >
+          <span aria-live="polite">{monthLabel(month)}</span>
+          <icons.chevronDown size={12} className="text-fg-subtle" />
+        </button>
+      </MonthPicker>
       <IconButton
         aria-label="Mes siguiente"
         icon={<icons.chevronRight />}
@@ -154,9 +159,14 @@ export function Finanzas() {
       />
     )
     body = inlineForm ? (
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      // lg: la pantalla mide lo que la ventana (ADR-0050); la lista hace scroll dentro de su tarjeta y el
+      // formulario se queda a la vista.
+      <div className="grid items-start gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[minmax(0,1fr)]">
         {list}
-        <Card aria-label="Nuevo movimiento" className="flex flex-col gap-3 p-4 lg:sticky lg:top-7">
+        <Card
+          aria-label="Nuevo movimiento"
+          className="flex flex-col gap-3 p-4 lg:max-h-full lg:overflow-y-auto"
+        >
           <h2 className="text-md font-semibold">Nuevo movimiento</h2>
           <TransactionForm accounts={accounts} categories={categories} today={today} />
         </Card>
@@ -185,7 +195,7 @@ export function Finanzas() {
   const title = txDialog.editing ? 'Editar movimiento' : 'Nuevo movimiento'
 
   return (
-    <Page>
+    <Page className={inlineForm ? 'lg:min-h-0' : undefined}>
       <PageHeader
         title="Finanzas"
         description={

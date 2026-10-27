@@ -1,4 +1,4 @@
-import { ACCENTS, type AccentName, Avatar, Button, Card, Kbd, Switch } from '@muninn/ui'
+import { ACCENTS, type AccentName, Avatar, Button, Card, icons, Kbd, Switch } from '@muninn/ui'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { type ReactNode, useState } from 'react'
 import { EmptyState, PageHeader } from '../../components/Page'
@@ -233,6 +233,13 @@ export function Seccion() {
   if (!section) return null
   return (
     <>
+      <Link
+        to="/ajustes"
+        className="-mb-2 -ml-1 inline-flex h-11 items-center gap-1 self-start rounded-md pr-2 text-base text-accent md:hidden"
+      >
+        <icons.chevronLeft size={18} aria-hidden="true" />
+        Ajustes
+      </Link>
       <PageHeader title={section.label} />
       {section.id === 'cuenta' ? (
         <Cuenta />

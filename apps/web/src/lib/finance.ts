@@ -207,13 +207,19 @@ export function chargeLabel(
 
 const MONTH_NAME = new Intl.DateTimeFormat('es-ES', { month: 'long' })
 
+/** Por encima de esto (más del triple), un porcentaje ya no dice nada: «+15559 %». */
+const MAX_DELTA_PCT = 200
+
 /**
  * Cambio respecto al mes anterior en texto: «−6 % que en septiembre». `null` si el mes anterior fue 0 (no hay base).
+ * Si se multiplicó por más de tres (un mes casi vacío, p. ej. el primero que apuntas), da la cifra de ese mes:
+ * «En septiembre: 9,99 €».
  */
 export function deltaText(current: number, previous: number, previousMonth: string) {
   if (previous === 0) return null
   const pct = Math.round(((current - previous) / previous) * 100)
   const name = MONTH_NAME.format(asDate(`${previousMonth}-15`))
+  if (pct > MAX_DELTA_PCT) return `En ${name}: ${amountText(previous, 'none')}`
   if (pct === 0) return `Igual que en ${name}`
   return `${pct > 0 ? '+' : '−'}${Math.abs(pct)} % que en ${name}`
 }
@@ -221,3 +227,22 @@ export function deltaText(current: number, previous: number, previousMonth: stri
 /** Tasa de ahorro (0–1) como «20 %»; «—» sin ingresos. */
 export const rateText = (rate: number | null) =>
   rate === null ? '—' : `${Math.round(rate * 100)} %`
+
+/**
+ * Reordena en la caché: `category` pasa al puesto `index` de las activas de su tipo; las demás (el otro
+ * tipo y las archivadas) se quedan donde estaban.
+ */
+export function applyCategoryMove(
+  list: FinanceCategory[],
+  category: Pick<FinanceCategory, 'id' | 'kind'>,
+  index: number,
+): FinanceCategory[] {
+  const inGroup = (c: FinanceCategory) => c.kind === category.kind && !c.archivedAt
+  const moved = list.find((c) => c.id === category.id)
+  if (!moved) return list
+  const rest = list.filter((c) => inGroup(c) && c.id !== category.id)
+  const at = Math.max(0, Math.min(index, rest.length))
+  const order = [...rest.slice(0, at), moved, ...rest.slice(at)]
+  let i = 0
+  return list.map((c) => (inGroup(c) ? (order[i++] ?? c) : c))
+}

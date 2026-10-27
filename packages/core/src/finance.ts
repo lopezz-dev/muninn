@@ -288,9 +288,12 @@ export function createFinance({ store, nowIso, today, parse, log }: FinanceConte
     return category
   }
 
+  /** `index` cuenta las demás categorías activas de su tipo (0 = la primera de gastos o de ingresos). */
   async function moveCategory(id: string, index: number) {
-    await getCategoryRow(id)
-    const siblings = (await store.financeCategories.list({})).filter((c) => c.id !== id)
+    const c = await getCategoryRow(id)
+    const siblings = (await store.financeCategories.list({ kind: c.kind })).filter(
+      (s) => s.id !== id,
+    )
     return store.financeCategories.update(id, {
       position: await place('financeCategories', siblings, index),
     })

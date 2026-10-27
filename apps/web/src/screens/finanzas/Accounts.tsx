@@ -11,7 +11,6 @@ import {
   Card,
   CardHeader,
   Checkbox,
-  ColorDot,
   Dialog,
   DialogClose,
   DialogContent,
@@ -30,13 +29,13 @@ import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
 import { ACCOUNT_KIND_LABEL, amountText } from '../../lib/finance'
 import {
   archiveAccount,
-  archiveCategory,
   createAccount,
   createCategory,
   updateAccount,
   updateCategory,
 } from '../../lib/finance-actions'
 import { useMuninn } from '../../lib/muninn'
+import { SortableCategories } from './SortableCategories'
 
 export const COLORS: Swatch<FinanceColor>[] = [
   { value: 'blue', label: 'Azul', color: palette.blue },
@@ -275,8 +274,6 @@ function CategoryDialog({
 }
 
 function CategoryList({ kind, categories }: { kind: CategoryKind; categories: FinanceCategory[] }) {
-  const m = useMuninn()
-  const qc = useQueryClient()
   const [dialog, setDialog] = useState<{ open: boolean; editing?: FinanceCategory }>({
     open: false,
   })
@@ -294,28 +291,7 @@ function CategoryList({ kind, categories }: { kind: CategoryKind; categories: Fi
         }
       />
       <ul className="flex flex-col pb-1.5">
-        {list.map((c) => (
-          <li
-            key={c.id}
-            className="flex items-center gap-1 border-t border-border-subtle py-1 pr-2 pl-4"
-          >
-            <button
-              type="button"
-              onClick={() => setDialog({ open: true, editing: c })}
-              aria-label={`Editar ${c.name}`}
-              className="flex min-h-11 flex-1 cursor-pointer items-center gap-2.5 text-left text-base outline-none hover:text-fg focus-visible:underline md:min-h-8"
-            >
-              <ColorDot color={projectColor(c.color)} />
-              <span className="truncate">{c.name}</span>
-            </button>
-            <IconButton
-              aria-label={`Archivar ${c.name}`}
-              icon={<icons.archive />}
-              onClick={() => archiveCategory(m, qc, c)}
-              className="size-11 md:size-8"
-            />
-          </li>
-        ))}
+        <SortableCategories list={list} onEdit={(c) => setDialog({ open: true, editing: c })} />
         {list.length === 0 ? (
           <li className="border-t border-border-subtle px-4 py-4 text-sm text-fg-subtle">
             Sin categorías: los movimientos irán «Sin categoría».

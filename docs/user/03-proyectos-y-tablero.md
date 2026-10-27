@@ -30,8 +30,11 @@ Cada proyecto tiene su propio tablero Kanban. Al crearlo empieza con cinco colum
 ### Personalizar las columnas
 
 Desde el menú **⋯** de cada columna puedes **editarla** (nombre, tipo y límite), **moverla** a la izquierda o a la
-derecha y **borrarla**. Con **Añadir columna** creas una nueva al final. También puedes reordenarlas arrastrándolas
-por el asa de su cabecera.
+derecha y **borrarla**. Con **Columna**, arriba junto a **Nueva tarea** (o en el menú **⋯** del proyecto), creas una nueva
+al final. También puedes reordenarlas arrastrándolas por el asa de su cabecera.
+
+En el ordenador, las columnas se reparten el ancho de la pantalla y cada una hace scroll por dentro cuando tiene muchas
+tareas: así ves el tablero entero de un vistazo.
 
 El **límite** es el número de tareas que quieres tener a la vez en esa columna (útil para no tener demasiadas cosas
 "en curso"). Cuando lo alcanzas, el contador se pone en ámbar, y en rojo si lo superas. Es un aviso: Muninn no te

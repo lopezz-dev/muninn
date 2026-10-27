@@ -53,7 +53,7 @@ export function Proyectos() {
           GitHub más adelante.
         </EmptyState>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {projects?.map((p) => {
             const s = stats.get(p.id)
             const total = (s?.open ?? 0) + (s?.done ?? 0)

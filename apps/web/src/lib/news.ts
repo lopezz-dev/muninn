@@ -82,7 +82,7 @@ export function settleNews(qc: QueryClient) {
 export async function addSource(
   m: Muninn,
   qc: QueryClient,
-  input: { url: string; topic?: string | null },
+  input: { url: string; title?: string; topic?: string | null },
 ): Promise<NewsSource | null> {
   let source: NewsSource
   try {

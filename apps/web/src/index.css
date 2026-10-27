@@ -41,3 +41,40 @@
     font-size: 16px;
   }
 }
+
+/*
+ * «Ola» del estado «pensando» del asistente: un brillo del color de acento que recorre el texto, como en Claude
+ * Desktop. Movimiento constante → `linear`. Con movimiento reducido, el texto se queda quieto en el color de acento.
+ */
+@layer components {
+  .mn-shimmer {
+    background-image: linear-gradient(
+      100deg,
+      var(--mn-color-fg-subtle) 0%,
+      var(--mn-color-fg-subtle) 35%,
+      var(--mn-color-accent) 50%,
+      var(--mn-color-fg-subtle) 65%,
+      var(--mn-color-fg-subtle) 100%
+    );
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: mn-shimmer 1.8s linear infinite;
+  }
+  @keyframes mn-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -150% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mn-shimmer {
+      animation: none;
+      color: var(--mn-color-accent);
+      background-image: none;
+    }
+  }
+}

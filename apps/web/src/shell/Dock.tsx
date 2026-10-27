@@ -1,6 +1,6 @@
 import { cn, Icon } from '@muninn/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useEnabledModules } from '../lib/modules'
 import {
   DOCK_DURATION,
@@ -15,6 +15,36 @@ import { dockFor, dockIndexOf, SECTIONS, sectionOf } from './nav'
 const reducedMotion = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
+/** Hueco máximo que se corrige: la barra de estado más alta de un iPhone (59 pt) con margen. */
+const MAX_GAP = 80
+
+/**
+ * App instalada en iOS (`navigator.standalone`): a veces, al abrirla, el visor mide la pantalla menos la
+ * barra de estado y `position: fixed; bottom: 0` queda ese tanto por encima del borde. Devuelve cuánto falta para bajar el
+ * dock (0 si el visor mide lo mismo que la pantalla, que es lo normal). Ver docs/gotchas/web.md.
+ */
+function useStandaloneGap() {
+  const [gap, setGap] = useState(0)
+  useEffect(() => {
+    if ((navigator as { standalone?: boolean }).standalone !== true) return
+    const measure = () => {
+      const portrait = window.innerHeight >= window.innerWidth
+      const { width: w, height: h } = window.screen
+      const full = portrait ? Math.max(w, h) : Math.min(w, h)
+      const diff = Math.round(full - window.innerHeight)
+      setGap(diff > 0 && diff <= MAX_GAP ? diff : 0)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('pageshow', measure)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('pageshow', measure)
+    }
+  }, [])
+  return gap
+}
+
 /**
  * Dock con menisco para móvil (< 768 px). Diseño: Dock.dc.html.
  * La burbuja ámbar se desliza a la pestaña activa y la barra se hunde bajo ella. La posición se
@@ -27,6 +57,7 @@ export function Dock({ className }: { className?: string }) {
   const dock = useMemo(() => dockFor(modules), [modules])
   const count = dock.length
   const active = dockIndexOf(sectionOf(pathname), dock)
+  const gap = useStandaloneGap()
 
   const boxRef = useRef<HTMLDivElement>(null)
   const strokeRef = useRef<SVGPathElement>(null)
@@ -95,7 +126,10 @@ export function Dock({ className }: { className?: string }) {
   const activeId = dock[active] ?? 'more'
 
   return (
-    <div className={cn('pointer-events-none fixed inset-x-0 bottom-0 z-30', className)}>
+    <div
+      className={cn('pointer-events-none fixed inset-x-0 bottom-0 z-30', className)}
+      style={gap ? { translate: `0 ${gap}px` } : undefined}
+    >
       {/* Fundido para que el contenido no choque con el dock al hacer scroll. */}
       <div
         aria-hidden="true"

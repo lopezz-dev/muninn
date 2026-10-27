@@ -13,7 +13,6 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import type { BoardColumn } from '@muninn/core'
-import { icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -212,7 +211,9 @@ export function BoardDesktop({
       >
         <section
           aria-label="Columnas"
-          className="-mx-8 flex items-start gap-3 overflow-x-auto px-8 pb-3"
+          // flex-1 + min-h-0: el tablero mide lo que queda de ventana; las columnas llegan al pie (se puede
+          // soltar en todo su alto) y sus tarjetas hacen scroll dentro (ADR-0050).
+          className="-mx-8 flex min-h-0 flex-1 gap-3 overflow-x-auto px-8 pb-3"
         >
           <SortableContext items={colOrder.map(colKey)} strategy={horizontalListSortingStrategy}>
             {colOrder.map((id) => {
@@ -236,14 +237,6 @@ export function BoardDesktop({
               )
             })}
           </SortableContext>
-          <button
-            type="button"
-            onClick={() => setEditing('new')}
-            className="flex h-11 w-[200px] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm font-medium text-fg-subtle transition-colors hover:border-fg-faint hover:text-fg"
-          >
-            <icons.plus size={16} />
-            Añadir columna
-          </button>
         </section>
 
         <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>

@@ -1,10 +1,11 @@
 import { type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes, useId } from 'react'
 import { cn } from '../cn'
 
-const fieldBox =
+/** Caja de los campos de texto. Exportada para otros campos de `@muninn/ui` (fecha). */
+export const fieldBox =
   'w-full rounded-md border border-border-strong bg-surface-sunken text-fg placeholder:text-fg-faint transition-colors duration-150 outline-none focus:border-accent aria-[invalid=true]:border-danger disabled:opacity-50'
 
-interface FieldChrome {
+export interface FieldChrome {
   label: ReactNode
   /** Texto de ayuda bajo el campo. */
   hint?: ReactNode
@@ -14,7 +15,8 @@ interface FieldChrome {
   hideLabel?: boolean
 }
 
-function Field({
+/** Etiqueta, ayuda y error alrededor de un campo. */
+export function Field({
   id,
   label,
   hint,

@@ -171,6 +171,28 @@
   `Dock.tsx`). Para verificar fotograma a fotograma en un panel oculto, sustituye temporalmente
   `requestAnimationFrame` por `cb => setTimeout(() => cb(performance.now()), 16)`.
 
+### El dock flota por encima del borde en la app instalada del iPhone
+
+- **Síntoma:** en la app añadida a la pantalla de inicio (iOS, barra de estado `black-translucent`), al abrirla el dock
+  queda unos 55 pt por encima del borde de abajo, con fondo vacío debajo. Al cambiar de sección se coloca bien. En Safari
+  no pasa.
+- **Causa:** a veces iOS calcula el visor de la app instalada como la pantalla menos la barra de estado, así que
+  `position: fixed; bottom: 0` termina a esa altura. Es un fallo de WebKit, no de nuestro CSS.
+- **Solución:** `useStandaloneGap` en `shell/Dock.tsx` compara `screen` con `innerHeight` solo si `navigator.standalone`,
+  y baja el dock la diferencia (como mucho 80 px; si no hay diferencia, no hace nada). Solo se puede comprobar en un iPhone real: va en
+  [pruebas-iphone](../pruebas-iphone.md).
+
+### En escritorio la ventana no hace scroll: lo hace `<main>`
+
+- **Síntoma:** algo que escucha `window.scroll` o usa `window.scrollTo` no hace nada en escritorio, o un `sticky` se pega
+  a un sitio raro.
+- **Causa:** desde el [ADR-0050](../adr/0050-scroll-dentro-de-la-pantalla-en-escritorio.md), en ≥ 768 px el shell mide
+  `h-dvh` y el scroll es de `<main id="contenido">`. `window.scrollY` vale 0. En el móvil sigue siendo la ventana.
+- **Solución:** en escritorio, usa `document.getElementById('contenido')`. El router ya lo devuelve arriba al cambiar de
+  pantalla (`scrollToTopSelectors`) y recuerda su posición (`data-scroll-restoration-id`). Para que una lista haga scroll
+  dentro, la cadena entera necesita `min-h-0` (desde `Page fit` hasta la lista con `overflow-y-auto`): un solo eslabón
+  sin él y crece en lugar de hacer scroll.
+
 ### El buscador ⌘K no usa `cmdk`
 
 - Es un *combobox* propio (`shell/CommandPalette.tsx`) con la lógica pura en `palette-items.ts` (con tests).

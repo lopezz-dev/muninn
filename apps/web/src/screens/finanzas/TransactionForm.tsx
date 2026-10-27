@@ -3,6 +3,7 @@ import {
   AmountField,
   Button,
   Checkbox,
+  DateField,
   Icon,
   projectColor,
   SegmentedControl,
@@ -233,13 +234,12 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
           </div>
         ) : null}
       </div>
-      <TextField
+      <DateField
         label="Fecha"
-        type="date"
         size={large ? 'lg' : 'md'}
         value={date}
-        onChange={(e) => setDate(e.target.value)}
-        leading={<Icon name="calendar" />}
+        onChange={setDate}
+        today={m.today()}
       />
       {!editing && entry === 'expense' ? (
         <div className="flex items-center gap-2.5 text-sm">
