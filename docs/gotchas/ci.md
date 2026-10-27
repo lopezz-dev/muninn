@@ -11,6 +11,8 @@
 
 - El plan gratuito incluye unos 2000 minutos al mes, y cada minuto de macOS cuenta como 10. Por eso macOS
   solo se compila en `release.yml`, nunca en los PRs. No lo añadas a `ci.yml`.
+- Con el repo público ([ADR-0046](../adr/0046-repo-publico-con-licencia-mit.md)) los minutos no cuentan, pero compilar macOS
+  sigue tardando: mantenlo solo al publicar.
 
 ### Secretos de Apple vacíos
 
@@ -25,10 +27,43 @@
 - **Solución:** hazlo a mano con `git checkout develop && git merge origin/main`. Si se protege `develop`,
   permite el bypass al bot.
 
-### El auto-updater no funciona con releases privadas
+### El actualizador solo funciona con el repo público
 
-- Las releases de un repo privado no son descargables sin token. Para el updater de Tauri hará falta un
-  repo público solo de binarios o un endpoint propio. Está en el backlog del roadmap.
+- **Síntoma:** las apps instaladas nunca ven la versión nueva, aunque la release tenga `latest.json`.
+- **Causa:** el endpoint es `github.com/lopezz-dev/muninn/releases/latest/download/latest.json` ([ADR-0047](../adr/0047-actualizaciones-de-escritorio-firmadas.md)).
+  Mientras el repo sea privado, GitHub contesta 404 sin token, y la app calla.
+- **Solución:** hacer público el repo ([ADR-0046](../adr/0046-repo-publico-con-licencia-mit.md)) antes de la primera release.
+
+### La release falla en «Comprobar la clave de firma del actualizador»
+
+- **Síntoma:** el job `desktop` de `release.yml` para en ese paso, sin compilar nada.
+- **Causa:** falta el secreto `TAURI_SIGNING_PRIVATE_KEY`, o `plugins.updater.pubkey` de `tauri.conf.json` sigue con el texto
+  `PENDIENTE_CLAVE_PUBLICA…`. Es a propósito: sin firma, las apps instaladas rechazarían la versión.
+- **Solución:** los pasos de la [fase final](../fase-final.md#10-repo-público-y-primera-versión-de-escritorio). Después, relanza los
+  jobs fallidos de esa ejecución (**Re-run failed jobs**): release-please no vuelve a crear la release.
+- **Ojo:** la clave privada y su contraseña solo existen en tu gestor de contraseñas y en los secretos. Si se pierden, ninguna
+  instalación aceptará actualizaciones firmadas con una clave nueva: habrá que reinstalar a mano en cada equipo.
+
+### `latest.json` tarda unos minutos en aparecer
+
+- **Síntoma:** justo tras fusionar el Release PR, la release ya está publicada pero sin instaladores ni `latest.json`.
+- **Causa:** release-please publica la release en cuanto se fusiona y `tauri-action` sube los ficheros cuando acaba de compilar
+  cada plataforma (macOS es la más lenta). Las tres fusionan sus entradas en el mismo `latest.json`; `retryAttempts: 3` cubre la carrera.
+- **Solución:** nada; mientras, la app recibe un 404 y no avisa. Si un job falla, la release se queda con las plataformas que sí
+  acabaron: relanza el que falló.
+
+### Windows: solo NSIS, sin MSI
+
+- **Síntoma** (si vuelves a `"targets": "all"`): el bundle de Windows falla al generar el `.msi` con errores de WiX o VBScript.
+- **Causa:** el MSI lo hace WiX v3, abandonado desde febrero de 2025, y el `windows-latest` de 2026 (Windows Server 2025) lo rompe.
+  Le pasó a huginnDB.
+- **Solución:** `bundle.targets` lista los formatos y en Windows solo hay `nsis`. Es también lo que usa el actualizador.
+
+### `ubuntu-22.04` tiene fecha de caducidad
+
+- `release.yml` y `desktop-ci.yml` compilan Linux en `ubuntu-22.04` para que el AppImage arranque en distribuciones con glibc 2.35.
+  GitHub la retira: apagones programados desde finales de marzo de 2027 y fuera de servicio el 17 de abril de 2027
+  (actions/runner-images#14254). Pásalas a `ubuntu-24.04` antes; el AppImage pedirá glibc 2.39 o más.
 
 ### Los commits deben seguir Conventional Commits
 
@@ -79,3 +114,9 @@
   resuelve en menos (52 s, y el PR se abrió 10 s antes de la cancelación). Muninn mueve a «Revisión» cualquier PR abierto del agente.
 - **Solución:** el paso «Cerrar el PR si sacaste la tarea» del workflow: antes de quitar la etiqueta, si ya no está (la quitó Muninn), cierra
   los PRs abiertos de `agent/issue-<n>`, y el webhook devuelve la tarea a «Por hacer». La rama se queda; bórrala a mano si quieres.
+
+### `tauri-action` va fijada a un commit
+
+- **Por qué:** recibe `TAURI_SIGNING_PRIVATE_KEY`. Con `@v0`, quien controlase esa etiqueta podría cambiar el código que ve la clave.
+- **Cómo subirla:** busca el commit de la nueva versión (`gh api repos/tauri-apps/tauri-action/git/ref/tags/action-vX.Y.Z`), revisa
+  sus cambios y sustituye el SHA y el comentario `# action-vX.Y.Z` en `release.yml`. La 1.0 cambia entradas: léete sus notas antes.

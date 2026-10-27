@@ -37,6 +37,27 @@
 
 - La versión de `tauri.conf.json` y `Cargo.toml` la actualiza release-please. No la cambies a mano.
   `Cargo.lock` se actualiza en el siguiente build.
+- El actualizador compara esa versión con la de `latest.json`: una app compilada a mano con una versión mayor que la publicada no
+  verá actualizaciones hasta que salga una versión aún mayor.
+
+### Actualizaciones: no se prueban con `pnpm dev:desktop`
+
+- **Síntoma:** en `tauri dev` nunca aparece «Hay una versión nueva», ni con una release más nueva publicada.
+- **Causa:** `main.tsx` solo busca versiones con `TAURI_ENV_PLATFORM` y en producción ([ADR-0047](../adr/0047-actualizaciones-de-escritorio-firmadas.md)).
+  En desarrollo no tendría sentido: no hay instalador que sustituir.
+- **Solución:** para probarlo, instala una versión publicada anterior (Releases) y ábrela cuando ya exista una más nueva.
+
+### `tauri build` en local no firma ni genera `latest.json`
+
+- **Síntoma:** tu build local no trae `.sig` ni `latest.json`; o, si activas `createUpdaterArtifacts`, falla pidiendo
+  `TAURI_SIGNING_PRIVATE_KEY`.
+- **Causa:** `bundle.createUpdaterArtifacts` no está en `tauri.conf.json`: lo activa `release.yml` solo en CI, que es quien tiene la
+  clave privada.
+- **Solución:** no lo actives en el fichero. Para generar artefactos firmados en local (no hace falta para nada habitual), exporta la
+  clave en la terminal (`$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content $HOME\.tauri\muninn.key -Raw`) y añade
+  `--config '{\"bundle\":{\"createUpdaterArtifacts\":true}}'`.
+- **Ojo:** mientras `plugins.updater.pubkey` tenga el texto provisional, la app comprueba versiones pero no puede verificar ninguna
+  descarga: falla en silencio y no avisa. Las apps compiladas así no se actualizan nunca; reinstálalas tras la primera versión firmada.
 
 ### Instalar Ollama y el modelo del asistente (pasos manuales, fase final)
 

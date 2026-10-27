@@ -27,3 +27,8 @@ createRoot(root).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+// App de escritorio compilada: busca una versión nueva al abrir (ADR-0047). En `tauri dev` y en la web, nunca.
+if (import.meta.env.TAURI_ENV_PLATFORM && import.meta.env.PROD) {
+  void import('./lib/desktop-update').then((m) => m.checkForUpdate())
+}

@@ -7,20 +7,43 @@ status: parcial
 
 # Instalación
 
-> **Próximamente:** la primera versión instalable se publicará cuando esté lista la interfaz.
-> Esta página describe cómo será el proceso.
+> **Próximamente:** la app de escritorio todavía no tiene ninguna versión publicada. Esta parte describe cómo será
+> cuando salga la primera. En el móvil y en el navegador ya puedes usar Muninn.
 
 ## Escritorio
 
-Descarga el instalador de tu sistema desde la página de versiones (Releases):
+Descarga el instalador de tu sistema desde la [página de versiones](https://github.com/lopezz-dev/muninn/releases) (la de
+arriba es la más reciente). Está en el apartado **Assets** de cada versión:
 
 | Sistema | Fichero |
 |---|---|
-| Windows | `Muninn_x.y.z_x64-setup.exe` o `.msi` |
+| Windows 10 y 11 | `Muninn_x.y.z_x64-setup.exe` |
 | macOS (Intel y Apple Silicon) | `Muninn_x.y.z_universal.dmg` |
-| Linux | `.AppImage` (portable) o `.deb` (Debian/Ubuntu) |
+| Linux | `.AppImage` (portable), `.deb` (Debian/Ubuntu) o `.rpm` (Fedora) |
 
-En macOS, si la versión no está firmada, la primera vez abre la app con **clic derecho → Abrir**.
+### Windows
+
+1. Descarga el `-setup.exe` y ábrelo. Se instala solo para tu usuario: no pide permisos de administrador.
+2. La primera vez, Windows puede enseñar **«Windows protegió su PC»**, porque el instalador no lleva certificado de Microsoft.
+   Pulsa **Más información** y luego **Ejecutar de todas formas**.
+3. Abre Muninn desde el menú Inicio.
+
+### macOS
+
+Abre el `.dmg` y arrastra Muninn a **Aplicaciones**. Si la versión no está firmada, la primera vez abre la app con
+**clic derecho → Abrir**.
+
+### Actualizaciones
+
+No tienes que volver a descargar nada. Cada vez que abres Muninn mira si hay una versión nueva; si la hay, la descarga sin
+interrumpirte y te avisa arriba con **Hay una versión nueva · Reiniciar**. Pulsa **Reiniciar** cuando te venga bien: se
+instala y Muninn se vuelve a abrir. Si prefieres seguir con lo tuyo, cierra el aviso: te lo volverá a ofrecer la próxima
+vez que abras Muninn.
+
+Muninn solo instala versiones firmadas por el proyecto. Sin conexión no comprueba nada y no te molesta. En Linux, las
+actualizaciones automáticas funcionan con el `.AppImage`; con `.deb` o `.rpm`, instala la versión nueva a mano.
+
+La versión que tienes aparece arriba en la barra lateral, junto al nombre de Muninn.
 
 ## iPhone
 

@@ -25,9 +25,16 @@
       "csp": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:* ws://localhost:*; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'"
     }
   },
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://github.com/lopezz-dev/muninn/releases/latest/download/latest.json"],
+      "pubkey": "PENDIENTE_CLAVE_PUBLICA_DE_TAURI_SIGNER_GENERATE"
+    }
+  },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "app", "dmg", "appimage", "deb", "rpm"],
+    "license": "MIT",
     "category": "Productivity",
     "shortDescription": "Tu sistema operativo personal",
     "icon": [
