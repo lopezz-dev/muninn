@@ -1,5 +1,5 @@
 import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/core'
-import { Card, icons, projectColor } from '@muninn/ui'
+import { Card, cn, IconButton, icons, projectColor } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Ghost } from '../../components/Page'
@@ -17,9 +17,9 @@ import {
 } from '../../lib/finance'
 import { monthTransactionsQuery } from '../../lib/finance-queries'
 import { useMuninn } from '../../lib/muninn'
+import { useIsDesktop } from '../../lib/use-media'
+import { activeTxFilters, MovementFilterSheet, TX_KINDS } from './MovementFilters'
 import { TransactionRow } from './TransactionRows'
-
-const KINDS: EntryKind[] = ['expense', 'income', 'saving', 'investment', 'transfer']
 
 interface Props {
   month: string
@@ -50,28 +50,81 @@ export function Movements({
   )
   const groups = useMemo(() => groupByDay(shown, filter.accountId), [shown, filter.accountId])
   const filtering = isFilteringTx(filter)
+  const desktop = useIsDesktop()
+  const [sheet, setSheet] = useState(false)
+
+  const count = list.data ? `${shown.length} movimiento${shown.length === 1 ? '' : 's'}` : ''
+  const lists = activeTxFilters(filter)
+  const search = (
+    <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-border px-2.5 text-fg-subtle focus-within:border-accent md:h-8 md:w-56 md:flex-none">
+      <icons.search size={14} aria-hidden="true" />
+      <input
+        type="search"
+        aria-label="Buscar concepto"
+        placeholder="Buscar concepto"
+        value={filter.query}
+        onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
+        className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-faint"
+      />
+    </label>
+  )
 
   return (
-    <Card aria-label="Movimientos" className="flex min-w-0 flex-col overflow-hidden">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-4 py-3">
-        <label className="flex h-9 w-full items-center gap-2 rounded-md border border-border px-2.5 text-fg-subtle focus-within:border-accent sm:w-56 md:h-8">
-          <icons.search size={14} aria-hidden="true" />
-          <input
-            type="search"
-            aria-label="Buscar concepto"
-            placeholder="Buscar concepto"
-            value={filter.query}
-            onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
-            className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-faint"
+    // lg: la tarjeta llena el alto de la rejilla y solo la lista de días hace scroll (ADR-0047).
+    <Card
+      aria-label="Movimientos"
+      className="flex min-w-0 flex-col overflow-hidden lg:max-h-full lg:self-stretch"
+    >
+      {desktop ? null : (
+        // Móvil: una línea (búsqueda + filtrar); los filtros de lista van en una hoja.
+        <div className="flex flex-col gap-2 border-b border-border-subtle px-4 py-3">
+          <div className="flex items-center gap-2">
+            {search}
+            <IconButton
+              aria-label={lists ? `Filtrar (${lists} activos)` : 'Filtrar'}
+              icon={<icons.filter />}
+              variant="secondary"
+              onClick={() => setSheet(true)}
+              className={cn('relative size-11', lists > 0 && 'text-accent')}
+            />
+          </div>
+          <p role="status" className="flex items-center gap-2 text-xs text-fg-subtle">
+            {count}
+            {lists ? (
+              <button
+                type="button"
+                onClick={() => setFilter((f) => ({ ...NO_TX_FILTER, query: f.query }))}
+                className="ml-auto h-7 cursor-pointer px-1 text-sm font-medium text-accent"
+              >
+                Quitar filtros
+              </button>
+            ) : null}
+          </p>
+          <MovementFilterSheet
+            open={sheet}
+            onOpenChange={setSheet}
+            filter={filter}
+            onChange={setFilter}
+            accounts={accounts}
+            categories={categories}
+            shown={shown.length}
           />
-        </label>
+        </div>
+      )}
+      <div
+        className={cn(
+          'flex-wrap items-center gap-2 border-b border-border-subtle px-4 py-3',
+          desktop ? 'flex' : 'hidden',
+        )}
+      >
+        {search}
         <SelectMenu
           label="Tipo"
           value={filter.kind ?? ''}
           onChange={(v) => setFilter((f) => ({ ...f, kind: (v || null) as EntryKind | null }))}
           options={[
             { value: '', label: 'Todos los tipos' },
-            ...KINDS.map((k) => ({ value: k, label: ENTRY_LABEL[k] })),
+            ...TX_KINDS.map((k) => ({ value: k, label: ENTRY_LABEL[k] })),
           ]}
           className="h-8 text-[12.5px]"
         />
@@ -104,9 +157,7 @@ export function Movements({
           ]}
           className="h-8 text-[12.5px]"
         />
-        <span className="ml-auto text-xs text-fg-subtle">
-          {list.data ? `${shown.length} movimiento${shown.length === 1 ? '' : 's'}` : ''}
-        </span>
+        <span className="ml-auto text-xs text-fg-subtle">{count}</span>
       </div>
 
       {list.isPending ? (
@@ -133,30 +184,32 @@ export function Movements({
           ) : null}
         </p>
       ) : (
-        groups.map((g) => (
-          <section key={g.date} aria-label={dayLabel(g.date, today)}>
-            <h3 className="flex px-4 pt-3.5 pb-1.5 text-xs font-semibold text-fg-subtle">
-              {dayLabel(g.date, today)}
-              <span className="ml-auto font-mono font-medium tabular">
-                {g.total !== 0
-                  ? amountText(g.total)
-                  : g.moved
-                    ? `${amountText(g.moved, 'none')} movidos`
-                    : ''}
-              </span>
-            </h3>
-            {g.items.map((t) => (
-              <TransactionRow
-                key={t.id}
-                tx={t}
-                accountById={accountById}
-                categoryById={categoryById}
-                accountId={filter.accountId}
-                onOpen={onOpen}
-              />
-            ))}
-          </section>
-        ))
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+          {groups.map((g) => (
+            <section key={g.date} aria-label={dayLabel(g.date, today)}>
+              <h3 className="flex px-4 pt-3.5 pb-1.5 text-xs font-semibold text-fg-subtle">
+                {dayLabel(g.date, today)}
+                <span className="ml-auto font-mono font-medium tabular">
+                  {g.total !== 0
+                    ? amountText(g.total)
+                    : g.moved
+                      ? `${amountText(g.moved, 'none')} movidos`
+                      : ''}
+                </span>
+              </h3>
+              {g.items.map((t) => (
+                <TransactionRow
+                  key={t.id}
+                  tx={t}
+                  accountById={accountById}
+                  categoryById={categoryById}
+                  accountId={filter.accountId}
+                  onOpen={onOpen}
+                />
+              ))}
+            </section>
+          ))}
+        </div>
       )}
     </Card>
   )

@@ -47,6 +47,10 @@ proyecto de Muninn con la etiqueta `iphone`.
 | Cambiar de pestaña en el dock | La burbuja se desliza y no queda a medio camino |
 | La barra del dock respecto al borde de abajo | Respeta la barra de gestos del iPhone (no la tapa) |
 | Ajustes › Módulos: desactivar Finanzas | El dock pasa a 4 pestañas y la burbuja sigue alineada |
+| Cerrar la app del todo y abrirla en Inicio (con pocos datos) | El dock está pegado abajo desde el primer momento, sin hueco debajo |
+| Hacer algo que muestre un aviso (archivar y deshacer) | La píldora sale entera bajo la isla, sin taparse |
+| Ajustes desde **Más › Todos los ajustes** | Una lista de secciones; cada una se abre y vuelve con «‹ Ajustes» |
+| Finanzas › Movimientos: el botón de filtro | Se abre una hoja con tipo, categorías y cuenta; la búsqueda y el botón caben en una línea |
 
 ## 5. Sin conexión y tiempo real
 
