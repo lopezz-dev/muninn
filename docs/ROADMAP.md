@@ -299,7 +299,8 @@ más o menos en este orden:
 - Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional). Al cambiarlo, regenerar el favicon y los iconos de la web
   (`pnpm --filter @muninn/web icons` y la imagen social) y los de escritorio (`pnpm --filter @muninn/desktop icons`)
-- Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*)
+- Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*). Se hará
+  junto con la landing page; entonces, añadirlas a `sitemap.xml` y dar de alta Search Console
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")
 - Auto-updater de escritorio (requiere publicar binarios en un repo público o endpoint propio)
