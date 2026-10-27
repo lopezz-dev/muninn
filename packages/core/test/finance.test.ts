@@ -110,6 +110,28 @@ describe('categorías', () => {
     expect((await f.categories.list()).some((c) => c.id === mine.id)).toBe(true)
   })
 
+  it('se reordenan dentro de su tipo: el índice cuenta solo las de gastos o las de ingresos', async () => {
+    const { f } = setup()
+    const income = await f.categories.list({ kind: 'income' })
+    const others = income.at(-1)
+    if (!others) throw new Error('faltan categorías de serie')
+    await f.categories.move(others.id, 0)
+    expect((await f.categories.list({ kind: 'income' })).map((c) => c.name)).toEqual([
+      'Otros ingresos',
+      'Nómina',
+      'Facturas',
+    ])
+    // Los gastos no se mueven.
+    expect((await f.categories.list({ kind: 'expense' })).map((c) => c.name)).toEqual(
+      DEFAULT_CATEGORIES.filter((c) => c.kind === 'expense').map((c) => c.name),
+    )
+    const expenses = await f.categories.list({ kind: 'expense' })
+    const first = expenses[0]
+    if (!first) throw new Error('faltan categorías de serie')
+    await f.categories.move(first.id, expenses.length - 1)
+    expect((await f.categories.list({ kind: 'expense' })).at(-1)?.id).toBe(first.id)
+  })
+
   it('valida nombre y color', async () => {
     const { f } = setup()
     await expect(f.categories.create({ name: ' ', kind: 'expense' })).rejects.toThrow(

@@ -13,7 +13,13 @@ import type {
 } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
-import { amountText, applyToBalances, dropTransaction, putTransaction } from './finance'
+import {
+  amountText,
+  applyCategoryMove,
+  applyToBalances,
+  dropTransaction,
+  putTransaction,
+} from './finance'
 import { financeKeys } from './finance-queries'
 import { fail, isBusy, serial } from './mutations'
 
@@ -448,6 +454,46 @@ export async function archiveCategory(
         settleFinance(qc)
       },
     },
+  })
+  return true
+}
+
+/** Mueve una categoría dentro de su lista (gastos o ingresos). `index` cuenta las demás de esa lista. */
+export async function moveCategory(
+  m: Muninn,
+  qc: QueryClient,
+  category: Pick<FinanceCategory, 'id' | 'kind' | 'name'>,
+  index: number,
+  opts: { undoing?: boolean } = {},
+): Promise<boolean> {
+  const prev = patchList<FinanceCategory>(qc, financeKeys.categories, (l) =>
+    applyCategoryMove(l, category, index),
+  )
+  const fromIndex =
+    prev
+      ?.filter((c) => c.kind === category.kind && !c.archivedAt)
+      .findIndex((c) => c.id === category.id) ?? -1
+  try {
+    await run(() => m.finance.categories.move(category.id, index))
+  } catch (err) {
+    if (prev) qc.setQueryData(financeKeys.categories, prev)
+    fail('No se pudo mover la categoría', err)
+    return false
+  }
+  settleFinance(qc)
+  if (opts.undoing) return true
+  notify.success(`«${category.name}» movida`, {
+    icon: 'move',
+    action:
+      fromIndex >= 0
+        ? {
+            label: 'Deshacer',
+            onClick: async () => {
+              const ok = await moveCategory(m, qc, category, fromIndex, { undoing: true })
+              if (ok) notify.info('Orden deshecho', { icon: 'move' })
+            },
+          }
+        : undefined,
   })
   return true
 }

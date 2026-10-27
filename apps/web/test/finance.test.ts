@@ -1,7 +1,8 @@
-import type { AccountWithBalance, Transaction } from '@muninn/core'
+import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/core'
 import { describe, expect, it } from 'vitest'
 import {
   amountText,
+  applyCategoryMove,
   applyToBalances,
   chargeLabel,
   dayLabel,
@@ -149,6 +150,9 @@ describe('finanzas · panel', () => {
     expect(deltaText(110, 100, '2026-09')).toBe('+10 % que en septiembre')
     expect(deltaText(100, 100, '2026-12')).toBe('Igual que en diciembre')
     expect(deltaText(100, 0, '2026-09')).toBeNull()
+    // Un mes casi vacío no da porcentajes absurdos: se dice cuánto hubo.
+    expect(deltaText(300, 100, '2026-09')).toBe('+200 % que en septiembre')
+    expect(deltaText(155_805, 999, '2026-09')).toBe('En septiembre: 9,99 €')
     expect(rateText(0.2034)).toBe('20 %')
     expect(rateText(null)).toBe('—')
   })
@@ -166,5 +170,51 @@ describe('finanzas · suscripciones', () => {
     expect(chargeLabel({ nextDate: '2026-10-18', frequency: 'monthly' }, t)).toBe(
       'Vencida · 18 oct',
     )
+  })
+})
+
+describe('applyCategoryMove', () => {
+  const cat = (id: string, kind: FinanceCategory['kind'], archived = false): FinanceCategory => ({
+    id,
+    name: id,
+    kind,
+    color: 'gray',
+    key: null,
+    position: id,
+    archivedAt: archived ? '2026-10-01T00:00:00Z' : null,
+    createdAt: '2026-10-01T00:00:00Z',
+    updatedAt: '2026-10-01T00:00:00Z',
+  })
+  // Mezcladas como vienen de la caché: gastos, ingresos y una archivada en medio.
+  const list = [
+    cat('casa', 'expense'),
+    cat('nomina', 'income'),
+    cat('viejo', 'expense', true),
+    cat('ocio', 'expense'),
+    cat('bizum', 'income'),
+    cat('salud', 'expense'),
+  ]
+  const ids = (l: FinanceCategory[]) => l.map((c) => c.id)
+
+  it('mueve dentro de su tipo y deja quietos el otro tipo y las archivadas', () => {
+    const next = applyCategoryMove(list, { id: 'salud', kind: 'expense' }, 0)
+    expect(ids(next)).toEqual(['salud', 'nomina', 'viejo', 'casa', 'bizum', 'ocio'])
+    expect(ids(next.filter((c) => c.kind === 'expense' && !c.archivedAt))).toEqual([
+      'salud',
+      'casa',
+      'ocio',
+    ])
+  })
+
+  it('el índice cuenta las demás del tipo y se acota', () => {
+    expect(ids(applyCategoryMove(list, { id: 'nomina', kind: 'income' }, 9))).toEqual([
+      'casa',
+      'bizum',
+      'viejo',
+      'ocio',
+      'nomina',
+      'salud',
+    ])
+    expect(applyCategoryMove(list, { id: 'nada', kind: 'income' }, 0)).toBe(list)
   })
 })

@@ -24,7 +24,8 @@ function Kpi({
   icon?: 'income' | 'expense'
 }) {
   return (
-    <Card className="flex flex-col gap-2 p-4">
+    // @container: la cifra se ajusta al ancho de la tarjeta (cqi) y nunca se parte en dos líneas.
+    <Card className="@container flex min-w-0 flex-col gap-2 p-4">
       <span className="flex items-center gap-1.5 text-xs font-medium text-fg-subtle">
         {icon ? (
           <Icon
@@ -35,7 +36,7 @@ function Kpi({
         ) : null}
         {label}
       </span>
-      <span className="font-mono text-[22px] leading-none font-medium tabular md:text-2xl">
+      <span className="font-mono text-[clamp(15px,13cqi,24px)] leading-none font-medium whitespace-nowrap tabular">
         {value}
       </span>
       {note ? <span className="text-xs text-fg-subtle">{note}</span> : null}
