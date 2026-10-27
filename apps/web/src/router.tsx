@@ -228,9 +228,13 @@ const settingsRoute = createRoute({
 const settingsIndexRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/',
+  // En escritorio el menú va a la izquierda: se abre una sección. En el móvil, la lista de secciones.
   beforeLoad: () => {
-    throw redirect({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' }, replace: true })
+    if (typeof matchMedia === 'function' && matchMedia('(min-width: 768px)').matches) {
+      throw redirect({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' }, replace: true })
+    }
   },
+  component: screen(() => import('./screens/ajustes/Indice'), 'Indice'),
 })
 
 const settingsSectionRoute = createRoute({
@@ -276,6 +280,8 @@ export const router = createRouter({
   defaultErrorComponent: ErrorScreen,
   defaultNotFoundComponent: NotFound,
   scrollRestoration: true,
+  // En escritorio hace scroll <main>, no la ventana (ADR-0047): al cambiar de pantalla también vuelve arriba.
+  scrollToTopSelectors: ['#contenido'],
 })
 
 // Otra pestaña (o este mismo cliente) cambió de usuario: fuera los datos del anterior y a recalcular

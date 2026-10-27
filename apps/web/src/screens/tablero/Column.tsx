@@ -99,7 +99,8 @@ export function Column({
       data-column-id={column.id}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn(
-        'flex w-[280px] shrink-0 flex-col gap-2 rounded-lg border border-border-subtle bg-surface-sunken p-2',
+        // Flexibles: se reparten el ancho (240–360 px) y solo hay scroll lateral si no caben ni a 240.
+        'flex min-h-0 min-w-[240px] max-w-[360px] flex-1 basis-0 flex-col gap-2 rounded-lg border border-border-subtle bg-surface-sunken p-2',
         isDragging && 'opacity-30',
       )}
     >
@@ -139,7 +140,8 @@ export function Column({
       </header>
 
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex min-h-10 flex-col gap-2">
+        {/* Las tarjetas hacen scroll dentro de la columna: la cabecera y «Añadir tarea» se quedan a la vista. */}
+        <div className="-mx-1 flex min-h-10 flex-col gap-2 overflow-y-auto px-1 pb-0.5">
           {tasks.length === 0 ? (
             <p className="grid min-h-16 place-items-center rounded-md border border-dashed border-border-strong px-4 text-center text-xs text-fg-faint">
               {total > 0

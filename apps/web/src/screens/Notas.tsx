@@ -245,18 +245,18 @@ export function Notas() {
 
   return (
     <Page className="max-w-none">
-      <div className="md:grid md:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] md:gap-8">
+      <div className="md:grid md:flex-1 md:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] md:gap-8">
         {list}
         {desktop ? (
           open ? (
             <Outlet />
           ) : (
-            <div className="hidden md:block">
+            <div className="hidden md:flex md:flex-col">
               <EmptyState
                 icon="notes"
                 title="Elige una nota"
                 actions={all?.length ? newButton : undefined}
-                className="mt-10"
+                className="flex-1 justify-center"
               >
                 Selecciona una de la lista o crea una nueva. Se guardan solas mientras escribes.
               </EmptyState>

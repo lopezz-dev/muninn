@@ -119,14 +119,20 @@ export function AppShell() {
       >
         Saltar al contenido
       </a>
-      <div className="flex min-h-dvh">
+      {/*
+       * Escritorio: la ventana no hace scroll; lo hace <main> (ADR-0047). Así una pantalla puede medir justo el
+       * alto de la ventana (`Page fit`) y llevar el scroll dentro de su lista. En el móvil sigue el scroll de la
+       * página, que es el que conocen Safari y el dock.
+       */}
+      <div className="flex min-h-dvh md:h-dvh">
         <Sidebar className="hidden md:flex" />
         <main
           id="contenido"
           ref={mainRef}
           tabIndex={-1}
+          data-scroll-restoration-id="contenido"
           className={cn(
-            'min-w-0 flex-1 px-5 pt-[calc(env(safe-area-inset-top)+28px)] outline-none md:px-8 md:pt-7 md:pb-8',
+            'flex min-w-0 flex-1 flex-col px-5 pt-[calc(env(safe-area-inset-top)+28px)] outline-none md:overflow-y-auto md:px-8 md:pt-7 md:pb-8',
             immersive
               ? 'pb-[calc(env(safe-area-inset-bottom)+104px)]'
               : 'pb-[calc(env(safe-area-inset-bottom)+148px)]',

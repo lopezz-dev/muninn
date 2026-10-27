@@ -33,6 +33,7 @@ import { useIsDesktop } from '../lib/use-media'
 import { useShell } from '../shell/shell-context'
 import { BoardDesktop } from './tablero/BoardDesktop'
 import { BoardMobile } from './tablero/BoardMobile'
+import { ColumnDialog } from './tablero/ColumnDialog'
 import { FilterBar, FilterSheet, FilterSummary } from './tablero/FilterBar'
 
 const route = getRouteApi('/_app/proyectos/$projectId')
@@ -75,6 +76,7 @@ export function Tablero() {
   // Los filtros viven aquí, en la ruta padre: sobreviven a abrir y cerrar una tarea.
   const [filter, setFilter] = useState<BoardFilter>(NO_FILTER)
   const [sheet, setSheet] = useState(false)
+  const [newColumn, setNewColumn] = useState(false)
   // Tablero o Lista, recordado por proyecto en este dispositivo (`lib/board-view.ts`).
   const [view, setView] = useState<BoardView>(() => readBoardView(projectId))
   useEffect(() => setView(readBoardView(projectId)), [projectId])
@@ -143,7 +145,7 @@ export function Tablero() {
   }
 
   return (
-    <Page className="max-w-none">
+    <Page fit>
       <nav aria-label="Ruta" className="-mb-2 flex items-center gap-1.5 text-sm text-fg-subtle">
         <Link to="/proyectos" className="transition-colors hover:text-fg">
           Proyectos
@@ -178,6 +180,13 @@ export function Tablero() {
                 activeGroups(filter) > 0 && 'text-accent',
               )}
             />
+            {desktop && view === 'board' ? (
+              // Aquí y no al final de las columnas: así no hay que hacer scroll lateral para crear una.
+              <Button onClick={() => setNewColumn(true)}>
+                <Icon name="plus" />
+                Columna
+              </Button>
+            ) : null}
             <Button
               variant="primary"
               className="max-md:size-11 max-md:px-0"
@@ -197,6 +206,9 @@ export function Tablero() {
                 />
               </MenuTrigger>
               <MenuContent>
+                <MenuItem icon={<icons.plus />} onSelect={() => setNewColumn(true)}>
+                  Nueva columna
+                </MenuItem>
                 <MenuItem icon={<icons.link />} onSelect={copyLink}>
                   Copiar enlace
                 </MenuItem>
@@ -263,6 +275,11 @@ export function Tablero() {
         <BoardSkeleton />
       )}
 
+      <ColumnDialog
+        projectId={p.id}
+        target={newColumn ? 'new' : null}
+        onClose={() => setNewColumn(false)}
+      />
       <Outlet />
     </Page>
   )
