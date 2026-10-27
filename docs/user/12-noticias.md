@@ -15,7 +15,12 @@ con lo más importante. Actívala en **Ajustes › Módulos › Noticias**.
 
 ## Añadir una fuente
 
-En el panel **Fuentes**, pega la dirección del feed (suele terminar en `rss`, `feed` o `atom.xml`) en **Añadir RSS**,
+Lo más rápido: **Fuentes oficiales** (en el panel **Fuentes**, o en la pantalla vacía) abre una lista de feeds publicados por
+el propio medio u organismo, por temas: actualidad (RTVE, El País, Europa Press…), instituciones (BOE, La Moncloa, Banco de
+España, OMS), economía, tecnología, IA, desarrollo y ciencia. Pulsa **Añadir** en las que quieras y se guardan con su tema,
+así cada tema tiene su pestaña.
+
+Si la que buscas no está, en el panel **Fuentes** pega la dirección del feed (suele terminar en `rss`, `feed` o `atom.xml`) en **Añadir RSS**,
 ponle un **tema** si quieres (por ejemplo «Rust» o «IA local») y pulsa **Añadir fuente**. Si te equivocas, **Deshacer**.
 
 - El interruptor **pausa** una fuente: deja de descargarse, pero conservas lo que ya llegó.

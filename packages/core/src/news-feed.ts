@@ -283,15 +283,30 @@ export async function assertPublicUrl(
   return url
 }
 
+/**
+ * Codificación del feed: la de `Content-Type` y, si no la dice, la de `<?xml … encoding="…"?>`; si no, UTF-8. Hay
+ * feeds oficiales en ISO-8859-1 (el del BOE): leídos como UTF-8, cada tilde sale como «�».
+ */
+export function feedCharset(contentType: string | null, head: string) {
+  const label =
+    /charset=["']?([\w-]+)/i.exec(contentType ?? '')?.[1] ??
+    /<\?xml[^>]*encoding=["']([\w-]+)["']/i.exec(head)?.[1] ??
+    'utf-8'
+  try {
+    return new TextDecoder(label).encoding
+  } catch {
+    return 'utf-8'
+  }
+}
+
 /** Lee el cuerpo como texto sin pasar de `max` bytes (un servidor podría mandar uno infinito). */
 async function readCapped(res: Response, max: number) {
   const declared = Number(res.headers.get('content-length') ?? 0)
   if (declared > max) throw new Error('El feed es demasiado grande')
   if (!res.body) return ''
   const reader = res.body.getReader()
-  const decoder = new TextDecoder()
+  const chunks: Uint8Array[] = []
   let size = 0
-  let text = ''
   for (;;) {
     const { done, value } = await reader.read()
     if (done) break
@@ -300,9 +315,17 @@ async function readCapped(res: Response, max: number) {
       await reader.cancel().catch(() => {})
       throw new Error('El feed es demasiado grande')
     }
-    text += decoder.decode(value, { stream: true })
+    chunks.push(value)
   }
-  return text + decoder.decode()
+  const bytes = new Uint8Array(size)
+  let at = 0
+  for (const c of chunks) {
+    bytes.set(c, at)
+    at += c.byteLength
+  }
+  // La declaración XML va en ASCII al principio: se puede leer antes de saber la codificación.
+  const head = new TextDecoder('latin1').decode(bytes.subarray(0, 200))
+  return new TextDecoder(feedCharset(res.headers.get('content-type'), head)).decode(bytes)
 }
 
 export const FEED_MAX_BYTES = 3_000_000
