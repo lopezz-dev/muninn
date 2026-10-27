@@ -298,7 +298,7 @@ más o menos en este orden:
 - Buscador ⌘K sobre tareas y notas, y acción «Nueva nota» (hoy: secciones, proyectos, acciones y «Buscar en Noticias»)
 - Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional). Al cambiarlo, regenerar el favicon y los iconos de la web
-  (`pnpm --filter @muninn/web icons` y la imagen social), y los de escritorio (`apps/desktop/src-tauri/icons`), que aún son provisionales
+  (`pnpm --filter @muninn/web icons` y la imagen social) y los de escritorio (`pnpm --filter @muninn/desktop icons`)
 - Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*)
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")

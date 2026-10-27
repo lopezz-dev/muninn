@@ -446,16 +446,16 @@
 
 - **Síntoma:** la pestaña, la PWA instalada o el icono de iOS enseñan un logo distinto del de la app.
 - **Causa:** `public/favicon.*`, `apple-touch-icon.png` e `icon-*.png` son ficheros generados. La geometría y los colores del logo
-  (`shell/Logo.tsx`) están copiados en `scripts/icons.mjs`, que no lee el componente. La imagen social (`og-image.jpg`) lleva texto
+  (`shell/Logo.tsx`) están copiados en `scripts/logo.mjs`, que no lee el componente. La imagen social (`og-image.jpg`) lleva texto
   en Geist y se dibuja aparte, en el navegador.
 - **Solución:**
-  - Cambia la geometría en `scripts/icons.mjs` y ejecuta `pnpm --filter @muninn/web icons`. No necesita dependencias: escribe los
+  - Cambia la geometría en `scripts/logo.mjs` y ejecuta `pnpm --filter @muninn/web icons`. No necesita dependencias: escribe los
     PNG y el ICO con `zlib`.
   - Para la imagen social, con `pnpm dev`, abre `/scripts/og-image.html`, pulsa «Descargar» y guárdala en `public/og-image.jpg`.
   - Los `maskable` y el de iOS llenan el cuadrado, sin esquinas transparentes: iOS pinta de negro la transparencia, y Android
     recorta los `maskable` con su forma. El pájaro cabe en la zona segura (radio del 40 %).
   - El navegador y el service worker guardan el favicon en caché: para ver el nuevo, recarga forzando o abre una ventana privada.
-  - Los iconos de escritorio (`apps/desktop/src-tauri/icons`) siguen siendo los provisionales.
+  - Los iconos de escritorio salen del mismo dibujo: `pnpm --filter @muninn/desktop icons` ([gotchas/desktop](desktop.md)).
 - **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md)
 
 ### Metas por página: `usePageMeta`, sin canónica fija

@@ -13,12 +13,20 @@
 - **Causa:** Git Bash pone `C:\Program Files\Git\usr\bin\link.exe` (el `link` de coreutils) antes que el de MSVC en el PATH.
 - **Solución:** compila desde PowerShell o desde la terminal de Tauri. En esta máquina hay Visual Studio Build Tools 2022.
 
-### Iconos
+### Iconos: salen del logo con `pnpm --filter @muninn/desktop icons`, no con `tauri icon`
 
-- Se generan con `pnpm --filter @muninn/desktop tauri icon <png de 1024×1024>`. El comando también
-  crea `icons/android` e `icons/ios`, que borramos porque no se usan. Los iconos actuales son
-  provisionales hasta tener el sistema de diseño.
-- La PWA usa `apps/web/public/icon-192.png` e `icon-512.png`: regéneralos a la vez.
+- **Síntoma:** la ventana, la barra de tareas o el instalador enseñan un icono distinto del logo de la app.
+- **Causa:** `src-tauri/icons/*` son ficheros generados por `scripts/icons.mjs`, que reutiliza el dibujo de la web
+  (`apps/web/scripts/logo.mjs`, copia a mano de `shell/Logo.tsx`). No lee el componente.
+- **Solución:**
+  - Si cambia el logo, cambia la geometría en `apps/web/scripts/logo.mjs` y ejecuta `pnpm --filter @muninn/web icons` y
+    `pnpm --filter @muninn/desktop icons`. Ninguno necesita dependencias: escriben PNG, ICO e ICNS con `zlib`.
+  - No uses `tauri icon`: pisaría los mismos nombres desde un PNG y crearía `icons/android` e `icons/ios`, que no se usan.
+  - `icon.ico` lleva BMP de 32 bits por debajo de 256 px y PNG en 256, como el de `tauri icon`: Windows y el compilador de recursos
+    lo entienden en todos los tamaños. (`System.Drawing.Icon` de .NET no lee la entrada PNG; eso no indica que el fichero esté mal).
+  - `icon.icns` deja un margen transparente (824 de 1024 px, la rejilla de macOS); los demás llenan el tile. No se ha probado en un Mac.
+- **Ojo:** Windows guarda los iconos en caché. Si tras recompilar la barra de tareas o un acceso directo siguen con el viejo, cierra la app
+  y ejecuta `ie4uinit.exe -show`, o reinicia el Explorador.
 
 ### CSP
 
