@@ -53,8 +53,16 @@ Todo parte de [docs/README.md](docs/README.md):
 - `main`: producción. `develop`: integración. Trabajo en ramas `feat/*`, `fix/*`, `docs/*` → PR a `develop`.
 - Commits en formato [Conventional Commits](https://www.conventionalcommits.org/es/) (`feat:`, `fix:`, `chore:`…).
 - Al llegar a `main`, **release-please** abre un Release PR con versión y CHANGELOG. Al mergearlo se publica la
-  GitHub Release y **tauri-action** adjunta los instaladores de Windows, Linux y macOS.
+  GitHub Release y **tauri-action** adjunta los instaladores de Windows, Linux y macOS, firmados, y el `latest.json` del que las
+  apps instaladas sacan sus actualizaciones ([ADR-0047](docs/adr/0047-actualizaciones-de-escritorio-firmadas.md)).
+- Firma del actualizador: secretos `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, y la clave pública en
+  `apps/desktop/src-tauri/tauri.conf.json`. Sin ellos la release de escritorio se detiene.
 - Firma de macOS: añade los secretos `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
   `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD` y `APPLE_TEAM_ID`. Sin ellos el `.dmg` sale sin firmar.
 
 Más detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) y [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Seguridad y licencia
+
+Si encuentras una vulnerabilidad, no abras una issue: sigue [SECURITY.md](SECURITY.md), que explica también qué protege tus
+datos y qué no hace todavía. Muninn se distribuye con licencia [MIT](LICENSE).
