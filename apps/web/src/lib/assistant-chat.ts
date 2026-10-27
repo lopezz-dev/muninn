@@ -32,7 +32,7 @@ export const IMAGE_ONLY_QUESTION = '¿Qué ves en la imagen?'
 
 /**
  * El historial para el modelo: preguntas y respuestas, sin herramientas ni turnos con error. Solo texto: las imágenes
- * viajan una vez, en su turno (ADR-0048).
+ * viajan una vez, en su turno (ADR-0051).
  */
 export function historyFor(turns: Turn[]): ChatMessage[] {
   return turns

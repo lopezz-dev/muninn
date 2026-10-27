@@ -167,7 +167,7 @@ export function Asistente() {
     end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [turns.length, lastText])
 
-  // Imágenes adjuntas (ADR-0048): reducidas en el navegador; solo si el modelo tiene visión se pueden mandar.
+  // Imágenes adjuntas (ADR-0051): reducidas en el navegador; solo si el modelo tiene visión se pueden mandar.
   const [images, setImages] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
   const [vision, setVision] = useState<boolean | null>(null)

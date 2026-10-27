@@ -212,7 +212,7 @@ export function BoardDesktop({
         <section
           aria-label="Columnas"
           // flex-1 + min-h-0: el tablero mide lo que queda de ventana; las columnas llegan al pie (se puede
-          // soltar en todo su alto) y sus tarjetas hacen scroll dentro (ADR-0047).
+          // soltar en todo su alto) y sus tarjetas hacen scroll dentro (ADR-0050).
           className="-mx-8 flex min-h-0 flex-1 gap-3 overflow-x-auto px-8 pb-3"
         >
           <SortableContext items={colOrder.map(colKey)} strategy={horizontalListSortingStrategy}>

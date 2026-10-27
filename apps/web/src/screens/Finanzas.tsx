@@ -159,7 +159,7 @@ export function Finanzas() {
       />
     )
     body = inlineForm ? (
-      // lg: la pantalla mide lo que la ventana (ADR-0047); la lista hace scroll dentro de su tarjeta y el
+      // lg: la pantalla mide lo que la ventana (ADR-0050); la lista hace scroll dentro de su tarjeta y el
       // formulario se queda a la vista.
       <div className="grid items-start gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[minmax(0,1fr)]">
         {list}

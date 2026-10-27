@@ -58,7 +58,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0041](0041-asistente-local-con-catalogo-unico.md) — Asistente con modelo local (Ollama) en la app, con un catálogo único de herramientas compartido con el MCP
 - [ADR-0042](0042-noticias-rss-con-descarga-en-servidor.md) — Noticias: fuentes RSS por usuario, descarga en una Edge Function con cron y resumen diario en local
 - [ADR-0043](0043-informe-de-la-manana-en-local.md) — Informe de la mañana generado en el ordenador y guardado como nota fijada
-- [ADR-0048](0048-imagenes-en-el-asistente.md) — Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
+- [ADR-0051](0051-imagenes-en-el-asistente.md) — Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -92,9 +92,9 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0019](0019-feedback-con-notificaciones.md) — Toda acción da feedback: notificaciones en píldora con «Deshacer»
 - [ADR-0021](0021-shell-de-la-app.md) — Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K
 - [ADR-0039](0039-panel-mensual-y-tasa-de-ahorro.md) — Panel mensual calculado en el core, con la tasa de ahorro como lo que no gastas
-- [ADR-0045](0045-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
-- [ADR-0046](0046-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
-- [ADR-0047](0047-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
+- [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
+- [ADR-0049](0049-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
+- [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -120,10 +120,10 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0043](0043-informe-de-la-manana-en-local.md) — Informe de la mañana generado en el ordenador y guardado como nota fijada
 - [ADR-0044](0044-voz-local-whisper-y-piper.md) — Voz en local: whisper.cpp para dictar y Piper para hablar, como procesos aparte en el escritorio *(propuesto)*
 - [ADR-0045](0045-seo-de-la-web-sin-ssr.md) — SEO sin SSR: metas en `index.html` y por página, iconos desde el logo *(guías públicas y prerenderizadas, propuesto)*
-- [ADR-0045](0045-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
-- [ADR-0046](0046-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
-- [ADR-0047](0047-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
-- [ADR-0048](0048-imagenes-en-el-asistente.md) — Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
+- [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
+- [ADR-0049](0049-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
+- [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
+- [ADR-0051](0051-imagenes-en-el-asistente.md) — Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

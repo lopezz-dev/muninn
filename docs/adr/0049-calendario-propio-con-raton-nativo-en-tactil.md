@@ -1,4 +1,4 @@
-# ADR-0046: Fechas con un calendario propio con ratón y el selector nativo en táctil
+# ADR-0049: Fechas con un calendario propio con ratón y el selector nativo en táctil
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-10-27

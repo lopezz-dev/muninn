@@ -33,7 +33,7 @@ export function PageHeader({ title, description, actions, leading }: PageHeaderP
  * Contenedor de pantalla: ocupa todo el ancho y, en escritorio, todo el alto que deja `<main>`
  * (es `flex-1` dentro de su columna). Lo que deba llenar el alto sobrante usa `md:flex-1`.
  *
- * `fit` (ADR-0047): en escritorio la pantalla mide exactamente el alto de la ventana y no crece; lo que no
+ * `fit` (ADR-0050): en escritorio la pantalla mide exactamente el alto de la ventana y no crece; lo que no
  * quepa hace scroll dentro de su lista (`md:min-h-0` + `md:overflow-y-auto` en el bloque que crece). Sin
  * `fit`, si el contenido no cabe, hace scroll la pantalla entera.
  */

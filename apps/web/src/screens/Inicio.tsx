@@ -201,7 +201,7 @@ export function Inicio() {
   )
 
   return (
-    // lg: el panel mide la ventana; cada tarjeta lleva el scroll de su lista (ADR-0047).
+    // lg: el panel mide la ventana; cada tarjeta lleva el scroll de su lista (ADR-0050).
     <Page className="lg:min-h-0">
       <PageHeader
         title={name ? `${greeting(now.getHours())}, ${name}` : greeting(now.getHours())}

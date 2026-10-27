@@ -1,4 +1,4 @@
-# ADR-0047: En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
+# ADR-0050: En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-10-27
@@ -6,7 +6,7 @@
 
 ## Contexto
 
-Con el [ADR-0045](0045-pantallas-a-todo-el-ancho-y-alto.md) las pantallas ya ocupan todo el ancho y el alto, pero el
+Con el [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md) las pantallas ya ocupan todo el ancho y el alto, pero el
 scroll seguía siendo de la página entera. En Movimientos, por ejemplo, al bajar por la lista desaparecían la cabecera,
 los filtros y el formulario. En el tablero las columnas tenían 280 px fijos, así que con cinco o seis columnas había
 que hacer scroll lateral, también para llegar a «Añadir columna», que iba al final. Queremos que, siempre que se
@@ -47,5 +47,5 @@ pueda, todo quepa en la ventana y que solo hagan scroll las listas que no caben.
 - Negativas / costes: en escritorio `window.scrollY` siempre es 0. Lo que escuche el scroll de la ventana o use
   `scrollTo` en escritorio tiene que mirar `#contenido` (ver docs/gotchas/web.md). Un `sticky` dentro de `<main>` se
   pega al borde de `<main>`, no de la ventana (es lo mismo a la vista).
-- Relacionado: [ADR-0045](0045-pantallas-a-todo-el-ancho-y-alto.md), [ADR-0021](0021-shell-de-la-app.md),
+- Relacionado: [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md), [ADR-0021](0021-shell-de-la-app.md),
   `apps/web/src/shell/AppShell.tsx`, `apps/web/src/components/Page.tsx`, `apps/web/src/router.tsx`.

@@ -70,7 +70,7 @@ export function Movements({
   )
 
   return (
-    // lg: la tarjeta llena el alto de la rejilla y solo la lista de días hace scroll (ADR-0047).
+    // lg: la tarjeta llena el alto de la rejilla y solo la lista de días hace scroll (ADR-0050).
     <Card
       aria-label="Movimientos"
       className="flex min-w-0 flex-col overflow-hidden lg:max-h-full lg:self-stretch"

@@ -84,7 +84,7 @@ describe('chat', () => {
     expect(h.some((m) => m.content === 'roto')).toBe(false)
   })
 
-  it('las imágenes de turnos anteriores no se vuelven a mandar (ADR-0048)', () => {
+  it('las imágenes de turnos anteriores no se vuelven a mandar (ADR-0051)', () => {
     const h = historyFor([
       {
         id: '1',

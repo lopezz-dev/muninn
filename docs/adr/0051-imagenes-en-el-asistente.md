@@ -1,4 +1,4 @@
-# ADR-0048: Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
+# ADR-0051: Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-10-27

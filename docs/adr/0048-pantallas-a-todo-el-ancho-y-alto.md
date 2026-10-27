@@ -1,4 +1,4 @@
-# ADR-0045: Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
+# ADR-0048: Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-10-27

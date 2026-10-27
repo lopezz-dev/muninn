@@ -1,5 +1,5 @@
 /**
- * Imágenes para el asistente (ADR-0048): se reducen en el navegador antes de guardarlas en el historial del dispositivo
+ * Imágenes para el asistente (ADR-0051): se reducen en el navegador antes de guardarlas en el historial del dispositivo
  * y de mandarlas al modelo local. Así una foto del móvil (4–8 MB) se queda en unos cientos de KB y el modelo no tarda.
  */
 

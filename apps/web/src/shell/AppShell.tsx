@@ -120,7 +120,7 @@ export function AppShell() {
         Saltar al contenido
       </a>
       {/*
-       * Escritorio: la ventana no hace scroll; lo hace <main> (ADR-0047). Así una pantalla puede medir justo el
+       * Escritorio: la ventana no hace scroll; lo hace <main> (ADR-0050). Así una pantalla puede medir justo el
        * alto de la ventana (`Page fit`) y llevar el scroll dentro de su lista. En el móvil sigue el scroll de la
        * página, que es el que conocen Safari y el dock.
        */}

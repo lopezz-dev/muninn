@@ -186,7 +186,7 @@
 
 - **Síntoma:** algo que escucha `window.scroll` o usa `window.scrollTo` no hace nada en escritorio, o un `sticky` se pega
   a un sitio raro.
-- **Causa:** desde el [ADR-0047](../adr/0047-scroll-dentro-de-la-pantalla-en-escritorio.md), en ≥ 768 px el shell mide
+- **Causa:** desde el [ADR-0050](../adr/0050-scroll-dentro-de-la-pantalla-en-escritorio.md), en ≥ 768 px el shell mide
   `h-dvh` y el scroll es de `<main id="contenido">`. `window.scrollY` vale 0. En el móvil sigue siendo la ventana.
 - **Solución:** en escritorio, usa `document.getElementById('contenido')`. El router ya lo devuelve arriba al cambiar de
   pantalla (`scrollToTopSelectors`) y recuerda su posición (`data-scroll-restoration-id`). Para que una lista haga scroll
