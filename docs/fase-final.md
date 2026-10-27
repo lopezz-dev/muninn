@@ -49,6 +49,13 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   token tiene que seguir dando 401 con `resource_metadata` ([gotchas/mcp › MCP remoto](gotchas/mcp.md#mcp-remoto-pasos-manuales), paso 2).
 - [ ] MCP remoto con token, que caduca a la hora: paso 3 de gotchas/mcp. «¿Cómo voy hoy?» responde con tus datos; con el token caducado da 401.
 - [x] La función `github` no hace falta volver a desplegarla: el empaquetado la regenera, pero no ha cambiado nada que use.
+- [ ] **Redesplegar `news`** (27-10): el core lee ahora la codificación del feed (cabecera o `<?xml encoding>`), para que el BOE
+  (ISO-8859-1) no salga con «�». `pnpm --filter @muninn/core build:edge` y desplegar como en el paso 2 de gotchas/db › Noticias.
+  Después, añadir el BOE desde **Fuentes oficiales**, pulsar **Actualizar** y comprobar las tildes.
+- [ ] **Asistente con imágenes** (27-10, ADR-0048): `ollama pull gemma3` (o `qwen2.5vl`), elegirlo en Ajustes › Asistente e IA,
+  adjuntar la foto de un ticket con «apunta este gasto» y comprobar que lo apunta bien. Con `qwen3:8b`, el aviso «no ve imágenes».
+- [ ] **Redesplegar `mcp`** (27-10): `categories.move` cuenta ahora dentro de su tipo (gastos o ingresos). Ninguna herramienta lo usa
+  aún, pero el paquete del MCP lleva el core.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
