@@ -1,5 +1,16 @@
 import type { TaskWithColumn } from '@muninn/core'
-import { Checkbox, Chip, cn, columnKinds, Icon, icons, TextArea } from '@muninn/ui'
+import {
+  Checkbox,
+  Chip,
+  cn,
+  columnKinds,
+  DatePicker,
+  formatDateShort,
+  Icon,
+  icons,
+  TextArea,
+  useCoarsePointer,
+} from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { lazy, Suspense, useEffect, useState } from 'react'
@@ -85,7 +96,7 @@ function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   )
 }
 
-/** Fecha de vencimiento: el selector nativo de fechas (teclado, calendario y móvil ya resueltos). */
+/** Fecha de vencimiento: calendario de Muninn con ratón; el selector nativo en táctil. */
 function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const m = useMuninn()
   const qc = useQueryClient()
@@ -103,21 +114,44 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
         icon: 'calendar',
       },
     )
+  const coarse = useCoarsePointer()
+  const value = task.dueDate ?? ''
+  const box = cn(
+    'rounded-md border border-transparent bg-transparent px-2 text-sm font-medium outline-none transition-colors hover:bg-surface-hover focus-visible:border-accent',
+    touch ? 'h-[38px] border-border-strong bg-surface-raised' : '-ml-2 h-7',
+    task.dueDate ? 'text-fg' : 'text-fg-subtle',
+  )
   return (
     <span className="inline-flex items-center gap-1">
-      <input
-        type="date"
-        aria-label="Fecha de vencimiento"
-        value={task.dueDate ?? ''}
-        onChange={(e) => {
-          if (e.target.value !== (task.dueDate ?? '')) void set(e.target.value)
-        }}
-        className={cn(
-          'rounded-md border border-transparent bg-transparent px-2 text-sm font-medium outline-none transition-colors hover:bg-surface-hover focus-visible:border-accent',
-          touch ? 'h-[38px] border-border-strong bg-surface-raised' : '-ml-2 h-7',
-          task.dueDate ? 'text-fg' : 'text-fg-subtle',
-        )}
-      />
+      {coarse ? (
+        <input
+          type="date"
+          aria-label="Fecha de vencimiento"
+          value={value}
+          onChange={(e) => {
+            if (e.target.value !== value) void set(e.target.value)
+          }}
+          className={box}
+        />
+      ) : (
+        <DatePicker
+          value={value}
+          today={today}
+          clearable
+          onChange={(v) => {
+            if (v !== value) void set(v)
+          }}
+        >
+          <button
+            type="button"
+            aria-label={`Fecha de vencimiento: ${task.dueDate ? formatDateShort(task.dueDate) : 'sin fecha'}`}
+            className={cn(box, 'inline-flex cursor-pointer items-center gap-1.5')}
+          >
+            <icons.calendar size={14} className="text-fg-subtle" />
+            {task.dueDate ? dueLabel(task.dueDate, today) : 'Sin fecha'}
+          </button>
+        </DatePicker>
+      )}
       {task.dueDate ? (
         <button
           type="button"

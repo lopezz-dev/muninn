@@ -10,6 +10,7 @@ import {
   Card,
   CardHeader,
   cn,
+  DateField,
   Dialog,
   DialogClose,
   DialogContent,
@@ -241,12 +242,11 @@ function SubscriptionForm({
             ]}
           />
         </div>
-        <TextField
+        <DateField
           label="Próximo cobro"
-          type="date"
           value={nextDate}
-          onChange={(e) => setNextDate(e.target.value)}
-          leading={<Icon name="calendar" />}
+          onChange={setNextDate}
+          today={m.today()}
         />
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-fg-muted">Avisar</span>

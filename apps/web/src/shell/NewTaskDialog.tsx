@@ -2,6 +2,7 @@ import type { TaskPriority } from '@muninn/core'
 import {
   Button,
   columnKinds,
+  DateField,
   Dialog,
   DialogClose,
   DialogContent,
@@ -157,11 +158,12 @@ export function NewTaskDialog({
                   onChange={setPriority}
                 />
               </div>
-              <TextField
+              <DateField
                 label="Vence"
-                type="date"
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
+                today={m.today()}
+                clearable
               />
             </div>
             <div className="flex justify-end gap-2 pt-1">
