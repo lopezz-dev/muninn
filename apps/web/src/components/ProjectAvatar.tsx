@@ -5,14 +5,22 @@ import { type CSSProperties, useState } from 'react'
 import { useMuninn } from '../lib/muninn'
 import { projectImageQuery } from '../lib/queries'
 
-type ProjectLook = Pick<Project, 'name' | 'color'> & { imagePath?: string | null }
+type ProjectLook = Pick<Project, 'name' | 'color'> & {
+  imagePath?: string | null
+  coverPath?: string | null
+}
 
 const hex = (color: string) => (color.startsWith('#') ? color : projectColor(color))
 
 /** Fondo del proyecto sin imagen: su color, suave, sobre la superficie. */
-const soft = (color: string): CSSProperties => ({
+export const soft = (color: string): CSSProperties => ({
   background: `color-mix(in srgb, ${hex(color)} 18%, var(--mn-color-surface-raised))`,
   color: hex(color),
+})
+
+/** Banner sin portada: el color del proyecto, de más a menos intenso, sobre la superficie. */
+const banner = (color: string): CSSProperties => ({
+  background: `linear-gradient(135deg, color-mix(in srgb, ${hex(color)} 38%, var(--mn-color-surface-raised)), color-mix(in srgb, ${hex(color)} 10%, var(--mn-color-surface)))`,
 })
 
 /** URL de la imagen, o `null` si no tiene, aún no llegó o no carga (sin conexión): entonces se ven la inicial y el color. */
@@ -63,11 +71,14 @@ export function ProjectAvatar({
   )
 }
 
-/** Portada de la tarjeta del proyecto: su imagen o su color suave, con una franja del color abajo. */
+/**
+ * Portada de la tarjeta del proyecto (ADR-0056): su portada o, sin ella, un degradado de su color (que puede venir del
+ * logo), con una franja del color abajo.
+ */
 export function ProjectCover({ project, className }: { project: ProjectLook; className?: string }) {
-  const { url, onError } = useProjectImage(project.imagePath)
+  const { url, onError } = useProjectImage(project.coverPath)
   return (
-    <div aria-hidden="true" className={cn('relative', className)} style={soft(project.color)}>
+    <div aria-hidden="true" className={cn('relative', className)} style={banner(project.color)}>
       {url ? <img src={url} alt="" onError={onError} className="size-full object-cover" /> : null}
       <span
         className="absolute inset-x-0 bottom-0 h-[3px]"

@@ -246,7 +246,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [x] Fase 2a: Proyectos en tres tamaños (tarjetas con portada, barra por estados, avisos, lo próximo y actividad; filtros,
     orden y Archivados con «Recuperar»), editar proyecto (nombre, descripción, color e imagen) desde la tarjeta y el tablero, e
     imagen de proyecto en Storage ([ADR-0055](adr/0055-imagen-de-proyecto-en-storage.md)). Migración
-    `20261028120000_project_images` aplicada el 28 de octubre
+    `20261028120000_project_images` aplicada el 28 de octubre. Logo y portada por separado, con el color del logo como color del proyecto
+    ([ADR-0056](adr/0056-logo-y-portada-de-proyecto-con-color-del-logo.md), migración `20261028150000_project_cover`)
   - [ ] Fase 2b: tablero en el teléfono (cabecera con «‹ Proyectos», columnas como chips, «Añadir» dentro de la columna)
   - [ ] Fase 3: detalle de tarea con las acciones abajo, al alcance del pulgar; nueva tarea y nuevo movimiento como hojas
   - [ ] Fase 4: Finanzas, Notas, Más y el Asistente como hoja; repasar todas las pantallas a 390, 820 y 1280 px

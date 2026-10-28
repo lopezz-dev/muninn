@@ -36,6 +36,7 @@ import {
   PROJECT_IMAGE_MAX_BYTES,
   PROJECT_IMAGE_TYPES,
   type Project,
+  type ProjectImageKind,
   type Task,
   type TaskQuery,
   type TaskSource,
@@ -153,6 +154,7 @@ export interface OverviewReport {
     color: string
     description: string
     imagePath: string | null
+    coverPath: string | null
     githubRepo: string | null
     open: number
     inProgress: number
@@ -283,6 +285,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       color: data.color ?? 'blue',
       icon: data.icon ?? null,
       imagePath: null,
+      coverPath: null,
       githubRepo: data.githubRepo ?? null,
       agentColumnId: null,
       status: 'active',
@@ -324,31 +327,37 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   }
 
   /**
-   * Imagen del proyecto (ADR-0055). Llega ya reducida desde la app. La anterior no se borra del almacén: así «Deshacer»
-   * puede volver a ella (`restoreImage`).
+   * Logo o portada del proyecto (ADR-0055, ADR-0056). Llega ya reducida desde la app. La anterior no se borra del
+   * almacén: así «Deshacer» puede volver a ella (`restoreImage`).
    */
-  async function setProjectImage(id: string, image: Blob) {
+  async function setProjectImage(id: string, image: Blob, kind: ProjectImageKind = 'logo') {
     await getProject(id)
     if (!store.projectImages) throw new ValidationError('Este almacenamiento no guarda imágenes')
     if (!(PROJECT_IMAGE_TYPES as readonly string[]).includes(image.type)) {
       throw new ValidationError('La imagen debe ser JPG, PNG o WebP')
     }
     if (image.size > PROJECT_IMAGE_MAX_BYTES) throw new ValidationError('La imagen pesa demasiado')
-    const imagePath = await store.projectImages.upload(id, image)
-    const project = await store.projects.update(id, { imagePath })
-    await log('project', id, 'updated', id, { imagePath })
+    const path = await store.projectImages.upload(id, image)
+    const patch = kind === 'cover' ? { coverPath: path } : { imagePath: path }
+    const project = await store.projects.update(id, patch)
+    await log('project', id, 'updated', id, patch)
     return project
   }
 
   /** Vuelve a una imagen que ya tuvo el proyecto (o a ninguna, con `null`): para «Deshacer» y «Quitar». */
-  async function restoreProjectImage(id: string, imagePath: string | null) {
+  async function restoreProjectImage(
+    id: string,
+    path: string | null,
+    kind: ProjectImageKind = 'logo',
+  ) {
     await getProject(id)
     // Solo rutas de este proyecto: `…/<id>/<archivo>`.
-    if (imagePath !== null && !isImageOf(id, imagePath)) {
+    if (path !== null && !isImageOf(id, path)) {
       throw new ValidationError('Esa imagen no es de este proyecto')
     }
-    const project = await store.projects.update(id, { imagePath })
-    await log('project', id, 'updated', id, { imagePath })
+    const patch = kind === 'cover' ? { coverPath: path } : { imagePath: path }
+    const project = await store.projects.update(id, patch)
+    await log('project', id, 'updated', id, patch)
     return project
   }
 
@@ -1082,6 +1091,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
         color: p.color,
         description: p.description,
         imagePath: p.imagePath ?? null,
+        coverPath: p.coverPath ?? null,
         githubRepo: p.githubRepo,
         open: open.length,
         inProgress: active.length,

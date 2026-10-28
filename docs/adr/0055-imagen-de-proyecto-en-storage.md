@@ -1,6 +1,6 @@
 # ADR-0055: Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado en parte por ADR-0056 (logo y portada por separado); lo demás sigue vigente
 - **Fecha:** 2026-10-28
 - **Área:** core, db, web
 

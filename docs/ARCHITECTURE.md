@@ -85,7 +85,7 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 | `news_items` | Artículos descargados por la Edge Function `news`, sin duplicados por `(source_id, guid)`; los no guardados caducan a los 30 días. |
 | `news_digests` | El resumen del día (uno por fecha), generado en el ordenador con el modelo local. |
 | `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn (`kind = 'state'`, [ADR-0031](adr/0031-sync-github-issues-tareas.md)) o que entraron o salieron de la columna del agente (`kind = 'agent'`, ADR-0032). |
-| Storage `project-images` | Imagen de cada proyecto (`projects.image_path` guarda la ruta), privada, en `<owner_id>/<project_id>/…` y leída con URL firmadas ([ADR-0055](adr/0055-imagen-de-proyecto-en-storage.md)). |
+| Storage `project-images` | Logo y portada de cada proyecto (`projects.image_path` y `cover_path` guardan las rutas, [ADR-0056](adr/0056-logo-y-portada-de-proyecto-con-color-del-logo.md)), privados, en `<owner_id>/<project_id>/…` y leída con URL firmadas ([ADR-0055](adr/0055-imagen-de-proyecto-en-storage.md)). |
 
 ### Sincronización con GitHub
 

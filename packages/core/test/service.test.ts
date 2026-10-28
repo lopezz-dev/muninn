@@ -229,6 +229,25 @@ describe('proyectos: estadísticas e imagen', () => {
     expect((await app.projects.restoreImage(p.id, path)).imagePath).toBe(path)
   })
 
+  it('el logo y la portada se guardan por separado', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    expect(p.coverPath).toBeNull()
+    const logo = (await app.projects.setImage(p.id, new Blob(['l'], { type: 'image/png' })))
+      .imagePath as string
+    const withCover = await app.projects.setImage(
+      p.id,
+      new Blob(['c'], { type: 'image/jpeg' }),
+      'cover',
+    )
+    expect(withCover.imagePath).toBe(logo)
+    expect(withCover.coverPath).toMatch(new RegExp(`^${p.id}/[\\w-]+\\.jpg$`))
+    const cover = withCover.coverPath as string
+    expect((await app.projects.restoreImage(p.id, null, 'cover')).coverPath).toBeNull()
+    expect((await app.projects.restoreImage(p.id, cover, 'cover')).imagePath).toBe(logo)
+    expect((await app.overview()).projects[0]?.coverPath).toBe(cover)
+  })
+
   it('rechaza imágenes que no lo son, demasiado grandes o de otro proyecto', async () => {
     const { app } = setup()
     const p = await app.projects.create({ name: 'P' })

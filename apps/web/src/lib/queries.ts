@@ -1,4 +1,10 @@
-import type { CreateProjectInput, Muninn, Project, UpdateProjectInput } from '@muninn/core'
+import type {
+  CreateProjectInput,
+  Muninn,
+  Project,
+  ProjectImageKind,
+  UpdateProjectInput,
+} from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
 import type { BoardData } from './board'
@@ -193,35 +199,42 @@ export async function updateProjectWithUndo(
   }
 }
 
-/** Pone una imagen (ya reducida) o la quita (`null`), con «Deshacer» que vuelve a la anterior. */
+/** Pone el logo o la portada (ya reducidos) o los quita (`null`), con «Deshacer» que vuelve al anterior. */
 export async function setProjectImageWithUndo(
   m: Muninn,
   qc: QueryClient,
   project: Project,
   image: Blob | null,
+  kind: ProjectImageKind,
 ) {
-  const previous = project.imagePath ?? null
+  const previous = (kind === 'cover' ? project.coverPath : project.imagePath) ?? null
+  const what = kind === 'cover' ? 'Portada' : 'Logo'
   try {
-    if (image) await m.projects.setImage(project.id, image)
-    else await m.projects.restoreImage(project.id, null)
+    if (image) await m.projects.setImage(project.id, image, kind)
+    else await m.projects.restoreImage(project.id, null, kind)
     await invalidateProjects(qc)
-    notify.success(image ? 'Imagen del proyecto actualizada' : 'Imagen quitada', {
+    notify.success(image ? `${what} actualizado` : `${what} quitado`, {
       icon: 'image',
       description: project.name,
       action: {
         label: 'Deshacer',
         onClick: async () => {
-          await m.projects.restoreImage(project.id, previous)
+          await m.projects.restoreImage(project.id, previous, kind)
           await invalidateProjects(qc)
-          notify.info('Imagen como estaba')
+          notify.info(`${what} como estaba`)
         },
       },
     })
     return true
   } catch (err) {
-    notify.error(image ? 'No se pudo subir la imagen' : 'No se pudo quitar la imagen', {
-      description: errorText(err),
-    })
+    notify.error(
+      image
+        ? `No se pudo subir: ${what.toLowerCase()}`
+        : `No se pudo quitar: ${what.toLowerCase()}`,
+      {
+        description: errorText(err),
+      },
+    )
     return false
   }
 }

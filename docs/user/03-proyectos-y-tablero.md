@@ -9,7 +9,7 @@ icon: projects
 
 # Proyectos y tablero
 
-> **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color e imagen), mover tareas arrastrándolas,
+> **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color, logo y portada), mover tareas arrastrándolas,
 > personalizar las columnas y ver el tablero como lista. La vista de calendario y el color de las columnas llegarán más
 > adelante. En modo demo, sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
@@ -19,8 +19,9 @@ Un proyecto agrupa las tareas y notas de algo en lo que estás trabajando: una a
 
 En la pantalla **Proyectos** (en la barra lateral, o en las pestañas del móvil) cada proyecto tiene su tarjeta con:
 
-- Su **imagen** y su **color**. En el ordenador y la tablet la imagen es la portada de la tarjeta; en el teléfono, el icono.
-  Sin imagen, verás la inicial del nombre sobre su color.
+- Su **logo**, su **portada** y su **color**. En el ordenador y la tablet la portada es el banner de la tarjeta, con el
+  logo encima; en el teléfono se ve el logo. Sin portada, el banner es un degradado de su color; sin logo, verás la
+  inicial del nombre sobre su color.
 - La **descripción**, si tiene. Si no, en el ordenador puedes pulsar **+ Añade una descripción**.
 - Una **barra de colores** con cuántas tareas hay en cada estado (backlog, pendientes, en curso, en revisión y hechas).
 - **Avisos** de un vistazo: las tareas vencidas, las que están en curso, las que tiene el agente y el repositorio de
@@ -38,31 +39,36 @@ Pulsa una tarjeta para abrir su tablero.
 ### Crear un proyecto
 
 Pulsa **Nuevo proyecto** (en Proyectos o en Inicio), el **+** de la barra lateral, o busca «nuevo proyecto» con **⌘K** /
-**Ctrl K**. Escribe el **nombre** y, si quieres, una **descripción**, elige un **color** y una **imagen**, y pulsa **Crear
-proyecto**: se abre su tablero con cinco columnas. Si te equivocas, **Deshacer** en el aviso lo archiva.
+**Ctrl K**. Escribe el **nombre** y, si quieres, una **descripción**, elige un **color**, un **logo** y una **portada**, y
+pulsa **Crear proyecto**: se abre su tablero con cinco columnas. Si te equivocas, **Deshacer** en el aviso lo archiva.
 
 ### Editar un proyecto
 
 Pulsa el lápiz de su tarjeta (**Editar** en el teléfono) o, en el tablero, **⋯ › Editar proyecto**. Puedes cambiar el
-nombre, la descripción, el color y la imagen. Cada cambio avisa al guardarlo y tiene **Deshacer**.
+nombre, la descripción, el color, el logo y la portada. Cada cambio avisa al guardarlo y tiene **Deshacer**.
 
-Sobre la **imagen**:
+Sobre el **logo** y la **portada**:
 
-- Puede ser una foto o un archivo JPG, PNG o WebP. Muninn la reduce en tu dispositivo antes de subirla, así que no
-  importa que sea una foto grande del móvil.
-- **Quitar** la deja sin imagen; **Deshacer** en el aviso la recupera.
-- Solo la ves tú: se guarda en tu cuenta, en privado. Sin conexión, verás la inicial y el color en su lugar.
-- En modo demo la imagen se pierde al recargar, como lo demás.
+- El **logo** es el icono del proyecto: mejor una imagen cuadrada. Si tiene fondo transparente, se ve sobre el color del
+  proyecto. Al elegirlo, Muninn saca su color principal y lo pone como color del proyecto (la muestra **Del logo**), salvo
+  que ya hubieras elegido otro color a mano. Puedes cambiarlo cuando quieras. Un logo en blanco y negro no propone color.
+- La **portada** es el banner de la tarjeta en el ordenador y la tablet: mejor una imagen apaisada. Es opcional; sin ella,
+  el banner usa el color del proyecto.
+- Pueden ser fotos o archivos JPG, PNG o WebP. Muninn los reduce en tu dispositivo antes de subirlos, así que no importa
+  que sea una foto grande del móvil.
+- **Quitar** deja el proyecto sin esa imagen; **Deshacer** en el aviso la recupera.
+- Solo los ves tú: se guardan en tu cuenta, en privado. Sin conexión, verás la inicial y el color en su lugar.
+- En modo demo se pierden al recargar, como lo demás.
 
 Desde aquí también puedes **archivar** el proyecto.
 
-Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle una descripción, pero no una imagen.
+Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle una descripción, pero no un logo ni una portada.
 
 ### El menú del proyecto
 
 En el tablero, el menú **⋯** de arriba tiene:
 
-- **Editar proyecto:** nombre, descripción, color e imagen.
+- **Editar proyecto:** nombre, descripción, color, logo y portada.
 - **Nueva columna:** añade una columna al final.
 - **Copiar enlace:** copia la dirección del tablero, para abrirlo directamente o guardarlo.
 - **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera, y también

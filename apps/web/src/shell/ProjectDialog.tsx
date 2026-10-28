@@ -1,4 +1,4 @@
-import type { Project } from '@muninn/core'
+import type { Project, ProjectImageKind } from '@muninn/core'
 import {
   Button,
   Dialog,
@@ -13,8 +13,8 @@ import {
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { type FormEvent, useEffect, useId, useRef, useState } from 'react'
-import { ProjectAvatar, ProjectCover } from '../components/ProjectAvatar'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { ProjectAvatar, ProjectCover, soft } from '../components/ProjectAvatar'
 import { type Swatch, SwatchPicker } from '../components/SwatchPicker'
 import { useMuninn } from '../lib/muninn'
 import { reduceProjectImage } from '../lib/project-image'
@@ -80,28 +80,87 @@ export function ProjectDialog({
   )
 }
 
+/** Selector de una imagen (logo o portada): botón que abre el archivo, y «Quitar» si hay una. */
+function ImagePicker({
+  label,
+  has,
+  onPick,
+  onRemove,
+}: {
+  label: string
+  has: boolean
+  onPick: (file: File) => void
+  onRemove: () => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-16 text-sm text-fg-muted">{label}</span>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        tabIndex={-1}
+        aria-label={`Elegir ${label.toLowerCase()}`}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) onPick(file)
+          e.target.value = ''
+        }}
+      />
+      <Button size="lg" className="flex-1 md:h-8 md:flex-none" onClick={() => ref.current?.click()}>
+        <Icon name="image" />
+        {has ? `Cambiar ${label.toLowerCase()}` : `Elegir ${label.toLowerCase()}`}
+      </Button>
+      {has ? (
+        <Button size="lg" variant="ghost" className="md:h-8" onClick={onRemove}>
+          Quitar
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
 function ProjectForm({ project, onDone }: { project?: Project; onDone: () => void }) {
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const fileId = useId()
-  const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState(project?.name ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   const [color, setColor] = useState(project?.color ?? 'blue')
-  const [image, setImage] = useState<ImageChange>({ kind: 'keep' })
+  // Si eligió color a mano, el del logo nuevo no lo pisa (solo se ofrece como muestra).
+  const [colorTouched, setColorTouched] = useState(false)
+  const [logoColor, setLogoColor] = useState<string | null>(null)
+  const [logo, setLogo] = useState<ImageChange>({ kind: 'keep' })
+  const [cover, setCover] = useState<ImageChange>({ kind: 'keep' })
   const [error, setError] = useState<string>()
   const [saving, setSaving] = useState(false)
 
-  // La vista previa es un `blob:` local: se libera al cambiarla o al cerrar.
-  const preview = image.kind === 'new' ? image.preview : null
-  useEffect(() => () => (preview ? URL.revokeObjectURL(preview) : undefined), [preview])
+  // Las vistas previas son `blob:` locales: se liberan al cambiarlas o al cerrar.
+  const logoPreview = logo.kind === 'new' ? logo.preview : null
+  const coverPreview = cover.kind === 'new' ? cover.preview : null
+  useEffect(() => () => (logoPreview ? URL.revokeObjectURL(logoPreview) : undefined), [logoPreview])
+  useEffect(
+    () => () => (coverPreview ? URL.revokeObjectURL(coverPreview) : undefined),
+    [coverPreview],
+  )
 
-  const pick = async (file: File | undefined) => {
-    if (!file) return
+  const pick = async (file: File, kind: ProjectImageKind) => {
     try {
-      const blob = await reduceProjectImage(file)
-      setImage({ kind: 'new', blob, preview: URL.createObjectURL(blob) })
+      const reduced = await reduceProjectImage(file, kind)
+      const change: ImageChange = {
+        kind: 'new',
+        blob: reduced.blob,
+        preview: URL.createObjectURL(reduced.blob),
+      }
+      if (kind === 'cover') {
+        setCover(change)
+        return
+      }
+      setLogo(change)
+      setLogoColor(reduced.color)
+      if (reduced.color && !colorTouched) setColor(reduced.color)
     } catch (err) {
       notify.error('No se pudo usar esa imagen', {
         description: err instanceof Error ? err.message : undefined,
@@ -109,9 +168,20 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
     }
   }
 
-  const currentPath = image.kind === 'keep' ? (project?.imagePath ?? null) : null
-  const hasImage = image.kind === 'new' || Boolean(currentPath)
-  const look = { name: name.trim() || 'P', color, imagePath: currentPath }
+  const logoPath = logo.kind === 'keep' ? (project?.imagePath ?? null) : null
+  const coverPath = cover.kind === 'keep' ? (project?.coverPath ?? null) : null
+  const hasLogo = logo.kind === 'new' || Boolean(logoPath)
+  const hasCover = cover.kind === 'new' || Boolean(coverPath)
+  const look = { name: name.trim() || 'P', color, imagePath: logoPath, coverPath }
+
+  // Colores: los de siempre, el del logo y, si el proyecto ya tenía uno propio, ese.
+  const swatches: Swatch<string>[] = [...COLORS]
+  if (logoColor && !COLORS.some((c) => c.value === logoColor)) {
+    swatches.push({ value: logoColor, label: 'Del logo', color: logoColor })
+  }
+  if (color.startsWith('#') && !swatches.some((c) => c.value === color)) {
+    swatches.push({ value: color, label: 'Personalizado', color })
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -127,9 +197,10 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
         color,
         description: description.trim(),
       })
-      if (created && image.kind === 'new') {
+      if (created && (logo.kind === 'new' || cover.kind === 'new')) {
         try {
-          await m.projects.setImage(created.id, image.blob)
+          if (logo.kind === 'new') await m.projects.setImage(created.id, logo.blob, 'logo')
+          if (cover.kind === 'new') await m.projects.setImage(created.id, cover.blob, 'cover')
           await invalidateProjects(qc)
         } catch (err) {
           notify.error('El proyecto se creó, pero no se pudo subir la imagen', {
@@ -150,8 +221,18 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
     }
     let ok = true
     if (Object.keys(patch).length) ok = Boolean(await updateProjectWithUndo(m, qc, project, patch))
-    if (ok && image.kind !== 'keep') {
-      ok = await setProjectImageWithUndo(m, qc, project, image.kind === 'new' ? image.blob : null)
+    for (const [kind, change] of [
+      ['logo', logo],
+      ['cover', cover],
+    ] as const) {
+      if (!ok || change.kind === 'keep') continue
+      ok = await setProjectImageWithUndo(
+        m,
+        qc,
+        project,
+        change.kind === 'new' ? change.blob : null,
+        kind,
+      )
     }
     setSaving(false)
     if (ok) onDone()
@@ -167,66 +248,50 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
   return (
     <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
       {m.projects.imagesEnabled ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-fg-muted">Imagen</span>
+        <div className="flex flex-col gap-2.5">
+          <span className="text-xs font-medium text-fg-muted">Logo y portada</span>
+          {/* Vista previa como en la tarjeta: la portada (o el degradado del color) con el logo encima. */}
           <div className="relative">
-            {preview ? (
-              <div aria-hidden="true" className="relative h-28 overflow-hidden rounded-lg">
-                <img src={preview} alt="" className="size-full object-cover" />
+            {coverPreview ? (
+              <div aria-hidden="true" className="h-28 overflow-hidden rounded-lg">
+                <img src={coverPreview} alt="" className="size-full object-cover" />
               </div>
             ) : (
               <ProjectCover project={look} className="h-28 overflow-hidden rounded-lg" />
             )}
             <span className="absolute bottom-2.5 left-2.5 rounded-lg border-2 border-surface-raised shadow-popover">
-              {preview ? (
-                <span aria-hidden="true" className="block size-14 overflow-hidden rounded-md">
-                  <img src={preview} alt="" className="size-full object-cover" />
+              {logoPreview ? (
+                <span
+                  aria-hidden="true"
+                  className="block size-14 overflow-hidden rounded-md"
+                  style={soft(color)}
+                >
+                  <img src={logoPreview} alt="" className="size-full object-cover" />
                 </span>
               ) : (
                 <ProjectAvatar project={look} size="lg" className="size-14" />
               )}
             </span>
-            {hasImage ? null : (
-              <span className="absolute inset-y-0 right-4 left-24 flex items-center text-sm text-fg-muted">
-                Sin imagen: se ven la inicial y el color.
-              </span>
-            )}
           </div>
-          <div className="flex gap-2">
-            <input
-              ref={fileRef}
-              id={fileId}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              tabIndex={-1}
-              onChange={(e) => {
-                void pick(e.target.files?.[0])
-                e.target.value = ''
-              }}
-            />
-            <Button
-              size="lg"
-              className="flex-1 md:h-8 md:flex-none"
-              onClick={() => fileRef.current?.click()}
-            >
-              <Icon name="image" />
-              {hasImage ? 'Cambiar imagen' : 'Elegir imagen'}
-            </Button>
-            {hasImage ? (
-              <Button
-                size="lg"
-                variant="ghost"
-                className="md:h-8"
-                onClick={() => setImage({ kind: 'remove' })}
-              >
-                Quitar
-              </Button>
-            ) : null}
-          </div>
+          <ImagePicker
+            label="Logo"
+            has={hasLogo}
+            onPick={(f) => void pick(f, 'logo')}
+            onRemove={() => {
+              setLogo({ kind: 'remove' })
+              setLogoColor(null)
+            }}
+          />
+          <ImagePicker
+            label="Portada"
+            has={hasCover}
+            onPick={(f) => void pick(f, 'cover')}
+            onRemove={() => setCover({ kind: 'remove' })}
+          />
           <p className="text-xs text-fg-subtle">
-            Opcional. Se reduce en tu dispositivo antes de subirla. Es la portada en el ordenador y
-            la tablet, y el icono en el teléfono y en la barra lateral.
+            Opcionales. Se reducen en tu dispositivo antes de subirlas. El logo es el icono del
+            proyecto y su color se ofrece como color del proyecto; sin portada, el banner usa ese
+            color.
           </p>
         </div>
       ) : null}
@@ -256,8 +321,11 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
         legend="Color"
         name="project-color"
         value={color}
-        options={COLORS}
-        onChange={setColor}
+        options={swatches}
+        onChange={(c) => {
+          setColor(c)
+          setColorTouched(true)
+        }}
       />
 
       <div className="flex flex-wrap items-center gap-2 pt-1">
