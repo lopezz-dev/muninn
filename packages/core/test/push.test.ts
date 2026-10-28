@@ -83,6 +83,47 @@ describe('dispositivos', () => {
     )
   })
 
+  it('solo servicios de push conocidos (contra SSRF)', async () => {
+    const { push } = setup()
+    for (const endpoint of [
+      'https://169.254.169.254/latest/meta-data',
+      'https://localhost/x',
+      'https://fcm.googleapis.com.evil.example/x',
+      'https://user:pw@fcm.googleapis.com/x',
+      'https://fcm.googleapis.com:8443/x',
+    ]) {
+      await expect(push.subscribe({ ...sub(1), endpoint })).rejects.toThrow(ValidationError)
+    }
+    for (const endpoint of [
+      'https://fcm.googleapis.com/fcm/send/abc',
+      'https://updates.push.services.mozilla.com/wpush/v2/abc',
+      'https://web.push.apple.com/abc',
+      'https://wns2-db5p.notify.windows.com/w/?token=abc',
+    ]) {
+      await expect(push.subscribe({ ...sub(1), endpoint })).resolves.toMatchObject({ endpoint })
+    }
+  })
+
+  it('deliver no envía a una fila con otra dirección: la borra', async () => {
+    const { push, store } = setup()
+    await store.pushDevices.upsert({
+      endpoint: 'https://169.254.169.254/x',
+      p256dh: 'k',
+      auth: 'a',
+      userAgent: null,
+      label: null,
+      lastSeenAt: clock.toISOString(),
+    })
+    let calls = 0
+    const res = await push.deliver([TEST_ALERT], async () => {
+      calls++
+      return 201
+    })
+    expect(calls).toBe(0)
+    expect(res).toEqual({ sent: 0, removed: 1, failed: 0 })
+    expect(await push.devices()).toEqual([])
+  })
+
   it('sin la función push (memoria), no hay aviso de prueba', async () => {
     const { push } = setup()
     expect(push.canTest()).toBe(false)

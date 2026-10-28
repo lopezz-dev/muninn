@@ -7,7 +7,12 @@ create table public.push_subscriptions (
   id            uuid primary key default gen_random_uuid(),
   owner_id      uuid not null default auth.uid() references auth.users (id) on delete cascade,
   -- Dirección del servicio de push del navegador (Apple, Google, Mozilla…). Es secreta: quien la tiene puede enviar.
-  endpoint      text not null check (char_length(endpoint) between 12 and 2000 and endpoint ~* '^https://'),
+  -- Solo servicios de push conocidos (como `isPushServiceUrl` del core): la función hace un POST a esta dirección y una
+  -- cualquiera la convertiría en un proxy hacia la red de Supabase (SSRF).
+  endpoint      text not null check (
+    char_length(endpoint) between 12 and 2000
+    and endpoint ~* '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9-]+\.)*push\.apple\.com|([a-z0-9-]+\.)*notify\.windows\.com)(/|\?|$)'
+  ),
   -- Claves de cifrado de la suscripción (base64url).
   p256dh        text not null check (char_length(p256dh) between 1 and 200),
   auth          text not null check (char_length(auth) between 1 and 100),

@@ -432,6 +432,9 @@
   dispositivos fallan, se reintenta al día siguiente. El cron borra el registro de más de 90 días.
 - **Ojo:** `push_subscriptions` es única por `(owner_id, endpoint)`, no por `endpoint`: con RLS, un `upsert` no ve la fila de otro usuario.
   Por eso al **cerrar sesión** la app borra la fila de este dispositivo y cancela la suscripción del navegador (`leaveThisDevice`).
+- **Ojo:** solo se admiten direcciones de servicios de push conocidos (`isPushServiceUrl` en `schemas.ts`: FCM, Mozilla, Apple y
+  Windows), en el core, en un `check` de la tabla y otra vez antes de enviar. La función hace un POST a esa dirección desde la red de
+  Supabase: aceptar cualquier `https://` sería un SSRF. Si un navegador nuevo usa otro servicio, añádelo en los tres sitios.
 - **Ojo:** la función usa `npm:web-push`, que tira de `crypto` y `https` de Node. Si el runtime de Supabase lo rompe (errores de
   `createECDH` en los logs), cámbialo por una librería nativa de Deno con la misma forma (`sendNotification` → código HTTP): lo demás
   (qué avisar, a quién, borrar con 410) está en el core y no cambia.

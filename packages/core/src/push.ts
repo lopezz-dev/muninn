@@ -1,6 +1,11 @@
 import type { z } from 'zod'
 import { formatEuros } from './finance'
-import { type PushDevice, type PushSubscribeInput, pushSubscribeInput } from './schemas'
+import {
+  isPushServiceUrl,
+  type PushDevice,
+  type PushSubscribeInput,
+  pushSubscribeInput,
+} from './schemas'
 import type { PushSendSummary, Store } from './store'
 import { daysBetween } from './subscriptions'
 
@@ -124,7 +129,10 @@ export function createPush({ store, nowIso, today, parse }: PushContext) {
     for (const { key, ...payload } of alerts) {
       const alive = []
       for (const device of targets) {
-        const status = await send(device, payload).catch(() => 0)
+        // Segunda barrera contra SSRF: una fila escrita sin pasar por `subscribe` tampoco se envía; se borra.
+        const status = isPushServiceUrl(device.endpoint)
+          ? await send(device, payload).catch(() => 0)
+          : 410
         if (isGone(status)) {
           await forget(device.endpoint)
           summary.removed++
