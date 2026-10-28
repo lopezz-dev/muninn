@@ -30,8 +30,9 @@ arriba es la más reciente). Está en el apartado **Assets** de cada versión:
 
 ### macOS
 
-Abre el `.dmg` y arrastra Muninn a **Aplicaciones**. Si la versión no está firmada, la primera vez abre la app con
-**clic derecho → Abrir**.
+Abre el `.dmg` y arrastra Muninn a **Aplicaciones**. Mientras Muninn no lleve firma de Apple, la primera vez macOS no te
+dejará abrirla. En macOS 15 (Sequoia) o superior, intenta abrirla, cierra el aviso y ve a **Ajustes del Sistema › Privacidad y
+seguridad**: abajo sale Muninn con el botón **Abrir igualmente**. En versiones anteriores basta con **clic derecho → Abrir**.
 
 ### Actualizaciones
 

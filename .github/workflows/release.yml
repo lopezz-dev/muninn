@@ -52,7 +52,7 @@ jobs:
             args: ''
           - platform: ubuntu-22.04
             args: ''
-          # macOS solo se compila al publicar (en un repo privado sus minutos cuentan ×10).
+          # macOS solo se compila al publicar: es la plataforma más lenta (y en repos privados cuenta ×10).
           - platform: macos-latest
             args: --target universal-apple-darwin
     runs-on: ${{ matrix.platform }}

@@ -112,3 +112,11 @@ dock y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0
 | `finance` (gastos, ingresos, ahorro, inversión, suscripciones) | F3 — core listo (ADR-0037) |
 | `news` (RSS + resúmenes) | F4 — core, función `news` (desplegada, con cron) y pantalla (ADR-0042) |
 | `focus` (temporizador "isla") | Backlog |
+
+## Distribución
+
+- **Web y móvil:** la PWA de `apps/web`, publicada en Vercel ([ADR-0040](adr/0040-pwa-instalable-y-web-push.md)).
+- **Escritorio:** al fusionar el Release PR de release-please en `main`, `release.yml` publica la GitHub Release con los
+  instaladores de Windows (NSIS), macOS y Linux, firmados para el actualizador, y su `latest.json`
+  ([ADR-0010](adr/0010-ramas-y-releases.md)). Las apps instaladas leen ese `latest.json` del repo público al abrirse y ofrecen
+  «Reiniciar» ([ADR-0046](adr/0046-repo-publico-con-licencia-mit.md), [ADR-0047](adr/0047-actualizaciones-de-escritorio-firmadas.md)).

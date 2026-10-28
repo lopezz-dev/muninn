@@ -20,7 +20,7 @@ revisó el historial completo (148 commits, todas las ramas) y no había secreto
 
 ## Decisión
 
-- El repositorio pasa a **público**, como `lopezz-dev/huginnDB`.
+- `lopezz-dev/muninn` pasa a **público**, con el mismo nombre: el actualizador, `SECURITY.md` y las guías apuntan a esa dirección.
 - Licencia **MIT** (`LICENSE`, `"license"` en el `package.json` raíz y en el bundle de Tauri).
 - **`SECURITY.md`** en la raíz: cómo avisar de una vulnerabilidad (`contact@shion.es`, sin issues públicas), qué protege los
   datos y qué no hace todavía (no hay cifrado de extremo a extremo).
