@@ -198,11 +198,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] En el iPhone: el informe se lee en Notas y en el Asistente, y el iPhone no genera ninguno
 
 ### Escritorio · primera versión y actualizaciones (ADR-0046, ADR-0047)
-> Código, CI y documentación listos el 27 de octubre (tests del aviso y `cargo check` en verde). Falta todo lo que necesita la clave de firma,
-> el repo público y una release: [paso 10 de la fase final](fase-final.md#10-repo-público-y-primera-versión-de-escritorio).
-- [ ] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
-- [ ] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
-- [ ] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
+> Probado el 28 de octubre: repo público, [v0.2.0](https://github.com/lopezz-dev/muninn/releases/tag/v0.2.0) y
+> [v0.2.1](https://github.com/lopezz-dev/muninn/releases/tag/v0.2.1). La 0.2.0 salió sin las variables de Supabase (solo modo demo);
+> la 0.2.1 lo arregla ([#55](https://github.com/lopezz-dev/muninn/pull/55)) y llegó a Windows con el propio actualizador.
+- [x] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
+- [x] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
+- [x] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
 - [ ] Sin conexión, al abrir no sale ningún aviso
 
 ## F3 · Móvil y finanzas

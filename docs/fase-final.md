@@ -212,7 +212,7 @@ actualizaciones.
 5. **Publicar:**
    - [ ] Fusiona el Release PR de release-please (`chore(main): release 0.x.0`).
    - [ ] En **Actions › Release**, en verde: `release-please`, `back-merge` y los tres `desktop` (macOS es el que más tarda).
-   - [ ] En la release: `Muninn_<versión>_x64-setup.exe`, el `.dmg`, `Muninn.app.tar.gz`, el `.AppImage`, el `.deb` y el `.rpm`, un `.sig`
+   - [ ] En la release: `Muninn_<versión>_x64-setup.exe`, el `.dmg`, `Muninn_universal.app.tar.gz`, el `.AppImage`, el `.deb` y el `.rpm`, un `.sig`
      junto a cada instalador que se actualiza, y `latest.json` con una `signature` no vacía en cada plataforma.
    - [ ] Sin sesión (otra ventana o `curl -L https://github.com/lopezz-dev/muninn/releases/latest/download/latest.json`) se descarga
      `latest.json`: el repo es público de verdad.
