@@ -1,0 +1,140 @@
+import { type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes, useId } from 'react'
+import { cn } from '../cn'
+
+/** Caja de los campos de texto. Exportada para otros campos de `@muninn/ui` (fecha). */
+export const fieldBox =
+  'w-full rounded-md border border-border-strong bg-surface-sunken text-fg placeholder:text-fg-faint transition-colors duration-150 outline-none focus:border-accent aria-[invalid=true]:border-danger disabled:opacity-50'
+
+export interface FieldChrome {
+  label: ReactNode
+  /** Texto de ayuda bajo el campo. */
+  hint?: ReactNode
+  /** Mensaje de error: marca el campo como inválido. */
+  error?: ReactNode
+  /** Oculta la etiqueta visualmente (sigue existiendo para lectores de pantalla). */
+  hideLabel?: boolean
+}
+
+/** Etiqueta, ayuda y error alrededor de un campo. */
+export function Field({
+  id,
+  label,
+  hint,
+  error,
+  hideLabel,
+  className,
+  children,
+}: FieldChrome & { id: string; className?: string; children: ReactNode }) {
+  return (
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      <label
+        htmlFor={id}
+        className={cn('text-xs font-medium text-fg-muted', hideLabel && 'sr-only')}
+      >
+        {label}
+      </label>
+      {children}
+      {error ? (
+        <p id={`${id}-msg`} className="text-xs text-danger">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-msg`} className="text-xs text-fg-subtle">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+export interface TextFieldProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>,
+    FieldChrome {
+  /** Icono o texto dentro del campo, a la izquierda. */
+  leading?: ReactNode
+  /** Contenido a la derecha (unidad «€», atajo…). */
+  trailing?: ReactNode
+  /** `lg` = 44 px, para móvil. */
+  size?: 'md' | 'lg'
+}
+
+export function TextField({
+  label,
+  hint,
+  error,
+  hideLabel,
+  leading,
+  trailing,
+  size = 'md',
+  className,
+  id: idProp,
+  ...props
+}: TextFieldProps) {
+  const autoId = useId()
+  const id = idProp ?? autoId
+  const describedBy = error || hint ? `${id}-msg` : undefined
+  return (
+    <Field
+      id={id}
+      label={label}
+      hint={hint}
+      error={error}
+      hideLabel={hideLabel}
+      className={className}
+    >
+      <div className="relative flex items-center">
+        {leading ? (
+          <span className="pointer-events-none absolute left-3 flex text-fg-subtle">{leading}</span>
+        ) : null}
+        <input
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          className={cn(
+            fieldBox,
+            size === 'lg' ? 'h-11 px-3.5 text-md' : 'h-9 px-3 text-base',
+            leading ? 'pl-9' : undefined,
+            trailing ? 'pr-10' : undefined,
+          )}
+          {...props}
+        />
+        {trailing ? <span className="absolute right-3 flex text-fg-subtle">{trailing}</span> : null}
+      </div>
+    </Field>
+  )
+}
+
+export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement>, FieldChrome {}
+
+export function TextArea({
+  label,
+  hint,
+  error,
+  hideLabel,
+  className,
+  id: idProp,
+  rows = 4,
+  ...props
+}: TextAreaProps) {
+  const autoId = useId()
+  const id = idProp ?? autoId
+  return (
+    <Field
+      id={id}
+      label={label}
+      hint={hint}
+      error={error}
+      hideLabel={hideLabel}
+      className={className}
+    >
+      <textarea
+        id={id}
+        rows={rows}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error || hint ? `${id}-msg` : undefined}
+        className={cn(fieldBox, 'resize-y px-3 py-2 text-base leading-relaxed')}
+        {...props}
+      />
+    </Field>
+  )
+}

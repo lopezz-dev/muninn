@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@import "@muninn/ui/theme.css";
+
+/* Las clases usadas dentro de @muninn/ui también deben generarse. */
+@source "../../../packages/ui/src";
+
+/*
+ * Dock con menisco (móvil). La posición la anima Dock.tsx en JS; aquí solo el aspecto, que sigue
+ * al color de acento elegido en Ajustes › Apariencia.
+ */
+@layer components {
+  .mn-dock-bead {
+    background: radial-gradient(
+      circle at 35% 30%,
+      color-mix(in oklab, var(--mn-color-accent), white 35%),
+      var(--mn-color-accent) 55%,
+      color-mix(in oklab, var(--mn-color-accent), black 14%)
+    );
+    box-shadow:
+      0 8px 20px color-mix(in srgb, var(--mn-color-accent) 35%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  .mn-dock-glow {
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--mn-color-accent) 22%, transparent),
+      transparent
+    );
+  }
+}
+
+/*
+ * iPhone: Safari amplía la página al enfocar un campo con letra menor de 16 px y no vuelve. En pantallas
+ * táctiles, los campos de texto usan 16 px. Va fuera de `@layer` a propósito: así gana a las clases de
+ * Tailwind (`text-sm`, `text-xs`…), que sí están en capa. Ver docs/gotchas/web.md.
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/*
+ * «Ola» del estado «pensando» del asistente: un brillo del color de acento que recorre el texto, como en Claude
+ * Desktop. Movimiento constante → `linear`. Con movimiento reducido, el texto se queda quieto en el color de acento.
+ */
+@layer components {
+  .mn-shimmer {
+    background-image: linear-gradient(
+      100deg,
+      var(--mn-color-fg-subtle) 0%,
+      var(--mn-color-fg-subtle) 35%,
+      var(--mn-color-accent) 50%,
+      var(--mn-color-fg-subtle) 65%,
+      var(--mn-color-fg-subtle) 100%
+    );
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: mn-shimmer 1.8s linear infinite;
+  }
+  @keyframes mn-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -150% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mn-shimmer {
+      animation: none;
+      color: var(--mn-color-accent);
+      background-image: none;
+    }
+  }
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Muninn · Tu sistema operativo personal</title>
+    <meta
+      name="description"
+      content="Muninn es tu sistema operativo personal: proyectos con tablero Kanban, tareas, notas, finanzas, GitHub, noticias y un asistente, en el ordenador y en el móvil."
+    />
+    <meta name="theme-color" content="#0C0D10" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Iconos generados desde el logo con `pnpm --filter @muninn/web icons` (scripts/icons.mjs). -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Muninn" />
+
+    <!--
+      Tarjeta al compartir un enlace. Los que la leen no ejecutan JavaScript: URLs absolutas y del dominio de
+      producción (si cambia el dominio, cambia también public/robots.txt y public/sitemap.xml). Sin <link
+      rel="canonical"> fijo: la pone cada página pública desde lib/seo.ts.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Muninn" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content="https://muninn-sepia.vercel.app/" />
+    <meta property="og:title" content="Muninn · Tu sistema operativo personal" />
+    <meta
+      property="og:description"
+      content="Proyectos con tablero Kanban, tareas, notas, finanzas, GitHub, noticias y un asistente, en el ordenador y en el móvil."
+    />
+    <meta property="og:image" content="https://muninn-sepia.vercel.app/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logo de Muninn y el lema «Tu sistema operativo personal»" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Muninn · Tu sistema operativo personal" />
+    <meta
+      name="twitter:description"
+      content="Proyectos con tablero Kanban, tareas, notas, finanzas, GitHub, noticias y un asistente, en el ordenador y en el móvil."
+    />
+    <meta name="twitter:image" content="https://muninn-sepia.vercel.app/og-image.jpg" />
+    <meta name="twitter:image:alt" content="Logo de Muninn y el lema «Tu sistema operativo personal»" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <p>
+        Muninn es tu sistema operativo personal: proyectos, tareas, notas, finanzas y más en un solo sitio.
+        Para usarlo, activa JavaScript en tu navegador.
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

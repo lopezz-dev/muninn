@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>Muninn</title>
+</head>
+<body style="margin:0; padding:0; background-color:#0C0D10;">
+<!-- Texto de vista previa en la bandeja de entrada (oculto en el correo). -->
+<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:#0C0D10;">Tu código para crear la cuenta: {{ .Token }}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0C0D10" style="background-color:#0C0D10;">
+  <tr>
+    <td align="center" style="padding:40px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;">
+        <!-- Marca -->
+        <tr>
+          <td style="padding:0 4px 20px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="28" height="28" align="center" valign="middle" bgcolor="#F2A93B" style="width:28px; height:28px; background-color:#F2A93B; border-radius:6px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; font-weight:700; color:#1A1206; line-height:28px;">M</td>
+                <td style="padding-left:10px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; font-weight:600; color:#ECEDEF; letter-spacing:-0.01em;">Muninn</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Tarjeta -->
+        <tr>
+          <td bgcolor="#15181C" style="background-color:#15181C; border:1px solid #23272E; border-radius:12px; padding:32px 28px;">
+            <h1 style="margin:0 0 10px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:22px; line-height:1.3; font-weight:600; color:#ECEDEF; letter-spacing:-0.02em;">Te damos la bienvenida a Muninn</h1>
+            <p style="margin:0 0 24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.55; color:#A3A9B2;">Escribe este código en la pantalla de inicio de sesión para confirmar tu correo y crear tu cuenta. No hace falta contraseña.</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" bgcolor="#101215" style="background-color:#101215; border:1px solid #F2A93B; border-radius:8px; padding:18px 12px; font-family:'SF Mono',SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace; font-size:34px; line-height:1.2; font-weight:600; letter-spacing:0.28em; color:#F2A93B;">{{ .Token }}</td>
+              </tr>
+            </table>
+            <p style="margin:24px 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:1.55; color:#8A9099;">Caduca en una hora y solo sirve una vez. Si no lo has pedido tú, ignora este correo: nadie puede entrar sin el código.</p>
+          </td>
+        </tr>
+        <!-- Pie -->
+        <tr>
+          <td style="padding:20px 4px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:1.55; color:#818892;">Recibes este correo porque alguien ha pedido crear una cuenta de Muninn con esta dirección.<br>Muninn · proyectos, notas, finanzas y un asistente que recuerda por ti.</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

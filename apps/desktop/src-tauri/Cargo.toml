@@ -1,0 +1,31 @@
+[package]
+name = "muninn"
+version = "0.1.0"
+description = "Muninn — sistema operativo personal"
+authors = ["lopezz-dev"]
+edition = "2021"
+rust-version = "1.85"
+
+[lib]
+name = "muninn_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-process = "2"
+
+# Actualizaciones firmadas (ADR-0047): solo en escritorio.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

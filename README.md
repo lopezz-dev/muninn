@@ -15,6 +15,7 @@ apps/
   web/         React + Vite — PWA instalable (iPhone) y frontend del escritorio
 packages/
   core/        API de dominio (createMuninn) + stores (Supabase, fichero, memoria)
+  ui/          Tokens de diseño, tema de Tailwind v4, iconos (Phosphor), apariencia (cristal, acento)
   mcp/         Servidor MCP para Claude / Codex / Jarvis
 supabase/
   migrations/  Esquema SQL con RLS
@@ -37,15 +38,31 @@ pnpm typecheck
 Supabase: crea un proyecto, aplica `supabase/migrations/*.sql` (SQL editor o `supabase db push`)
 y copia `apps/web/.env.example` a `apps/web/.env.local`.
 
-MCP: ver [docs/MCP.md](docs/MCP.md). Funciona sin Supabase (guarda en `~/.muninn/data.json`).
+MCP: ver [docs/user/06-asistentes-ia.md](docs/user/06-asistentes-ia.md). Funciona sin Supabase (guarda en `~/.muninn/data.json`).
+
+## Documentación
+
+Todo parte de [docs/README.md](docs/README.md):
+
+- **[ADRs](docs/adr/README.md):** decisiones de arquitectura y su porqué, por área.
+- **[Gotchas](docs/gotchas/README.md):** trampas no obvias por área. Léelas antes de tocar esa parte.
+- **[Docs de usuario](docs/user/README.md):** guías de uso, que también se muestran dentro de la app.
 
 ## Ramas y releases
 
-- `main`: producción. `develop`: integración. Trabajo en ramas `feat/*`, `fix/*` → PR a `develop`.
+- `main`: producción. `develop`: integración. Trabajo en ramas `feat/*`, `fix/*`, `docs/*` → PR a `develop`.
 - Commits en formato [Conventional Commits](https://www.conventionalcommits.org/es/) (`feat:`, `fix:`, `chore:`…).
 - Al llegar a `main`, **release-please** abre un Release PR con versión y CHANGELOG. Al mergearlo se publica la
-  GitHub Release y **tauri-action** adjunta los instaladores de Windows, Linux y macOS.
+  GitHub Release y **tauri-action** adjunta los instaladores de Windows, Linux y macOS, firmados, y el `latest.json` del que las
+  apps instaladas sacan sus actualizaciones ([ADR-0047](docs/adr/0047-actualizaciones-de-escritorio-firmadas.md)).
+- Firma del actualizador: secretos `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, y la clave pública en
+  `apps/desktop/src-tauri/tauri.conf.json`. Sin ellos la release de escritorio se detiene.
 - Firma de macOS: añade los secretos `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
   `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD` y `APPLE_TEAM_ID`. Sin ellos el `.dmg` sale sin firmar.
 
 Más detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) y [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Seguridad y licencia
+
+Si encuentras una vulnerabilidad, no abras una issue: sigue [SECURITY.md](SECURITY.md), que explica también qué protege tus
+datos y qué no hace todavía. Muninn se distribuye con licencia [MIT](LICENSE).
