@@ -34,6 +34,8 @@
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
 - [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
   estado, índice de la página; [ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md))
+  - [x] Rediseño: portada con las guías por grupos e iconos, guía centrada en pantallas anchas, búsqueda que lleva al
+    apartado y anterior/siguiente por grupo ([ADR-0052](adr/0052-documentacion-con-grupos-iconos-y-portada.md))
 - [x] Sincronización en tiempo real entre dispositivos (Realtime por tabla, invalidando la caché) y caché de lectura sin conexión
   en IndexedDB ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
 

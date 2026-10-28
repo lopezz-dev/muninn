@@ -3,6 +3,8 @@ title: Noticias
 description: Sigue tus blogs y webs por RSS y recibe cada mañana un resumen hecho en tu ordenador.
 order: 12
 status: parcial
+group: modulos
+icon: news
 ---
 
 # Noticias

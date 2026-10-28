@@ -2,7 +2,9 @@
 title: Tareas
 description: Crea, mueve y completa tareas; prioridades, fechas y subtareas.
 order: 4
-status: parcial
+status: disponible
+group: tu-trabajo
+icon: checklist
 ---
 
 # Tareas

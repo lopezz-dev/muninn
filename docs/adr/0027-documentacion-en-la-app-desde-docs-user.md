@@ -1,6 +1,6 @@
 # ADR-0027: La sección Documentación se genera con `docs/user/*.md` importados al compilar
 
-- **Estado:** Aceptado
+- **Estado:** Aceptado (en parte reemplazado por [ADR-0052](0052-documentacion-con-grupos-iconos-y-portada.md))
 - **Fecha:** 2026-10-19
 - **Área:** web, docs
 

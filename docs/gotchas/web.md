@@ -284,7 +284,7 @@
   `ui-vendor` de `vite.config.ts` carga en el arranque todo módulo de `@phosphor-icons` que alguien use.
 - **Solución:** iconos de una sola pantalla en `screenIcons` (`packages/ui/src/screen-icons.tsx`, fichero aparte para que
   no compartan chunk con `icons`) y su nombre en `SCREEN_ICONS` de `vite.config.ts`, que los saca del grupo. Hoy:
-  `list` y `checklist` (barra de formato de Notas). Si el shell pasa a usarlos, vuelven a `icons`.
+  `list` y `checklist` (barra de formato de Notas) y `compass`, `plug`, `shield` y `partial` (Documentación). Si el shell pasa a usarlos, vuelven a `icons`.
 - **Ref:** [ADR-0020](../adr/0020-tanstack-router-carga-diferida.md)
 
 ### Un chunk compartido `dist-*.js` (Radix) suma ~0,6 kB al arranque
@@ -324,14 +324,17 @@
 ### Escribir una guía de `docs/user` para la app
 
 - **Síntoma:** una guía no sale en el menú, un enlace no funciona o un aviso no se destaca.
-- **Causa:** la sección Documentación solo importa `NN-nombre.md` (dos cifras, guion y minúsculas) y solo entiende cuatro
-  claves planas de metadatos: `title` (obligatorio), `description`, `order` y `status` (`disponible`, `parcial`,
-  `proximamente`; otro valor cuenta como disponible).
+- **Causa:** la sección Documentación solo importa `NN-nombre.md` (dos cifras, guion y minúsculas) y solo entiende seis
+  claves planas de metadatos: `title` (obligatorio), `description`, `order`, `status` (`disponible`, `parcial`,
+  `proximamente`; otro valor cuenta como disponible), `group` (`primeros-pasos`, `tu-trabajo`, `modulos`, `ia`,
+  `cuenta`; sin él, la guía cae en «Más guías») e `icon` (un nombre de `icons` o `screenIcons`). El test de
+  `test/docs.test.ts` falla si una guía no tiene grupo o su icono no existe.
 - **Solución:** el `# Título` con que empieza el texto se quita (el título sale de los metadatos). Una cita que empieza
   en negrita (`> **Estado:** …`) se pinta como aviso. Los enlaces entre guías van como `05-notas.md#archivar` (las anclas
   se comparan sin tildes: `#iniciar-sesión` e `#iniciar-sesion` son lo mismo); cualquier otro fichero relativo se ve como texto.
-  Nada de HTML ni imágenes ([ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)).
-- **Ref:** [ADR-0027](../adr/0027-documentacion-en-la-app-desde-docs-user.md)
+  `> **Estado:**` lleva el círculo a medias y `> **Próximamente:**` va en neutro con reloj. Nada de HTML ni imágenes
+  ([ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)).
+- **Ref:** [ADR-0027](../adr/0027-documentacion-en-la-app-desde-docs-user.md), [ADR-0052](../adr/0052-documentacion-con-grupos-iconos-y-portada.md)
 
 ### Los diálogos del shell se cargan al abrirse la primera vez
 

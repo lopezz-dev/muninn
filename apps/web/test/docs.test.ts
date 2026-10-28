@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest'
 import {
   buildDocs,
   docLink,
+  groupDocs,
   neighbours,
   searchDocs,
+  sections,
   slugOf,
   splitFrontMatter,
 } from '../src/lib/docs'
 import { makeSlugger, outline, slugify } from '../src/markdown/outline'
+import { DOCS } from '../src/screens/docs/content'
+import { isDocIcon } from '../src/screens/docs/look'
 
 const file = (title: string, order: number, status: string, body: string) =>
   `---\ntitle: ${title}\ndescription: "Sobre ${title}"\norder: ${order}\nstatus: ${status}\n---\n\n# ${title}\n\n${body}\n`
@@ -129,5 +133,75 @@ describe('índice de una guía', () => {
       { depth: 3, text: 'Uno.uno negrita', id: 'uno-uno-negrita' },
       { depth: 2, text: 'Uno', id: 'uno-2' },
     ])
+  })
+})
+
+describe('grupos, iconos y apartados (ADR-0052)', () => {
+  const g = (title: string, order: number, group: string, body = 'texto') =>
+    `---\ntitle: ${title}\norder: ${order}\ngroup: ${group}\nicon: notes\n---\n\n# ${title}\n\n${body}\n`
+
+  it('ordena por grupo y luego por `order`; un grupo desconocido va al final', () => {
+    const docs = buildDocs({
+      '/a/01-a.md': g('A', 1, 'modulos'),
+      '/a/02-b.md': g('B', 2, 'primeros-pasos'),
+      '/a/03-c.md': g('C', 3, 'raro'),
+      '/a/04-d.md': g('D', 4, 'primeros-pasos'),
+    })
+    expect(docs.map((d) => d.slug)).toEqual(['b', 'd', 'a', 'c'])
+    expect(docs.map((d) => d.group)).toEqual([
+      'primeros-pasos',
+      'primeros-pasos',
+      'modulos',
+      'otras',
+    ])
+    expect(groupDocs(docs).map((x) => [x.label, x.docs.length])).toEqual([
+      ['Primeros pasos', 2],
+      ['Módulos', 1],
+      ['Más guías', 1],
+    ])
+    expect(neighbours(docs, 'd')).toMatchObject({ prev: { slug: 'b' }, next: { slug: 'a' } })
+  })
+
+  it('el texto llega sin el `# Título`, con su icono y los minutos de lectura', () => {
+    const [d] = buildDocs({ '/a/01-a.md': g('A', 1, 'cuenta', 'palabra '.repeat(450)) })
+    expect(d?.body.startsWith('# A')).toBe(false)
+    expect(d?.icon).toBe('notes')
+    expect(d?.minutes).toBe(3)
+    expect(buildDocs(FILES)[0]?.icon).toBe('docs')
+  })
+
+  it('parte el texto por apartados con los mismos ids que el renderizador', () => {
+    expect(sections('Intro\n\n## Uno\n\nhola\n\n## Uno\n\nadiós')).toEqual([
+      { id: '', title: '', text: 'Intro' },
+      { id: 'uno', title: 'Uno', text: 'hola' },
+      { id: 'uno-2', title: 'Uno', text: 'adiós' },
+    ])
+  })
+
+  it('el resultado dice en qué apartado está', () => {
+    const docs = buildDocs({
+      '/a/01-a.md': g(
+        'A',
+        1,
+        'cuenta',
+        '## Cuentas\n\nEl saldo se calcula.\n\n## Archivar\n\nArchivar una cuenta guarda su saldo.',
+      ),
+    })
+    expect(searchDocs(docs, 'archivar saldo')[0]?.section).toEqual({
+      id: 'archivar',
+      title: 'Archivar',
+    })
+    expect(searchDocs(docs, 'calcula')[0]?.section?.id).toBe('cuentas')
+    expect(searchDocs(docs, 'calcula')[0]?.snippet).toContain('saldo se calcula')
+  })
+})
+
+describe('las guías de docs/user', () => {
+  it('tienen un icono que existe y un grupo conocido', () => {
+    expect(DOCS.length).toBeGreaterThan(5)
+    for (const d of DOCS) {
+      expect(isDocIcon(d.icon), `${d.slug}: icono «${d.icon}»`).toBe(true)
+      expect(d.group, `${d.slug}: falta \`group\``).not.toBe('otras')
+    }
   })
 })

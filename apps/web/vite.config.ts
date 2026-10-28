@@ -6,7 +6,7 @@ import pkg from './package.json' with { type: 'json' }
 
 // Iconos que solo usa una pantalla diferida (`screenIcons` en @muninn/ui). Se quedan fuera del grupo
 // `ui-vendor`: un grupo carga en el arranque todo módulo que case con su `test`, lo use quien lo use.
-const SCREEN_ICONS = ['ListBullets', 'ListChecks']
+const SCREEN_ICONS = ['ListBullets', 'ListChecks', 'Compass', 'Plug', 'ShieldCheck', 'CircleHalf']
 const notScreenIcon = `(?!.*[/](?:${SCREEN_ICONS.join('|')})[.])`
 
 // Tauri carga este mismo build; en escritorio no registramos service worker.

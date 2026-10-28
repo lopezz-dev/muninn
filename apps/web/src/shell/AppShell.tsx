@@ -2,6 +2,7 @@ import { cn } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { typingIn } from '../lib/keyboard'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import { settingsQuery } from '../lib/queries'
@@ -29,11 +30,6 @@ const NewTaskDialog = lazy(() =>
 const NewProjectDialog = lazy(() =>
   import('./NewProjectDialog').then((m) => ({ default: m.NewProjectDialog })),
 )
-
-/** Dentro de un campo o de un diálogo, las teclas sueltas son para escribir. */
-const typingIn = (t: EventTarget | null) =>
-  t instanceof HTMLElement &&
-  Boolean(t.closest('input, textarea, select, [contenteditable="true"], [role=dialog]'))
 
 /**
  * Estructura común de todas las pantallas: barra lateral en escritorio, dock en móvil (< 768 px),
