@@ -28,7 +28,7 @@
   "plugins": {
     "updater": {
       "endpoints": ["https://github.com/lopezz-dev/muninn/releases/latest/download/latest.json"],
-      "pubkey": "PENDIENTE_CLAVE_PUBLICA_DE_TAURI_SIGNER_GENERATE"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYzN0UwMTQ5MTAwNjM3RUQKUldUdE53WVFTUUYrWTdxdnh4b0tOSnFoZ0lFM0xWcXVYVG9ramRWcEtDMzdjM1hrS2k3SEFlNE8K"
     }
   },
   "bundle": {
