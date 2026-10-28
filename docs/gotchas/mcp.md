@@ -27,11 +27,23 @@
 - **Solución:** guárdala solo en la configuración local del cliente MCP y nunca en el repo. Cuando haya
   MCP remoto (F2), se usará OAuth con la sesión del usuario en lugar de la service key.
 
-### Nombres de proyecto ambiguos
+### Nombres de proyecto repetidos o ambiguos
 
-- **Síntoma:** `create_task` con `project: "app"` cae en un proyecto inesperado.
-- **Causa:** la resolución por nombre busca primero la coincidencia exacta y después la primera que *contiene* el texto.
-- **Solución:** para operaciones importantes, que el modelo use el id que devuelven `list_projects` u `overview`.
+- **Síntoma:** `list_tasks` con `project: "Muninn"` devolvía las tareas de un proyecto **archivado** con el mismo nombre (pasó el 28 de
+  octubre), o `create_task` con `project: "app"` caía en un proyecto inesperado.
+- **Causa:** `resolveProject` busca también entre los archivados (para poder consultarlos) y se quedaba con el primero por posición.
+- **Solución:** desde el 28 de octubre, primero el nombre exacto y, si no hay, los que lo contienen; entre ellos gana el activo o pausado
+  sobre el archivado, y si quedan **varios sin archivar** da un error con sus ids. Un archivado solo sigue valiendo. No vuelvas a
+  `byName` para proyectos: elige el primero sin mirar el estado. Para operaciones importantes, mejor el id de `list_projects` u `overview`.
+
+### `create_tasks`: un fallo no corta el lote
+
+- Hasta 50 tareas (`MAX_BATCH_TASKS`), cada una con `checklist` opcional; `project` arriba vale para las que no lleven el suyo.
+  Devuelve `results` en el orden de la entrada: `{ index, ok: true, id, checklist }` o `{ index, ok: false, error }`. El modelo **no debe
+  repetir** las que salieron bien: la descripción se lo dice.
+- En el core es `m.tasks.createMany`: valida y resuelve cada tarea por separado (pide columnas una vez por proyecto) y escribe con un
+  `insert` múltiple para tareas, otro para subtareas y otro para la actividad. Las claves de orden van detrás de la última de cada columna
+  (`positionsAfter`), así que no hay rebalanceo. Si fallaran solo las subtareas, las tareas quedan creadas y cada una lleva `checklistError`.
 
 ### Herramientas nuevas: reutiliza los esquemas del core
 

@@ -3,5 +3,11 @@
   "identifier": "default",
   "description": "Permisos de la ventana principal",
   "windows": ["main"],
-  "permissions": ["core:default", "updater:default", "process:allow-restart"]
+  "permissions": [
+    "core:default",
+    "updater:default",
+    "process:allow-restart",
+    "opener:allow-open-url",
+    "opener:allow-default-urls"
+  ]
 }

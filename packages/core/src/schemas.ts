@@ -254,7 +254,15 @@ export const createTaskInput = z.object({
   source: taskSource.optional(),
   externalId: z.string().max(200).nullable().optional(),
   externalUrl: z.url().nullable().optional(),
+  /** Subtareas que se crean con ella, en orden. */
+  checklist: z.array(z.string().trim().min(1).max(300)).max(100).optional(),
 })
+
+/** Tope de `tasks.createMany`: una llamada del MCP no debería crear un proyecto entero de golpe. */
+export const MAX_BATCH_TASKS = 50
+
+/** Solo la forma del lote: cada tarea se valida por separado para que una mala no tumbe a las demás. */
+export const createTasksInput = z.array(z.unknown()).min(1).max(MAX_BATCH_TASKS)
 
 export const updateTaskInput = z.object({
   title: z.string().trim().min(1).max(300).optional(),

@@ -56,6 +56,11 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   adjuntar la foto de un ticket con «apunta este gasto» y comprobar que lo apunta bien. Con `qwen3:8b`, el aviso «no ve imágenes».
 - [ ] **Redesplegar `mcp`** (27-10): `categories.move` cuenta ahora dentro de su tipo (gastos o ingresos). Ninguna herramienta lo usa
   aún, pero el paquete del MCP lleva el core.
+- [ ] **Redesplegar `mcp`** (28-10): herramienta `create_tasks` (hasta 50 tareas con su checklist), `checklist` en `create_task` y el
+  proyecto por nombre ya no cae en el archivado. `pnpm --filter @muninn/mcp build:edge` y desplegar como arriba. Después, en claude.ai:
+  - [ ] «En el proyecto Prueba final, crea 5 tareas, cada una con 2 subtareas, y una más en la columna "No existe"». Una sola llamada a
+    `create_tasks`: 5 creadas con sus subtareas en orden, 1 con el error de la columna, y no repite las buenas. Archívalas al acabar.
+  - [ ] «¿Qué tareas tiene Muninn?» lista las del proyecto activo, no las del archivado con el mismo nombre.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
@@ -106,6 +111,11 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 - [ ] La nota está fijada y lleva la entradilla del modelo y el resumen de noticias. *(Fijada, con actor `assistant`, «Hecho a las
   20:27…», vencidas y cobros; falta la entradilla y las noticias, que necesitan Ollama y la función.)*
 - [x] Antes de terminar el día, déjalo a tu hora de verdad (p. ej. 08:30). Lo necesitas para el paso 8. *(Activado a las 08:30.)*
+
+**Enlaces externos** (escritorio con `pnpm dev:desktop` y navegador en el 5174).
+- [ ] Escritorio: en Noticias, el título y «Abrir» abren el artículo en tu navegador y la noticia queda leída. También la issue y «Ver el
+  PR» de una tarea, «PR #n» en GitHub, un enlace de una nota y «GitHub» en Ajustes › Acerca de. Las imágenes del Asistente no llevan enlace.
+- [ ] Navegador: los mismos enlaces abren otra pestaña (Ctrl-clic, en segundo plano) y una imagen adjunta del Asistente se abre a tamaño real.
 
 ## 4. Publicar la web (≈ 30 min)
 
@@ -158,6 +168,8 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - lo apuntado en el iPhone aparece en el ordenador sin recargar.
 - [ ] El Asistente dice que usa el modelo del ordenador y no intenta conectar.
 - [ ] Noticias muestra el mismo resumen de hoy que el ordenador.
+- [ ] En Noticias, «Abrir» y el título abren el artículo en Safari sin cerrar Muninn, y al volver sale leída. Igual con un enlace de una
+  nota y con una imagen adjunta del Asistente.
 - [ ] El informe de la mañana se lee en Notas y en el Asistente, y el iPhone no genera ninguno.
 - [ ] **Avisos push** (necesita el paso 4b):
   - antes de instalar, en Safari, Ajustes › Notificaciones dice «Añade Muninn a tu pantalla de inicio»;

@@ -220,6 +220,18 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
 - [ ] Sin conexión, al abrir no sale ningún aviso
 
+### Enlaces externos (`tauri-plugin-opener`)
+> Antes, en escritorio ningún enlace externo abría nada (`target="_blank"` no hace nada en Tauri). Ahora todos pasan por `openExternal`.
+> Probado con tests (escritorio o web, y el aviso si falla) y `cargo check`; nada a mano todavía.
+- [ ] Escritorio (`pnpm dev:desktop` y la app instalada tras la siguiente versión): en Noticias, el título y «Abrir» abren el artículo en el
+  navegador del sistema y la noticia queda leída; también la issue y «Ver el PR» del detalle de una tarea, «PR #n» de la pantalla GitHub,
+  un enlace dentro de una nota y «GitHub» de Ajustes › Acerca de
+- [ ] Escritorio: las imágenes adjuntas en el Asistente se ven en la burbuja y no llevan enlace
+- [ ] Navegador: los mismos enlaces abren otra pestaña y la noticia queda leída; Ctrl/⌘-clic sigue abriendo en segundo plano; una imagen
+  adjunta del Asistente se abre a tamaño real en otra pestaña
+- [ ] iPhone (PWA instalada): «Abrir» y el título de una noticia abren el artículo en Safari (o en la hoja de Safari) sin cerrar Muninn, y al
+  volver la noticia sale leída; lo mismo con un enlace de una nota; una imagen adjunta del Asistente se abre
+
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
 > [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →

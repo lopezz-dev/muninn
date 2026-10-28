@@ -41,7 +41,7 @@ en ese momento. Los artículos se guardan **30 días**; los que marques con **Le
   **Buscar en Noticias**.
 - Si un artículo habla de uno de tus proyectos, sale **Relacionada con …**.
 - Cada artículo tiene **Crear tarea** (abre «Nueva tarea» con el título y el enlace), **Guardar como nota**, **Leer luego**
-  y **Abrir** (en una pestaña nueva; queda marcado como leído).
+  y **Abrir** (en tu navegador, también desde la app de escritorio; queda marcado como leído). El título hace lo mismo.
 
 ## El resumen del día
 

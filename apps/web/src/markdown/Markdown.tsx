@@ -2,6 +2,7 @@
 import { cn } from '@muninn/ui'
 import { Lexer, type Token, type Tokens } from 'marked'
 import { Fragment, type ReactNode, useMemo } from 'react'
+import { externalLink } from '../lib/external-link'
 import { makeSlugger } from './outline'
 import { plainText } from './plain'
 import { countTasks } from './tasks'
@@ -120,10 +121,8 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
       if (custom !== undefined) return custom
       return href ? (
         <a
-          href={href}
+          {...externalLink(href)}
           title={tk.title ? decodeEntities(tk.title) : undefined}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-accent underline-offset-2 hover:underline"
         >
           {label}
@@ -138,12 +137,7 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
       const href = safeHref(decodeEntities(tk.href))
       const label = decodeEntities(tk.text) || 'imagen'
       return href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-accent underline-offset-2 hover:underline"
-        >
+        <a {...externalLink(href)} className="text-accent underline-offset-2 hover:underline">
           {label}
         </a>
       ) : (

@@ -103,7 +103,8 @@ export interface NewsItemStoreQuery {
 }
 
 /** Artículos: de los más recientes a los más antiguos (por publicación y, sin ella, por descarga). */
-export interface NewsItemStore extends Omit<Collection<NewsItem, NewsItemStoreQuery>, 'insert'> {
+export interface NewsItemStore
+  extends Omit<Collection<NewsItem, NewsItemStoreQuery>, 'insert' | 'insertMany'> {
   /** Inserta los que no estén ya (misma fuente y `guid`) y devuelve solo los nuevos. */
   insertNew(rows: NewRow<NewsItem>[]): Promise<NewsItem[]>
 }
@@ -191,6 +192,8 @@ export interface Collection<T extends { id: string }, Q> {
   /** Devuelve filas ordenadas: por `position` si la entidad la tiene; las notas, fijadas primero y por recientes. */
   list(query: Q): Promise<T[]>
   insert(row: NewRow<T>): Promise<T>
+  /** Varias filas en una sola escritura; las devuelve en el mismo orden. */
+  insertMany(rows: NewRow<T>[]): Promise<T[]>
   update(id: string, patch: Partial<NewRow<T>>): Promise<T>
   remove(id: string): Promise<void>
 }
@@ -247,6 +250,7 @@ export interface NoteStoreQuery {
 
 export interface ActivityLog {
   insert(row: Omit<Activity, 'id' | 'createdAt'>): Promise<Activity>
+  insertMany(rows: Omit<Activity, 'id' | 'createdAt'>[]): Promise<void>
   list(query: {
     projectId?: string
     /** Solo los eventos de una entidad (una tarea, una columna…). */

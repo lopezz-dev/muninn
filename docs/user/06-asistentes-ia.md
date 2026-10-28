@@ -24,9 +24,12 @@ pedirle cosas como:
 - *"Mueve la tarea del login a En curso."*
 - *"Apunta en una nota del proyecto lo que hemos decidido sobre el diseño."*
 - *"He gastado 24,90 en el cine."* o *"¿Cuánto tengo en la hucha?"* (Finanzas: cuentas, gastos, ingresos y traspasos)
+- *"Pasa este plan a tareas de Muninn, cada una con su checklist."* Crea hasta 50 tareas de una vez. Si alguna falla (una
+  columna que no existe, por ejemplo), las demás se crean igual y te dice cuál falló.
 
 Puedes nombrar los proyectos, las columnas, las cuentas y las categorías por su nombre, sin preocuparte de mayúsculas. Los
-importes se dicen en euros, como los escribirías tú.
+importes se dicen en euros, como los escribirías tú. Si tienes un proyecto archivado con el mismo nombre que uno activo, se usa el
+activo. Si hay dos activos que se llaman igual, te pedirá que digas cuál.
 
 **Seguridad:** el asistente puede crear, editar, mover, completar y archivar, pero **nunca borrar** nada definitivamente.
 En el historial de una tarea, lo que hace Claude sale como «Claude» y lo del Asistente de la app, como «El asistente».
@@ -117,7 +120,7 @@ args = ["C:/sourcecode/muninn/packages/mcp/dist/index.js"]
 | Para consultar | Para actuar |
 |---|---|
 | `overview`: resumen del día | `create_project` |
-| `list_projects` | `create_task`, `update_task` |
+| `list_projects` | `create_task` (con su checklist), `create_tasks` (hasta 50 a la vez), `update_task` |
 | `project_status`: informe de un proyecto | `move_task`, `complete_task`, `archive_task` |
 | `list_tasks`: con filtros | `add_checklist_item`, `set_checklist_item_done` |
 | `get_task`: con subtareas y notas | `create_note`, `update_note` |
