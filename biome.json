@@ -8,7 +8,8 @@
       "!**/src-tauri/target",
       "!**/src-tauri/gen",
       "!**/routeTree.gen.ts",
-      "!packages/ui/src/tokens.css"
+      "!packages/ui/src/tokens.css",
+      "!packages/ui/src/*.generated.ts"
     ]
   },
   "formatter": {

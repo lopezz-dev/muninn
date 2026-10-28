@@ -15,7 +15,8 @@
   "scripts": {
     "tokens": "tsx scripts/build-tokens.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "icons": "tsx scripts/build-icons.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

@@ -7,6 +7,7 @@ import {
   matchRange,
   normalize,
   type PaletteItem,
+  searchResultItems,
 } from '../src/shell/palette-items'
 
 describe('navegación', () => {
@@ -113,5 +114,46 @@ describe('preselección del buscador', () => {
   it('sin coincidencia clara, pregunta a Muninn', () => {
     expect(bestMatch(list, 'firma')).toBe(0)
     expect(bestMatch(list, '')).toBe(0)
+  })
+})
+
+describe('tareas y notas en el buscador', () => {
+  const found = {
+    tasks: [{ id: 't1', title: 'Revisar factura', projectId: 'p1' }],
+    notes: [
+      { id: 'n1', title: '', projectId: null },
+      { id: 'n2', title: 'Ideas de factura', projectId: 'p1' },
+    ],
+  }
+  const projects = [{ id: 'p1', name: 'Casa' }]
+  const opened: string[] = []
+  const items = searchResultItems(found, projects, 'factura', {
+    task: (t) => opened.push(`task:${t.id}`),
+    note: (n) => opened.push(`note:${n.id}`),
+  })
+
+  it('las tareas llevan su proyecto y las notas sin título se nombran', () => {
+    expect(items.map((i) => [i.group, i.label, i.hint])).toEqual([
+      ['tasks', 'Revisar factura', 'Casa'],
+      ['notes', 'Sin título', undefined],
+      ['notes', 'Ideas de factura', 'Casa'],
+    ])
+  })
+
+  it('no las quita el filtro aunque coincidan solo por el contenido, y van tras los proyectos', () => {
+    const project: PaletteItem = {
+      id: 'project-p1',
+      group: 'projects',
+      label: 'Factura anual',
+      icon: 'projects',
+      run: () => {},
+    }
+    const out = filterItems([...items, project], 'factura')
+    expect(out.map((i) => i.id)).toEqual(['project-p1', 'task-t1', 'note-n1', 'note-n2'])
+  })
+
+  it('abren su detalle', () => {
+    for (const it of items) it.run()
+    expect(opened).toEqual(['task:t1', 'note:n1', 'note:n2'])
   })
 })

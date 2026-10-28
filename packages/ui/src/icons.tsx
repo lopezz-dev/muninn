@@ -1,3 +1,6 @@
+import { IconContext } from '@phosphor-icons/react/dist/lib/context'
+import type { IconProps } from '@phosphor-icons/react/dist/lib/types'
+import type { ComponentType, ReactNode } from 'react'
 import {
   Archive,
   ArrowDown,
@@ -22,8 +25,6 @@ import {
   GitBranch,
   GithubLogo,
   House,
-  IconContext,
-  type IconProps,
   ImageSquare,
   Info,
   Kanban,
@@ -50,11 +51,10 @@ import {
   Wallet,
   WarningCircle,
   X,
-} from '@phosphor-icons/react'
-import type { ComponentType, ReactNode } from 'react'
+} from './icons.generated'
 
 /**
- * Iconos de Muninn (Phosphor) con nombres semánticos. La app importa SIEMPRE desde aquí,
+ * Iconos de Muninn (Phosphor, con solo los grosores que se usan: ADR-0058) con nombres semánticos. La app importa SIEMPRE desde aquí,
  * nunca de '@phosphor-icons/react' directamente: así cambiar de librería es tocar este fichero.
  */
 export const icons = {
