@@ -5,9 +5,7 @@
 
 ### Features
 
-* **web:** rediseño de Ajustes con grupos, buscador y restablecer ([a923ab3](https://github.com/lopezz-dev/muninn/commit/a923ab3612f687028c94160062a30194c1fc7eb1))
 * **web:** rediseño de Ajustes con grupos, buscador y restablecer ([bad1ba4](https://github.com/lopezz-dev/muninn/commit/bad1ba454550a33baa83f39fa577bc9c2d24eedf))
-* **web:** rediseño de Documentación con portada, grupos e iconos ([dfcefd9](https://github.com/lopezz-dev/muninn/commit/dfcefd9fcf904fff26a541fa1a9e6224cd51fc25))
 * **web:** rediseño de Documentación con portada, grupos e iconos ([f8bd09b](https://github.com/lopezz-dev/muninn/commit/f8bd09bb15ac8642aebd190f09d01bd6cbea83dc))
 
 ## [0.2.1](https://github.com/lopezz-dev/muninn/compare/v0.2.0...v0.2.1) (2026-10-28)
