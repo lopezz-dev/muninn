@@ -1,3 +1,4 @@
+import { createMemoryAccount, type MemoryAccountSeed } from './memory-account'
 import type {
   Activity,
   BoardColumn,
@@ -146,7 +147,12 @@ function stripUndefined<T extends object>(obj: T): Partial<T> {
  */
 export function createMemoryStore(
   initial: MemorySnapshot = emptySnapshot(),
-  options: { onChange?: (snapshot: MemorySnapshot) => void; now?: () => string } = {},
+  options: {
+    onChange?: (snapshot: MemorySnapshot) => void
+    now?: () => string
+    /** Sesiones de partida de la seguridad simulada (tests y demo). */
+    account?: MemoryAccountSeed
+  } = {},
 ): Store & { snapshot(): MemorySnapshot } {
   const now = options.now ?? (() => new Date().toISOString())
   const toMap = <T extends { id: string }>(rows: T[]) => new Map(rows.map((r) => [r.id, r]))
@@ -259,9 +265,14 @@ export function createMemoryStore(
     },
   }
 
+  // Seguridad de la cuenta (ADR-0061), simulada: no es parte de la instantánea (es Auth, no datos). Sin sesiones de
+  // partida, solo está la de este dispositivo.
+  const accountState = createMemoryAccount(options.account, now)
+
   return {
     snapshot,
     projectImages,
+    account: accountState,
     activity: activityLog,
     newsSources: new MemoryCollection<NewsSource, { includeArchived?: boolean }>(
       'Fuente',

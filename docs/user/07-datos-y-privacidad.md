@@ -51,7 +51,8 @@ recuperar tu cuenta. En modo demo no se guarda nada.
 
 - Entras con un código que te llega al correo, o con GitHub. Muninn no guarda contraseñas.
 - La sesión se guarda en el navegador o en la app de ese dispositivo, para que no tengas que entrar cada
-  vez. **Cerrar sesión** (en Ajustes › Cuenta) la borra de ese dispositivo.
+  vez. **Cerrar sesión** (en Ajustes › Cuenta) la borra de ese dispositivo. Ahí mismo ves en qué otros
+  dispositivos está abierta y puedes cerrarla: [Cuenta y seguridad](14-cuenta-y-seguridad.md).
 - Si entras con GitHub, Muninn solo recibe tu nombre, tu correo y tu foto de perfil, para mostrarlos en la app.
 - Al cerrar sesión, la app olvida lo que tenía cargado: nadie que entre después en ese dispositivo con otra
   cuenta verá tus datos.

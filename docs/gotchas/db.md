@@ -277,3 +277,17 @@
   (`projectImages.upload` en `supabase-store.ts` ya la construye). Un bucket nuevo necesita sus propias políticas en
   una migración: Storage no hereda las de las tablas.
 - **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)
+
+### Sesiones de la cuenta: `auth.sessions` solo con las funciones
+
+- **Síntoma:** Ajustes › Cuenta dice «No se pudo cargar la lista de sesiones», o la consola muestra
+  `Could not find the function public.list_my_sessions`.
+- **Causa:** el cliente no puede leer `auth.sessions` (el esquema `auth` no está expuesto). La lista y el cierre van por
+  `list_my_sessions()` y `revoke_my_session(uuid)`, `security definer` y limitadas a `auth.uid()`
+  (migración `20261029120000_account_sessions`). Sin la migración aplicada no existen.
+- **Solución:** aplica la migración. Si cambias las funciones, que sigan sin devolver tokens y filtrando por `auth.uid()`, con
+  `execute` solo para `authenticated`.
+- **Ojo:** cerrar una sesión borra su fila y sus *refresh tokens*, pero su token de acceso sigue valiendo hasta que caduca (una hora
+  como mucho, el *JWT expiry* del proyecto). Por eso la app dice «saldrá en menos de una hora». `is_current` compara con el claim
+  `session_id` del JWT de quien pregunta.
+- **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)

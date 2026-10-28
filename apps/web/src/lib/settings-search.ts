@@ -32,6 +32,20 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     keywords: 'salir logout',
   },
   {
+    id: 'sesiones',
+    section: 'cuenta',
+    label: 'Sesiones y dispositivos',
+    description: 'Dónde tienes la sesión abierta, con su última actividad.',
+    keywords: 'dispositivos navegadores seguridad',
+  },
+  {
+    id: 'cerrar-sesiones',
+    section: 'cuenta',
+    label: 'Cerrar sesión en otros dispositivos',
+    description: 'En los demás o en todos, también en este.',
+    keywords: 'salir logout todos seguridad',
+  },
+  {
     id: 'tema',
     section: 'apariencia',
     label: 'Tema',

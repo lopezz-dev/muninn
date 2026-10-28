@@ -326,8 +326,9 @@ más o menos en este orden:
   soporte de WebAuthn de cada sistema
 - [ ] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional, y obligatorio para conectar integraciones
   sensibles (finanzas, GitHub con permisos de escritura)
-- [ ] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
-  o en todos (`signOut({ scope: 'global' })`)
+- [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
+  o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
+  prueba real, en la fase final (4c)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
 - [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo

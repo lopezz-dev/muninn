@@ -26,6 +26,8 @@ export const keys = {
   taskActivity: (taskId: string) => ['tasks', taskId, 'activity'] as const,
   taskNotes: (taskId: string) => ['tasks', taskId, 'notes'] as const,
   checklistCounts: (ids: string[]) => ['checklist-counts', ids] as const,
+  /** Ajustes › Cuenta (ADR-0061): sesiones abiertas. Es Auth, no datos: no se guarda para leer sin conexión. */
+  accountSessions: ['account', 'sessions'] as const,
 }
 
 export const projectsQuery = (m: Muninn) =>

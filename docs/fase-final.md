@@ -160,6 +160,19 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 - [ ] Programar el cron `muninn-push-charges` (`0 7 * * *`).
 - [ ] Comprobar: `curl -X POST` a `/push/send` sin secreto da 401 y con el secreto responde `{ users, results, pruned }`.
 
+## 4c. Seguridad de la cuenta (≈ 20 min)
+
+Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
+y el iPhone con la sesión abierta.
+- [ ] Aplicar la migración `20261029120000_account_sessions` (y alinear la versión si usas `apply_migration`).
+- [ ] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
+  última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
+  `select * from list_my_sessions()` con otro `sub` devuelve 0 filas).
+- [ ] **Cerrar** en la fila del iPhone: sale el aviso y desaparece de la lista; en menos de una hora el iPhone vuelve a la pantalla de
+  entrada.
+- [ ] Vuelve a entrar en el iPhone y pulsa **En los demás** en el ordenador: el ordenador sigue dentro y el iPhone sale.
+- [ ] **En todos**: el ordenador vuelve a la pantalla de entrada con el aviso; el iPhone sale en menos de una hora.
+
 ## 5. iPhone (≈ 45 min)
 
 Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra con tu cuenta.

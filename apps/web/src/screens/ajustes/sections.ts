@@ -35,10 +35,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     group: 'tu',
     tile: 'bg-project-blue/15 text-project-blue',
     doc: {
-      pagina: 'instalacion',
-      hash: 'iniciar-sesion',
-      title: 'Instalación › Iniciar sesión',
-      text: 'Entrar con un código o con GitHub, probar sin cuenta y cerrar sesión.',
+      pagina: 'cuenta-y-seguridad',
+      title: 'Cuenta y seguridad',
+      text: 'Dónde tienes la sesión abierta y cómo cerrarla en otros dispositivos.',
     },
   },
   {

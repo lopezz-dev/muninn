@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
+  AccountSession,
   Activity,
   GithubRepoSummary,
   GithubSyncScope,
@@ -11,6 +12,7 @@ import type {
 } from './schemas'
 import { imageExt } from './schemas'
 import {
+  type AccountStore,
   type AccountStoreQuery,
   type ActivityLog,
   type CategoryStoreQuery,
@@ -454,12 +456,35 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Seguridad de la cuenta (ADR-0061). `auth.sessions` no se puede leer desde el cliente: las funciones
+  // `list_my_sessions` y `revoke_my_session` (migración 20261029120000_account_sessions) solo ven las del usuario.
+  const account: AccountStore = {
+    async sessions() {
+      const { data, error } = await client.rpc('list_my_sessions')
+      if (error) throw error
+      return (data as Row[]).map((r) => {
+        const { isCurrent, ...rest } = fromRow<AccountSession & { isCurrent: boolean }>(r)
+        return { ...rest, current: Boolean(isCurrent) }
+      })
+    },
+    async revokeSession(id) {
+      const { data, error } = await client.rpc('revoke_my_session', { session_id: id })
+      if (error) throw error
+      return Boolean(data)
+    },
+    async signOut(scope) {
+      const { error } = await client.auth.signOut({ scope })
+      if (error) throw error
+    },
+  }
+
   return {
     activity,
     settings,
     githubOutbox,
     githubRepos,
     projectImages,
+    account,
     newsSources: col<NewsSource, { includeArchived?: boolean }>(
       'news_sources',
       'Fuente',

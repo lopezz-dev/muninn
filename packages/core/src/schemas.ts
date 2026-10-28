@@ -685,3 +685,23 @@ export const pushSubscribeInput = z.object({
 })
 
 export type PushSubscribeInput = z.input<typeof pushSubscribeInput>
+
+// ─── Cuenta: sesiones y seguridad (ADR-0061) ────────────────────────────────
+
+/** Una sesión abierta de la cuenta: un navegador o una app con la sesión iniciada. Nunca lleva tokens. */
+export interface AccountSession {
+  id: string
+  createdAt: string
+  /** Última vez que renovó la sesión (cada hora mientras está abierta). */
+  lastActiveAt: string
+  userAgent: string | null
+  ip: string | null
+  /** `aal1` (solo código o GitHub) o `aal2` (con el segundo factor). */
+  aal: string | null
+  /** La sesión de este dispositivo. */
+  current: boolean
+}
+
+/** Cerrar en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
+export const signOutScope = z.enum(['others', 'global'])
+export type SignOutScope = z.infer<typeof signOutScope>
