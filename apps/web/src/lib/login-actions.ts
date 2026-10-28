@@ -3,7 +3,10 @@ import { loadSupabase, resetAuth, safeRedirect, toAccount } from './auth'
 import { openExternal } from './external-link'
 import {
   type AuthCallback,
+  clearPendingFlow,
   type DeepLinkDeps,
+  hasPendingFlow,
+  markPendingFlow,
   OAuthAbortedError,
   oauthOptions,
   parseAuthCallback,
@@ -92,6 +95,7 @@ export async function signInWithGitHubDesktop(opts: {
     options: oauthOptions(true, ''),
   })
   if (error) throw error
+  markPendingFlow(localStorage)
   // Se deja de escuchar si cancelas tú o si no llega a abrirse el navegador.
   const stop = new AbortController()
   opts.signal?.addEventListener('abort', () => stop.abort(), { once: true })
@@ -100,11 +104,16 @@ export async function signInWithGitHubDesktop(opts: {
   if (!(await openExternal(data.url))) {
     stop.abort()
     await wait.result.catch(() => {})
+    clearPendingFlow(localStorage)
     // `openExternal` ya lo ha dicho con `notify`.
     return null
   }
   opts.onBrowser?.()
-  return completeAuthCallback(await wait.result)
+  try {
+    return await completeAuthCallback(await wait.result)
+  } finally {
+    clearPendingFlow(localStorage)
+  }
 }
 
 /** Termina la sesión con lo que trae el deep link. El verificador PKCE lo guardó supabase-js al empezar. */
@@ -112,13 +121,7 @@ export async function completeAuthCallback(callback: AuthCallback) {
   if (callback.kind === 'error')
     throw callback.cancelled ? new OAuthAbortedError('denied') : new Error(callback.message)
   const c = await loadSupabase()
-  const { data, error } =
-    callback.kind === 'code'
-      ? await c.auth.exchangeCodeForSession(callback.code)
-      : await c.auth.setSession({
-          access_token: callback.accessToken,
-          refresh_token: callback.refreshToken,
-        })
+  const { data, error } = await c.auth.exchangeCodeForSession(callback.code)
   if (error) throw error
   if (!data.session) throw new Error('No se pudo iniciar la sesión.')
   resetAuth()
@@ -127,9 +130,12 @@ export async function completeAuthCallback(callback: AuthCallback) {
 
 /**
  * Si la app se abrió con el enlace de vuelta (estaba cerrada al volver de GitHub), lo recoge. Solo en
- * escritorio; `null` si no hay nada pendiente.
+ * escritorio; `null` si no hay nada pendiente. Solo si el login lo empezó esta app hace poco: un enlace
+ * abierto por otro programa no inicia nada.
  */
 export async function pendingAuthCallback(): Promise<AuthCallback | null> {
+  if (!hasPendingFlow(localStorage)) return null
+  clearPendingFlow(localStorage)
   const { getCurrent } = await import('@tauri-apps/plugin-deep-link')
   for (const u of (await getCurrent()) ?? []) {
     const parsed = parseAuthCallback(u)

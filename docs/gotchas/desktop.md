@@ -138,4 +138,5 @@
   - Si al probar en dev quedó registrado el `muninn://` del ejecutable de `target/debug`, el instalado lo vuelve a apuntar a sí mismo al
     instalarse. En Windows está en `HKCU\Software\Classes\muninn`.
   - `getCurrent()` devuelve el enlace con el que arrancó la app durante toda la sesión: se mira una sola vez (un código PKCE no se puede
-    canjear dos veces).
+    canjear dos veces), y solo con la marca `muninn.oauth.desktop` de un login empezado aquí.
+  - No aceptes `#access_token=…` en la vuelta (`setSession`): cualquier web podría abrir el enlace y meterte en otra cuenta. Solo PKCE.

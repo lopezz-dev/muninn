@@ -18,11 +18,13 @@ export function oauthOptions(tauri: boolean, webRedirect: string) {
     : { redirectTo: webRedirect }
 }
 
+/**
+ * Solo PKCE: el código se canjea con el verificador que guardó esta app, así que un código ajeno no sirve.
+ * Los tokens en el fragmento (flujo implícito) no se aceptan: cualquier página podría abrir
+ * `muninn://auth/callback#access_token=…` y meterte en la cuenta de otro.
+ */
 export type AuthCallback =
-  /** PKCE (lo que usa el cliente): se canjea con `exchangeCodeForSession`. */
   | { kind: 'code'; code: string }
-  /** Flujo implícito: los tokens vienen en el fragmento. */
-  | { kind: 'tokens'; accessToken: string; refreshToken: string }
   /** `cancelled`: dijiste que no en GitHub (`access_denied`). */
   | { kind: 'error'; cancelled: boolean; message: string }
 
@@ -57,10 +59,28 @@ export function parseAuthCallback(raw: string): AuthCallback | null {
   }
   const code = query.get('code')
   if (code) return { kind: 'code', code }
-  const accessToken = hash.get('access_token')
-  const refreshToken = hash.get('refresh_token')
-  if (accessToken && refreshToken) return { kind: 'tokens', accessToken, refreshToken }
   return { kind: 'error', cancelled: false, message: 'GitHub no ha devuelto ningún código.' }
+}
+
+/** Marca de «hay un login con GitHub en marcha en esta app». Sin ella, un enlace de vuelta se ignora. */
+const PENDING_KEY = 'muninn.oauth.desktop'
+/** Cuánto vale la marca: la espera y un margen por si la app se cerró a medias. */
+const PENDING_TTL_MS = 2 * DESKTOP_TIMEOUT_MS
+
+type FlagStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+
+export function markPendingFlow(storage: FlagStorage, now = Date.now()) {
+  storage.setItem(PENDING_KEY, String(now))
+}
+
+export function clearPendingFlow(storage: FlagStorage) {
+  storage.removeItem(PENDING_KEY)
+}
+
+/** Hay un login empezado aquí y aún no ha caducado. */
+export function hasPendingFlow(storage: FlagStorage, now = Date.now()) {
+  const started = Number(storage.getItem(PENDING_KEY))
+  return Number.isFinite(started) && started > 0 && now - started < PENDING_TTL_MS
 }
 
 /** Cómo llegan los deep links. Se inyecta en los tests. */

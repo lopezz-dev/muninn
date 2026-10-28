@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  clearPendingFlow,
   DESKTOP_REDIRECT,
+  hasPendingFlow,
+  markPendingFlow,
   OAuthAbortedError,
   oauthOptions,
   parseAuthCallback,
@@ -34,12 +37,12 @@ describe('parseAuthCallback', () => {
     })
   })
 
-  it('saca los tokens del fragmento (flujo implícito)', () => {
+  it('no acepta tokens en el fragmento: solo PKCE', () => {
     expect(
       parseAuthCallback(
         'muninn://auth/callback#access_token=at&refresh_token=rt&token_type=bearer',
       ),
-    ).toEqual({ kind: 'tokens', accessToken: 'at', refreshToken: 'rt' })
+    ).toMatchObject({ kind: 'error', cancelled: false })
   })
 
   it('reconoce que dijiste que no en GitHub', () => {
@@ -128,5 +131,34 @@ describe('waitForAuthCallback', () => {
     const wait = waitForAuthCallback({ onOpenUrl: () => Promise.reject(err) })
     await expect(wait.ready).rejects.toBe(err)
     await expect(wait.result).rejects.toBe(err)
+  })
+})
+
+describe('marca del login en marcha', () => {
+  const storage = () => {
+    const m = new Map<string, string>()
+    return {
+      getItem: (k: string) => m.get(k) ?? null,
+      setItem: (k: string, v: string) => void m.set(k, v),
+      removeItem: (k: string) => void m.delete(k),
+    }
+  }
+
+  it('sin marca no hay login pendiente', () => {
+    expect(hasPendingFlow(storage())).toBe(false)
+  })
+
+  it('vale un rato tras empezar y caduca', () => {
+    const s = storage()
+    markPendingFlow(s, 1_000)
+    expect(hasPendingFlow(s, 1_000 + 60_000)).toBe(true)
+    expect(hasPendingFlow(s, 1_000 + 11 * 60_000)).toBe(false)
+  })
+
+  it('se borra al terminar', () => {
+    const s = storage()
+    markPendingFlow(s)
+    clearPendingFlow(s)
+    expect(hasPendingFlow(s)).toBe(false)
   })
 })

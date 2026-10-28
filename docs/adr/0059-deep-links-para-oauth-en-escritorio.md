@@ -29,10 +29,12 @@ Por eso el botón de GitHub estaba oculto en escritorio.
   1. `signInWithOAuth({ provider: 'github', options: { redirectTo: 'muninn://auth/callback', skipBrowserRedirect: true } })`:
      supabase-js guarda el verificador PKCE y devuelve la URL sin navegar.
   2. Se empieza a escuchar `onOpenUrl` **antes** de abrir el navegador, y se abre la URL con `openExternal`.
-  3. Al llegar `muninn://auth/callback?code=…` se llama a `exchangeCodeForSession(code)`. Si llegan tokens en el fragmento (flujo
-     implícito), `setSession`. `error=access_denied` es «cancelado»; otros `error`, un fallo con su `error_description`.
+  3. Al llegar `muninn://auth/callback?code=…` se llama a `exchangeCodeForSession(code)`. **Solo PKCE:** tokens en el fragmento
+     (flujo implícito) se rechazan, porque cualquier página podría abrir `muninn://auth/callback#access_token=…` y meterte en la cuenta
+     de otro (*login CSRF*). `error=access_denied` es «cancelado»; otros `error`, un fallo con su `error_description`.
   4. Se puede cancelar desde la pantalla, y a los cinco minutos sin volver se da por abandonado.
-  5. Si la app estaba cerrada al volver, arranca con el enlace: el login lo recoge con `getCurrent()` una vez por sesión.
+  5. Si la app estaba cerrada al volver, arranca con el enlace: el login lo recoge con `getCurrent()` una vez por sesión, y solo si
+     hay una marca de «login empezado aquí» (`muninn.oauth.desktop` en localStorage, diez minutos) que se borra al terminar.
 - La lógica sin Supabase (opciones según la plataforma, análisis del enlace, espera cancelable) va en `oauth-callback.ts`, con tests.
   Las llamadas a Supabase Auth siguen en `login-actions.ts`, junto a las demás del login (ADR-0022): el cliente de auth vive en la web,
   no en el store del core, que solo recibe la sesión ya hecha.
@@ -50,7 +52,7 @@ Por eso el botón de GitHub estaba oculto en escritorio.
 
 - Hay que añadir `muninn://auth/callback` a las *Redirect URLs* de Supabase (paso manual, en [fase final](../fase-final.md)).
 - Cualquier programa puede abrir `muninn://auth/callback?code=…`, pero sin el verificador PKCE que guardó esta app el código no
-  sirve: el canje falla. Por eso solo se acepta PKCE como flujo principal.
+  sirve: el canje falla. Por eso solo se acepta PKCE, y un enlace sin login en marcha se ignora.
 - macOS solo registra el esquema con la app instalada en `/Applications` (o lanzada una vez desde el `.app`); en `tauri dev` no hay
   deep links en macOS. Ver [gotchas/desktop](../gotchas/desktop.md).
 - Relacionado: `apps/desktop/src-tauri/src/lib.rs`, `capabilities/default.json`, `apps/web/src/lib/oauth-callback.ts`,
