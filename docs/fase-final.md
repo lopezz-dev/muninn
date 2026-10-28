@@ -56,6 +56,11 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   adjuntar la foto de un ticket con «apunta este gasto» y comprobar que lo apunta bien. Con `qwen3:8b`, el aviso «no ve imágenes».
 - [ ] **Redesplegar `mcp`** (27-10): `categories.move` cuenta ahora dentro de su tipo (gastos o ingresos). Ninguna herramienta lo usa
   aún, pero el paquete del MCP lleva el core.
+- [ ] **Redesplegar `mcp`** (28-10): herramienta `create_tasks` (hasta 50 tareas con su checklist), `checklist` en `create_task` y el
+  proyecto por nombre ya no cae en el archivado. `pnpm --filter @muninn/mcp build:edge` y desplegar como arriba. Después, en claude.ai:
+  - [ ] «En el proyecto Prueba final, crea 5 tareas, cada una con 2 subtareas, y una más en la columna "No existe"». Una sola llamada a
+    `create_tasks`: 5 creadas con sus subtareas en orden, 1 con el error de la columna, y no repite las buenas. Archívalas al acabar.
+  - [ ] «¿Qué tareas tiene Muninn?» lista las del proyecto activo, no las del archivado con el mismo nombre.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
