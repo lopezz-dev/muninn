@@ -134,7 +134,7 @@ lo más útil sin abrirla: con qué entras, cuántos módulos tienes activos o a
 | Tú | **Apariencia** | Cristal y color de acento (ver arriba) |
 | Tú | **Atajos de teclado** | Los atajos del buscador, del tablero y de toda la app |
 | Espacio de trabajo | **Módulos** | Activar y desactivar módulos (ver arriba) |
-| Espacio de trabajo | **Notificaciones** | *Próximamente:* avisos en el móvil antes de cada cobro y cuando un agente termine |
+| Espacio de trabajo | **Notificaciones** | Activar los avisos en este dispositivo, **Enviar prueba** y los dispositivos que los reciben (ver [Notificaciones](13-notificaciones.md)) |
 | Asistente | **Modelo local** | Dónde está Ollama, qué modelo usa el [Asistente](11-asistente.md) y **Probar conexión** |
 | Asistente | **Informe de la mañana** | Activarlo, la hora y **Hacer ahora** (ver [Asistente](11-asistente.md#informe-de-la-mañana)) |
 | Integraciones | **GitHub** | El repositorio de cada proyecto y el estado de la sincronización (ver [GitHub](09-github.md)) |

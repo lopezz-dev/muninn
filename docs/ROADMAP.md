@@ -166,6 +166,15 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
   gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
 
+### F3 · Avisos push (fase final)
+> Montado el 28 de octubre sin desplegar: falta todo lo de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales)
+> (claves, migración, función, cron, variable en Vercel). Pasos en [fase-final.md](fase-final.md), 4b y 5.
+- [ ] `curl` a `/push/send` sin secreto da 401; con secreto, `{ users, results, pruned }`
+- [ ] En el iPhone instalado: Ajustes › Notificaciones › activar, **Permitir**, «Enviar prueba» llega y al tocarlo abre Notificaciones
+- [ ] Una suscripción «Prueba final» que cobra mañana: tras lanzar el cron a mano, llega «Mañana te cobran…» y abre Finanzas › Suscripciones
+- [ ] Lanzar el cron otra vez no repite el aviso; quitar el dispositivo con «Deshacer» lo recupera; cerrar sesión lo quita de la lista
+- [ ] Safari sin instalar enseña «Añade Muninn a tu pantalla de inicio»; tras «No permitir», «Avisos bloqueados»
+
 ### F4 · Asistente (fase final)
 > El MCP de stdio y el paquete de la Edge están recompilados con el catálogo único; la función `mcp` se redesplegó el 26 de octubre. La
 > migración del actor `assistant` está aplicada (versión alineada).
@@ -222,8 +231,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     `push` con cron y VAPID, **propuesto**); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
   - [x] Publicar la web: **https://muninn-sepia.vercel.app** desde el 26 de octubre (equipo Kodemaru, rama `develop` mientras dura la fase
     final). Falta la *Site URL* de Supabase y probarla en el iPhone: [fase final](fase-final.md), pasos 4 y 5
-  - [ ] Implementar la suscripción (Ajustes › Notificaciones), la tabla `push_subscriptions` y la función `push`: **fase final** (necesita la
-    web publicada y claves VAPID para probarse de verdad)
+  - [x] Implementar la suscripción (Ajustes › Notificaciones, con dispositivos y «Deshacer»), las tablas `push_subscriptions` y `push_log`
+    (migración `20261028180000_push_subscriptions`, **sin aplicar**), `m.push` en el core con tests y la Edge Function `push` con cron
+    diario (28 de octubre); guía [Notificaciones](user/13-notificaciones.md)
+  - [ ] Claves VAPID, migración, despliegue de `push`, cron y `VITE_VAPID_PUBLIC_KEY` en Vercel, y probarlo en el iPhone:
+    [fase final](fase-final.md), paso 4b
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
   - [x] Modelo de datos (ADR-0037): cuentas con saldo derivado, categorías de serie y propias, movimientos (gasto, ingreso, traspaso)
     en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
@@ -234,7 +246,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [x] Suscripciones semanales, mensuales y anuales (ADR-0038): al llegar la fecha la app **avisa** (Inicio y Finanzas) y el cobro se
     apunta o se salta con un toque, con «Deshacer»; nunca se apunta solo. Migración `20261021140000_finance_subscriptions` aplicada el
     21 de octubre. MCP: listar, crear, apuntar, saltar y archivar
-  - [ ] Aviso push antes del cobro: bloque E (PWA instalable y Web Push)
+  - [x] Aviso push antes del cobro: la función `push` avisa cada mañana de los cobros dentro de sus días de aviso, una vez por cobro
+    (28 de octubre; se prueba en la fase final con el resto de Web Push)
 - [x] Panel mensual (entradas, salidas, tasa de ahorro): calculado en el core (ADR-0039), con el mes anterior, gasto por categoría y
   los últimos 6 meses; en Finanzas › Resumen y en el MCP (`finance_month_report`)
 - [ ] (v2) Importar CSV de Imagin / conexión bancaria. Fuera de la sesión del 21–22 de octubre por alcance; el modelo ya lo admite
