@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/lopezz-dev/muninn/compare/v0.2.0...v0.2.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **ci:** compila la app de escritorio con las variables de Supabase ([e208ab4](https://github.com/lopezz-dev/muninn/commit/e208ab431e6e3a023949424b0f98cb6bc32e6007))
+* **ci:** compila la app de escritorio con las variables de Supabase ([b274733](https://github.com/lopezz-dev/muninn/commit/b274733d048857d93c452553768034caa3ff09ad))
+
 ## [0.2.0](https://github.com/lopezz-dev/muninn/compare/v0.1.0...v0.2.0) (2026-10-28)
 
 
