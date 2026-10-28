@@ -108,6 +108,7 @@ export const icons = {
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons
+export type { IconProps }
 
 /** Icono por nombre, útil cuando el icono viene de datos (navegación, módulos). */
 export function Icon({ name, ...props }: IconProps & { name: IconName }) {

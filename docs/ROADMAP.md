@@ -25,6 +25,8 @@
   [gotchas/db](gotchas/db.md#activar-github-oauth-paso-manual)
 - [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) y corregir lo que falle → en [Pruebas finales](#pruebas-finales)
 - [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, el dock y el buscador solo enseñan lo activo
+- [x] Ajustes rediseñados: menú por grupos con buscador, cabecera por sección, tarjetas con subtítulo, marca de «cambiado» y
+  «Restablecer sección» con Deshacer ([ADR-0053](adr/0053-ajustes-por-grupos-buscador-y-restablecer.md))
   ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md))
 - [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
@@ -34,12 +36,14 @@
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
 - [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
   estado, índice de la página; [ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md))
+  - [x] Rediseño: portada con las guías por grupos e iconos, guía centrada en pantallas anchas, búsqueda que lleva al
+    apartado y anterior/siguiente por grupo ([ADR-0052](adr/0052-documentacion-con-grupos-iconos-y-portada.md))
 - [x] Sincronización en tiempo real entre dispositivos (Realtime por tabla, invalidando la caché) y caché de lectura sin conexión
   en IndexedDB ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
 
 ## F2 · Claude y GitHub
 > **Estado:** en curso. La tanda del 19 de octubre ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#20](https://github.com/lopezz-dev/muninn/pull/20)) ya está en `develop`.
-> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto está **desplegado** (21 de octubre); falta activar OAuth en Supabase para claude.ai. Lo pendiente, en [Pruebas finales](#pruebas-finales).
+> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto está **desplegado** (21 de octubre) y **conectado a claude.ai** por OAuth (28 de octubre). Lo pendiente, en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
@@ -64,9 +68,8 @@
   - [x] Pantalla de autorización `/oauth/consent` para el servidor OAuth de Supabase (ADR-0036): sin ella, OAuth no funciona
   - [x] Servidor OAuth activado en Supabase el 21 de octubre (*Authorization Path* `/oauth/consent`, registro dinámico, *Site URL*
     `localhost:5174`); el descubrimiento responde 200
-  - [ ] Conectar claude.ai (sin verificar) → [Pruebas finales](#pruebas-finales). **En espera:** añadir conectores personalizados en
-    claude.ai necesita permisos de la organización que aún no tienes (los tiene que dar Edgar). En el iPhone, cuando la PWA esté publicada
-    (F3): hoy la *Site URL* es `localhost`
+  - [x] Conectar claude.ai: **funciona desde el 28 de octubre** (conector personalizado en la organización del trabajo, con registro dinámico;
+    ve las 36 herramientas). Falta el iPhone → [Pruebas finales](#pruebas-finales)
 - [ ] **Escribir sin conexión:** cola de intenciones persistente, UUID del cliente, orden por ancla, conflictos y «Deshacer» sobre lo
   pendiente. ADR-0034 **propuesto** ([#19](https://github.com/lopezz-dev/muninn/pull/19)), para revisarlo juntos antes de implementar; hoy sin red solo se puede leer
   ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
@@ -134,14 +137,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)».
   Hecho el 21 de octubre: sin token 401 con `resource_metadata`, metadatos 200, GET 405, token inventado 401 y `Origin` no permitido 403
 - [ ] Claude Code con `--header "Authorization: Bearer <token>"`: «¿Cómo voy hoy?» responde con tus datos; con el token caducado, 401
-- [ ] Pantalla `/oauth/consent`: comprobada en el navegador con respuestas simuladas de Supabase (permiso, error de solicitud caducada, móvil
-  sin scroll horizontal); falta con una solicitud real
+- [x] Pantalla `/oauth/consent` con una solicitud real (28 de octubre, desde claude.ai). Antes, la autorización aún redirigía a
+  `localhost:5174`: la *Site URL* de Supabase no estaba en la web publicada ([gotchas/mcp](gotchas/mcp.md#el-servidor-oauth-manda-a-localhost))
 - [x] Activar el servidor OAuth (paso 4 de gotchas/mcp): hecho el 21 de octubre; `/.well-known/oauth-authorization-server/auth/v1` da 200
   con `registration_endpoint` (tarda un par de minutos en aplicarse tras guardar)
 - [ ] OAuth sin claude.ai, con Claude Code: `claude mcp add --transport http muninn-remoto <URL>` sin cabecera y, en una sesión interactiva,
   `/mcp` › muninn-remoto › *Authenticate*: abre el navegador en `/oauth/consent` y, tras «Permitir acceso», lista tus proyectos
-- [ ] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y lista tus proyectos (**sin
-  verificar**). En espera de permisos de la organización (Edgar)
+- [x] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y salen las herramientas (28 de
+  octubre: 15 de lectura y 21 de escritura, el catálogo actual). Sale con el icono de Supabase (Backlog)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
 ### F3 · Finanzas
@@ -198,11 +201,12 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] En el iPhone: el informe se lee en Notas y en el Asistente, y el iPhone no genera ninguno
 
 ### Escritorio · primera versión y actualizaciones (ADR-0046, ADR-0047)
-> Código, CI y documentación listos el 27 de octubre (tests del aviso y `cargo check` en verde). Falta todo lo que necesita la clave de firma,
-> el repo público y una release: [paso 10 de la fase final](fase-final.md#10-repo-público-y-primera-versión-de-escritorio).
-- [ ] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
-- [ ] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
-- [ ] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
+> Probado el 28 de octubre: repo público, [v0.2.0](https://github.com/lopezz-dev/muninn/releases/tag/v0.2.0) y
+> [v0.2.1](https://github.com/lopezz-dev/muninn/releases/tag/v0.2.1). La 0.2.0 salió sin las variables de Supabase (solo modo demo);
+> la 0.2.1 lo arregla ([#55](https://github.com/lopezz-dev/muninn/pull/55)) y llegó a Windows con el propio actualizador.
+- [x] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
+- [x] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
+- [x] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
 - [ ] Sin conexión, al abrir no sale ningún aviso
 
 ## F3 · Móvil y finanzas
@@ -294,6 +298,7 @@ más o menos en este orden:
 
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
+- Icono de Muninn en el conector de claude.ai (hoy sale el de Supabase): [gotchas/mcp](gotchas/mcp.md#el-conector-sale-con-el-icono-de-supabase)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
 - Ver y quitar los permisos OAuth dados a otras apps (claude.ai…) en Ajustes › Cuenta (ADR-0036; la API `oauth` de supabase-js ya lo permite)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas

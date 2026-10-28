@@ -84,10 +84,32 @@
      publicada, la *Site URL* (Authentication › URL Configuration) tiene que ser la del servidor de desarrollo (`http://localhost:5174`), y
      solo funciona en ese ordenador. Recomendado: claves de firma asimétricas (Settings › JWT Keys), obligatorias si un cliente pide `openid`.
      Comprueba: `curl https://yjzzubpxikpvukymgfkt.supabase.co/.well-known/oauth-authorization-server/auth/v1` da 200 (antes, 404).
-  5. **claude.ai:** Ajustes › Conectores › **Añadir conector personalizado** con la URL del paso 1. Debería abrir `/oauth/consent` en tu Muninn
-     (o el login, si no tienes sesión), y al pulsar «Permitir acceso» volver a claude.ai con el conector listo. **Sin verificar**: si el cliente
-     no encuentra el servidor de autorización o no se puede registrar, el plan B son tokens personales de Muninn (ADR-0033, alternativas).
+  5. **claude.ai** (funciona desde el 28 de octubre): Ajustes › Conectores › **Añadir conector personalizado** con la URL del paso 1,
+     *Sign in now* y *Register automatically (DCR)*, sin cabeceras. Abre `/oauth/consent` en tu Muninn (o el login, si no tienes sesión), y
+     «Permitir acceso» vuelve a claude.ai con el conector listo. Recomendado: las de lectura en *Always allow* y las de escritura en
+     *Needs approval*.
 - **Ref:** [ADR-0033](../adr/0033-mcp-remoto-http.md), [ADR-0036](../adr/0036-pantalla-de-autorizacion-oauth.md)
+
+### El servidor OAuth manda a `localhost`
+
+- **Síntoma:** al conectar claude.ai o Claude Code, el navegador abre `http://localhost:5174/oauth/consent?…` y no carga.
+- **Causa:** la pantalla de autorización es *Site URL* + *Authorization Path*. Si la *Site URL* de Supabase sigue en el servidor de desarrollo,
+  la autorización solo funciona en el ordenador con `pnpm dev`. Pasó el 28 de octubre aunque el paso estaba marcado como hecho.
+- **Solución:** Authentication › URL Configuration › *Site URL* = `https://muninn-sepia.vercel.app`. Compruébalo sin navegador: registra un
+  cliente (`POST …/auth/v1/oauth/clients/register` con `redirect_uris` y `token_endpoint_auth_method: "none"`) y pide
+  `…/auth/v1/oauth/authorize?response_type=code&client_id=…&redirect_uri=…&code_challenge=…&code_challenge_method=S256`: el `location`
+  del 302 tiene que ser la web publicada. Borra luego el cliente de prueba en Authentication › OAuth Apps.
+
+### El conector sale con el icono de Supabase
+
+- **Síntoma:** en claude.ai, el conector «Muninn» lleva el logo de Supabase.
+- **Causa:** la URL del MCP es de `supabase.co` y claude.ai, al parecer, usa el favicon de ese dominio.
+- **Solución (sin hacer, no molesta):** primero, lo barato: el SDK (1.32.1) acepta `title`, `icons` y `websiteUrl` en la información del
+  servidor (especificación MCP 2025-11-25). En `packages/mcp/src/server.ts`,
+  `new McpServer({ name: 'muninn', title: 'Muninn', version, icons: [{ src: 'data:image/png;base64,…', mimeType: 'image/png', sizes: ['96x96'] }] })`,
+  con el logo como *data URI* para no atar el MCP al dominio de la web; `build:edge`, redesplegar y volver a conectar el conector. No está
+  comprobado que claude.ai lo lea. Si no, la otra vía es servir el MCP desde un dominio de Muninn (un *rewrite* de Vercel a la función), que
+  cambia la URL del recurso en los metadatos OAuth: necesita ADR.
 
 ### Finanzas: importes en euros, cuentas y categorías por nombre
 

@@ -30,8 +30,11 @@ export interface MarkdownProps {
   onToggleTask?: (index: number) => void
   /** Pone un `id` a cada título (`#iniciar-sesion`), para enlazar a un apartado. */
   headingIds?: boolean
-  /** Una cita que empieza en negrita (`> **Estado:** …`) se pinta como aviso destacado. */
-  callouts?: boolean
+  /**
+   * Una cita que empieza en negrita (`> **Estado:** …`) se pinta como aviso destacado. Con una función,
+   * ella decide el icono y el tono según esa etiqueta en negrita («Estado», «Próximamente»…).
+   */
+  callouts?: boolean | ((label: string) => CalloutLook)
   /**
    * Enlaces propios (entre guías): devuelve el elemento para ese destino, o `undefined` para el
    * tratamiento normal (que solo admite `http(s)`, `mailto` y `tel`).
@@ -40,13 +43,19 @@ export interface MarkdownProps {
   className?: string
 }
 
+/** Cómo se ve un aviso: un icono delante y el tono (acento, o neutro para lo que aún no existe). */
+export interface CalloutLook {
+  icon?: ReactNode
+  tone?: 'accent' | 'neutral'
+}
+
 interface Ctx {
   /** Contador de casillas de tarea, en el orden en que se pintan. */
   tasks: number
   onToggleTask?: (index: number) => void
   /** Reparte los `id` de los títulos (solo con `headingIds`). */
   slug?: (text: string) => string
-  callouts?: boolean
+  callouts?: MarkdownProps['callouts']
   renderLink?: MarkdownProps['renderLink']
 }
 
@@ -224,19 +233,41 @@ function block(t: Token, ctx: Ctx): ReactNode {
     case 'blockquote': {
       const tk = t as Tokens.Blockquote
       const first = tk.tokens[0]
-      const callout =
-        ctx.callouts && first?.type === 'paragraph' && first.tokens?.[0]?.type === 'strong'
-      return callout ? (
+      const label = first?.type === 'paragraph' ? first.tokens?.[0] : undefined
+      if (!ctx.callouts || label?.type !== 'strong') {
+        return (
+          <blockquote className="flex flex-col gap-3 border-l-2 border-border-strong pl-4 text-fg-subtle">
+            {blocks(tk.tokens, ctx)}
+          </blockquote>
+        )
+      }
+      const look: CalloutLook =
+        typeof ctx.callouts === 'function'
+          ? ctx.callouts(plainText((label as Tokens.Strong).text, 80).replace(/:\s*$/, ''))
+          : {}
+      return (
         <div
           role="note"
-          className="flex flex-col gap-2 rounded-md border border-accent/30 bg-accent-soft px-3.5 py-3 text-base leading-relaxed text-fg-muted"
+          className={cn(
+            'flex gap-3 rounded-md border px-3.5 py-3 text-base leading-relaxed text-fg-muted',
+            look.tone === 'neutral'
+              ? 'border-dashed border-border-strong bg-surface'
+              : 'border-accent/30 bg-accent-soft',
+          )}
         >
-          {blocks(tk.tokens, ctx)}
+          {look.icon ? (
+            <span
+              aria-hidden="true"
+              className={cn(
+                'mt-[3px] shrink-0',
+                look.tone === 'neutral' ? 'text-fg-subtle' : 'text-accent',
+              )}
+            >
+              {look.icon}
+            </span>
+          ) : null}
+          <div className="flex min-w-0 flex-col gap-2">{blocks(tk.tokens, ctx)}</div>
         </div>
-      ) : (
-        <blockquote className="flex flex-col gap-3 border-l-2 border-border-strong pl-4 text-fg-subtle">
-          {blocks(tk.tokens, ctx)}
-        </blockquote>
       )
     }
     case 'list': {

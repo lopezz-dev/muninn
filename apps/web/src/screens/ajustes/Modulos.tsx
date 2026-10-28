@@ -1,9 +1,10 @@
 import type { ModuleName } from '@muninn/core'
-import { Card, cn, Icon, type IconName, Switch } from '@muninn/ui'
+import { cn, Icon, type IconName, Switch } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { setModuleEnabled } from '../../lib/module-actions'
 import { MODULE_ORDER, useEnabledModules } from '../../lib/modules'
 import { useMuninn } from '../../lib/muninn'
+import { PrefGroup } from './ui'
 
 interface ModuleInfo {
   label: string
@@ -64,12 +65,18 @@ export function Modulos() {
   const enabled = useEnabledModules()
 
   return (
-    <Card className="px-[18px] pt-4 pb-1.5">
-      <h2 className="text-md font-semibold">Módulos</h2>
-      <p className="mt-1 mb-2.5 text-[13px] text-fg-subtle">
-        Activa solo lo que uses. Lo desactivado desaparece del menú, del dock y del buscador; tus
-        datos siguen guardados.
-      </p>
+    <PrefGroup
+      title="Módulos"
+      icon="more"
+      action={
+        enabled ? (
+          <span className="text-xs text-fg-faint">
+            {MODULE_ORDER.filter((x) => x !== 'focus' && enabled.has(x)).length} de{' '}
+            {MODULE_ORDER.length - 1} activos
+          </span>
+        ) : null
+      }
+    >
       <ul>
         {MODULE_ORDER.map((id) => {
           const info = MODULES[id]
@@ -77,11 +84,10 @@ export function Modulos() {
           return (
             <li
               key={id}
-              className="flex items-center gap-3.5 border-t border-border-subtle py-3 first:border-t-0"
+              id={`ajuste-modulo-${id}`}
+              className="flex items-center gap-3.5 border-t border-border-subtle px-4 py-3.5 first:border-t-0 md:px-[18px]"
             >
-              <span
-                className={cn('grid size-[30px] shrink-0 place-items-center rounded-lg', info.tile)}
-              >
+              <span className={cn('grid size-8 shrink-0 place-items-center rounded-md', info.tile)}>
                 <Icon name={info.icon} />
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -110,6 +116,6 @@ export function Modulos() {
           )
         })}
       </ul>
-    </Card>
+    </PrefGroup>
   )
 }

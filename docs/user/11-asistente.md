@@ -3,6 +3,8 @@ title: Asistente
 description: Pregunta y pide cosas a Muninn con un modelo que corre en tu ordenador.
 order: 11
 status: parcial
+group: ia
+icon: assistant
 ---
 
 # Asistente
@@ -11,8 +13,8 @@ El **Asistente** es Muninn hablando contigo. Le preguntas por tus tareas, notas 
 haga cosas: crear una tarea, moverla, apuntar un gasto, escribir una nota… Lo encuentras en el menú, en el centro del
 dock del móvil y en el buscador (**Ctrl K** o **⌘ K**, escribe tu pregunta y elige **Preguntar a Muninn**).
 
-> **Estado:** la pantalla está lista, pero necesita **Ollama** y un modelo instalados en tu ordenador, y eso todavía no
-> está hecho. Mientras, en la **demo** puedes ver cómo funciona con respuestas guionizadas.
+> **Antes de empezar:** instala **Ollama** y un modelo en tu ordenador (ver [Instalar Ollama](#instalar-ollama)); sin eso, el
+> Asistente no puede contestar. En la **demo** puedes ver cómo funciona con respuestas guionizadas.
 
 ## Qué puedes pedirle
 
@@ -34,7 +36,7 @@ Puedes enseñarle hasta **4 imágenes** por mensaje: con el clip, arrastrándola
 - Se reducen antes de enviarlas (una foto de varios MB se queda en unos cientos de KB) y **no salen de tu ordenador**:
   van al modelo local y se guardan en el historial de este dispositivo.
 - Hace falta un **modelo con visión** en Ollama, como `gemma3`, `qwen2.5vl` o `llama3.2-vision`
-  (`ollama pull gemma3` y elígelo en **Ajustes › Asistente e IA**). Si el tuyo no ve imágenes, la pantalla te lo avisa y
+  (`ollama pull gemma3` y elígelo en **Ajustes › Modelo local**). Si el tuyo no ve imágenes, la pantalla te lo avisa y
   no deja enviarlas.
 - El modelo ve las imágenes en el mensaje en que las mandas. Si en otro mensaje quieres que vuelva a mirarlas, adjúntalas
   otra vez.
@@ -61,7 +63,7 @@ preguntas no sale de casa.
 
 - **En el ordenador** (la app de escritorio o el navegador): funciona en cuanto Ollama está abierto y tiene el modelo.
 - **En el iPhone:** no hay modelo, así que la pantalla te lo dice. Desde el móvil puedes usar Claude con el conector de
-  Muninn ([Asistentes de IA](06-asistentes-ia.md)). Lo que el asistente haya cambiado desde el ordenador lo ves igual en
+  Muninn ([Conectar Claude y otros](06-asistentes-ia.md#conectar-claude-ai)). Lo que el asistente haya cambiado desde el ordenador lo ves igual en
   el móvil.
 
 Si algo falta, la pantalla te dice qué es y cómo arreglarlo:
@@ -80,12 +82,12 @@ Si algo falta, la pantalla te dice qué es y cómo arreglarlo:
 3. Descarga el modelo: `ollama pull qwen3:8b` (unos 5 GB).
 4. Abre el Asistente: arriba verás **Local · Ollama · qwen3:8b** con un punto verde.
 
-En **Ajustes › Asistente e IA** puedes cambiar la dirección de Ollama (casi nunca hace falta) y el modelo, y pulsar
+En **Ajustes › Modelo local** puedes cambiar la dirección de Ollama (casi nunca hace falta) y el modelo, y pulsar
 **Probar conexión**.
 
 ## Informe de la mañana
 
-Si lo activas en **Ajustes › Asistente e IA**, cada día a la hora que elijas Muninn te prepara un informe con tus tareas
+Si lo activas en **Ajustes › Informe de la mañana**, cada día a la hora que elijas Muninn te prepara un informe con tus tareas
 vencidas, las de hoy y las que tienes en curso, los cobros de los próximos días y el resumen de [Noticias](12-noticias.md).
 Se guarda como una **nota fijada** («Informe de la mañana · jueves, 22 oct»), así lo lees en cualquier dispositivo, y sale
 arriba en la lista de conversaciones del Asistente.

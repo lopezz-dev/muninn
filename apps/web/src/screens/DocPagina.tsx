@@ -2,11 +2,12 @@ import { Button, cn, icons } from '@muninn/ui'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { EmptyState } from '../components/Page'
-import { docLink, neighbours } from '../lib/docs'
+import { type Doc, docLink, groupLabel, neighbours } from '../lib/docs'
 import { usePageMeta } from '../lib/seo'
-import { Markdown } from '../markdown/Markdown'
+import { type CalloutLook, Markdown } from '../markdown/Markdown'
 import { outline, slugify } from '../markdown/outline'
 import { DOCS } from './docs/content'
+import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
 
 const route = getRouteApi('/_app/documentacion/$pagina')
@@ -46,8 +47,13 @@ function renderLink(href: string, children: ReactNode): ReactNode | undefined {
   )
 }
 
-/** El título de cada guía ya sale de sus metadatos: se quita el `# Título` con que empiezan. */
-const withoutTitle = (body: string) => body.replace(/^\s*#\s+.*\r?\n/, '')
+/** Los avisos de las guías: «Estado» con el círculo a medias, «Próximamente» en neutro con reloj. */
+function calloutLook(label: string): CalloutLook {
+  const l = slugify(label)
+  if (l.startsWith('proximamente')) return { icon: <icons.clock size={17} />, tone: 'neutral' }
+  if (l.startsWith('estado')) return { icon: <DocIcon name="partial" size={17} /> }
+  return { icon: <icons.info size={17} /> }
+}
 
 /** Título del apartado que se está leyendo, para resaltarlo en «En esta página». */
 function useActiveHeading(ids: string[]) {
@@ -76,12 +82,40 @@ function useActiveHeading(ids: string[]) {
   return active
 }
 
-/** Una guía (Documentacion.dc.html): título, texto, índice de la página y guía anterior y siguiente. */
+/** Guía anterior o siguiente, con su icono y su grupo. */
+function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
+  const next = dir === 'next'
+  const Arrow = next ? icons.move : icons.chevronLeft
+  return (
+    <Link
+      to="/documentacion/$pagina"
+      params={{ pagina: doc.slug }}
+      className={cn(
+        'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
+        next && 'flex-row-reverse text-right',
+      )}
+    >
+      <Arrow size={16} aria-hidden="true" className="shrink-0 text-fg-subtle" />
+      <DocTile doc={doc} size="sm" />
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate text-xs text-fg-subtle">
+          {next ? 'Siguiente' : 'Anterior'} · {groupLabel(doc.group)}
+        </span>
+        <span className="truncate text-base font-medium">{doc.title}</span>
+      </span>
+    </Link>
+  )
+}
+
+/**
+ * Una guía (ADR-0052): cabecera con icono, estado y tiempo de lectura; el texto centrado a medida de
+ * lectura (ADR-0048); «En esta página» a la derecha en pantallas anchas (desplegable en el móvil) y la guía
+ * anterior y siguiente al final.
+ */
 export function DocPagina() {
   const { pagina } = route.useParams()
   const doc = DOCS.find((d) => d.slug === pagina)
-  const body = useMemo(() => (doc ? withoutTitle(doc.body) : ''), [doc])
-  const toc = useMemo(() => outline(body), [body])
+  const toc = useMemo(() => (doc ? outline(doc.body) : []), [doc])
   const active = useActiveHeading(toc.map((t) => t.id))
 
   usePageMeta({
@@ -94,7 +128,7 @@ export function DocPagina() {
       <EmptyState
         icon="docs"
         title="No encontramos esta guía"
-        className="mt-10"
+        className="mt-10 flex-1"
         actions={
           <Button asChild variant="primary">
             <Link to="/documentacion">Ver la documentación</Link>
@@ -107,48 +141,109 @@ export function DocPagina() {
   }
 
   const { prev, next } = neighbours(DOCS, doc.slug)
-  const nav =
-    'flex min-w-0 flex-col gap-0.5 rounded-md py-1 text-fg transition-colors hover:text-accent'
+  const sections = toc.filter((t) => t.depth === 2).length
 
   return (
-    <div className="flex min-w-0 gap-10 md:px-2">
-      <article className="flex min-w-0 max-w-[720px] flex-1 flex-col gap-4">
-        <Link
-          to="/documentacion"
-          className="-mb-1 flex h-9 items-center gap-1.5 text-sm text-fg-subtle md:hidden"
-        >
-          <icons.chevronLeft size={14} />
-          Documentación
-        </Link>
-        <p className="flex items-center gap-2 text-sm text-fg-subtle">
-          Guía · {DOCS.indexOf(doc) + 1} de {DOCS.length}
-          <StatusBadge status={doc.status} />
-        </p>
-        <h1 className="text-[28px] leading-tight font-semibold tracking-tight text-fg md:text-[32px]">
-          {doc.title}
-        </h1>
-        {doc.description ? <p className="text-lg text-fg-muted">{doc.description}</p> : null}
-
-        <Markdown source={body} headingIds callouts renderLink={renderLink} className="mt-2" />
-
-        <div className="mt-6 flex justify-between gap-4 border-t border-border-subtle pt-5">
-          {prev ? (
-            <Link to="/documentacion/$pagina" params={{ pagina: prev.slug }} className={nav}>
-              <span className="text-xs text-fg-subtle">Anterior</span>
-              <span className="text-base font-medium">← {prev.title}</span>
+    <div className="flex min-w-0 flex-1 gap-10 xl:gap-12">
+      <article className="flex min-w-0 flex-1 justify-center">
+        <div className="flex w-full max-w-[760px] min-w-0 flex-col gap-4">
+          <Link
+            to="/documentacion"
+            className="-mb-1 flex h-11 items-center gap-1.5 self-start text-md text-accent md:hidden"
+          >
+            <icons.chevronLeft size={18} aria-hidden="true" />
+            Documentación
+          </Link>
+          <nav
+            aria-label="Estás en"
+            className="hidden items-center gap-1.5 text-sm text-fg-subtle md:flex"
+          >
+            <Link to="/documentacion" className="flex items-center gap-1.5 hover:text-fg">
+              <icons.docs size={14} aria-hidden="true" />
+              Documentación
             </Link>
-          ) : (
-            <span />
-          )}
-          {next ? (
-            <Link
-              to="/documentacion/$pagina"
-              params={{ pagina: next.slug }}
-              className={cn(nav, 'text-right')}
+            <icons.chevronRight size={12} aria-hidden="true" className="text-fg-faint" />
+            <span>{groupLabel(doc.group)}</span>
+            <icons.chevronRight size={12} aria-hidden="true" className="text-fg-faint" />
+            <span className="text-fg-muted">{doc.title}</span>
+          </nav>
+
+          <div className="flex items-center gap-3.5 md:gap-4">
+            <DocTile doc={doc} size="lg" />
+            <h1 className="min-w-0 text-[28px] leading-tight font-semibold tracking-tight text-fg md:text-[34px]">
+              {doc.title}
+            </h1>
+          </div>
+          {doc.description ? <p className="text-lg text-fg-muted">{doc.description}</p> : null}
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-fg-subtle">
+            <StatusBadge status={doc.status} />
+            <span className="flex items-center gap-1.5">
+              <icons.clock size={14} aria-hidden="true" />
+              {doc.minutes} min de lectura
+            </span>
+            {sections > 1 ? (
+              <span className="flex items-center gap-1.5">
+                <DocIcon name="list" size={14} />
+                {sections} apartados
+              </span>
+            ) : null}
+          </p>
+
+          {toc.length > 1 ? (
+            <details className="group glass rounded-lg border border-border xl:hidden">
+              <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-3.5 text-md text-fg [&::-webkit-details-marker]:hidden">
+                <DocIcon name="list" size={16} className="text-fg-subtle" />
+                En esta página
+                <span className="text-fg-subtle">· {toc.length} apartados</span>
+                <icons.chevronDown
+                  size={16}
+                  aria-hidden="true"
+                  className="ml-auto text-fg-subtle transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <ul className="flex flex-col border-t border-border-subtle py-1.5">
+                {toc.map((t) => (
+                  <li key={t.id}>
+                    <a
+                      href={`#${t.id}`}
+                      onClick={(e) => jump(e, t.id)}
+                      className={cn(
+                        'flex min-h-10 items-center px-3.5 text-base text-fg-muted hover:text-fg',
+                        t.depth === 3 && 'pl-7 text-sm',
+                      )}
+                    >
+                      {t.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+
+          <Markdown
+            source={doc.body}
+            headingIds
+            callouts={calloutLook}
+            renderLink={renderLink}
+            className="mt-2"
+          />
+
+          {prev || next ? (
+            <nav
+              aria-label="Otras guías"
+              className="mt-8 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row"
             >
-              <span className="text-xs text-fg-subtle">Siguiente</span>
-              <span className="text-base font-medium">{next.title} →</span>
-            </Link>
+              {prev ? (
+                <Neighbour doc={prev} dir="prev" />
+              ) : (
+                <span className="hidden flex-1 sm:block" />
+              )}
+              {next ? (
+                <Neighbour doc={next} dir="next" />
+              ) : (
+                <span className="hidden flex-1 sm:block" />
+              )}
+            </nav>
           ) : null}
         </div>
       </article>
@@ -156,9 +251,12 @@ export function DocPagina() {
       {toc.length > 1 ? (
         <aside
           aria-label="En esta página"
-          className="sticky top-7 hidden max-h-[calc(100dvh-3.5rem)] w-[180px] shrink-0 flex-col gap-1 self-start overflow-y-auto pt-16 xl:flex"
+          className="sticky top-7 hidden max-h-[calc(100dvh-3.5rem)] w-[220px] shrink-0 flex-col gap-1 self-start overflow-y-auto pt-24 xl:flex"
         >
-          <span className="mb-1.5 text-xs font-semibold text-fg-subtle">En esta página</span>
+          <span className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
+            <DocIcon name="list" size={13} />
+            En esta página
+          </span>
           {toc.map((t) => (
             <a
               key={t.id}

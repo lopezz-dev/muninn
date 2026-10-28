@@ -1,4 +1,14 @@
-import { type IconProps, ListBullets, ListChecks } from '@phosphor-icons/react'
+import {
+  ArrowCounterClockwise,
+  CircleHalf,
+  Compass,
+  type IconProps,
+  ListBullets,
+  ListChecks,
+  Plug,
+  ShieldCheck,
+  Sun,
+} from '@phosphor-icons/react'
 import type { ComponentType } from 'react'
 
 /**
@@ -9,4 +19,14 @@ import type { ComponentType } from 'react'
 export const screenIcons = {
   list: ListBullets,
   checklist: ListChecks,
+  // Documentación: iconos de guía y la marca «Parcial».
+  compass: Compass,
+  plug: Plug,
+  shield: ShieldCheck,
+  partial: CircleHalf,
+  // Ajustes: informe de la mañana y «Restablecer».
+  sun: Sun,
+  reset: ArrowCounterClockwise,
 } satisfies Record<string, ComponentType<IconProps>>
+
+export type ScreenIconName = keyof typeof screenIcons

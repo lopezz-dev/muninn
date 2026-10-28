@@ -1,11 +1,13 @@
 ---
-title: Asistentes de IA
-description: Conecta Claude, Codex o un modelo local para que conozcan y gestionen tus proyectos.
+title: Conectar Claude y otros
+description: Conecta Claude, Codex u otro asistente de IA para que conozcan y gestionen tus datos de Muninn.
 order: 6
 status: disponible
+group: ia
+icon: plug
 ---
 
-# Asistentes de IA
+# Conectar Claude y otros
 
 Muninn tiene dos formas de hablar con una IA:
 
@@ -29,10 +31,25 @@ importes se dicen en euros, como los escribirías tú.
 **Seguridad:** el asistente puede crear, editar, mover, completar y archivar, pero **nunca borrar** nada definitivamente.
 En el historial de una tarea, lo que hace Claude sale como «Claude» y lo del Asistente de la app, como «El asistente».
 
-> **Desde claude.ai o el móvil: casi listo.** El servidor MCP remoto de Muninn (por internet, entrando con tu cuenta) ya está en marcha.
-> Para añadirlo como conector en claude.ai falta activar el inicio de sesión con tu cuenta de Muninn. Cuando lo esté, claude.ai te traerá a
-> una pantalla de Muninn que dice qué app pide acceso y qué podrá hacer, y tú eliges **Permitir acceso** o **Rechazar**. Verá lo mismo que la
-> app y tampoco podrá borrar nada. Desde el iPhone hará falta además que la app esté publicada, y todavía no lo está.
+## Conectar claude.ai
+
+Puedes añadir Muninn como **conector** en claude.ai: Claude entra con tu cuenta de Muninn y ve lo mismo que tú en la app.
+
+1. En claude.ai, ve a **Ajustes › Conectores** y pulsa **Añadir conector personalizado**.
+2. Ponle un nombre (por ejemplo, Muninn) y pega esta dirección:
+   `https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp`
+3. Pulsa conectar. claude.ai te trae a una pantalla de Muninn que dice qué app pide acceso, con qué cuenta entrarás y qué podrá
+   hacer. Si no tenías la sesión abierta, primero te pide entrar.
+4. Elige **Permitir acceso** (o **Rechazar**). Vuelves a claude.ai con el conector listo y sus herramientas.
+
+Un consejo: deja las herramientas de consulta como «permitir siempre» y las que cambian cosas, con «pedir aprobación», para
+ver qué va a hacer antes de que lo haga.
+
+> **Ten en cuenta:** si usas claude.ai dentro de una organización, quien la administra puede tener que permitir los conectores
+> personalizados. El conector sale de momento con un icono que no es el de Muninn. Y los permisos que le das a claude.ai **todavía no se
+> pueden ver ni quitar desde Muninn**.
+
+> **Próximamente:** usarlo desde la app de Claude en el **iPhone**. Debería funcionar igual, pero aún no está probado.
 
 ---
 
@@ -40,7 +57,8 @@ En el historial de una tarea, lo que hace Claude sale como «Claude» y lo del A
 
 > Esta sección es técnica: se simplificará cuando Muninn incluya un asistente de configuración.
 
-Compila el servidor una vez desde la carpeta del proyecto:
+Esto es para conectar un asistente que corre en tu ordenador (Claude Code, Claude Desktop, Codex…) directamente, sin pasar por
+internet. Compila el servidor una vez desde la carpeta del proyecto:
 
 ```bash
 pnpm --filter @muninn/mcp build
@@ -57,10 +75,12 @@ pnpm --filter @muninn/mcp build
 > **Importante:** la *service role key* da acceso total a la base de datos. Guárdala solo en la
 > configuración de tu equipo y no la compartas nunca.
 
+En los ejemplos, cambia `C:/sourcecode/muninn` por la carpeta donde tengas Muninn.
+
 ### Claude Code
 
 ```bash
-claude mcp add muninn --scope user -- node C:/sourcecode/personal_app/packages/mcp/dist/index.js
+claude mcp add muninn --scope user -- node C:/sourcecode/muninn/packages/mcp/dist/index.js
 ```
 
 ### Claude Desktop
@@ -73,7 +93,7 @@ Edita `%APPDATA%\Claude\claude_desktop_config.json` en Windows o
   "mcpServers": {
     "muninn": {
       "command": "node",
-      "args": ["C:/sourcecode/personal_app/packages/mcp/dist/index.js"]
+      "args": ["C:/sourcecode/muninn/packages/mcp/dist/index.js"]
     }
   }
 }
@@ -89,7 +109,7 @@ En `~/.codex/config.toml`:
 ```toml
 [mcp_servers.muninn]
 command = "node"
-args = ["C:/sourcecode/personal_app/packages/mcp/dist/index.js"]
+args = ["C:/sourcecode/muninn/packages/mcp/dist/index.js"]
 ```
 
 ### Herramientas disponibles
@@ -104,4 +124,6 @@ args = ["C:/sourcecode/personal_app/packages/mcp/dist/index.js"]
 | `list_columns`, `list_notes`, `recent_activity` | |
 | `list_finance_accounts`, `list_transactions`, `finance_month_report` | `create_transaction`, `update_transaction`, `archive_transaction` |
 | `list_news`, `news_digest` (con Noticias) | |
-| `list_finance_categories`, `list_subscriptions` | cuentas, categorías y suscripciones: crear, editar, apuntar o saltar un cobro, archivar |
+| `list_finance_categories`, `list_subscriptions` | `create_finance_account`, `update_finance_account`, `archive_finance_account` |
+| | `create_finance_category` (las categorías aún no se editan ni se archivan) |
+| | `create_subscription`, `record_subscription_charge`, `skip_subscription_charge`, `archive_subscription` |

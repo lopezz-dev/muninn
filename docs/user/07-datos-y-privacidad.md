@@ -3,16 +3,22 @@ title: Tus datos y privacidad
 description: Dónde se guarda tu información y quién puede verla.
 order: 7
 status: disponible
+group: cuenta
+icon: shield
 ---
 
 # Tus datos y privacidad
 
 ## Dónde se guardan
 
-- **En la nube (Supabase):** tus proyectos, tareas y notas se guardan en una base de datos Postgres,
-  lo que permite sincronizarlos entre dispositivos.
-- **Solo en tu equipo:** si usas el asistente sin cuenta, los datos van a un fichero local
-  (`~/.muninn/data.json`) y no salen de tu ordenador.
+- **En la nube (Supabase):** tus proyectos, tareas y notas, tus finanzas (cuentas, movimientos, categorías y suscripciones),
+  tus fuentes y artículos de Noticias y tus ajustes se guardan en una base de datos Postgres, lo que permite sincronizarlos
+  entre dispositivos.
+- **Solo en tu equipo:** las conversaciones con el [Asistente](11-asistente.md) y las imágenes que le enseñas se quedan en ese
+  dispositivo y no viajan a tu cuenta (lo que el asistente cambia, sí, como cualquier otro cambio).
+- **Solo en tu equipo, sin cuenta:** si conectas Claude u otro asistente **directamente en tu ordenador** sin configurar tu
+  cuenta (la opción avanzada de [Conectar Claude y otros](06-asistentes-ia.md#configuración-avanzado)), los datos que maneje van
+  a un fichero local (`~/.muninn/data.json`) y no salen de tu ordenador. No son los mismos datos que ves en la app.
 - **Servidor propio:** Muninn está pensado para poder alojarse en tu propio servidor en el futuro.
 
 > **Ahora mismo, en la app:**
@@ -23,9 +29,16 @@ status: disponible
 > - **En modo demo:** lo que creas vive en la memoria del navegador y se pierde al recargar. Solo la
 >   apariencia se guarda, en este dispositivo.
 
+## Noticias
+
+Para traerte los artículos nuevos aunque tengas el ordenador apagado, el servidor de Muninn **descarga tus fuentes RSS** cada
+hora (y cuando pulsas **Actualizar**). Las webs que sigues ven esa descarga como una visita del servidor, no tuya. El resumen de lo
+importante, en cambio, lo hace el modelo de tu ordenador (ver [Noticias](12-noticias.md)).
+
 ## Sin conexión
 
-Con cuenta, Muninn guarda **en ese dispositivo** una copia de lo último que viste (tus proyectos, tareas y notas) para abrir
+Con cuenta, Muninn guarda **en ese dispositivo** una copia de lo último que viste (proyectos, tareas, notas, finanzas, noticias y
+ajustes) para abrir
 al instante y poder consultarlo aunque no tengas red. Sin conexión la app es **de solo lectura**: verás el aviso «Sin
 conexión · solo lectura» y, si intentas cambiar algo, Muninn te avisa y lo deja como estaba. Al volver la red se actualiza sola.
 

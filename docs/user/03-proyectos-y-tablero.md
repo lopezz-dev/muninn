@@ -3,23 +3,46 @@ title: Proyectos y tablero
 description: Organiza tu trabajo en proyectos con un Kanban a tu medida.
 order: 3
 status: parcial
+group: tu-trabajo
+icon: projects
 ---
 
 # Proyectos y tablero
 
 > **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas, personalizar las columnas y ver el tablero como
-> lista. La vista de calendario y el color de las columnas llegarán más adelante. En modo demo,
+> lista. Aún no se puede cambiar el nombre ni el color de un proyecto desde la app; la vista de calendario y el color de las
+> columnas llegarán más adelante. En modo demo,
 > sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
 
 Un proyecto agrupa las tareas y notas de algo en lo que estás trabajando: una app, un cliente, una mudanza…
 
-Cada proyecto tiene:
-- **Nombre, descripción, color e icono.**
-- **Estado:** activo, pausado o archivado. Los archivados desaparecen de las listas, pero no se borran.
-- **Repositorio de GitHub** (opcional, en formato `usuario/repositorio`, desde **Ajustes › Integraciones**): las issues
-  de ese repo aparecerán como tareas del proyecto cuando la sincronización esté en marcha (ver [GitHub](09-github.md)).
+En la pantalla **Proyectos** (en la barra lateral, o en el dock del móvil) ves todos los tuyos, cada uno con su color y
+su progreso: cuántas tareas llevas hechas de las que tiene, por ejemplo «3 de 8 hechas», y una barra. Pulsa uno para abrir su
+tablero.
+
+### Crear un proyecto
+
+Pulsa **Nuevo proyecto** (en Proyectos o en Inicio), el **+** de la barra lateral, o busca «nuevo proyecto» con **⌘K** /
+**Ctrl K**. Escribe el **nombre**, elige un **color** y pulsa **Crear proyecto**: se abre su tablero con cinco columnas.
+Si te equivocas, **Deshacer** en el aviso lo archiva.
+
+Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle también una descripción, que se ve en la
+lista.
+
+### El menú del proyecto
+
+En el tablero, el menú **⋯** de arriba tiene:
+
+- **Nueva columna:** añade una columna al final.
+- **Copiar enlace:** copia la dirección del tablero, para abrirlo directamente o guardarlo.
+- **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera.
+
+### Vincular un repositorio de GitHub
+
+Opcional, desde **Ajustes › GitHub**: cada proyecto puede ir con un repositorio, y sus issues aparecen como tareas
+del proyecto y se mantienen al día solas (ver [GitHub](09-github.md)).
 
 ## El tablero
 

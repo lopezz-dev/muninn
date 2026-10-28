@@ -3,12 +3,11 @@ title: Instalación
 description: Instala Muninn en tu ordenador y en tu móvil.
 order: 2
 status: parcial
+group: primeros-pasos
+icon: download
 ---
 
 # Instalación
-
-> **Próximamente:** la app de escritorio todavía no tiene ninguna versión publicada. Esta parte describe cómo será
-> cuando salga la primera. En el móvil y en el navegador ya puedes usar Muninn.
 
 ## Escritorio
 
@@ -44,21 +43,28 @@ vez que abras Muninn.
 Muninn solo instala versiones firmadas por el proyecto. Sin conexión no comprueba nada y no te molesta. En Linux, las
 actualizaciones automáticas funcionan con el `.AppImage`; con `.deb` o `.rpm`, instala la versión nueva a mano.
 
-La versión que tienes aparece arriba en la barra lateral, junto al nombre de Muninn.
+La versión que tienes aparece arriba en la barra lateral, junto al nombre de Muninn, y en el móvil al pie de **Más**.
+
+## En el navegador
+
+No hace falta instalar nada: abre [muninn-sepia.vercel.app](https://muninn-sepia.vercel.app) en cualquier navegador y entra con tu
+cuenta. Es la misma dirección que usas para instalarla en el móvil.
 
 ## iPhone
 
 Muninn se instala desde Safari como una app más, sin pasar por la App Store:
 
-1. Abre la dirección de Muninn en **Safari**.
+1. Abre [muninn-sepia.vercel.app](https://muninn-sepia.vercel.app) en **Safari**.
 2. Pulsa el botón **Compartir** (el cuadrado con la flecha).
 3. Elige **Añadir a pantalla de inicio**.
-4. Abre Muninn desde el icono nuevo, el del cuervo sobre fondo ámbar. Para recibir **notificaciones**, actívalas desde los ajustes de
-   la app: en iPhone solo funcionan cuando está instalada así (iOS 16.4 o superior).
+4. Abre Muninn desde el icono nuevo, el del cuervo sobre fondo ámbar.
+
+> **Próximamente:** **notificaciones** en el móvil (por ejemplo, antes de cada cobro). Aún no hay avisos: **Ajustes ›
+> Notificaciones** está marcado como próximamente. En iPhone solo funcionarán con Muninn instalada así (iOS 16.4 o superior).
 
 ## Android
 
-Abre la dirección en Chrome y pulsa **Instalar app** en el menú (⋮).
+Abre [muninn-sepia.vercel.app](https://muninn-sepia.vercel.app) en Chrome y pulsa **Instalar app** en el menú (⋮).
 
 ## Iniciar sesión
 

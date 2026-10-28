@@ -1,7 +1,7 @@
-import { Button, Card, Icon, notify, Switch, TextField } from '@muninn/ui'
+import { Button, Icon, notify, Switch, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import {
   DEFAULT_ASSISTANT,
   normalizeUrl,
@@ -13,26 +13,8 @@ import { changeReportPrefs, reportPrefs } from '../../lib/morning-report-prefs'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { fail } from '../../lib/mutations'
 import { settingsQuery } from '../../lib/queries'
-
-function Row({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description?: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-t border-border-subtle py-3 first:border-t-0">
-      <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
-        <span className="text-base font-medium">{title}</span>
-        {description ? <span className="text-[12.5px] text-fg-subtle">{description}</span> : null}
-      </div>
-      {children}
-    </div>
-  )
-}
+import { bySection, resetPrefs, useChangedPrefs } from '../../lib/settings-changes'
+import { PrefGroup, PrefRow } from './ui'
 
 /** Modelos que hay en Ollama ahora mismo (sin cargar `@muninn/assistant`: es una sola petición). */
 async function listModels(url: string): Promise<string[] | null> {
@@ -47,8 +29,8 @@ async function listModels(url: string): Promise<string[] | null> {
 }
 
 /**
- * Ajustes › Asistente e IA (Ajustes.dc.html, ADR-0041): dónde está Ollama y qué modelo usa. Se guarda en la cuenta. El
- * cerebro es siempre local; Claude se conecta aparte, por MCP.
+ * Ajustes › Modelo local (ADR-0041): dónde está Ollama y qué modelo usa. Se guarda en la cuenta. El cerebro es siempre
+ * local; Claude se conecta aparte, por MCP. No llevan marca de «cambiado»: son configuración de tu equipo (ADR-0053).
  */
 export function AsistenteAjustes() {
   const m = useMuninn()
@@ -93,9 +75,11 @@ export function AsistenteAjustes() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card className="px-[18px] py-1.5">
-        <Row
+    <>
+      <PrefGroup title="Estado" icon="assistant">
+        <PrefRow
+          icon="assistant"
+          tile="bg-project-green/15 text-project-green"
           title="Cerebro"
           description="Un modelo que corre en tu ordenador con Ollama: gratis y privado, tus datos no salen de casa."
         >
@@ -114,29 +98,35 @@ export function AsistenteAjustes() {
                 ? 'Ollama no responde'
                 : 'Local · Ollama'}
           </span>
-        </Row>
-        <form onSubmit={save} className="flex flex-col gap-3 border-t border-border-subtle py-3">
+        </PrefRow>
+      </PrefGroup>
+      <PrefGroup title="Conexión" icon="sync" padded>
+        <form onSubmit={save} className="flex flex-col gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <TextField
-              label="Dirección de Ollama"
-              hint="Normalmente no hace falta cambiarla."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              inputMode="url"
-              spellCheck={false}
-            />
-            <TextField
-              label="Modelo"
-              hint={
-                models?.length
-                  ? `En tu Ollama: ${models.join(', ')}`
-                  : `Recomendado: ${DEFAULT_ASSISTANT.model} (5,2 GB).`
-              }
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              list="asistente-modelos"
-              spellCheck={false}
-            />
+            <div id="ajuste-ollama">
+              <TextField
+                label="Dirección de Ollama"
+                hint="Normalmente no hace falta cambiarla."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                inputMode="url"
+                spellCheck={false}
+              />
+            </div>
+            <div id="ajuste-modelo">
+              <TextField
+                label="Modelo"
+                hint={
+                  models?.length
+                    ? `En tu Ollama: ${models.join(', ')}`
+                    : `Recomendado: ${DEFAULT_ASSISTANT.model} (5,2 GB).`
+                }
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                list="asistente-modelos"
+                spellCheck={false}
+              />
+            </div>
             <datalist id="asistente-modelos">
               {(models ?? []).map((x) => (
                 <option key={x} value={x} />
@@ -153,30 +143,35 @@ export function AsistenteAjustes() {
             </Button>
           </div>
         </form>
-        <p className="border-t border-border-subtle py-3 text-xs text-fg-faint">
-          {auth.kind === 'user'
-            ? 'Se guarda en tu cuenta. Solo se usa en el ordenador donde está Ollama: en el móvil no hay modelo.'
-            : 'En la demo el asistente responde con un guion y no usa Ollama.'}{' '}
-          <Link to="/documentacion/$pagina" params={{ pagina: 'asistente' }} className="underline">
-            Cómo instalarlo
-          </Link>
-        </p>
-      </Card>
-      <MorningReportCard />
-    </div>
+      </PrefGroup>
+      <p className="px-0.5 text-xs text-fg-faint">
+        {auth.kind === 'user'
+          ? 'Se guarda en tu cuenta. Solo se usa en el ordenador donde está Ollama: en el móvil no hay modelo.'
+          : 'En la demo el asistente responde con un guion y no usa Ollama.'}{' '}
+        <Link
+          to="/documentacion/$pagina"
+          params={{ pagina: 'asistente' }}
+          hash="instalar-ollama"
+          className="underline"
+        >
+          Cómo instalarlo
+        </Link>
+      </p>
+    </>
   )
 }
 
 /**
- * Informe de la mañana (ADR-0043): activarlo, la hora y «Hacer ahora». Se prepara en el ordenador que tenga Muninn abierto
- * a esa hora (o al abrirlo después) y se guarda como nota fijada.
+ * Ajustes › Informe de la mañana (ADR-0043): activarlo, la hora y «Hacer ahora». Se prepara en el ordenador que tenga
+ * Muninn abierto a esa hora (o al abrirlo después) y se guarda como nota fijada.
  */
-function MorningReportCard() {
+export function InformeAjustes() {
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
   const modules = useEnabledModules()
   const prefs = reportPrefs(useQuery(settingsQuery(m)).data)
+  const changed = bySection(useChangedPrefs()).informe ?? []
   const [time, setTime] = useState(prefs.time)
   const [busy, setBusy] = useState(false)
   useEffect(() => setTime(prefs.time), [prefs.time])
@@ -208,47 +203,64 @@ function MorningReportCard() {
   }
 
   return (
-    <Card className="px-[18px] py-1.5">
-      <Row
-        title="Informe de la mañana"
-        description="Cada día, tus tareas de hoy y vencidas, los cobros próximos y el resumen de noticias, en una nota fijada."
-      >
-        <Switch
-          checked={prefs.enabled}
-          aria-label="Informe de la mañana"
-          onCheckedChange={(enabled) => void changeReportPrefs(m, qc, { enabled })}
-        />
-      </Row>
-      <Row
-        title="Hora"
-        description="Si a esa hora el ordenador está apagado, se hace al abrir Muninn ese día (y lo dice)."
-      >
-        <TextField
-          label="Hora del informe"
-          hideLabel
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          onBlur={() => {
-            if (/^\d{2}:\d{2}$/.test(time) && time !== prefs.time)
-              void changeReportPrefs(m, qc, { time })
-          }}
-          className="w-32"
-        />
-      </Row>
-      <Row
-        title="Hacer ahora"
-        description={
-          prefs.lastDate
-            ? `El último es del ${prefs.lastDate}. Si ya hay uno hoy, se hace otro.`
-            : 'Para ver cómo queda. Usa el modelo de este ordenador si está listo.'
-        }
-      >
-        <Button onClick={now} disabled={busy}>
-          <Icon name="assistant" size={14} />
-          {busy ? 'Preparando…' : 'Hacer ahora'}
-        </Button>
-      </Row>
-    </Card>
+    <>
+      <PrefGroup title="Cada día" icon="sun">
+        <PrefRow
+          id="informe-activo"
+          icon="sun"
+          tile="bg-project-amber/15 text-project-amber"
+          title="Informe de la mañana"
+          description="Tus tareas de hoy y vencidas, los cobros próximos y el resumen de noticias, en una nota fijada."
+          htmlFor="ajuste-informe-switch"
+          changed={changed.includes('reportEnabled')}
+          onReset={() => void resetPrefs(m, qc, ['reportEnabled'], 'Informe desactivado')}
+        >
+          <Switch
+            id="ajuste-informe-switch"
+            checked={prefs.enabled}
+            onCheckedChange={(enabled) => void changeReportPrefs(m, qc, { enabled })}
+          />
+        </PrefRow>
+        <PrefRow
+          id="informe-hora"
+          icon="clock"
+          title="Hora"
+          description="Si a esa hora el ordenador está apagado, se hace al abrir Muninn ese día (y lo dice)."
+          changed={changed.includes('reportTime')}
+          onReset={() => void resetPrefs(m, qc, ['reportTime'], 'Hora del informe: 08:30')}
+          resetLabel="Volver a las 08:30"
+        >
+          <TextField
+            label="Hora del informe"
+            hideLabel
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            onBlur={() => {
+              if (/^\d{2}:\d{2}$/.test(time) && time !== prefs.time)
+                void changeReportPrefs(m, qc, { time })
+            }}
+            className="w-32"
+          />
+        </PrefRow>
+      </PrefGroup>
+      <PrefGroup title="Ahora" icon="assistant">
+        <PrefRow
+          id="informe-ahora"
+          icon="assistant"
+          title="Hacer ahora"
+          description={
+            prefs.lastDate
+              ? `El último es del ${prefs.lastDate}. Si ya hay uno hoy, se hace otro.`
+              : 'Para ver cómo queda. Usa el modelo de este ordenador si está listo.'
+          }
+        >
+          <Button onClick={now} disabled={busy}>
+            <Icon name="assistant" size={14} />
+            {busy ? 'Preparando…' : 'Hacer ahora'}
+          </Button>
+        </PrefRow>
+      </PrefGroup>
+    </>
   )
 }
