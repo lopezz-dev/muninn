@@ -324,8 +324,11 @@ más o menos en este orden:
 - [ ] **Claves de acceso (passkeys, WebAuthn):** entrar con Face ID, Touch ID, Windows Hello o una llave
   física, sin correo ni contraseña. Funciona en la PWA del iPhone y en el navegador; en Tauri, según el
   soporte de WebAuthn de cada sistema
-- [ ] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional, y obligatorio para conectar integraciones
-  sensibles (finanzas, GitHub con permisos de escritura)
+- [x] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional: alta con QR y clave, código al entrar y desactivar con un
+  código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4c)
+  - [ ] Exigirlo en el servidor (RLS) y para conectar integraciones sensibles (finanzas, GitHub con permisos de escritura):
+    propuesto en [ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)
+  - [ ] Códigos de recuperación (en supabase-js aún experimentales)
 - [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
   o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
   prueba real, en la fase final (4c)

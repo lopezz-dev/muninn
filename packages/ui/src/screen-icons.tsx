@@ -4,10 +4,13 @@ import {
   ArrowCounterClockwise,
   CircleHalf,
   Compass,
+  Devices,
+  Key,
   ListBullets,
   ListChecks,
   Plug,
   ShieldCheck,
+  SignOut,
   Sun,
 } from './screen-icons.generated'
 
@@ -27,6 +30,10 @@ export const screenIcons = {
   // Ajustes: informe de la mañana y «Restablecer».
   sun: Sun,
   reset: ArrowCounterClockwise,
+  // Ajustes › Cuenta: sesiones y segundo factor (ADR-0061).
+  devices: Devices,
+  key: Key,
+  signOut: SignOut,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type ScreenIconName = keyof typeof screenIcons

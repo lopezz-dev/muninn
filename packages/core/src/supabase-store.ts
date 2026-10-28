@@ -69,6 +69,25 @@ const PROJECT_IMAGES_BUCKET = 'project-images'
 /** Filas por petición: el `max-rows` por defecto de PostgREST en Supabase. */
 const PAGE = 1000
 
+/** Los errores de Supabase Auth MFA que puede ver el usuario, en español (el resto, tal cual). */
+function mfaError(error: { code?: string; message: string }) {
+  switch (error.code) {
+    case 'mfa_verification_failed':
+    case 'mfa_challenge_expired':
+      return new Error(
+        'El código no es correcto o ha caducado. Escribe el que sale ahora en tu app.',
+      )
+    case 'mfa_verification_rejected':
+      return new Error('Demasiados intentos. Espera un minuto y vuelve a probar.')
+    case 'insufficient_aal':
+      return new Error('Antes, entra con el código de tu app (cierra sesión y vuelve a entrar).')
+    case 'mfa_totp_enroll_not_enabled':
+    case 'mfa_totp_verify_not_enabled':
+      return new Error('El segundo factor no está activado en este servidor.')
+  }
+  return error
+}
+
 class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q> {
   constructor(
     private readonly client: Client,
@@ -475,6 +494,49 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     async signOut(scope) {
       const { error } = await client.auth.signOut({ scope })
       if (error) throw error
+    },
+    mfa: {
+      async factors() {
+        const { data, error } = await client.auth.mfa.listFactors()
+        if (error) throw error
+        // `all` trae también los que están a medias (`totp`, solo los confirmados).
+        return data.all
+          .filter((f) => f.factor_type === 'totp')
+          .map((f) => ({
+            id: f.id,
+            name: f.friendly_name ?? null,
+            status: f.status === 'verified' ? 'verified' : 'unverified',
+            createdAt: f.created_at,
+          }))
+      },
+      async enroll(name) {
+        const { data, error } = await client.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: name,
+          issuer: 'Muninn',
+        })
+        if (error) throw mfaError(error)
+        return {
+          factorId: data.id,
+          qrCode: data.totp.qr_code,
+          secret: data.totp.secret,
+          uri: data.totp.uri,
+        }
+      },
+      async verify(factorId, code) {
+        const { error } = await client.auth.mfa.challengeAndVerify({ factorId, code })
+        if (error) throw mfaError(error)
+      },
+      async unenroll(factorId) {
+        const { error } = await client.auth.mfa.unenroll({ factorId })
+        if (error) throw mfaError(error)
+      },
+      async assurance() {
+        const { data, error } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (error) throw error
+        const level = (l: string | null) => (l === 'aal1' || l === 'aal2' ? l : null)
+        return { current: level(data.currentLevel), next: level(data.nextLevel) }
+      },
     },
   }
 

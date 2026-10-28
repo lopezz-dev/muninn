@@ -37,7 +37,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     doc: {
       pagina: 'cuenta-y-seguridad',
       title: 'Cuenta y seguridad',
-      text: 'Dónde tienes la sesión abierta y cómo cerrarla en otros dispositivos.',
+      text: 'El segundo factor, dónde tienes la sesión abierta y cómo cerrarla en otros dispositivos.',
     },
   },
   {

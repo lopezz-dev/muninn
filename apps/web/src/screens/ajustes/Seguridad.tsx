@@ -25,7 +25,7 @@ function SessionRow({ session }: { session: AccountSession }) {
     setBusy(true)
     try {
       await m.account.sessions.revoke(session.id)
-      notify.success(`Sesión cerrada en «${label}»`, { icon: 'signOut', description: LEAVES_SOON })
+      notify.success(`Sesión cerrada en «${label}»`, { icon: 'user', description: LEAVES_SOON })
     } catch (err) {
       fail('No se pudo cerrar la sesión', err)
     }
@@ -82,7 +82,7 @@ export function Sesiones() {
     try {
       await m.account.sessions.signOut('others')
       notify.success('Sesión cerrada en los demás dispositivos', {
-        icon: 'signOut',
+        icon: 'user',
         description: 'Saldrán en menos de una hora. En este sigues dentro y tus datos no cambian.',
       })
     } catch (err) {

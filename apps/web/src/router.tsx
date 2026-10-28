@@ -54,7 +54,8 @@ const loginRoute = createRoute({
     if (context.auth.kind === 'user')
       throw redirect({ href: safeRedirect(search.redirect), replace: true })
   },
-  component: screen(() => import('./screens/Login'), 'Login'),
+  // El formulario o, con el segundo factor pendiente, su código (ADR-0061).
+  component: screen(() => import('./screens/login/Entrada'), 'Entrada'),
 })
 
 export interface OAuthConsentSearch {
@@ -88,7 +89,8 @@ const appRoute = createRoute({
   id: '_app',
   beforeLoad: ({ context, location }) => {
     const { auth } = context
-    if (auth.kind === 'anonymous') {
+    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí).
+    if (auth.kind === 'anonymous' || auth.kind === 'mfa') {
       throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
     }
     return { auth }

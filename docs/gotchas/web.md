@@ -217,6 +217,16 @@
   descarta la instancia del core y vacía react-query: los datos de un usuario no pueden verse en la
   sesión de otro.
 
+### Estado `mfa`: sesión abierta, pero falta el código de la app
+
+- **Síntoma:** tras entrar con el código del correo, la app vuelve a /login y enseña «Falta un paso» en lugar de entrar.
+- **Causa:** la cuenta tiene segundo factor y la sesión aún es `aal1`. `getAuth()` devuelve `{ kind: 'mfa', account }` (lo mira con
+  `getAuthenticatorAssuranceLevel`, sin red), `/_app` manda a /login y `screens/login/Entrada.tsx` enseña el paso del código.
+- **Solución:** es lo esperado ([ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)). Dentro de la app, `useAuth()` nunca ve `mfa`
+  (`AppAuthState`). Una ruta nueva que necesite una cuenta completa compara con `kind === 'user'`, no con `!== 'anonymous'`.
+- **Ojo:** el estado se calcula al resolver `getAuth()`. Un dispositivo con la sesión abierta antes de activar el segundo factor lo
+  pide al volver a abrir la app, cuando la sesión guardada ya trae el factor (al renovarse el token, como mucho en una hora).
+
 ### `/login` no tiene shell ni datos
 
 - La pantalla de login cuelga de la raíz, no de `_app`: no uses ahí `useMuninn()`, `useAuth()` ni nada del
@@ -284,7 +294,8 @@
   `ui-vendor` de `vite.config.ts` carga en el arranque todo módulo de `@phosphor-icons` que alguien use.
 - **Solución:** iconos de una sola pantalla en `screenIcons` (`packages/ui/src/screen-icons.tsx`, fichero aparte para que
   no compartan chunk con `icons`) y su nombre en `SCREEN_ICONS` de `vite.config.ts`, que los saca del grupo. Hoy:
-  `list` y `checklist` (barra de formato de Notas) `compass`, `plug`, `shield` y `partial` (Documentación) y `sun` y `reset` (Ajustes). Las pantallas que los leen de
+  `list` y `checklist` (barra de formato de Notas) `compass`, `plug`, `shield` y `partial` (Documentación), `sun` y `reset` (Ajustes) y
+  `devices`, `key` y `signOut` (Ajustes › Cuenta). `notify` solo acepta los de `icons`. Las pantallas que los leen de
   datos usan `AppIcon` (`components/AppIcon.tsx`), que junta `icons` y `screenIcons`. Si el shell pasa a usarlos, vuelven a `icons`.
 - **Ref:** [ADR-0020](../adr/0020-tanstack-router-carga-diferida.md)
 

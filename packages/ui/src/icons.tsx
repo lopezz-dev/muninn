@@ -16,7 +16,6 @@ import {
   CaretRight,
   Check,
   Clock,
-  Devices,
   DotsSixVertical,
   DotsThree,
   DownloadSimple,
@@ -29,7 +28,6 @@ import {
   ImageSquare,
   Info,
   Kanban,
-  Key,
   Keyboard,
   LinkSimple,
   MagnifyingGlass,
@@ -44,7 +42,6 @@ import {
   PushPin,
   Repeat,
   Robot,
-  SignOut,
   SlidersHorizontal,
   Sparkle,
   SpeakerHigh,
@@ -110,9 +107,6 @@ export const icons = {
   image: ImageSquare,
   attach: Paperclip,
   edit: PencilSimple,
-  devices: Devices,
-  key: Key,
-  signOut: SignOut,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons

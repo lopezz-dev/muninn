@@ -1,4 +1,4 @@
-# ADR-0061: Seguridad de la cuenta en Ajustes › Cuenta, a través del core
+# ADR-0061: Seguridad de la cuenta en Ajustes › Cuenta (sesiones y segundo factor), a través del core
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-10-28
@@ -7,13 +7,17 @@
 
 ## Contexto
 
-[ADR-0022](0022-auth-y-sesion.md) dejó para más adelante la gestión de sesiones («Acceso y seguridad» del ROADMAP). Hace falta ver dónde
-está abierta la sesión de la cuenta y cerrarla en uno o en todos los dispositivos. Restricciones:
+[ADR-0022](0022-auth-y-sesion.md) dejó para más adelante la gestión de sesiones y el segundo factor («Acceso y seguridad» del ROADMAP). Hace
+falta ver dónde está abierta la sesión de la cuenta y cerrarla en uno o en todos los dispositivos, y un segundo factor opcional con una app
+de códigos (TOTP). Restricciones:
 
 - El cliente **no puede leer `auth.sessions`**: el esquema `auth` no está expuesto en PostgREST ni tiene RLS.
 - supabase-js solo sabe cerrar la sesión en este dispositivo, en los demás (`scope: 'others'`) o en todos (`'global'`); no cierra una
   concreta ni lista las que hay.
 - CLAUDE.md: todo acceso a Supabase pasa por el store y el core; la demo y los tests deben poder usarlo sin red.
+- Supabase Auth trae MFA TOTP (activado por defecto en los proyectos): `mfa.enroll`, `challengeAndVerify`, `unenroll` y
+  `getAuthenticatorAssuranceLevel`. La sesión es `aal1` tras el código del correo o GitHub y `aal2` tras el código de la app. Quitar un
+  factor confirmado exige `aal2`.
 - Ni la lista de sesiones (con su IP) ni nada de seguridad debe acabar en la caché sin conexión ([ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md)).
 
 ## Decisión
@@ -32,9 +36,24 @@ está abierta la sesión de la cuenta y cerrarla en uno o en todos los dispositi
   limpia este dispositivo igual que «Cerrar sesión» y lleva a la entrada).
 - **Sin «Deshacer»**: una sesión cerrada solo se recupera volviendo a entrar en ese dispositivo. En su lugar, el aviso dice qué pasa
   («Saldrá en menos de una hora»), como pide [ADR-0019](0019-feedback-con-notificaciones.md) para lo que no cambia datos.
+- **Segundo factor (TOTP), opcional.** `m.account.mfa`: `enroll` devuelve el QR y la clave (y borra antes un alta a medias, porque
+  Supabase no deja dos factores con el mismo nombre); `confirm` lo activa con el primer código; `disable` pide un código actual antes de
+  quitarlo (prueba que tienes el móvil y deja la sesión en `aal2`, que Supabase exige). Un solo factor por cuenta. Sin «Deshacer»: volver a
+  activarlo da otra clave, así que el aviso lo explica. La clave se enseña agrupada y con «Copiar», y se pide guardarla: aún no hay códigos
+  de recuperación.
+- **Al entrar**, `getAuth()` mira el nivel de la sesión (sin red: lo leen el token y los factores de la sesión guardada). Si es `aal1` y
+  podría ser `aal2`, el estado es `{ kind: 'mfa', account }`: `/_app` manda a `/login` y allí `Entrada` enseña el paso del código en lugar
+  del formulario (`screens/login/Entrada.tsx`, `lib/second-factor.ts`). Como el resto del login, habla con Supabase Auth desde la web,
+  porque el core aún no existe; «Usar otra cuenta» cierra esa sesión a medias. `Login.tsx` no cambia.
 - Las consultas de seguridad usan claves `['account', …]` y **no se guardan sin conexión** (`shouldPersist`).
 
 ## Alternativas consideradas
+
+- **Exigir el segundo factor también en RLS** (políticas restrictivas con `auth.jwt() ->> 'aal'`): es lo que lo haría robusto, porque hoy un
+  token `aal1` sigue leyendo los datos por la API aunque la app pida el código. Pero toca todas las tablas y hay que comprobar qué nivel
+  llevan los tokens del MCP remoto (OAuth) y de las Edge Functions antes de cerrarlo. Se propone en [ADR-0062](0062-aal2-para-integraciones-sensibles.md).
+- **Códigos de recuperación** de Supabase: siguen siendo experimentales en supabase-js 2.118 (`auth.experimental.recoveryCodes`). Quedan
+  como tarea; mientras, la clave de configuración hace de copia.
 
 - **Llamar a Auth desde la web, como el login:** más corto, pero rompe la regla de que la UI no habla con Supabase y deja la demo y los
   tests sin nada que probar.
@@ -46,9 +65,12 @@ está abierta la sesión de la cuenta y cerrarla en uno o en todos los dispositi
 
 ## Consecuencias
 
+- El segundo factor lo pide la app, no el servidor: protege la entrada por la interfaz, no un token `aal1` ya emitido usado contra la API.
+  La guía de usuario lo dice. Hay que comprobar en el panel que MFA TOTP sigue activado (fase final).
 - Cerrar una sesión no es inmediato: su token de acceso vale hasta que caduca (una hora como mucho). La interfaz lo dice.
 - La migración es un paso manual de la fase final, como las demás ([gotchas/db](../gotchas/db.md), «Sesiones de la cuenta»).
 - Al cerrar en todos los dispositivos, los avisos push de los demás no se quitan: siguen suscritos hasta que se borren en Ajustes ›
   Notificaciones (tarea en el tablero).
 - Relacionado: `packages/core/src/account.ts`, `memory-account.ts`, `supabase-store.ts` (`account`),
-  `apps/web/src/screens/ajustes/Seguridad.tsx`, `apps/web/src/lib/session.ts`, `docs/user/14-cuenta-y-seguridad.md`.
+  `apps/web/src/screens/ajustes/Seguridad.tsx`, `SegundoFactor.tsx`, `apps/web/src/lib/session.ts`, `lib/second-factor.ts`,
+  `screens/login/Entrada.tsx`, `docs/user/14-cuenta-y-seguridad.md`.

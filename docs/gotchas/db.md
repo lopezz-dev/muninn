@@ -291,3 +291,15 @@
   como mucho, el *JWT expiry* del proyecto). Por eso la app dice «saldrá en menos de una hora». `is_current` compara con el claim
   `session_id` del JWT de quien pregunta.
 - **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
+
+### Segundo factor: lo pide la app, RLS no lo mira
+
+- **Síntoma:** con el segundo factor activado, una petición a la API con un token recién sacado del código del correo (`aal1`) sigue
+  leyendo y escribiendo datos.
+- **Causa:** las políticas solo comparan `owner_id` con `auth.uid()`; ninguna mira `auth.jwt() ->> 'aal'`. El código de la app lo exige la
+  web al entrar (estado `mfa` en `getAuth()`), no el servidor.
+- **Solución:** es lo previsto por ahora ([ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)). Exigirlo en RLS está propuesto en
+  [ADR-0062](../adr/0062-aal2-para-integraciones-sensibles.md): no lo añadas a una tabla suelta sin comprobar antes qué `aal` llevan los
+  tokens del MCP remoto.
+- **Ojo:** MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por defecto). Quitar un factor confirmado exige una sesión
+  `aal2`; por eso «Desactivar» pide un código antes.

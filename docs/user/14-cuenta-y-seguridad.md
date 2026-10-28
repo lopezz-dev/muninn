@@ -1,6 +1,6 @@
 ---
 title: Cuenta y seguridad
-description: Mira dónde tienes la sesión abierta y ciérrala en los dispositivos que ya no uses.
+description: Protege tu cuenta con un segundo factor y cierra la sesión en los dispositivos que ya no uses.
 order: 14
 status: disponible
 group: cuenta
@@ -9,7 +9,38 @@ icon: shield
 
 # Cuenta y seguridad
 
-Todo esto está en **Ajustes › Cuenta**. Necesitas una cuenta: en el modo demo no hay sesiones que revisar.
+Todo esto está en **Ajustes › Cuenta**. Necesitas una cuenta: en el modo demo no sale.
+
+## Activar el segundo factor
+
+El segundo factor es opcional. Con él, para entrar no basta con el código del correo o con GitHub: además, Muninn te
+pide un código de seis cifras de una app de tu móvil (Google Authenticator, 1Password, Authy o la que uses). Si alguien
+consigue el código de tu correo, sin tu móvil no podrá entrar en la app.
+
+1. En **Segundo factor**, pulsa **Activar**.
+2. En tu app de códigos, añade una cuenta nueva y escanea el código QR. Si no puedes escanearlo, escribe la clave de
+   configuración que sale al lado.
+3. Escribe el código de seis cifras que te enseña la app y pulsa **Activar**.
+
+**Guarda la clave de configuración** en un sitio seguro (tu gestor de contraseñas, por ejemplo). Si pierdes el móvil,
+con ella añades Muninn a la app de otro móvil. Muninn aún no tiene códigos de recuperación.
+
+## Entrar con el segundo factor
+
+Entra como siempre, con el código del correo o con GitHub. Después, Muninn te pide el código de tu app: escríbelo y
+listo. Si te equivocas de cuenta, pulsa **Usar otra cuenta**.
+
+Cada vez que entras en un dispositivo nuevo te lo pide; mientras la sesión siga abierta en ese dispositivo, no.
+
+## Desactivar el segundo factor
+
+Pulsa **Desactivar** y escribe el código que sale en ese momento en tu app. Desde entonces, para entrar basta con el
+código del correo o con GitHub. No se puede deshacer: para volver a activarlo, tendrás que añadir Muninn otra vez a tu
+app (con una clave nueva). Puedes borrar la cuenta vieja de Muninn de tu app.
+
+> **Próximamente:** hoy el código lo pide la app al entrar; más adelante también lo exigirá el servidor en cada acceso a
+> tus datos, y conectar las integraciones con más riesgo (GitHub con permiso para escribir, y las de finanzas cuando
+> lleguen) pedirá tenerlo activado.
 
 ## Ver dónde tienes la sesión abierta
 

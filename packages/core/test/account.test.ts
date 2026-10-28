@@ -3,6 +3,7 @@ import {
   type AccountSession,
   createMemoryStore,
   createMuninn,
+  MEMORY_WRONG_MFA_CODE,
   type MemoryAccountSeed,
   sessionDeviceLabel,
   ValidationError,
@@ -71,6 +72,60 @@ describe('sesiones', () => {
     const account = createMuninn(rest, { timeZone: 'UTC' }).account
     expect(account.available()).toBe(false)
     await expect(account.sessions.list()).rejects.toThrow(/con una cuenta/)
+  })
+})
+
+describe('segundo factor', () => {
+  it('el alta no cuenta hasta confirmarla con un primer código', async () => {
+    const account = setup()
+    expect(await account.mfa.assurance()).toEqual({ current: 'aal1', next: 'aal1' })
+    const enrollment = await account.mfa.enroll()
+    expect(enrollment.secret).toMatch(/^[A-Z2-7]{32}$/)
+    expect(enrollment.uri).toMatch(/^otpauth:\/\/totp\//)
+    expect(await account.mfa.active()).toBeNull()
+
+    await expect(account.mfa.confirm(enrollment.factorId, MEMORY_WRONG_MFA_CODE)).rejects.toThrow(
+      /no es correcto/,
+    )
+    await account.mfa.confirm(enrollment.factorId, '123 456')
+    expect((await account.mfa.active())?.id).toBe(enrollment.factorId)
+    expect(await account.mfa.assurance()).toEqual({ current: 'aal2', next: 'aal2' })
+  })
+
+  it('valida el código: seis cifras', async () => {
+    const account = setup()
+    const { factorId } = await account.mfa.enroll()
+    await expect(account.mfa.confirm(factorId, '12345')).rejects.toBeInstanceOf(ValidationError)
+    await expect(account.mfa.confirm(factorId, 'abcdef')).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('un alta a medias se sustituye al empezar otra', async () => {
+    const account = setup()
+    const first = await account.mfa.enroll()
+    const second = await account.mfa.enroll()
+    expect((await account.mfa.factors()).map((f) => f.id)).toEqual([second.factorId])
+    expect(second.factorId).not.toBe(first.factorId)
+  })
+
+  it('con el segundo factor activado, no se puede dar de alta otro', async () => {
+    const account = setup()
+    const { factorId } = await account.mfa.enroll()
+    await account.mfa.confirm(factorId, '123456')
+    await expect(account.mfa.enroll()).rejects.toThrow(/Ya tienes/)
+  })
+
+  it('desactivarlo pide un código actual', async () => {
+    const account = setup({
+      factors: [
+        { id: crypto.randomUUID(), name: 'App', status: 'verified', createdAt: '2026-10-01' },
+      ],
+    })
+    await expect(account.mfa.disable(MEMORY_WRONG_MFA_CODE)).rejects.toThrow(/no es correcto/)
+    expect(await account.mfa.active()).not.toBeNull()
+    await account.mfa.disable('654321')
+    expect(await account.mfa.active()).toBeNull()
+    expect(await account.mfa.assurance()).toEqual({ current: 'aal1', next: 'aal1' })
+    await expect(account.mfa.disable('654321')).rejects.toThrow(/No tienes/)
   })
 })
 

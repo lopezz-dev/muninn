@@ -32,6 +32,13 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     keywords: 'salir logout',
   },
   {
+    id: 'segundo-factor',
+    section: 'cuenta',
+    label: 'Segundo factor',
+    description: 'Un código de una app de tu móvil al entrar, además del correo o GitHub.',
+    keywords: 'mfa 2fa totp autenticador authenticator verificación dos pasos seguridad',
+  },
+  {
     id: 'sesiones',
     section: 'cuenta',
     label: 'Sesiones y dispositivos',

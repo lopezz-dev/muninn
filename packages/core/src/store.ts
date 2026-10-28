@@ -2,6 +2,7 @@ import type {
   AccountKind,
   AccountSession,
   Activity,
+  AssuranceLevel,
   BoardColumn,
   CategoryKind,
   ChecklistItem,
@@ -9,6 +10,8 @@ import type {
   FinanceCategory,
   GithubRepoSummary,
   GithubSyncScope,
+  MfaEnrollment,
+  MfaFactor,
   NewsDigest,
   NewsItem,
   NewsSource,
@@ -287,4 +290,15 @@ export interface AccountStore {
   /** Cierra una sesión de la cuenta; devuelve si existía. */
   revokeSession(id: string): Promise<boolean>
   signOut(scope: SignOutScope): Promise<void>
+  mfa: MfaStore
+}
+
+/** Segundo factor TOTP (Supabase Auth MFA). */
+export interface MfaStore {
+  factors(): Promise<MfaFactor[]>
+  enroll(name: string): Promise<MfaEnrollment>
+  /** Comprueba un código del factor; si vale, la sesión pasa a `aal2`. Lanza si no vale. */
+  verify(factorId: string, code: string): Promise<void>
+  unenroll(factorId: string): Promise<void>
+  assurance(): Promise<AssuranceLevel>
 }

@@ -1,5 +1,13 @@
 import type { z } from 'zod'
-import { type AccountSession, type SignOutScope, signOutScope } from './schemas'
+import {
+  type AccountSession,
+  type MfaEnrollment,
+  type MfaFactor,
+  mfaCode,
+  mfaFactorName,
+  type SignOutScope,
+  signOutScope,
+} from './schemas'
 import type { AccountStore, Store } from './store'
 
 export interface AccountContext {
@@ -77,8 +85,54 @@ export function createAccount({ store, parse }: AccountContext) {
   /** Cierra la sesión en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
   const signOut = async (scope: SignOutScope) => auth().signOut(parse(signOutScope, scope))
 
+  // ─── Segundo factor (TOTP) ───────────────────────────────────────────────
+
+  /** Factores TOTP de la cuenta, el confirmado primero. Muninn ofrece uno: una app de códigos. */
+  async function factors(): Promise<MfaFactor[]> {
+    const list = await auth().mfa.factors()
+    return [...list].sort(
+      (a, b) => Number(b.status === 'verified') - Number(a.status === 'verified'),
+    )
+  }
+
+  /** El factor confirmado, si lo hay: con él, la cuenta pide el código al entrar. */
+  const active = async () => (await factors()).find((f) => f.status === 'verified') ?? null
+
+  /**
+   * Empieza el alta: devuelve el QR y el secreto. No cuenta hasta `confirm` con un primer código. Un alta anterior que se
+   * quedó a medias se borra antes (Supabase no deja dos factores con el mismo nombre).
+   */
+  async function enroll(name = 'App de códigos'): Promise<MfaEnrollment> {
+    const label = parse(mfaFactorName, name)
+    const list = await factors()
+    if (list.some((f) => f.status === 'verified'))
+      throw new Error('Ya tienes el segundo factor activado')
+    for (const f of list) await auth().mfa.unenroll(f.id)
+    return auth().mfa.enroll(label)
+  }
+
+  /** Confirma el alta con el primer código de la app. Desde ese momento, entrar pide el código. */
+  const confirm = async (factorId: string, code: string) =>
+    auth().mfa.verify(factorId, parse(mfaCode, code))
+
+  /**
+   * Desactiva el segundo factor. Pide un código actual, para que quien tenga la sesión abierta sin el móvil no pueda
+   * quitarlo (y porque Supabase exige `aal2` para borrar un factor confirmado). No hay «Deshacer»: volver a activarlo
+   * es darlo de alta otra vez, con otro secreto.
+   */
+  async function disable(code: string) {
+    const token = parse(mfaCode, code)
+    const factor = await active()
+    if (!factor) throw new Error('No tienes el segundo factor activado')
+    await auth().mfa.verify(factor.id, token)
+    await auth().mfa.unenroll(factor.id)
+  }
+
+  const assurance = () => auth().mfa.assurance()
+
   return {
     available,
     sessions: { list: sessions, revoke: revokeSession, signOut },
+    mfa: { factors, active, enroll, confirm, disable, assurance },
   }
 }
