@@ -7,9 +7,6 @@ status: parcial
 
 # Instalación
 
-> **Próximamente:** la app de escritorio todavía no tiene ninguna versión publicada. Esta parte describe cómo será
-> cuando salga la primera. En el móvil y en el navegador ya puedes usar Muninn.
-
 ## Escritorio
 
 Descarga el instalador de tu sistema desde la [página de versiones](https://github.com/lopezz-dev/muninn/releases) (la de
