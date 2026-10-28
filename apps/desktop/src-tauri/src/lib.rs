@@ -2,6 +2,7 @@
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             // Comprueba y aplica las versiones firmadas de GitHub Releases (ADR-0047). La web decide cuándo.
             #[cfg(desktop)]

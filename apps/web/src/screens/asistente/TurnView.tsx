@@ -3,6 +3,8 @@ import { Button, cn, Icon } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import type { Turn } from '../../lib/assistant-history'
+import { isTauri } from '../../lib/auth'
+import { openImage } from '../../lib/external-link'
 import { Markdown } from '../../markdown/Markdown'
 import { Logo } from '../../shell/Logo'
 
@@ -122,6 +124,16 @@ function TargetLink({ target }: { target: ChangeTarget }) {
   }
 }
 
+function AttachedImage({ src, n }: { src: string; n: number }) {
+  return (
+    <img
+      src={src}
+      alt={`Imagen ${n} adjunta`}
+      className="max-h-44 max-w-56 rounded-lg border border-border object-cover"
+    />
+  )
+}
+
 export function UserBubble({ text, images }: { text: string; images?: string[] }) {
   return (
     <div className="flex max-w-[86%] flex-col items-end gap-1.5 self-end md:max-w-[75%]">
@@ -130,13 +142,20 @@ export function UserBubble({ text, images }: { text: string; images?: string[] }
           {images.map((src, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: las imágenes de un mensaje no cambian
             <li key={i}>
-              <a href={src} target="_blank" rel="noreferrer" className="block">
-                <img
-                  src={src}
-                  alt={`Imagen ${i + 1} adjunta`}
-                  className="max-h-44 max-w-56 rounded-lg border border-border object-cover"
-                />
-              </a>
+              {isTauri ? (
+                <AttachedImage src={src} n={i + 1} />
+              ) : (
+                <a
+                  href={src}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    openImage(src)
+                  }}
+                  className="block"
+                >
+                  <AttachedImage src={src} n={i + 1} />
+                </a>
+              )}
             </li>
           ))}
         </ul>

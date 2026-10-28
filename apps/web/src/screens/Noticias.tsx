@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, Page, PageHeader } from '../components/Page'
 import { useAssistantPrefs } from '../lib/assistant-settings'
 import { timeAgo } from '../lib/dates'
+import { externalLink } from '../lib/external-link'
 import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
 import {
@@ -134,13 +135,7 @@ function Article({ item, source, related, tasksOn, notesOn }: ArticleProps) {
         ))}
       </div>
       <h3 className={cn('text-md leading-snug font-semibold', item.readAt && 'text-fg-muted')}>
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => markRead(m, qc, item)}
-          className="hover:underline"
-        >
+        <a {...externalLink(item.url, () => markRead(m, qc, item))} className="hover:underline">
           {item.title}
         </a>
       </h3>
@@ -182,13 +177,7 @@ function Article({ item, source, related, tasksOn, notesOn }: ArticleProps) {
           <Icon name="pin" size={14} className={item.savedAt ? 'text-accent' : undefined} />
           {item.savedAt ? 'Guardada' : 'Leer luego'}
         </button>
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={act}
-          onClick={() => markRead(m, qc, item)}
-        >
+        <a {...externalLink(item.url, () => markRead(m, qc, item))} className={act}>
           <Icon name="external" size={14} />
           Abrir
         </a>
