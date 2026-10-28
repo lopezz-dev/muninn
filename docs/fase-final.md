@@ -109,6 +109,8 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 - [ ] La nota está fijada y lleva la entradilla del modelo y el resumen de noticias. *(Fijada, con actor `assistant`, «Hecho a las
   20:27…», vencidas y cobros; falta la entradilla y las noticias, que necesitan Ollama y la función.)*
 - [x] Antes de terminar el día, déjalo a tu hora de verdad (p. ej. 08:30). Lo necesitas para el paso 8. *(Activado a las 08:30.)*
+- [ ] **Buscador ⌘K** (28-10): «fact» (o parte de una tarea tuya) lista tareas con su proyecto y notas, y al elegir una se abre su
+  detalle; «nueva nota» crea una y la abre, con «Deshacer». Con muchas tareas, escribir rápido no se nota lento.
 
 ## 4. Publicar la web (≈ 30 min)
 

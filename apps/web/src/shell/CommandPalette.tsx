@@ -1,10 +1,11 @@
 import { ColorDot, cn, Dialog, DialogContent, Icon, IconButton, icons, Kbd } from '@muninn/ui'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useId, useMemo, useState } from 'react'
 import { changeAppearance, useAppearance } from '../lib/appearance'
 import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
+import { createNote } from '../lib/note-actions'
 import { projectsQuery } from '../lib/queries'
 import { useEndSession } from '../lib/session'
 import { SECTIONS, type SectionId, sectionEnabled } from './nav'
@@ -15,6 +16,9 @@ import {
   groupItems,
   matchRange,
   type PaletteItem,
+  SEARCH_LIMIT,
+  SEARCH_MIN_LENGTH,
+  searchResultItems,
 } from './palette-items'
 import { useShell } from './shell-context'
 
@@ -51,6 +55,16 @@ function Highlight({ label, query }: { label: string; query: string }) {
   )
 }
 
+/** El valor, cuando lleva `ms` sin cambiar: la búsqueda en el core no sale en cada tecla. */
+function useDebounced<T>(value: T, ms: number) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), ms)
+    return () => clearTimeout(t)
+  }, [value, ms])
+  return debounced
+}
+
 interface CommandPaletteProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -71,6 +85,24 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
   /** `null`: la mejor coincidencia (bestMatch). Un número: lo que eligió el usuario con flechas o ratón. */
   const [active, setActive] = useState<number | null>(null)
   const listId = useId()
+  const qc = useQueryClient()
+  const tasksOn = sectionEnabled('projects', modules)
+  const notesOn = sectionEnabled('notes', modules)
+  // Tareas y notas: al core, con unas pocas de cada y tras una pausa al escribir.
+  const search = useDebounced(query.trim(), 200)
+  const found = useQuery({
+    queryKey: ['palette-search', search, tasksOn, notesOn],
+    queryFn: async () => {
+      const [tasks, notes] = await Promise.all([
+        tasksOn ? m.tasks.list({ search, limit: SEARCH_LIMIT.tasks }) : [],
+        notesOn ? m.notes.list({ search, limit: SEARCH_LIMIT.notes }) : [],
+      ])
+      return { tasks, notes }
+    },
+    enabled: open && search.length >= SEARCH_MIN_LENGTH && (tasksOn || notesOn),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  }).data
 
   useEffect(() => {
     if (open) {
@@ -114,7 +146,6 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         run: () => navigate({ to: s.to }),
       })
     }
-    const tasksOn = sectionEnabled('projects', modules)
     for (const p of tasksOn ? projects : []) {
       all.push({
         id: `project-${p.id}`,
@@ -124,6 +155,39 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         color: p.color,
         hint: 'Tablero',
         run: () => navigate({ to: '/proyectos/$projectId', params: { projectId: p.id } }),
+      })
+    }
+    // Con la búsqueda a medio llegar se queda lo anterior, pero solo si sigue valiendo para lo escrito.
+    if (found && q.length >= SEARCH_MIN_LENGTH) {
+      all.push(
+        ...searchResultItems(found, projects, q, {
+          task: (t) =>
+            navigate({
+              to: '/proyectos/$projectId/tareas/$taskId',
+              params: { projectId: t.projectId, taskId: t.id },
+            }),
+          note: (n) => navigate({ to: '/notas/$noteId', params: { noteId: n.id } }),
+        }),
+      )
+    }
+    if (notesOn) {
+      all.push({
+        id: 'new-note',
+        group: 'actions',
+        label: 'Nueva nota',
+        icon: 'plus',
+        keywords: 'crear anadir escribir apunte',
+        run: async () => {
+          const note = await createNote(
+            m,
+            qc,
+            {},
+            {
+              onUndo: () => navigate({ to: '/notas', replace: true }),
+            },
+          )
+          if (note) navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+        },
       })
     }
     if (tasksOn) {
@@ -167,6 +231,11 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
     query,
     projects,
     modules,
+    found,
+    tasksOn,
+    notesOn,
+    m,
+    qc,
     appearance.glass,
     navigate,
     shell.openNewProject,
@@ -305,7 +374,9 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
             <Kbd>↵</Kbd>
             Abrir
           </span>
-          <span className="ml-auto">Secciones, proyectos y acciones · o pregunta a Muninn</span>
+          <span className="ml-auto">
+            Secciones, proyectos, tareas, notas y acciones · o pregunta a Muninn
+          </span>
         </div>
       </DialogContent>
     </Dialog>

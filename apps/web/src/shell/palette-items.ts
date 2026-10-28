@@ -1,16 +1,23 @@
 import type { IconName } from '@muninn/ui'
+import { noteTitle } from '../lib/notes'
 import { normalize } from '../lib/text'
 
-export type PaletteGroup = 'ask' | 'nav' | 'projects' | 'actions'
+export type PaletteGroup = 'ask' | 'nav' | 'projects' | 'tasks' | 'notes' | 'actions'
 
 export const GROUP_LABEL: Record<PaletteGroup, string> = {
   ask: 'Preguntar',
   nav: 'Ir a',
   projects: 'Proyectos',
+  tasks: 'Tareas',
+  notes: 'Notas',
   actions: 'Acciones',
 }
 
-const GROUP_ORDER: PaletteGroup[] = ['ask', 'nav', 'projects', 'actions']
+const GROUP_ORDER: PaletteGroup[] = ['ask', 'nav', 'projects', 'tasks', 'notes', 'actions']
+
+/** Mínimo de letras para buscar tareas y notas en el core, y cuántas de cada una se piden. */
+export const SEARCH_MIN_LENGTH = 2
+export const SEARCH_LIMIT = { tasks: 6, notes: 5 }
 
 export interface PaletteItem {
   id: string
@@ -78,4 +85,54 @@ export function groupItems(items: PaletteItem[]) {
     else groups.push({ group: it.group, items: [it] })
   }
   return groups
+}
+
+interface FoundTask {
+  id: string
+  title: string
+  projectId: string
+}
+
+interface FoundNote {
+  id: string
+  title: string
+  projectId: string | null
+}
+
+/**
+ * Tareas y notas que ha encontrado el core, como opciones. Las tareas llevan su proyecto a la derecha. Ya
+ * vienen filtradas (también por descripción o contenido): los sinónimos son la búsqueda, para que `filterItems`
+ * no las quite.
+ */
+export function searchResultItems(
+  found: { tasks: FoundTask[]; notes: FoundNote[] },
+  projects: { id: string; name: string }[],
+  query: string,
+  open: { task: (t: FoundTask) => void; note: (n: FoundNote) => void },
+): PaletteItem[] {
+  const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
+  return [
+    ...found.tasks.map(
+      (t): PaletteItem => ({
+        id: `task-${t.id}`,
+        group: 'tasks',
+        label: t.title,
+        icon: 'check',
+        hint: projectName(t.projectId),
+        keywords: query,
+        run: () => open.task(t),
+      }),
+    ),
+    ...found.notes.map(
+      (n): PaletteItem => ({
+        id: `note-${n.id}`,
+        group: 'notes',
+        label: noteTitle(n),
+        icon: 'notes',
+        hint: projectName(n.projectId),
+        keywords: query,
+        run: () => open.note(n),
+      }),
+    ),
+  ]
 }
