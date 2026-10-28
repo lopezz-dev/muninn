@@ -41,6 +41,12 @@
 
 - No importes de `@phosphor-icons/react` en la app: usa `icons.x` o `<Icon name="x" />`. Así el catálogo
   queda centralizado y la librería se puede cambiar.
+- Los trazos vienen de `src/icons.generated.ts` y `src/screen-icons.generated.ts` (ADR-0058), con solo `regular` y
+  `bold`. **Al añadir un icono**, impórtalo en el catálogo desde el fichero generado y ejecuta
+  `pnpm --filter @muninn/ui icons`; si no, falla el test de sincronización. **Si usas otro grosor** (`fill`, `light`…)
+  en un icono, añádelo en `EXTRA_WEIGHTS` de `scripts/icons.ts`: sin eso se pinta el regular sin avisar.
+- `@phosphor-icons/react/lib` no existe en tiempo de ejecución (solo tiene tipos); importa de `…/dist/lib/IconBase`,
+  `…/dist/lib/context` y `…/dist/lib/types`. Biome no formatea los `*.generated.ts` (excluidos en `biome.json`).
 - Un botón con solo un icono necesita `aria-label`. `<Icon>` pone `aria-hidden` salvo que le pases `aria-label`.
 
 ### El acento se aplica en ejecución

@@ -146,7 +146,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] OAuth sin claude.ai, con Claude Code: `claude mcp add --transport http muninn-remoto <URL>` sin cabecera y, en una sesión interactiva,
   `/mcp` › muninn-remoto › *Authenticate*: abre el navegador en `/oauth/consent` y, tras «Permitir acceso», lista tus proyectos
 - [x] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y salen las herramientas (28 de
-  octubre: 15 de lectura y 21 de escritura, el catálogo actual). Sale con el icono de Supabase (Backlog)
+  octubre: 15 de lectura y 21 de escritura, el catálogo actual). Salía con el icono de Supabase: el servidor ya declara el logo de Muninn (falta redesplegar `mcp`, fase final)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
 ### F3 · Finanzas
@@ -324,7 +324,6 @@ más o menos en este orden:
 
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
-- Icono de Muninn en el conector de claude.ai (hoy sale el de Supabase): [gotchas/mcp](gotchas/mcp.md#el-conector-sale-con-el-icono-de-supabase)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
 - Ver y quitar los permisos OAuth dados a otras apps (claude.ai…) en Ajustes › Cuenta (ADR-0036; la API `oauth` de supabase-js ya lo permite)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
@@ -334,10 +333,9 @@ más o menos en este orden:
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras
 - Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
-- Buscador ⌘K sobre tareas y notas, y acción «Nueva nota» (hoy: secciones, proyectos, acciones y «Buscar en Noticias»)
-- Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional). Al cambiarlo, regenerar el favicon y los iconos de la web
-  (`pnpm --filter @muninn/web icons` y la imagen social) y los de escritorio (`pnpm --filter @muninn/desktop icons`)
+  (`pnpm --filter @muninn/web icons` y la imagen social), los de escritorio (`pnpm --filter @muninn/desktop icons`) y el del
+  conector MCP (`packages/mcp/src/icon.ts`)
 - Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*). Se hará
   junto con la landing page; entonces, añadirlas a `sitemap.xml` y dar de alta Search Console
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
