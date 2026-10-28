@@ -28,6 +28,20 @@
 - **Ojo:** Windows guarda los iconos en caché. Si tras recompilar la barra de tareas o un acceso directo siguen con el viejo, cierra la app
   y ejecuta `ie4uinit.exe -show`, o reinicia el Explorador.
 
+### Los enlaces externos no abren nada en escritorio
+
+- **Síntoma:** en la app de escritorio, el título de una noticia, «Abrir», la issue de una tarea, «Ver el PR» o un enlace del Markdown no
+  hacen nada al pulsarlos. En el navegador funcionan.
+- **Causa:** en Tauri 2, `<a target="_blank">` y `window.open` no abren el navegador del sistema: el webview no tiene pestañas y Tauri
+  no lo hace por su cuenta. Hace falta `tauri-plugin-opener` con su permiso.
+- **Solución:** todo enlace externo pasa por `externalLink(url, onOpen?)` o `openExternal(url)` de `apps/web/src/lib/external-link.ts`:
+  en escritorio llama a `openUrl` del plugin; en el navegador y la PWA, a `window.open(url, '_blank', 'noopener')`. Si falla, avisa con
+  `notify`. El plugin va en `Cargo.toml` y `lib.rs`, y el permiso en `capabilities/default.json`
+  (`opener:allow-open-url` + `opener:allow-default-urls`: solo `http(s)`, `mailto` y `tel`).
+- **Ojo:** `opener:allow-open-url` a solas no basta: sin `allow-default-urls` (o un `scope` propio) el plugin rechaza toda URL con
+  «Not allowed to open url». Las imágenes adjuntas al Asistente son `data:`: en la web se abren como `blob:` (`openImage`) y en
+  escritorio no llevan enlace. No pongas un `<a target="_blank">` a pelo en la web: en escritorio no hará nada.
+
 ### CSP
 
 - `tauri.conf.json` restringe `connect-src` a `self`, `*.supabase.co` y `localhost`. Si añades otro

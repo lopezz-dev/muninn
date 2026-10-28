@@ -107,6 +107,11 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   20:27…», vencidas y cobros; falta la entradilla y las noticias, que necesitan Ollama y la función.)*
 - [x] Antes de terminar el día, déjalo a tu hora de verdad (p. ej. 08:30). Lo necesitas para el paso 8. *(Activado a las 08:30.)*
 
+**Enlaces externos** (escritorio con `pnpm dev:desktop` y navegador en el 5174).
+- [ ] Escritorio: en Noticias, el título y «Abrir» abren el artículo en tu navegador y la noticia queda leída. También la issue y «Ver el
+  PR» de una tarea, «PR #n» en GitHub, un enlace de una nota y «GitHub» en Ajustes › Acerca de. Las imágenes del Asistente no llevan enlace.
+- [ ] Navegador: los mismos enlaces abren otra pestaña (Ctrl-clic, en segundo plano) y una imagen adjunta del Asistente se abre a tamaño real.
+
 ## 4. Publicar la web (≈ 30 min)
 
 Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales).
@@ -146,6 +151,8 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - lo apuntado en el iPhone aparece en el ordenador sin recargar.
 - [ ] El Asistente dice que usa el modelo del ordenador y no intenta conectar.
 - [ ] Noticias muestra el mismo resumen de hoy que el ordenador.
+- [ ] En Noticias, «Abrir» y el título abren el artículo en Safari sin cerrar Muninn, y al volver sale leída. Igual con un enlace de una
+  nota y con una imagen adjunta del Asistente.
 - [ ] El informe de la mañana se lee en Notas y en el Asistente, y el iPhone no genera ninguno.
 
 ## 6. OAuth del MCP remoto con Claude Code (≈ 10 min)
