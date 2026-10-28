@@ -2,6 +2,7 @@ import { Button, Icon, type IconName, icons, notify, TextField } from '@muninn/u
 import { getRouteApi, useRouter } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
 import { enterDemo, hasSupabase, isTauri, loadSupabase, safeRedirect } from '../lib/auth'
+import { useGitHubDesktopLogin } from '../lib/github-desktop-login'
 import {
   authErrorMessage,
   enabledProviders,
@@ -68,12 +69,10 @@ export function Login() {
     if (!hasSupabase) return
     // Se adelanta la descarga de supabase-js mientras se escribe el correo.
     loadSupabase().catch(() => {})
-    // Solo se ofrece GitHub si está activado en el proyecto (y no en escritorio: faltan deep links).
-    if (!isTauri) {
-      enabledProviders()
-        .then((p) => setGithub(Boolean(p.github)))
-        .catch(() => setGithub(false))
-    }
+    // Solo se ofrece GitHub si está activado en el proyecto.
+    enabledProviders()
+      .then((p) => setGithub(Boolean(p.github)))
+      .catch(() => setGithub(false))
   }, [])
 
   // GitHub vuelve con `error_description` si se cancela o falla el permiso.
@@ -135,7 +134,11 @@ export function Login() {
     }
   }
 
+  // En escritorio, GitHub se abre en el navegador del sistema y vuelve por deep link (ADR-0059).
+  const desktopGitHub = useGitHubDesktopLogin(isTauri && hasSupabase, goIn)
+
   const withGitHub = async () => {
+    if (isTauri) return desktopGitHub.start()
     setBusy('github')
     try {
       await signInWithGitHub(target)
@@ -303,10 +306,28 @@ export function Login() {
                 <span aria-hidden="true" className="h-px flex-1 bg-border" />o
                 <span aria-hidden="true" className="h-px flex-1 bg-border" />
               </div>
-              <Button size="lg" onClick={withGitHub} disabled={busy !== null} className="gap-2.5">
+              <Button
+                size="lg"
+                onClick={withGitHub}
+                disabled={busy !== null || desktopGitHub.waiting}
+                className="gap-2.5"
+              >
                 <Icon name="github" />
-                {busy === 'github' ? 'Abriendo GitHub…' : 'Continuar con GitHub'}
+                {desktopGitHub.waiting
+                  ? 'Esperando a GitHub…'
+                  : busy === 'github'
+                    ? 'Abriendo GitHub…'
+                    : 'Continuar con GitHub'}
               </Button>
+              {desktopGitHub.waiting ? (
+                <button
+                  type="button"
+                  onClick={desktopGitHub.cancel}
+                  className="cursor-pointer self-center text-[12.5px] text-accent hover:text-accent-hover"
+                >
+                  Cancelar
+                </button>
+              ) : null}
             </>
           ) : null}
 

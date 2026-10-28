@@ -119,3 +119,23 @@
   5. **Que arranquen solos:** un acceso directo a cada comando en `shell:startup` (Win + R) o una tarea programada «Al iniciar sesión».
 - **Ojo:** la GPU la comparten Ollama y Whisper. Con `qwen3:8b` y large-v3-turbo-q5_0 cabe en 12 GB; con `qwen3:14b`, pasa Whisper a CPU.
   Piper va en CPU y es GPL-3.0: úsalo como programa aparte, no lo metas en el instalador sin revisar la licencia.
+
+### GitHub en escritorio: la vuelta llega por `muninn://auth/callback`
+
+- **Síntoma:** tras autorizar en GitHub, el navegador acaba en la *Site URL* (o en «no se puede abrir esta página») y la app se queda
+  «Esperando a GitHub…»; o se abre una segunda ventana de Muninn sin sesión.
+- **Causa:** el navegador del sistema no puede volver a `tauri.localhost`: la vuelta es el deep link `muninn://auth/callback`
+  ([ADR-0059](../adr/0059-deep-links-para-oauth-en-escritorio.md)). Hace falta que (1) Supabase lo tenga en *Redirect URLs*, (2) el
+  sistema tenga registrado `muninn://` y (3) single-instance le pase el enlace a la ventana abierta.
+- **Solución:**
+  - *Redirect URLs* de Supabase con `muninn://auth/callback` ([gotchas/db](db.md#site-url-y-redirect-urls)).
+  - El instalador registra el esquema. En `tauri dev`, `lib.rs` lo registra al arrancar en Windows y Linux (solo en debug, para no
+    pisar el del instalador). **En macOS no hay deep links en `tauri dev`**: prueba con el `.app` en `/Applications`.
+  - `tauri_plugin_single_instance` va el **primero** en el `Builder` y con la *feature* `deep-link`; si no, Windows abre otro proceso.
+  - El permiso `deep-link:default` en `capabilities/default.json` (si falta, `onOpenUrl` falla con «not allowed»).
+- **Ojo:**
+  - Se escucha `onOpenUrl` **antes** de abrir el navegador: si la sesión de GitHub ya estaba autorizada, la vuelta llega en un segundo.
+  - Si al probar en dev quedó registrado el `muninn://` del ejecutable de `target/debug`, el instalado lo vuelve a apuntar a sí mismo al
+    instalarse. En Windows está en `HKCU\Software\Classes\muninn`.
+  - `getCurrent()` devuelve el enlace con el que arrancó la app durante toda la sesión: se mira una sola vez (un código PKCE no se puede
+    canjear dos veces).
