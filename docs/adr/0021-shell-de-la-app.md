@@ -1,6 +1,6 @@
 # ADR-0021: Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado por ADR-0054 en el móvil (dock) y en el corte de la barra lateral; lo demás sigue vigente
 - **Fecha:** 2026-10-19
 - **Área:** web, ui
 

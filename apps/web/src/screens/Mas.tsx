@@ -39,7 +39,7 @@ function RowContent({
   )
 }
 
-/** Hub de móvil para lo que no cabe en el dock. Diseño: M-Mas.dc.html. */
+/** Hub de móvil para lo que no tiene pestaña propia. Diseño: M-Mas.dc.html. */
 export function Mas() {
   const shell = useShell()
   const auth = useAuth()

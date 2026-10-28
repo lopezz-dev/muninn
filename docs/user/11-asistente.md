@@ -10,8 +10,8 @@ icon: assistant
 # Asistente
 
 El **Asistente** es Muninn hablando contigo. Le preguntas por tus tareas, notas y finanzas, y también le pides que
-haga cosas: crear una tarea, moverla, apuntar un gasto, escribir una nota… Lo encuentras en el menú, en el centro del
-dock del móvil y en el buscador (**Ctrl K** o **⌘ K**, escribe tu pregunta y elige **Preguntar a Muninn**).
+haga cosas: crear una tarea, moverla, apuntar un gasto, escribir una nota… Lo encuentras en el menú, en el botón con el logo de
+Muninn junto a las pestañas del móvil y en el buscador (**Ctrl K** o **⌘ K**, escribe tu pregunta y elige **Preguntar a Muninn**).
 
 > **Antes de empezar:** instala **Ollama** y un modelo en tu ordenador (ver [Instalar Ollama](#instalar-ollama)); sin eso, el
 > Asistente no puede contestar. En la **demo** puedes ver cómo funciona con respuestas guionizadas.

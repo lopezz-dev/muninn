@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DOCK, dockFor, dockIndexOf, sectionEnabled, sectionOf } from '../src/shell/nav'
+import { sectionEnabled, sectionOf, TABS, tabIndexOf, tabsFor } from '../src/shell/nav'
 import {
   bestMatch,
   filterItems,
@@ -18,12 +18,16 @@ describe('navegación', () => {
     expect(sectionOf('/no-existe')).toBeNull()
   })
 
-  it('el dock tiene el Asistente en el centro y lo demás vive en «Más»', () => {
-    expect(DOCK).toEqual(['home', 'projects', 'assistant', 'finance', 'more'])
-    expect(dockIndexOf('projects')).toBe(1)
-    expect(dockIndexOf('notes')).toBe(4)
-    expect(dockIndexOf('settings')).toBe(4)
-    expect(dockIndexOf(null)).toBe(4)
+  it('la barra del teléfono tiene cuatro pestañas y lo demás vive en «Más»', () => {
+    expect(TABS).toEqual(['home', 'projects', 'finance', 'more'])
+    expect(tabIndexOf('projects')).toBe(1)
+    expect(tabIndexOf('notes')).toBe(3)
+    expect(tabIndexOf('settings')).toBe(3)
+    expect(tabIndexOf(null)).toBe(3)
+  })
+
+  it('en el Asistente no hay pestaña activa: se marca su botón', () => {
+    expect(tabIndexOf('assistant')).toBe(-1)
   })
 })
 
@@ -42,15 +46,15 @@ describe('módulos activos', () => {
 
   it('mientras no se sepa (null) se enseña todo', () => {
     expect(sectionEnabled('finance', null)).toBe(true)
-    expect(dockFor(null)).toEqual(DOCK)
+    expect(tabsFor(null)).toEqual(TABS)
   })
 
-  it('el dock pierde la pestaña de un módulo desactivado y la activa se recalcula', () => {
-    const dock = dockFor(only('tasks', 'notes'))
-    expect(dock).toEqual(['home', 'projects', 'assistant', 'more'])
-    expect(dockIndexOf('projects', dock)).toBe(1)
-    expect(dockIndexOf('notes', dock)).toBe(3)
-    expect(dockIndexOf('finance', dock)).toBe(3)
+  it('la barra pierde la pestaña de un módulo desactivado y la activa se recalcula', () => {
+    const tabs = tabsFor(only('tasks', 'notes'))
+    expect(tabs).toEqual(['home', 'projects', 'more'])
+    expect(tabIndexOf('projects', tabs)).toBe(1)
+    expect(tabIndexOf('notes', tabs)).toBe(2)
+    expect(tabIndexOf('finance', tabs)).toBe(2)
   })
 })
 

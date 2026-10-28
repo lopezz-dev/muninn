@@ -91,6 +91,13 @@ export interface Project {
   description: string
   color: string
   icon: string | null
+  /**
+   * Logo del proyecto en el almacén de archivos (ADR-0055, ADR-0056): el icono cuadrado. `null` si no tiene. Se pide su
+   * URL con `projects.imageUrl`.
+   */
+  imagePath: string | null
+  /** Portada (el banner de la tarjeta), aparte del logo (ADR-0056). `null`: el banner usa el color del proyecto. */
+  coverPath: string | null
   status: ProjectStatus
   githubRepo: string | null
   /** Columna «Para el agente» (ADR-0032): mover ahí una tarea de GitHub etiqueta su issue. */
@@ -183,6 +190,19 @@ export interface UserSettings {
   preferences: Record<string, unknown>
   updatedAt: string
 }
+
+// ─── Imágenes de proyecto (ADR-0055) ────────────────────────────────────────
+
+/** Formatos que se guardan. La app reduce la imagen en el navegador antes de subirla. */
+export const PROJECT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
+/** Tope tras reducirla: una portada de 1200 px en JPEG ronda los 150 KB. */
+export const PROJECT_IMAGE_MAX_BYTES = 2 * 1024 * 1024
+/** Qué imagen del proyecto: el logo (icono cuadrado) o la portada (banner), ADR-0056. */
+export type ProjectImageKind = 'logo' | 'cover'
+
+/** Extensión de archivo para un tipo de imagen admitido. */
+export const imageExt = (type: string) =>
+  type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : 'jpg'
 
 // ─── Entradas (validadas en el servicio; el MCP reutiliza estas formas) ─────
 

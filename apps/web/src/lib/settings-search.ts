@@ -49,7 +49,7 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     id: 'acento',
     section: 'apariencia',
     label: 'Color de acento',
-    description: 'Botones, selección y la burbuja del dock.',
+    description: 'Botones, selección y el botón del Asistente en el móvil.',
     keywords: 'color tema',
   },
   {

@@ -9,35 +9,70 @@ icon: projects
 
 # Proyectos y tablero
 
-> **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas, personalizar las columnas y ver el tablero como
-> lista. Aún no se puede cambiar el nombre ni el color de un proyecto desde la app; la vista de calendario y el color de las
-> columnas llegarán más adelante. En modo demo,
-> sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
+> **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color, logo y portada), mover tareas arrastrándolas,
+> personalizar las columnas y ver el tablero como lista. La vista de calendario y el color de las columnas llegarán más
+> adelante. En modo demo, sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
 
 Un proyecto agrupa las tareas y notas de algo en lo que estás trabajando: una app, un cliente, una mudanza…
 
-En la pantalla **Proyectos** (en la barra lateral, o en el dock del móvil) ves todos los tuyos, cada uno con su color y
-su progreso: cuántas tareas llevas hechas de las que tiene, por ejemplo «3 de 8 hechas», y una barra. Pulsa uno para abrir su
-tablero.
+En la pantalla **Proyectos** (en la barra lateral, o en las pestañas del móvil) cada proyecto tiene su tarjeta con:
+
+- Su **logo**, su **portada** y su **color**. En el ordenador y la tablet la portada es el banner de la tarjeta, con el
+  logo encima; en el teléfono se ve el logo. Sin portada, el banner es un degradado de su color; sin logo, verás la
+  inicial del nombre sobre su color.
+- La **descripción**, si tiene. Si no, en el ordenador puedes pulsar **+ Añade una descripción**.
+- Una **barra de colores** con cuántas tareas hay en cada estado (backlog, pendientes, en curso, en revisión y hechas).
+- **Avisos** de un vistazo: las tareas vencidas, las que están en curso, las que tiene el agente y el repositorio de
+  GitHub. Si no hay nada que mirar, dice **Al día**.
+- **Lo próximo:** las dos tareas que vencen antes (una en el teléfono).
+- Cuándo fue la **última actividad**, y un botón **+ Tarea** para crear una directamente en ese proyecto.
+
+Arriba ves cuántos proyectos tienes, cuántas tareas abiertas y cuántas vencidas. Puedes filtrar (**Todos**, **Con
+vencidas** y, con GitHub activado, **Con GitHub**), ordenar por **urgencia**, **actividad reciente** o **nombre**, y buscar
+por nombre en el ordenador. Al final, **Archivados** guarda los proyectos que archivaste: ábrelo y pulsa **Recuperar** para
+traer uno de vuelta.
+
+Pulsa una tarjeta para abrir su tablero.
 
 ### Crear un proyecto
 
 Pulsa **Nuevo proyecto** (en Proyectos o en Inicio), el **+** de la barra lateral, o busca «nuevo proyecto» con **⌘K** /
-**Ctrl K**. Escribe el **nombre**, elige un **color** y pulsa **Crear proyecto**: se abre su tablero con cinco columnas.
-Si te equivocas, **Deshacer** en el aviso lo archiva.
+**Ctrl K**. Escribe el **nombre** y, si quieres, una **descripción**, elige un **color**, un **logo** y una **portada**, y
+pulsa **Crear proyecto**: se abre su tablero con cinco columnas. Si te equivocas, **Deshacer** en el aviso lo archiva.
 
-Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle también una descripción, que se ve en la
-lista.
+### Editar un proyecto
+
+Pulsa el lápiz de su tarjeta (**Editar** en el teléfono) o, en el tablero, **⋯ › Editar proyecto**. Puedes cambiar el
+nombre, la descripción, el color, el logo y la portada. Cada cambio avisa al guardarlo y tiene **Deshacer**.
+
+Sobre el **logo** y la **portada**:
+
+- El **logo** es el icono del proyecto: mejor una imagen cuadrada. Si tiene fondo transparente, se ve sobre el color del
+  proyecto. Al elegirlo, Muninn saca su color principal y lo pone como color del proyecto (la muestra **Del logo**), salvo
+  que ya hubieras elegido otro color a mano. Puedes cambiarlo cuando quieras. Un logo en blanco y negro no propone color.
+- La **portada** es el banner de la tarjeta en el ordenador y la tablet: mejor una imagen apaisada. Es opcional; sin ella,
+  el banner usa el color del proyecto.
+- Pueden ser fotos o archivos JPG, PNG o WebP. Muninn los reduce en tu dispositivo antes de subirlos, así que no importa
+  que sea una foto grande del móvil.
+- **Quitar** deja el proyecto sin esa imagen; **Deshacer** en el aviso la recupera.
+- Solo los ves tú: se guardan en tu cuenta, en privado. Sin conexión, verás la inicial y el color en su lugar.
+- En modo demo se pierden al recargar, como lo demás.
+
+Desde aquí también puedes **archivar** el proyecto.
+
+Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle una descripción, pero no un logo ni una portada.
 
 ### El menú del proyecto
 
 En el tablero, el menú **⋯** de arriba tiene:
 
+- **Editar proyecto:** nombre, descripción, color, logo y portada.
 - **Nueva columna:** añade una columna al final.
 - **Copiar enlace:** copia la dirección del tablero, para abrirlo directamente o guardarlo.
-- **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera.
+- **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera, y también
+  **Proyectos › Archivados**.
 
 ### Vincular un repositorio de GitHub
 

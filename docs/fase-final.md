@@ -136,7 +136,7 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
 ## 5. iPhone (≈ 45 min)
 
 Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra con tu cuenta.
-- [ ] Pasa entera la [lista de pruebas del iPhone](pruebas-iphone.md): instalar, teclado, gestos del tablero, dock y sin conexión.
+- [ ] Pasa entera la [lista de pruebas del iPhone](pruebas-iphone.md): instalar, teclado, gestos del tablero, pestañas y sin conexión.
 - [ ] Vista **Lista** en un proyecto:
   - la casilla de cada fila se toca bien y completa con «Deshacer»;
   - al cerrar y abrir la app sigue en Lista, y en el ordenador sigue en Tablero.

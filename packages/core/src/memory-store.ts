@@ -14,6 +14,7 @@ import type {
   Transaction,
   UserSettings,
 } from './schemas'
+import { imageExt } from './schemas'
 import {
   type AccountStoreQuery,
   type ActivityLog,
@@ -218,8 +219,25 @@ export function createMemoryStore(
   )
   const digestOrder = (a: NewsDigest, b: NewsDigest) => (a.date < b.date ? 1 : -1)
 
+  // Imágenes de proyecto: solo en memoria (en el modo demo se pierden al recargar, como lo demás).
+  const images = new Map<string, { blob: Blob; url?: string }>()
+  const projectImages = {
+    async upload(projectId: string, image: Blob) {
+      const path = `${projectId}/${crypto.randomUUID()}.${imageExt(image.type)}`
+      images.set(path, { blob: image })
+      return path
+    },
+    async url(path: string) {
+      const entry = images.get(path)
+      if (!entry) throw new NotFoundError('Imagen', path)
+      entry.url ??= URL.createObjectURL(entry.blob)
+      return entry.url
+    },
+  }
+
   return {
     snapshot,
+    projectImages,
     activity: activityLog,
     newsSources: new MemoryCollection<NewsSource, { includeArchived?: boolean }>(
       'Fuente',

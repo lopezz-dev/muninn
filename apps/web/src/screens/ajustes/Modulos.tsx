@@ -58,7 +58,7 @@ const MODULES: Record<ModuleName, ModuleInfo> = {
   },
 }
 
-/** Ajustes › Módulos (Ajustes.dc.html): activa solo lo que uses; lo demás sale del menú, del dock y del buscador. */
+/** Ajustes › Módulos (Ajustes.dc.html): activa solo lo que uses; lo demás sale del menú, de las pestañas y del buscador. */
 export function Modulos() {
   const m = useMuninn()
   const qc = useQueryClient()

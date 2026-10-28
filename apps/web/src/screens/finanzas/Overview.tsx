@@ -62,14 +62,14 @@ export function Overview({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {report.data ? <CategoryBars report={report.data} /> : <Ghost className="h-48" />}
         </div>
         {aside}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {report.data ? <HistoryChart report={report.data} /> : <Ghost className="h-56" />}
         </div>

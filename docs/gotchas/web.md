@@ -24,12 +24,12 @@
 
 ### Módulos desactivados: qué mira cada pieza del shell
 
-- **Síntoma:** un módulo desactivado sigue saliendo en el dock, el buscador o un atajo; o el menú parpadea al cargar.
+- **Síntoma:** un módulo desactivado sigue saliendo en la barra de pestañas, el buscador o un atajo; o el menú parpadea al cargar.
 - **Causa:** cada pieza decide por su cuenta. Todas usan `useEnabledModules()` (`lib/modules.ts`) y `sectionEnabled()`
-  (`shell/nav.ts`): barra lateral, dock (`dockFor`), «Más», buscador y la tecla **N**. Los ajustes llegan por la caché de
+  (`shell/nav.ts`): barra lateral, barra de pestañas del teléfono (`tabsFor`), «Más», buscador y la tecla **N**. Los ajustes llegan por la caché de
   react-query (`keys.settings`), que rellena el loader de `_app` antes de pintar; mientras valgan `null` se enseña todo.
-- **Solución:** una sección nueva con módulo se declara en `SECTION_MODULE`; no compruebes `enabledModules` a mano. El dock
-  cuenta sus pestañas (`slotWidth(width, count)`): no asumas cinco.
+- **Solución:** una sección nueva con módulo se declara en `SECTION_MODULE`; no compruebes `enabledModules` a mano. La barra
+  de pestañas reparte el ancho entre las que queden (flex): no asumas cuatro.
 - **Ref:** [ADR-0028](../adr/0028-modulos-activables-solo-en-la-interfaz.md)
 
 ### El buscador ⌘K es un chunk diferido que se pide al pintar el shell
@@ -163,23 +163,23 @@
 
 ### Animaciones con `requestAnimationFrame` y ventanas sin pintar
 
-- **Síntoma:** el dock se queda a medio camino, o en el navegador integrado de las herramientas de desarrollo
+- **Síntoma:** una animación en JS se queda a medio camino, o en el navegador integrado de las herramientas de desarrollo
   las transiciones parecen congeladas (`getAnimations()` en `currentTime: 0`).
 - **Causa:** si la página no se pinta (PWA en segundo plano, panel oculto), el navegador no da fotogramas,
   aunque `document.visibilityState` diga `visible`.
-- **Solución:** toda animación en JS fija su estado final con un `setTimeout` de la duración (lo hace
-  `Dock.tsx`). Para verificar fotograma a fotograma en un panel oculto, sustituye temporalmente
+- **Solución:** toda animación en JS fija su estado final con un `setTimeout` de la duración. Mejor aún, anima con
+  CSS (la barra de pestañas, ADR-0054, usa una transición de `flex-basis`). Para verificar fotograma a fotograma en un panel oculto, sustituye temporalmente
   `requestAnimationFrame` por `cb => setTimeout(() => cb(performance.now()), 16)`.
 
-### El dock flota por encima del borde en la app instalada del iPhone
+### La barra de pestañas flota por encima del borde en la app instalada del iPhone
 
-- **Síntoma:** en la app añadida a la pantalla de inicio (iOS, barra de estado `black-translucent`), al abrirla el dock
+- **Síntoma:** en la app añadida a la pantalla de inicio (iOS, barra de estado `black-translucent`), al abrirla la barra
   queda unos 55 pt por encima del borde de abajo, con fondo vacío debajo. Al cambiar de sección se coloca bien. En Safari
   no pasa.
 - **Causa:** a veces iOS calcula el visor de la app instalada como la pantalla menos la barra de estado, así que
   `position: fixed; bottom: 0` termina a esa altura. Es un fallo de WebKit, no de nuestro CSS.
-- **Solución:** `useStandaloneGap` en `shell/Dock.tsx` compara `screen` con `innerHeight` solo si `navigator.standalone`,
-  y baja el dock la diferencia (como mucho 80 px; si no hay diferencia, no hace nada). Solo se puede comprobar en un iPhone real: va en
+- **Solución:** `useStandaloneGap` en `shell/TabBar.tsx` compara `screen` con `innerHeight` solo si `navigator.standalone`,
+  y baja la barra la diferencia (como mucho 80 px; si no hay diferencia, no hace nada). Solo se puede comprobar en un iPhone real: va en
   [pruebas-iphone](../pruebas-iphone.md).
 
 ### En escritorio la ventana no hace scroll: lo hace `<main>`
@@ -538,3 +538,28 @@
   resaltado (`useFlashHash`) busca el elemento un fotograma después. Si lo buscas en el efecto directamente, aún no está
   y no se resalta nada (sin error).
 - **Ref:** [ADR-0053](../adr/0053-ajustes-por-grupos-buscador-y-restablecer.md)
+
+### La pantalla se sale por la derecha en el teléfono
+
+- **Síntoma:** en el iPhone una pantalla se puede arrastrar hacia los lados o las tarjetas aparecen cortadas por la
+  derecha; en el ordenador se ve bien. Desde el ADR-0054 `<main>` lleva `overflow-x: clip` en el teléfono, así que el
+  síntoma puede ser solo «el borde derecho de las tarjetas no se ve».
+- **Causa:** una rejilla sin columnas en el tamaño pequeño (`grid gap-3 lg:grid-cols-3`) usa una pista implícita
+  `auto`, que crece hasta el ancho mínimo de su contenido. Un título con `truncate` (`white-space: nowrap`) dentro la
+  estira hasta su longitud entera.
+- **Solución:** declara siempre las columnas desde el tamaño más pequeño: `grid grid-cols-1 lg:grid-cols-3` (en
+  Tailwind v4, `grid-cols-1` es `minmax(0, 1fr)`). En filas flex, el hijo que se recorta necesita `min-w-0`.
+- **Verificar:** abre la pantalla a 390 px de ancho con títulos largos.
+- **Ref:** [ADR-0054](../adr/0054-shell-responsive-en-tres-tamanos.md)
+
+### La imagen de un proyecto no carga, o carga y luego deja de cargar
+
+- **Síntoma:** una tarjeta enseña la inicial aunque el proyecto tiene imagen, o la imagen desaparece tras un día con la
+  app abierta.
+- **Causa:** la imagen se pinta con una URL firmada que caduca a las 24 h (`projectImageQuery`, con 12 h de vigencia en
+  react-query). Sin conexión no se puede pedir otra, y una URL caducada da error. En modo demo es un `blob:` que muere al
+  recargar.
+- **Solución:** es el comportamiento previsto: `ProjectAvatar` y `ProjectCover` caen a la inicial y el color si la imagen
+  falla (`onError`). No guardes la URL en ningún sitio (ni en la base de datos ni en estado propio): pide siempre
+  `projects.imageUrl(path)` a través de la consulta.
+- **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)

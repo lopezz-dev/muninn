@@ -1,6 +1,6 @@
 ---
 title: Moverte por Muninn
-description: La barra lateral, el dock del móvil, el buscador y la apariencia.
+description: La barra lateral, las pestañas del móvil, el buscador y la apariencia.
 order: 8
 status: parcial
 group: primeros-pasos
@@ -17,17 +17,27 @@ icon: compass
 A la izquierda tienes las secciones de los módulos que tienes activos (ver más abajo): **Inicio**, **Proyectos**, **Notas**,
 **Finanzas**, **Asistente**, **Noticias** y **GitHub**. Abajo están **Documentación** y **Ajustes**.
 
-En el apartado **Proyectos** aparecen tus proyectos con su color. Pulsa uno para abrir su tablero, o el
+En el apartado **Proyectos** aparecen tus proyectos con su logo o, si no tiene, su inicial y su color. Pulsa uno para abrir su tablero, o el
 botón **+** para crear otro.
 
 Al pie de la barra está tu cuenta, con tu nombre y tu foto (o tus iniciales). Púlsala para ir a
 **Ajustes › Cuenta**, donde puedes cerrar sesión.
 
-## En el móvil: el dock
+## En la tablet: la barra de iconos
 
-En pantallas pequeñas la barra lateral se convierte en un dock flotante. Al empezar tiene cuatro pestañas: **Inicio**,
-**Proyectos**, **Asistente** y **Más**; si activas Finanzas, se suma **Finanzas** junto al Asistente, que queda en el centro.
-La burbuja de color marca dónde estás.
+En una pantalla mediana, como un iPad en vertical, la barra lateral se queda en una columna estrecha con solo los
+iconos, para dejarle más sitio a lo que estás haciendo. Mantén el dedo o el ratón sobre un icono para ver su nombre.
+Tus proyectos no salen aquí: los tienes en **Proyectos**. Si giras el iPad o usas una pantalla más ancha, vuelve la
+barra completa.
+
+## En el móvil: las pestañas
+
+En el teléfono, abajo tienes las pestañas, cada una con su nombre: **Inicio**, **Proyectos** y **Más**, y
+**Finanzas** si lo tienes activado. La que está en color es donde estás. A la derecha, el botón con el logo de Muninn
+abre el [Asistente](11-asistente.md).
+
+Al bajar por una pantalla, la barra se encoge y deja solo la pestaña en la que estás, para que veas más. Sube un poco,
+o tócala, y vuelve entera.
 
 En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, tu cuenta, el buscador y los ajustes. Al pie
 verás la versión de Muninn. En el móvil,
@@ -35,10 +45,12 @@ verás la versión de Muninn. En el móvil,
 
 ## Inicio
 
-La primera pantalla te resume el día. Arriba, cuatro cifras: **Para hoy**, **En curso**, **Vencidas** y **Hechas · 7 días**.
-Debajo, tus tareas vencidas, las de hoy y las que has completado hoy; lo que tienes **en curso**; cada **proyecto** con su
-progreso («3 de 8»); una gráfica de los **últimos 7 días** y lo que vence en los **próximos días**. Con Finanzas activado, también
-ves los **Próximos cobros** de tus suscripciones. Marca la casilla de una
+La primera pantalla te resume el día: arriba, la fecha y una línea con lo importante («Nada vence hoy · 4 en curso»),
+y una franja con cuatro cifras: **Para hoy**, **En curso**, **Vencidas** y **Hechas · 7 días**. Debajo, tus tareas vencidas,
+las de hoy y las que has completado hoy (si no hay ninguna, verás «Día despejado» y cuál es tu siguiente tarea); lo que
+tienes **en curso**; lo que vence en los **próximos días** y aún no has empezado (lo que ya está en curso no se repite);
+cada **proyecto** con su progreso («3 de 8») y una gráfica de los **últimos 7 días**. Con Finanzas activado, también ves
+los **Próximos cobros** de tus suscripciones. Marca la casilla de una
 tarea para completarla; púlsala de nuevo para reabrirla. Si algo no aplica, verás un mensaje en su sitio (por ejemplo,
 «Nada vence hoy ni está atrasado»), no un hueco.
 
@@ -55,7 +67,7 @@ anchas) y los botones **Anterior** y **Siguiente**.
 ## Activar y desactivar módulos
 
 En **Ajustes › Módulos** eliges qué usas: **Tareas y proyectos**, **Notas**, **Finanzas**, **GitHub** y **Noticias**. Lo que
-desactives desaparece de la barra lateral, del dock del móvil, del centro **Más** y del buscador, y la tecla **N** deja de
+desactives desaparece de la barra lateral, de las pestañas del móvil, del centro **Más** y del buscador, y la tecla **N** deja de
 abrir «Nueva tarea» si desactivas las tareas. **No se borra nada**: al volver a activarlo, todo sigue donde estaba. Si abres un
 enlace a algo desactivado, Muninn te lo dice y te deja activarlo ahí mismo. Cada cambio avisa y se puede deshacer.
 
@@ -103,8 +115,8 @@ En **Ajustes › Apariencia**:
 
 - **Cristal:** activa o desactiva el desenfoque translúcido de paneles y menús. Si tu sistema tiene
   activado «Reducir transparencia», Muninn empieza sin cristal.
-- **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y la
-  burbuja del dock.
+- **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y el
+  botón del Asistente en el móvil.
 
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.

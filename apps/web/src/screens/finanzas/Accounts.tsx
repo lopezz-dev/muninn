@@ -384,7 +384,7 @@ export function Accounts({
           ))}
         </ul>
       </Card>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <CategoryList kind="expense" categories={categories} />
         <CategoryList kind="income" categories={categories} />
       </div>

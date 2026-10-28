@@ -15,7 +15,8 @@ import { clear, createStore, del, get, set, type UseStore } from 'idb-keyval'
  */
 
 /** Súbelo si cambia la forma de lo que se guarda en la caché: lo guardado con otra versión se descarta. */
-const CACHE_VERSION = 1
+// 2: el resumen (`overview`) trae estadísticas por proyecto nuevas (ADR-0055).
+const CACHE_VERSION = 2
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 const WRITE_EVERY_MS = 1500
 /** IndexedDB lenta o bloqueada no puede retrasar el arranque más que esto. */

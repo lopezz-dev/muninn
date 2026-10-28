@@ -6,8 +6,8 @@ import { fail, serial } from './mutations'
 import { keys } from './queries'
 
 /**
- * Activa o desactiva un módulo (`user_settings.enabled_modules`), con feedback y «Deshacer». El menú, el
- * dock y el buscador se actualizan al instante (la caché manda); si falla, vuelve a como estaba.
+ * Activa o desactiva un módulo (`user_settings.enabled_modules`), con feedback y «Deshacer». El menú,
+ * la barra de pestañas y el buscador se actualizan al instante (la caché manda); si falla, vuelve a como estaba.
  */
 export async function setModuleEnabled(
   m: Muninn,

@@ -18,7 +18,7 @@ import { AppShell } from './shell/AppShell'
 /**
  * Rutas de la app (ADR-0020). Cada pantalla es un chunk aparte (`lazyRouteComponent`) que se
  * precarga al pasar el ratón o enfocar su enlace (`defaultPreload: 'intent'`).
- * El shell (barra lateral, dock, ⌘K) va en el bundle inicial.
+ * El shell (barra lateral, barra de pestañas, ⌘K) va en el bundle inicial.
  */
 const rootRoute = createRootRoute({
   // Quién usa la app (ADR-0022). Memorizado: solo la primera navegación espera.

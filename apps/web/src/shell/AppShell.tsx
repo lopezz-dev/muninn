@@ -1,3 +1,4 @@
+import type { Project } from '@muninn/core'
 import { cn } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
@@ -6,10 +7,10 @@ import { typingIn } from '../lib/keyboard'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import { settingsQuery } from '../lib/queries'
-import { Dock } from './Dock'
 import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
+import { TabBar } from './TabBar'
 
 // Diferidos: los diálogos, la pantalla de «módulo desactivado» y el aviso de «sin conexión» no viajan con el shell.
 // El buscador se pide nada más pintar el shell (fuera del JS del arranque) y casi siempre está listo al abrirlo.
@@ -27,20 +28,26 @@ const MorningReportRunner = lazy(() =>
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
 )
-const NewProjectDialog = lazy(() =>
-  import('./NewProjectDialog').then((m) => ({ default: m.NewProjectDialog })),
+const ProjectDialog = lazy(() =>
+  import('./ProjectDialog').then((m) => ({ default: m.ProjectDialog })),
 )
 
 /**
- * Estructura común de todas las pantallas: barra lateral en escritorio, dock en móvil (< 768 px),
- * buscador ⌘K y diálogos globales. Las pantallas se cargan en diferido dentro de `<Outlet />`.
+ * Estructura común de todas las pantallas (ADR-0054): barra lateral completa en el ordenador (≥ 1024 px), raíl de
+ * iconos en tablet (768–1023 px) y barra de pestañas en el teléfono (< 768 px); buscador ⌘K y diálogos globales.
+ * Las pantallas se cargan en diferido dentro de `<Outlet />`.
  */
 export function AppShell() {
   const [palette, setPalette] = useState<{ open: boolean; query: string }>({
     open: false,
     query: '',
   })
-  const [newProject, setNewProject] = useState({ open: false, loaded: false })
+  const [projectDialog, setProjectDialog] = useState<{
+    open: boolean
+    loaded: boolean
+    /** El que se edita; sin él, se crea uno nuevo. */
+    project?: Project
+  }>({ open: false, loaded: false })
   const [newTask, setNewTask] = useState<{ open: boolean; preset: NewTaskPreset; loaded: boolean }>(
     {
       open: false,
@@ -56,14 +63,18 @@ export function AppShell() {
   const tasksOn = sectionEnabled('projects', modules)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
-  const openNewProject = useCallback(() => setNewProject({ open: true, loaded: true }), [])
+  const openNewProject = useCallback(() => setProjectDialog({ open: true, loaded: true }), [])
+  const openEditProject = useCallback(
+    (project: Project) => setProjectDialog({ open: true, loaded: true, project }),
+    [],
+  )
   const openNewTask = useCallback(
     (preset: NewTaskPreset = {}) => setNewTask({ open: true, preset, loaded: true }),
     [],
   )
   const api = useMemo<ShellApi>(
-    () => ({ openPalette, openNewProject, openNewTask }),
-    [openPalette, openNewProject, openNewTask],
+    () => ({ openPalette, openNewProject, openEditProject, openNewTask }),
+    [openPalette, openNewProject, openEditProject, openNewTask],
   )
 
   // ⌘K / Ctrl+K abre y cierra el buscador desde cualquier sitio, también dentro de un campo.
@@ -118,7 +129,7 @@ export function AppShell() {
       {/*
        * Escritorio: la ventana no hace scroll; lo hace <main> (ADR-0050). Así una pantalla puede medir justo el
        * alto de la ventana (`Page fit`) y llevar el scroll dentro de su lista. En el móvil sigue el scroll de la
-       * página, que es el que conocen Safari y el dock.
+       * página, que es el que conocen Safari y la barra de pestañas.
        */}
       <div className="flex min-h-dvh md:h-dvh">
         <Sidebar className="hidden md:flex" />
@@ -128,10 +139,12 @@ export function AppShell() {
           tabIndex={-1}
           data-scroll-restoration-id="contenido"
           className={cn(
-            'flex min-w-0 flex-1 flex-col px-5 pt-[calc(env(safe-area-inset-top)+28px)] outline-none md:overflow-y-auto md:px-8 md:pt-7 md:pb-8',
+            // overflow-x-clip: red de seguridad para que nada empuje la pantalla hacia los lados en el teléfono. No
+            // crea contenedor de scroll, así que los `sticky` siguen pegándose a la ventana.
+            'flex min-w-0 flex-1 flex-col px-5 max-md:overflow-x-clip pt-[calc(env(safe-area-inset-top)+24px)] outline-none md:overflow-y-auto md:px-7 md:pt-7 md:pb-8 lg:px-8',
             immersive
               ? 'pb-[calc(env(safe-area-inset-bottom)+104px)]'
-              : 'pb-[calc(env(safe-area-inset-bottom)+148px)]',
+              : 'pb-[calc(env(safe-area-inset-bottom)+112px)]',
           )}
         >
           {off ? (
@@ -142,7 +155,7 @@ export function AppShell() {
             <Outlet />
           )}
         </main>
-        {immersive ? null : <Dock className="md:hidden" />}
+        {immersive ? null : <TabBar className="md:hidden" />}
       </div>
       <Suspense fallback={null}>
         <CommandPalette
@@ -157,11 +170,12 @@ export function AppShell() {
           <MorningReportRunner />
         </Suspense>
       ) : null}
-      {newProject.loaded ? (
+      {projectDialog.loaded ? (
         <Suspense fallback={null}>
-          <NewProjectDialog
-            open={newProject.open}
-            onOpenChange={(open) => setNewProject((p) => ({ ...p, open }))}
+          <ProjectDialog
+            open={projectDialog.open}
+            project={projectDialog.project}
+            onOpenChange={(open) => setProjectDialog((p) => ({ ...p, open }))}
           />
         </Suspense>
       ) : null}
