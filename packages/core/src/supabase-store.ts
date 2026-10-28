@@ -115,6 +115,16 @@ class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q
     return fromRow<T>(data)
   }
 
+  async insertMany(rows: NewRow<T>[]) {
+    if (rows.length === 0) return []
+    // Un solo `insert … returning`: Postgres devuelve las filas en el orden de los valores.
+    const { data, error } = await this.from()
+      .insert(rows.map((row) => ({ ...toRow(row), owner_id: this.ownerId })))
+      .select('*')
+    if (error) throw error
+    return (data as Row[]).map((r) => fromRow<T>(r))
+  }
+
   async update(id: string, patch: Partial<NewRow<T>>) {
     const { data, error } = await this.from()
       .update(toRow(patch))
@@ -154,6 +164,13 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         .single()
       if (error) throw error
       return fromRow<Activity>(data)
+    },
+    async insertMany(rows) {
+      if (rows.length === 0) return
+      const { error } = await client
+        .from('activity')
+        .insert(rows.map((row) => ({ ...toRow(row), owner_id: ownerId })))
+      if (error) throw error
     },
     async list({ projectId, entityId, actions, since, limit = 50 }) {
       let qb = client.from('activity').select('*').eq('owner_id', ownerId)

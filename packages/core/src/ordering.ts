@@ -31,5 +31,9 @@ export function positionAt(
   return { position: keys[i] as string, rebalance }
 }
 
+/** `n` claves consecutivas detrás del último de `siblings` (ya ordenados): añadir al final nunca rebalancea. */
+export const positionsAfter = (siblings: Positioned[], n: number) =>
+  generateNKeysBetween(siblings.at(-1)?.position ?? null, null, n)
+
 /** `n` claves consecutivas para una lista nueva. */
 export const positionsFor = (n: number) => generateNKeysBetween(null, null, n)

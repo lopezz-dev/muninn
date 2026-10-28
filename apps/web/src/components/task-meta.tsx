@@ -2,6 +2,7 @@ import type { TaskPriority, TaskSource } from '@muninn/core'
 import { Chip, cn, Icon, icons } from '@muninn/ui'
 import { priorityLabel } from '../lib/board'
 import { type DueTone, dueLabel, dueTone } from '../lib/dates'
+import { externalLink } from '../lib/external-link'
 
 /** Piezas pequeñas de una tarea que comparten Inicio, el tablero y el detalle. */
 
@@ -102,9 +103,8 @@ export function SourceBadge({
     )
     return link && externalUrl ? (
       <a
+        {...externalLink(externalUrl)}
         href={externalUrl}
-        target="_blank"
-        rel="noreferrer"
         aria-label={n ? `Abrir la issue #${n} en GitHub` : 'Abrir la issue en GitHub'}
         className={cn(
           'inline-flex items-center gap-1 rounded-xs transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent',

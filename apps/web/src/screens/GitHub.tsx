@@ -7,6 +7,7 @@ import { EmptyState, Page, PageHeader } from '../components/Page'
 import { SelectMenu } from '../components/SelectMenu'
 import { canBeAgentColumn, setAgentColumn } from '../lib/agent'
 import { timeAgo } from '../lib/dates'
+import { externalLink } from '../lib/external-link'
 import { moveProjectRepo, pickProjectRepo, setProjectRepo } from '../lib/github'
 import {
   type AgentRun,
@@ -418,9 +419,7 @@ function RunLine({ run, projectId }: { run: AgentRun; projectId: string | undefi
         </span>
         {run.pr?.url ? (
           <a
-            href={run.pr.url}
-            target="_blank"
-            rel="noreferrer"
+            {...externalLink(run.pr.url)}
             className="flex items-center gap-0.5 text-accent hover:underline"
           >
             PR #{run.pr.number}

@@ -107,6 +107,16 @@ class MemoryCollection<T extends { id: string; createdAt: string; updatedAt: str
     return structuredClone(full)
   }
 
+  async insertMany(rows: NewRow<T>[]) {
+    const ts = this.now()
+    const full = rows.map(
+      (row) => ({ ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }) as unknown as T,
+    )
+    for (const r of full) this.rows.set(r.id, r)
+    if (full.length > 0) this.onChange()
+    return structuredClone(full)
+  }
+
   async update(id: string, patch: Partial<NewRow<T>>) {
     const current = this.rows.get(id)
     if (!current) throw new NotFoundError(this.name, id)
@@ -184,6 +194,11 @@ export function createMemoryStore(
       activity.push(full)
       changed()
       return structuredClone(full)
+    },
+    async insertMany(rows) {
+      const ts = now()
+      for (const row of rows) activity.push({ ...row, id: nextActivityId++, createdAt: ts })
+      if (rows.length > 0) changed()
     },
     async list({ projectId, entityId, actions, since, limit = 50 }) {
       return activity
