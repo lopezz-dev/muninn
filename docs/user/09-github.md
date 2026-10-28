@@ -3,6 +3,8 @@ title: GitHub
 description: Las issues de tus repositorios, como tareas de su proyecto.
 order: 9
 status: parcial
+group: modulos
+icon: github
 ---
 
 # GitHub

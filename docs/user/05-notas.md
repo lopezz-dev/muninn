@@ -3,6 +3,8 @@ title: Notas
 description: Apuntes en Markdown, sueltos o vinculados a proyectos y tareas.
 order: 5
 status: disponible
+group: tu-trabajo
+icon: notes
 ---
 
 # Notas
@@ -79,5 +81,11 @@ asistentes de IA tampoco.
 Claude y otros [asistentes](06-asistentes-ia.md) pueden crear, leer, buscar y editar tus notas por ti; lo que escriben
 aparece aquí igual que lo tuyo.
 
-> **Próximamente:** sincronizar al instante entre tus dispositivos (hoy, al volver a la pestaña se actualiza), enlaces entre
-> notas y buscar notas desde el buscador **⌘K**.
+Si activas el [informe de la mañana](11-asistente.md#informe-de-la-mañana), cada día te deja una **nota fijada** con tus
+tareas, los cobros próximos y el resumen de noticias.
+
+## En todos tus dispositivos
+
+Con cuenta, lo que escribes o cambias en un dispositivo aparece en los demás al momento, sin recargar.
+
+> **Próximamente:** enlaces entre notas y buscar notas desde el buscador **⌘K**.

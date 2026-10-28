@@ -3,6 +3,8 @@ title: Asistente
 description: Pregunta y pide cosas a Muninn con un modelo que corre en tu ordenador.
 order: 11
 status: parcial
+group: ia
+icon: assistant
 ---
 
 # Asistente
@@ -11,8 +13,8 @@ El **Asistente** es Muninn hablando contigo. Le preguntas por tus tareas, notas 
 haga cosas: crear una tarea, moverla, apuntar un gasto, escribir una nota… Lo encuentras en el menú, en el centro del
 dock del móvil y en el buscador (**Ctrl K** o **⌘ K**, escribe tu pregunta y elige **Preguntar a Muninn**).
 
-> **Estado:** la pantalla está lista, pero necesita **Ollama** y un modelo instalados en tu ordenador, y eso todavía no
-> está hecho. Mientras, en la **demo** puedes ver cómo funciona con respuestas guionizadas.
+> **Antes de empezar:** instala **Ollama** y un modelo en tu ordenador (ver [Instalar Ollama](#instalar-ollama)); sin eso, el
+> Asistente no puede contestar. En la **demo** puedes ver cómo funciona con respuestas guionizadas.
 
 ## Qué puedes pedirle
 
@@ -61,7 +63,7 @@ preguntas no sale de casa.
 
 - **En el ordenador** (la app de escritorio o el navegador): funciona en cuanto Ollama está abierto y tiene el modelo.
 - **En el iPhone:** no hay modelo, así que la pantalla te lo dice. Desde el móvil puedes usar Claude con el conector de
-  Muninn ([Asistentes de IA](06-asistentes-ia.md)). Lo que el asistente haya cambiado desde el ordenador lo ves igual en
+  Muninn ([Conectar Claude y otros](06-asistentes-ia.md#conectar-claude-ai)). Lo que el asistente haya cambiado desde el ordenador lo ves igual en
   el móvil.
 
 Si algo falta, la pantalla te dice qué es y cómo arreglarlo:

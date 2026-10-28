@@ -3,6 +3,8 @@ title: Finanzas
 description: Tus cuentas, gastos, ingresos y ahorro, con el saldo siempre al día.
 order: 10
 status: parcial
+group: modulos
+icon: finance
 ---
 
 # Finanzas
@@ -92,7 +94,7 @@ Una suscripción que ya no pagas se **archiva** (deja de avisar; sus cobros apun
 
 ## Con el asistente
 
-Si tienes un asistente conectado ([Asistentes de IA](06-asistentes-ia.md)), puedes decirle «He gastado 24,90 en el cine» o
+Si tienes un asistente conectado ([Conectar Claude y otros](06-asistentes-ia.md)), puedes decirle «He gastado 24,90 en el cine» o
 «¿Cuánto tengo en la hucha?», «¿Cómo voy este mes?», y también «¿Qué suscripciones me cobran esta semana?» o «Apunta el cobro de Spotify». Tampoco
 puede borrar nada: como mucho, archivar.
 
