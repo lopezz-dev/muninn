@@ -56,6 +56,9 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   adjuntar la foto de un ticket con «apunta este gasto» y comprobar que lo apunta bien. Con `qwen3:8b`, el aviso «no ve imágenes».
 - [ ] **Redesplegar `mcp`** (27-10): `categories.move` cuenta ahora dentro de su tipo (gastos o ingresos). Ninguna herramienta lo usa
   aún, pero el paquete del MCP lleva el core.
+- [ ] **Redesplegar `mcp`** (28-10): el servidor se presenta con `title` «Muninn» y el logo (`icons`, *data URI*) para que el conector de
+  claude.ai no salga con el icono de Supabase. Ya empaquetado con `pnpm --filter @muninn/mcp build:edge`; desplegar como arriba.
+  Se comprueba en el paso 7.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
@@ -165,7 +168,10 @@ Ya con la *Site URL* publicada:
 - [ ] Ajustes › Conectores › Añadir conector personalizado con la URL de `mcp`:
   - te lleva a `/oauth/consent`;
   - «Permitir acceso» vuelve a claude.ai;
-  - el conector lista tus proyectos.
+  - el conector lista tus proyectos;
+  - el conector sale con el logo de Muninn, no con el de Supabase (con el `mcp` redesplegado del paso 2; si ya estaba conectado,
+    quítalo y vuelve a añadirlo). Si sigue el de Supabase, apúntalo en [gotchas/mcp](gotchas/mcp.md#el-conector-sale-con-el-icono-de-supabase):
+    queda servir el MCP desde un dominio de Muninn, que necesita ADR.
 
   Si no consigue registrarse, el plan B son tokens personales de Muninn (Backlog).
 - [ ] Lo mismo desde la app de Claude en el iPhone.

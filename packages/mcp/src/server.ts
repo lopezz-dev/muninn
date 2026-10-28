@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { annotationsOf, catalog, isExpectedError } from '@muninn/assistant/tools'
 import type { Muninn } from '@muninn/core'
+import { MUNINN_ICON } from './icon'
 
 type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean }
 
@@ -26,7 +27,13 @@ const run = async (fn: () => Promise<unknown>): Promise<ToolResult> => {
  * (ADR-0009). Expone todo el catálogo, también lo de los módulos ocultos en la app (ADR-0028).
  */
 export function createMuninnMcpServer(app: Muninn) {
-  const server = new McpServer({ name: 'muninn', version: '0.2.0' })
+  // `title` e `icons` son lo que claude.ai pinta en el conector; sin ellos sale el favicon de supabase.co.
+  const server = new McpServer({
+    name: 'muninn',
+    title: 'Muninn',
+    version: '0.2.0',
+    icons: [MUNINN_ICON],
+  })
   // El MCP no ofrece «Deshacer»: los cambios que anotan las herramientas se ignoran.
   const ctx = { app, changed: () => {} }
   for (const tool of catalog) {
