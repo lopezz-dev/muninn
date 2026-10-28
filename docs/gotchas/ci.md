@@ -20,6 +20,15 @@
 - **Causa:** si `APPLE_CERTIFICATE` existe pero está vacío, Tauri intenta importarlo igualmente.
 - **Solución:** `release.yml` solo exporta las variables `APPLE_*` si el secreto tiene valor. Mantén ese patrón.
 
+### El Release PR falla en `pnpm lint` por `tauri.conf.json`
+
+- **Síntoma:** CI del Release PR de release-please en rojo en `biome check`: «Formatter would have printed…» en
+  `apps/desktop/src-tauri/tauri.conf.json`, con las listas `endpoints` y `targets` en una línea.
+- **Causa:** release-please sube la versión reescribiendo el JSON entero con una lista por línea; Biome, en cambio, junta en una
+  línea las listas que caben en 100 columnas.
+- **Solución:** `biome.json` formatea `tauri.conf.json` con `expand: "always"`, igual que lo escribe release-please. No quites ese
+  `override`.
+
 ### El back-merge a `develop` puede fallar
 
 - **Síntoma:** el job `back-merge` falla tras una release.
