@@ -43,6 +43,16 @@
   Mientras el repo sea privado, GitHub contesta 404 sin token, y la app calla.
 - **Solución:** hacer público el repo ([ADR-0046](../adr/0046-repo-publico-con-licencia-mit.md)) antes de la primera release.
 
+### La app instalada dice «Este build no tiene servidor»
+
+- **Síntoma:** el instalador de la release abre en la pantalla de entrada con «Enviar código» deshabilitado y solo ofrece el
+  modo demo. Pasó con la v0.2.0.
+- **Causa:** el frontend de escritorio se compila en `release.yml`, no en Vercel, y Vite solo mete en el bundle las
+  `VITE_SUPABASE_*` que haya en el entorno al compilar. `.env.local` no viaja con el repo.
+- **Solución:** variables de repositorio `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` (**Settings › Secrets and
+  variables › Actions › Variables**). `release.yml` las pasa a `tauri-action` y se para en «Comprobar las variables de Supabase» si
+  faltan. Van en variables y no en secretos porque son públicas: acaban dentro de la app igual que en la web.
+
 ### La release falla en «Comprobar la clave de firma del actualizador»
 
 - **Síntoma:** el job `desktop` de `release.yml` para en ese paso, sin compilar nada.
