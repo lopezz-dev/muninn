@@ -1,3 +1,4 @@
+import type { Project } from '@muninn/core'
 import { cn } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
@@ -27,8 +28,8 @@ const MorningReportRunner = lazy(() =>
 const NewTaskDialog = lazy(() =>
   import('./NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
 )
-const NewProjectDialog = lazy(() =>
-  import('./NewProjectDialog').then((m) => ({ default: m.NewProjectDialog })),
+const ProjectDialog = lazy(() =>
+  import('./ProjectDialog').then((m) => ({ default: m.ProjectDialog })),
 )
 
 /**
@@ -41,7 +42,12 @@ export function AppShell() {
     open: false,
     query: '',
   })
-  const [newProject, setNewProject] = useState({ open: false, loaded: false })
+  const [projectDialog, setProjectDialog] = useState<{
+    open: boolean
+    loaded: boolean
+    /** El que se edita; sin él, se crea uno nuevo. */
+    project?: Project
+  }>({ open: false, loaded: false })
   const [newTask, setNewTask] = useState<{ open: boolean; preset: NewTaskPreset; loaded: boolean }>(
     {
       open: false,
@@ -57,14 +63,18 @@ export function AppShell() {
   const tasksOn = sectionEnabled('projects', modules)
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
-  const openNewProject = useCallback(() => setNewProject({ open: true, loaded: true }), [])
+  const openNewProject = useCallback(() => setProjectDialog({ open: true, loaded: true }), [])
+  const openEditProject = useCallback(
+    (project: Project) => setProjectDialog({ open: true, loaded: true, project }),
+    [],
+  )
   const openNewTask = useCallback(
     (preset: NewTaskPreset = {}) => setNewTask({ open: true, preset, loaded: true }),
     [],
   )
   const api = useMemo<ShellApi>(
-    () => ({ openPalette, openNewProject, openNewTask }),
-    [openPalette, openNewProject, openNewTask],
+    () => ({ openPalette, openNewProject, openEditProject, openNewTask }),
+    [openPalette, openNewProject, openEditProject, openNewTask],
   )
 
   // ⌘K / Ctrl+K abre y cierra el buscador desde cualquier sitio, también dentro de un campo.
@@ -160,11 +170,12 @@ export function AppShell() {
           <MorningReportRunner />
         </Suspense>
       ) : null}
-      {newProject.loaded ? (
+      {projectDialog.loaded ? (
         <Suspense fallback={null}>
-          <NewProjectDialog
-            open={newProject.open}
-            onOpenChange={(open) => setNewProject((p) => ({ ...p, open }))}
+          <ProjectDialog
+            open={projectDialog.open}
+            project={projectDialog.project}
+            onOpenChange={(open) => setProjectDialog((p) => ({ ...p, open }))}
           />
         </Suspense>
       ) : null}

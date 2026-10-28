@@ -265,3 +265,15 @@
 
 - `news_items` es único por `(source_id, guid)`: si la fuente edita un artículo (título o resumen), Muninn conserva el primero. Es a
   propósito (el `guid` es lo estable). Si una fuente no da `guid` ni `id`, el enlace hace de id: si cambia el enlace, sale otro artículo.
+
+### Storage: la primera carpeta de la ruta es el dueño
+
+- **Síntoma:** subir una imagen de proyecto falla con `new row violates row-level security policy`, o
+  `createSignedUrl` devuelve `Object not found` aunque el archivo existe.
+- **Causa:** las políticas de `storage.objects` del bucket `project-images` comparan
+  `(storage.foldername(name))[1]` con `auth.uid()`. Una ruta que no empiece por el id del usuario no se puede escribir ni
+  leer, y con la service role key `auth.uid()` es `null`.
+- **Solución:** sube siempre con la sesión del usuario y con la ruta `<owner_id>/<project_id>/<archivo>`
+  (`projectImages.upload` en `supabase-store.ts` ya la construye). Un bucket nuevo necesita sus propias políticas en
+  una migración: Storage no hereda las de las tablas.
+- **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)

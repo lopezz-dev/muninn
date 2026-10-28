@@ -9,35 +9,64 @@ icon: projects
 
 # Proyectos y tablero
 
-> **Estado:** ya puedes crear proyectos, mover tareas arrastrándolas, personalizar las columnas y ver el tablero como
-> lista. Aún no se puede cambiar el nombre ni el color de un proyecto desde la app; la vista de calendario y el color de las
-> columnas llegarán más adelante. En modo demo,
-> sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
+> **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color e imagen), mover tareas arrastrándolas,
+> personalizar las columnas y ver el tablero como lista. La vista de calendario y el color de las columnas llegarán más
+> adelante. En modo demo, sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
 
 Un proyecto agrupa las tareas y notas de algo en lo que estás trabajando: una app, un cliente, una mudanza…
 
-En la pantalla **Proyectos** (en la barra lateral, o en las pestañas del móvil) ves todos los tuyos, cada uno con su color y
-su progreso: cuántas tareas llevas hechas de las que tiene, por ejemplo «3 de 8 hechas», y una barra. Pulsa uno para abrir su
-tablero.
+En la pantalla **Proyectos** (en la barra lateral, o en las pestañas del móvil) cada proyecto tiene su tarjeta con:
+
+- Su **imagen** y su **color**. En el ordenador y la tablet la imagen es la portada de la tarjeta; en el teléfono, el icono.
+  Sin imagen, verás la inicial del nombre sobre su color.
+- La **descripción**, si tiene. Si no, en el ordenador puedes pulsar **+ Añade una descripción**.
+- Una **barra de colores** con cuántas tareas hay en cada estado (backlog, pendientes, en curso, en revisión y hechas).
+- **Avisos** de un vistazo: las tareas vencidas, las que están en curso, las que tiene el agente y el repositorio de
+  GitHub. Si no hay nada que mirar, dice **Al día**.
+- **Lo próximo:** las dos tareas que vencen antes (una en el teléfono).
+- Cuándo fue la **última actividad**, y un botón **+ Tarea** para crear una directamente en ese proyecto.
+
+Arriba ves cuántos proyectos tienes, cuántas tareas abiertas y cuántas vencidas. Puedes filtrar (**Todos**, **Con
+vencidas** y, con GitHub activado, **Con GitHub**), ordenar por **urgencia**, **actividad reciente** o **nombre**, y buscar
+por nombre en el ordenador. Al final, **Archivados** guarda los proyectos que archivaste: ábrelo y pulsa **Recuperar** para
+traer uno de vuelta.
+
+Pulsa una tarjeta para abrir su tablero.
 
 ### Crear un proyecto
 
 Pulsa **Nuevo proyecto** (en Proyectos o en Inicio), el **+** de la barra lateral, o busca «nuevo proyecto» con **⌘K** /
-**Ctrl K**. Escribe el **nombre**, elige un **color** y pulsa **Crear proyecto**: se abre su tablero con cinco columnas.
-Si te equivocas, **Deshacer** en el aviso lo archiva.
+**Ctrl K**. Escribe el **nombre** y, si quieres, una **descripción**, elige un **color** y una **imagen**, y pulsa **Crear
+proyecto**: se abre su tablero con cinco columnas. Si te equivocas, **Deshacer** en el aviso lo archiva.
 
-Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle también una descripción, que se ve en la
-lista.
+### Editar un proyecto
+
+Pulsa el lápiz de su tarjeta (**Editar** en el teléfono) o, en el tablero, **⋯ › Editar proyecto**. Puedes cambiar el
+nombre, la descripción, el color y la imagen. Cada cambio avisa al guardarlo y tiene **Deshacer**.
+
+Sobre la **imagen**:
+
+- Puede ser una foto o un archivo JPG, PNG o WebP. Muninn la reduce en tu dispositivo antes de subirla, así que no
+  importa que sea una foto grande del móvil.
+- **Quitar** la deja sin imagen; **Deshacer** en el aviso la recupera.
+- Solo la ves tú: se guarda en tu cuenta, en privado. Sin conexión, verás la inicial y el color en su lugar.
+- En modo demo la imagen se pierde al recargar, como lo demás.
+
+Desde aquí también puedes **archivar** el proyecto.
+
+Si un [asistente de IA](06-asistentes-ia.md) crea el proyecto por ti, puede ponerle una descripción, pero no una imagen.
 
 ### El menú del proyecto
 
 En el tablero, el menú **⋯** de arriba tiene:
 
+- **Editar proyecto:** nombre, descripción, color e imagen.
 - **Nueva columna:** añade una columna al final.
 - **Copiar enlace:** copia la dirección del tablero, para abrirlo directamente o guardarlo.
-- **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera.
+- **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera, y también
+  **Proyectos › Archivados**.
 
 ### Vincular un repositorio de GitHub
 

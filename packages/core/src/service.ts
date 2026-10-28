@@ -33,6 +33,8 @@ import {
   type NoteQuery,
   noteQuery,
   type OutboxKind,
+  PROJECT_IMAGE_MAX_BYTES,
+  PROJECT_IMAGE_TYPES,
   type Project,
   type Task,
   type TaskQuery,
@@ -149,10 +151,21 @@ export interface OverviewReport {
     id: string
     name: string
     color: string
+    description: string
+    imagePath: string | null
+    githubRepo: string | null
     open: number
     inProgress: number
     overdue: number
     done: number
+    /** Abiertas por tipo de columna (las hechas van en `done`). */
+    byKind: Record<Exclude<ColumnKind, 'done'>, number>
+    /** Abiertas en la columna del agente (ADR-0032). */
+    agent: number
+    /** Lo último que pasó en el proyecto (actividad), o su última edición si no hay actividad. */
+    lastActivityAt: string
+    /** Las dos próximas abiertas: primero con fecha (las vencidas antes), luego sin fecha por orden del tablero. */
+    next: TaskWithColumn[]
   }[]
   overdue: (TaskWithColumn & { projectName: string })[]
   dueToday: (TaskWithColumn & { projectName: string })[]
@@ -167,6 +180,12 @@ export interface OverviewReport {
 }
 
 export type Muninn = ReturnType<typeof createMuninn>
+
+/** La ruta es de una imagen del proyecto `id`: `<id>/<archivo>`, quizá tras la carpeta del dueño. */
+export const isImageOf = (id: string, imagePath: string) => {
+  const parts = imagePath.split('/')
+  return parts.length >= 2 && parts.at(-2) === id && /^[\w.-]+$/.test(parts.at(-1) ?? '')
+}
 
 /**
  * API de dominio de Muninn. Todo cliente (UI, MCP, agentes, sync de GitHub) pasa por aquí:
@@ -263,6 +282,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       description: data.description ?? '',
       color: data.color ?? 'blue',
       icon: data.icon ?? null,
+      imagePath: null,
       githubRepo: data.githubRepo ?? null,
       agentColumnId: null,
       status: 'active',
@@ -301,6 +321,40 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     const project = await store.projects.update(id, patch)
     await log('project', id, patch.status === 'archived' ? 'archived' : 'updated', id, patch)
     return project
+  }
+
+  /**
+   * Imagen del proyecto (ADR-0055). Llega ya reducida desde la app. La anterior no se borra del almacén: así «Deshacer»
+   * puede volver a ella (`restoreImage`).
+   */
+  async function setProjectImage(id: string, image: Blob) {
+    await getProject(id)
+    if (!store.projectImages) throw new ValidationError('Este almacenamiento no guarda imágenes')
+    if (!(PROJECT_IMAGE_TYPES as readonly string[]).includes(image.type)) {
+      throw new ValidationError('La imagen debe ser JPG, PNG o WebP')
+    }
+    if (image.size > PROJECT_IMAGE_MAX_BYTES) throw new ValidationError('La imagen pesa demasiado')
+    const imagePath = await store.projectImages.upload(id, image)
+    const project = await store.projects.update(id, { imagePath })
+    await log('project', id, 'updated', id, { imagePath })
+    return project
+  }
+
+  /** Vuelve a una imagen que ya tuvo el proyecto (o a ninguna, con `null`): para «Deshacer» y «Quitar». */
+  async function restoreProjectImage(id: string, imagePath: string | null) {
+    await getProject(id)
+    // Solo rutas de este proyecto: `…/<id>/<archivo>`.
+    if (imagePath !== null && !isImageOf(id, imagePath)) {
+      throw new ValidationError('Esa imagen no es de este proyecto')
+    }
+    const project = await store.projects.update(id, { imagePath })
+    await log('project', id, 'updated', id, { imagePath })
+    return project
+  }
+
+  /** URL para pintar la imagen; `null` si el almacén no guarda imágenes. */
+  async function projectImageUrl(imagePath: string) {
+    return store.projectImages ? store.projectImages.url(imagePath) : null
   }
 
   async function moveProject(id: string, index: number) {
@@ -1016,14 +1070,37 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       const open = tasks.filter((t) => t.column.kind !== 'done')
       const overdue = open.filter((t) => t.dueDate && t.dueDate < t0)
       const active = open.filter((t) => OPEN_ACTIVE_KINDS.includes(t.column.kind))
+      const count = (kind: ColumnKind) => open.filter((t) => t.column.kind === kind).length
+      const [last] = await store.activity.list({ projectId: p.id, limit: 1 })
+      const position = new Map([...cols.values()].map((c) => [c.id, c.position]))
+      const byBoard = (a: TaskWithColumn, b: TaskWithColumn) =>
+        (position.get(a.columnId) ?? '').localeCompare(position.get(b.columnId) ?? '') ||
+        a.position.localeCompare(b.position)
       report.projects.push({
         id: p.id,
         name: p.name,
         color: p.color,
+        description: p.description,
+        imagePath: p.imagePath ?? null,
+        githubRepo: p.githubRepo,
         open: open.length,
         inProgress: active.length,
         overdue: overdue.length,
         done: tasks.length - open.length,
+        byKind: {
+          backlog: count('backlog'),
+          todo: count('todo'),
+          in_progress: count('in_progress'),
+          review: count('review'),
+        },
+        agent: p.agentColumnId ? open.filter((t) => t.columnId === p.agentColumnId).length : 0,
+        lastActivityAt: last?.createdAt ?? p.updatedAt,
+        next: [
+          ...open
+            .filter((t) => t.dueDate)
+            .sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')),
+          ...open.filter((t) => !t.dueDate).sort(byBoard),
+        ].slice(0, 2),
       })
       report.overdue.push(...overdue)
       report.dueToday.push(...open.filter((t) => t.dueDate === t0))
@@ -1083,6 +1160,11 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       update: updateProject,
       move: moveProject,
       archive: (id: string) => updateProject(id, { status: 'archived' }),
+      /** Si este almacenamiento guarda imágenes de proyecto (la UI esconde el selector si no). */
+      imagesEnabled: Boolean(store.projectImages),
+      setImage: setProjectImage,
+      restoreImage: restoreProjectImage,
+      imageUrl: projectImageUrl,
       status: projectStatus,
     },
     columns: {

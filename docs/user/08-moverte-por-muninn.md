@@ -17,7 +17,7 @@ icon: compass
 A la izquierda tienes las secciones de los módulos que tienes activos (ver más abajo): **Inicio**, **Proyectos**, **Notas**,
 **Finanzas**, **Asistente**, **Noticias** y **GitHub**. Abajo están **Documentación** y **Ajustes**.
 
-En el apartado **Proyectos** aparecen tus proyectos con su color. Pulsa uno para abrir su tablero, o el
+En el apartado **Proyectos** aparecen tus proyectos con su imagen o, si no tiene, su inicial y su color. Pulsa uno para abrir su tablero, o el
 botón **+** para crear otro.
 
 Al pie de la barra está tu cuenta, con tu nombre y tu foto (o tus iniciales). Púlsala para ir a

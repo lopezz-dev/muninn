@@ -8,6 +8,7 @@ import type {
   NewsSource,
   UserSettings,
 } from './schemas'
+import { imageExt } from './schemas'
 import {
   type AccountStoreQuery,
   type ActivityLog,
@@ -55,6 +56,9 @@ export const ilikeExact = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
 /** Quita los caracteres con significado en los filtros `or()` de PostgREST y en LIKE. */
 const likeTerm = (s: string) => `%${s.replace(/[,()*"\\%_]/g, ' ').trim()}%`
+
+/** Bucket de Storage de las imágenes de proyecto (migración 20261028120000_project_images). */
+const PROJECT_IMAGES_BUCKET = 'project-images'
 
 /** Filas por petición: el `max-rows` por defecto de PostgREST en Supabase. */
 const PAGE = 1000
@@ -339,11 +343,32 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Imágenes de proyecto (ADR-0055): bucket privado `project-images`; la primera carpeta es el dueño (la política RLS
+  // de Storage lo exige). Se leen con URL firmadas de un día: la app las pide cuando las pinta, nunca las guarda.
+  const projectImages = {
+    async upload(projectId: string, image: Blob) {
+      const path = `${ownerId}/${projectId}/${crypto.randomUUID()}.${imageExt(image.type)}`
+      const { error } = await client.storage
+        .from(PROJECT_IMAGES_BUCKET)
+        .upload(path, image, { contentType: image.type, cacheControl: '31536000' })
+      if (error) throw error
+      return path
+    },
+    async url(path: string) {
+      const { data, error } = await client.storage
+        .from(PROJECT_IMAGES_BUCKET)
+        .createSignedUrl(path, 60 * 60 * 24)
+      if (error) throw error
+      return data.signedUrl
+    },
+  }
+
   return {
     activity,
     settings,
     githubOutbox,
     githubRepos,
+    projectImages,
     newsSources: col<NewsSource, { includeArchived?: boolean }>(
       'news_sources',
       'Fuente',

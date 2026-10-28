@@ -3,6 +3,7 @@ import {
   createMemoryStore,
   createMuninn,
   DEFAULT_COLUMNS,
+  isImageOf,
   positionAt,
   ValidationError,
   withActor,
@@ -187,6 +188,67 @@ describe('informes', () => {
     expect(o.completedByDay.at(-1)).toEqual({ date: '2026-10-19', count: 1 })
     expect(o.completedByDay.at(-2)).toEqual({ date: '2026-10-18', count: 1 })
     expect(o.projects[0]?.done).toBe(1)
+  })
+})
+
+describe('proyectos: estadísticas e imagen', () => {
+  it('overview cuenta por tipo de columna, el agente, lo próximo y la última actividad', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P', description: 'De qué va' })
+    const cols = await app.columns.list(p.id)
+    const of = (kind: string) => cols.find((c) => c.kind === kind)?.id
+    await app.tasks.create({ projectId: p.id, title: 'sin fecha', columnId: of('backlog') })
+    await app.tasks.create({ projectId: p.id, title: 'vencida', dueDate: '2026-10-10' })
+    await app.tasks.create({ projectId: p.id, title: 'pronto', dueDate: '2026-10-21' })
+    await app.tasks.create({ projectId: p.id, title: 'revisar', columnId: of('review') })
+    await app.tasks.create({ projectId: p.id, title: 'agente', columnId: of('in_progress') })
+    await app.projects.update(p.id, { agentColumnId: of('in_progress') })
+    const hecha = await app.tasks.create({ projectId: p.id, title: 'hecha' })
+    clock = new Date('2026-10-19T12:00:00Z')
+    await app.tasks.complete(hecha.id)
+
+    const [s] = (await app.overview()).projects
+    expect(s?.description).toBe('De qué va')
+    expect(s?.byKind).toEqual({ backlog: 1, todo: 2, in_progress: 1, review: 1 })
+    expect(s?.done).toBe(1)
+    expect(s?.agent).toBe(1)
+    expect(s?.next.map((t) => t.title)).toEqual(['vencida', 'pronto'])
+    expect(s?.lastActivityAt).toBe('2026-10-19T12:00:00.000Z')
+  })
+
+  it('guarda la imagen, la quita y vuelve a ella con «Deshacer»', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    expect(app.projects.imagesEnabled).toBe(true)
+    const withImage = await app.projects.setImage(p.id, new Blob(['x'], { type: 'image/webp' }))
+    const path = withImage.imagePath
+    expect(path).toMatch(new RegExp(`^${p.id}/[\\w-]+\\.webp$`))
+    expect(await app.projects.imageUrl(path as string)).toMatch(/^blob:/)
+
+    expect((await app.projects.restoreImage(p.id, null)).imagePath).toBeNull()
+    expect((await app.projects.restoreImage(p.id, path)).imagePath).toBe(path)
+  })
+
+  it('rechaza imágenes que no lo son, demasiado grandes o de otro proyecto', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const q = await app.projects.create({ name: 'Q' })
+    await expect(
+      app.projects.setImage(p.id, new Blob(['x'], { type: 'text/plain' })),
+    ).rejects.toThrow(ValidationError)
+    const big = new Blob([new Uint8Array(3 * 1024 * 1024)], { type: 'image/jpeg' })
+    await expect(app.projects.setImage(p.id, big)).rejects.toThrow(ValidationError)
+    const other = (await app.projects.setImage(q.id, new Blob(['x'], { type: 'image/png' })))
+      .imagePath as string
+    await expect(app.projects.restoreImage(p.id, other)).rejects.toThrow(ValidationError)
+    await expect(app.projects.restoreImage(p.id, `${p.id}/../x`)).rejects.toThrow(ValidationError)
+  })
+
+  it('isImageOf acepta la ruta con la carpeta del dueño de Supabase', () => {
+    expect(isImageOf('p1', 'owner/p1/a.jpg')).toBe(true)
+    expect(isImageOf('p1', 'p1/a.jpg')).toBe(true)
+    expect(isImageOf('p1', 'p2/a.jpg')).toBe(false)
+    expect(isImageOf('p1', 'p1/a/b.jpg')).toBe(false)
   })
 })
 

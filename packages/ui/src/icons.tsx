@@ -36,6 +36,7 @@ import {
   Palette,
   Paperclip,
   PaperPlaneTilt,
+  PencilSimple,
   Plus,
   PushPin,
   Repeat,
@@ -105,6 +106,7 @@ export const icons = {
   warning: WarningCircle,
   image: ImageSquare,
   attach: Paperclip,
+  edit: PencilSimple,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons

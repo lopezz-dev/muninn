@@ -64,6 +64,16 @@ export interface Store {
    * Repos a los que llega el token de la sincronización. Solo lo sabe el store de Supabase (se lo pregunta
    * a la Edge Function `github`, que es quien tiene el token); sin él, la UI pide el repo a mano.
    */
+  /**
+   * Imágenes de proyecto (ADR-0055). Supabase las guarda en Storage y la memoria las tiene mientras dura la sesión; un
+   * store sin ellas (el fichero local del MCP) no las ofrece y la UI no enseña el selector.
+   */
+  projectImages?: {
+    /** Guarda la imagen y devuelve su ruta, que empieza por `<projectId>/` (en Supabase, tras la carpeta del dueño). */
+    upload(projectId: string, image: Blob): Promise<string>
+    /** URL para pintarla. En Supabase es firmada y caduca: no la guardes. */
+    url(path: string): Promise<string>
+  }
   githubRepos?: {
     list(): Promise<GithubRepoSummary[]>
     /** Si el token puede escribir issues en `repo` (los públicos salen en la lista aunque no pueda). */

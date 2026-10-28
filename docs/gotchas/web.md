@@ -551,3 +551,15 @@
   Tailwind v4, `grid-cols-1` es `minmax(0, 1fr)`). En filas flex, el hijo que se recorta necesita `min-w-0`.
 - **Verificar:** abre la pantalla a 390 px de ancho con títulos largos.
 - **Ref:** [ADR-0054](../adr/0054-shell-responsive-en-tres-tamanos.md)
+
+### La imagen de un proyecto no carga, o carga y luego deja de cargar
+
+- **Síntoma:** una tarjeta enseña la inicial aunque el proyecto tiene imagen, o la imagen desaparece tras un día con la
+  app abierta.
+- **Causa:** la imagen se pinta con una URL firmada que caduca a las 24 h (`projectImageQuery`, con 12 h de vigencia en
+  react-query). Sin conexión no se puede pedir otra, y una URL caducada da error. En modo demo es un `blob:` que muere al
+  recargar.
+- **Solución:** es el comportamiento previsto: `ProjectAvatar` y `ProjectCover` caen a la inicial y el color si la imagen
+  falla (`onError`). No guardes la URL en ningún sitio (ni en la base de datos ni en estado propio): pide siempre
+  `projects.imageUrl(path)` a través de la consulta.
+- **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)

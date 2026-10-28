@@ -243,7 +243,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [x] Fase 1 ([ADR-0054](adr/0054-shell-responsive-en-tres-tamanos.md)): barra de pestañas con el logo de Muninn para el Asistente
     (teléfono), raíl de iconos (tablet), barra lateral completa (≥ 1024 px); Inicio sin desbordarse, con una franja de números,
     «Día despejado» y sin tareas repetidas; rejillas con columnas declaradas en Finanzas, Proyectos y Cuentas
-  - [ ] Fase 2: Proyectos y tablero (cabecera con «‹ Proyectos», columnas como chips, «Añadir» dentro de la columna)
+  - [x] Fase 2a: Proyectos en tres tamaños (tarjetas con portada, barra por estados, avisos, lo próximo y actividad; filtros,
+    orden y Archivados con «Recuperar»), editar proyecto (nombre, descripción, color e imagen) desde la tarjeta y el tablero, e
+    imagen de proyecto en Storage ([ADR-0055](adr/0055-imagen-de-proyecto-en-storage.md)). Migración
+    `20261028120000_project_images` aplicada el 28 de octubre
+  - [ ] Fase 2b: tablero en el teléfono (cabecera con «‹ Proyectos», columnas como chips, «Añadir» dentro de la columna)
   - [ ] Fase 3: detalle de tarea con las acciones abajo, al alcance del pulgar; nueva tarea y nuevo movimiento como hojas
   - [ ] Fase 4: Finanzas, Notas, Más y el Asistente como hoja; repasar todas las pantallas a 390, 820 y 1280 px
 

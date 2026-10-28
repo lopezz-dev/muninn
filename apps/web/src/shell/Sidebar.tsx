@@ -1,7 +1,8 @@
-import { Avatar, ColorDot, cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
+import { Avatar, cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { ProjectAvatar } from '../components/ProjectAvatar'
 import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
 import { overviewQuery, projectsQuery } from '../lib/queries'
@@ -138,7 +139,7 @@ export function Sidebar({ className }: { className?: string }) {
                 params={{ projectId: p.id }}
                 className="flex h-[30px] items-center gap-2.5 rounded-md px-2.5 text-sm text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-raised data-[status=active]:text-fg"
               >
-                <ColorDot color={p.color} />
+                <ProjectAvatar project={p} size="xs" />
                 <span className="truncate">{p.name}</span>
                 {openCount.get(p.id) ? (
                   <span className="ml-auto text-xs text-fg-faint tabular">

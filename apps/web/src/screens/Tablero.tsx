@@ -1,6 +1,5 @@
 import {
   Button,
-  ColorDot,
   cn,
   copyText,
   Icon,
@@ -19,6 +18,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link, Outlet, useMatch, useNavigate } from '@tanstack/react-router'
 import { lazy, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
+import { ProjectAvatar } from '../components/ProjectAvatar'
 import {
   activeGroups,
   type BoardFilter,
@@ -155,7 +155,7 @@ export function Tablero() {
       </nav>
       <PageHeader
         title={p.name}
-        leading={<ColorDot color={p.color} className="size-3" />}
+        leading={<ProjectAvatar project={p} size="sm" />}
         description={p.description || undefined}
         actions={
           <>
@@ -206,6 +206,9 @@ export function Tablero() {
                 />
               </MenuTrigger>
               <MenuContent>
+                <MenuItem icon={<icons.edit />} onSelect={() => shell.openEditProject(p)}>
+                  Editar proyecto
+                </MenuItem>
                 <MenuItem icon={<icons.plus />} onSelect={() => setNewColumn(true)}>
                   Nueva columna
                 </MenuItem>
