@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/lopezz-dev/muninn/compare/v0.2.1...v0.3.0) (2026-10-28)
+
+
+### Features
+
+* **web:** rediseño de Ajustes con grupos, buscador y restablecer ([bad1ba4](https://github.com/lopezz-dev/muninn/commit/bad1ba454550a33baa83f39fa577bc9c2d24eedf))
+* **web:** rediseño de Documentación con portada, grupos e iconos ([f8bd09b](https://github.com/lopezz-dev/muninn/commit/f8bd09bb15ac8642aebd190f09d01bd6cbea83dc))
+
 ## [0.2.1](https://github.com/lopezz-dev/muninn/compare/v0.2.0...v0.2.1) (2026-10-28)
 
 
