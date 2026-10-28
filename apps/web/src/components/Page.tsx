@@ -10,11 +10,16 @@ interface PageHeaderProps {
   leading?: ReactNode
 }
 
-/** Cabecera de pantalla. También fija el título del documento («Notas · Muninn»). */
-export function PageHeader({ title, description, actions, leading }: PageHeaderProps) {
+/** Fija el título del documento («Notas · Muninn»). Para pantallas con cabecera propia. */
+export function useDocumentTitle(title: string) {
   useEffect(() => {
     document.title = `${title} · Muninn`
   }, [title])
+}
+
+/** Cabecera de pantalla. También fija el título del documento («Notas · Muninn»). */
+export function PageHeader({ title, description, actions, leading }: PageHeaderProps) {
+  useDocumentTitle(title)
   return (
     <header className="flex flex-wrap items-end gap-4">
       <div className="flex min-w-0 flex-col gap-1.5">

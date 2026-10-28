@@ -7,13 +7,15 @@ import {
   ColorDot,
   cn,
   Icon,
+  IconButton,
+  icons,
   Kbd,
   ProgressBar,
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
+import { EmptyState, Ghost, Page, useDocumentTitle } from '../components/Page'
 import { DueDate, PriorityFlag } from '../components/task-meta'
 import { clock, weekdayShort } from '../lib/dates'
 import { useEnabledModules } from '../lib/modules'
@@ -45,20 +47,20 @@ function Stat({
   tone?: 'danger'
 }) {
   return (
-    <Card className="flex flex-col gap-2 px-4 py-3.5">
-      <span className="text-xs font-medium text-fg-subtle">{label}</span>
+    <div className="flex min-w-0 flex-col gap-1.5 px-3 py-3 md:px-4 md:py-3.5">
       <span
         className={cn(
-          'text-[26px] leading-none font-semibold tracking-tight tabular',
+          'text-[22px] leading-none font-semibold tracking-tight tabular md:text-[26px]',
           tone === 'danger' && value > 0 && 'text-danger',
         )}
       >
         {value}
         {total !== undefined && total > value ? (
-          <span className="text-md font-medium text-fg-subtle"> / {total}</span>
+          <span className="text-sm font-medium text-fg-subtle md:text-md"> / {total}</span>
         ) : null}
       </span>
-    </Card>
+      <span className="text-xs leading-tight font-medium text-pretty text-fg-subtle">{label}</span>
+    </div>
   )
 }
 
@@ -90,14 +92,16 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
         <Link
           to="/proyectos/$projectId/tareas/$taskId"
           params={{ projectId: task.projectId, taskId: task.id }}
+          // La fila se adapta al ancho de su tarjeta (`@container`), no al de la pantalla: en una tarjeta estrecha
+          // (teléfono, tablet o la columna de «En curso») el título ocupa hasta dos líneas y los datos van debajo.
           className={cn(
-            'truncate text-md md:text-base',
+            'line-clamp-2 text-md @md:line-clamp-1 md:text-base',
             checked ? 'text-fg-subtle line-through' : 'text-fg',
           )}
         >
           {task.title}
         </Link>
-        <span className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-fg-subtle md:hidden">
+        <span className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-fg-subtle @md:hidden">
           <span className="inline-flex items-center gap-1.5">
             <ColorDot color={color} />
             {task.projectName}
@@ -110,7 +114,7 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
           ) : null}
         </span>
       </span>
-      <span className="hidden shrink-0 items-center gap-2.5 text-xs text-fg-subtle md:flex">
+      <span className="hidden shrink-0 items-center gap-2.5 text-xs text-fg-subtle @md:flex">
         <span className="inline-flex items-center gap-1.5">
           <ColorDot color={color} />
           {task.projectName}
@@ -128,6 +132,50 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
       </span>
       {done ? null : <PriorityFlag priority={task.priority} className="shrink-0" />}
     </li>
+  )
+}
+
+/** «Mis tareas» sin nada para hoy: en vez de un hueco, qué viene después. */
+function Clear({ next, today }: { next?: Task; today: string }) {
+  return (
+    <div className="border-t border-border-subtle">
+      <div className="flex items-center gap-3.5 px-4 py-4">
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-success-soft text-success">
+          <Icon name="check" size={20} />
+        </span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-md font-semibold">Día despejado</span>
+          <span className="text-sm text-fg-muted">Nada vence hoy ni está atrasado.</span>
+        </span>
+      </div>
+      {next ? (
+        <Link
+          to="/proyectos/$projectId/tareas/$taskId"
+          params={{ projectId: next.projectId, taskId: next.id }}
+          className="flex items-center gap-3 border-t border-border-subtle px-4 py-3 transition-colors hover:bg-surface-hover/60"
+        >
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-fg-subtle">
+              Lo siguiente
+              {next.dueDate ? (
+                <>
+                  {' · '}
+                  <DueDate due={next.dueDate} today={today} />
+                </>
+              ) : null}
+            </span>
+            <span className="text-md max-md:line-clamp-2 md:truncate md:text-base">
+              {next.title}
+            </span>
+          </span>
+          <icons.chevronRight aria-hidden="true" className="shrink-0 text-fg-faint" />
+        </Link>
+      ) : (
+        <p className="border-t border-border-subtle px-4 py-3 text-sm text-fg-muted">
+          Cuando pongas fechas a tus tareas, aparecerán aquí por urgencia.
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -153,6 +201,8 @@ export function Inicio() {
   // Con Finanzas oculta no se pregunta por cobros (ADR-0028); mientras no se sepa, tampoco.
   const financeOn = modules?.has('finance') ?? false
   const projectCount = data?.projects.length ?? 0
+  const title = name ? `${greeting(now.getHours())}, ${name}` : greeting(now.getHours())
+  useDocumentTitle(title)
   const totalTasks = data?.projects.reduce((n, p) => n + p.open + p.done, 0) ?? 0
 
   const toggle = async (task: Task, done: boolean) => {
@@ -180,6 +230,27 @@ export function Inicio() {
     ))
 
   const todayTasks = data ? [...data.overdue, ...data.dueToday] : []
+  // Lo que ya está en curso sale en su tarjeta: en «Próximos días» no se repite.
+  const inProgressIds = new Set(data?.inProgress.map((t) => t.id))
+  const upcoming = data?.upcoming.filter((t) => !inProgressIds.has(t.id)) ?? []
+  const summary = data
+    ? [
+        data.overdue.length
+          ? data.overdue.length === 1
+            ? '1 vencida'
+            : `${data.overdue.length} vencidas`
+          : null,
+        data.dueToday.length
+          ? data.dueToday.length === 1
+            ? '1 tarea para hoy'
+            : `${data.dueToday.length} tareas para hoy`
+          : null,
+        data.overdue.length || data.dueToday.length ? null : 'Nada vence hoy',
+        data.inProgress.length ? `${data.inProgress.length} en curso` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : ''
   const doneToday = data?.completedTodayTasks ?? []
   const dueTodayDone = doneToday.filter((t) => t.dueDate === today).length
   const week = data?.completedByDay ?? []
@@ -203,44 +274,46 @@ export function Inicio() {
   return (
     // lg: el panel mide la ventana; cada tarjeta lleva el scroll de su lista (ADR-0050).
     <Page className="lg:min-h-0">
-      <PageHeader
-        title={name ? `${greeting(now.getHours())}, ${name}` : greeting(now.getHours())}
-        description={
-          <>
-            {`${date.charAt(0).toUpperCase()}${date.slice(1)}`}
-            {data && projectCount > 0 ? (
-              <>
-                {' · '}
-                {data.dueToday.length === 1
-                  ? '1 tarea para hoy'
-                  : `${data.dueToday.length} tareas para hoy`}
-                {data.overdue.length > 0
-                  ? ` · ${data.overdue.length === 1 ? '1 vencida' : `${data.overdue.length} vencidas`}`
-                  : ''}
-              </>
-            ) : null}
-          </>
-        }
-        actions={
-          <>
-            <Button asChild>
-              <Link to="/asistente">
-                <Icon name="assistant" className="text-accent" />
-                Preguntar a Muninn
-              </Link>
-            </Button>
-            {projectCount > 0 ? newTask : newProject}
-          </>
-        }
-      />
+      <header className="flex items-start gap-3 md:items-end md:gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="text-xs font-semibold tracking-wider text-fg-subtle uppercase">{date}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
+          {projectCount > 0 && summary ? (
+            <p className="text-base text-fg-muted">{summary}</p>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 gap-2 md:hidden">
+          <IconButton
+            variant="secondary"
+            size="lg"
+            aria-label="Buscar o preguntar"
+            icon={<Icon name="search" size={20} />}
+            onClick={() => shell.openPalette()}
+          />
+          <IconButton
+            variant="primary"
+            size="lg"
+            aria-label={projectCount > 0 ? 'Nueva tarea' : 'Nuevo proyecto'}
+            icon={<Icon name="plus" size={20} />}
+            onClick={() => (projectCount > 0 ? shell.openNewTask() : shell.openNewProject())}
+          />
+        </div>
+        <div className="hidden shrink-0 flex-wrap gap-2 md:flex">
+          <Button asChild>
+            <Link to="/asistente">
+              <Icon name="assistant" className="text-accent" />
+              Preguntar a Muninn
+            </Link>
+          </Button>
+          {projectCount > 0 ? newTask : newProject}
+        </div>
+      </header>
 
       {financeOn ? <UpcomingCharges today={today} /> : null}
 
       {!data ? (
-        <div aria-hidden="true" className="grid gap-3 md:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <Ghost key={i} className="h-[74px]" />
-          ))}
+        <div aria-hidden="true">
+          <Ghost className="h-[74px]" />
         </div>
       ) : projectCount === 0 ? (
         <EmptyState
@@ -264,7 +337,11 @@ export function Inicio() {
         </EmptyState>
       ) : (
         <>
-          <section aria-label="Resumen" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {/* Una sola franja: en el teléfono, cuatro tarjetas grandes con ceros se comían la pantalla. */}
+          <Card
+            aria-label="Resumen"
+            className="grid shrink-0 grid-cols-4 divide-x divide-border-subtle"
+          >
             <Stat
               label="Para hoy"
               value={data.dueToday.length}
@@ -273,7 +350,7 @@ export function Inicio() {
             <Stat label="En curso" value={data.inProgress.length} />
             <Stat label="Vencidas" value={data.overdue.length} tone="danger" />
             <Stat label="Hechas · 7 días" value={weekTotal} />
-          </section>
+          </Card>
 
           {totalTasks === 0 ? (
             <EmptyState
@@ -289,48 +366,93 @@ export function Inicio() {
             >
               Crea la primera y aparecerá aquí cuando venza hoy, esté en curso o la termines.
             </EmptyState>
-          ) : (
-            <section className="grid gap-3 lg:min-h-[180px] lg:flex-1 lg:grid-cols-3">
-              <Card className="flex flex-col lg:col-span-2 lg:min-h-0">
-                <CardHeader
-                  title="Mis tareas"
-                  description="Vencidas, de hoy y las que has hecho hoy"
-                  action={
-                    <Link to="/proyectos" className="text-sm text-accent hover:text-accent-hover">
-                      Ver tableros
-                    </Link>
-                  }
-                />
-                {todayTasks.length === 0 && doneToday.length === 0 ? (
-                  <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
-                    Nada vence hoy ni está atrasado.
-                    {data.upcoming[0]
-                      ? ` Lo siguiente es «${data.upcoming[0].title}».`
-                      : ' Cuando pongas fechas a tus tareas, aparecerán aquí por urgencia.'}
-                  </p>
-                ) : (
-                  <ul className="min-h-0 overflow-y-auto">
-                    {rows(todayTasks)}
-                    {rows(doneToday, true)}
-                  </ul>
-                )}
-              </Card>
+          ) : null}
 
-              <Card className="flex flex-col lg:min-h-0">
-                <CardHeader title="En curso" description="Lo que tienes entre manos" />
-                {data.inProgress.length === 0 ? (
-                  <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
-                    Ninguna tarea en curso. Mueve una a «En curso» en su tablero.
-                  </p>
-                ) : (
-                  <ul className="min-h-0 overflow-y-auto">{rows(data.inProgress)}</ul>
-                )}
-              </Card>
-            </section>
-          )}
+          {/*
+           * Una sola rejilla para los tres tamaños (ADR-0054): una columna en el teléfono, dos en tablet y tres en el
+           * ordenador. `grid-cols-1` no sobra: sin columnas explícitas, la pista implícita se estira hasta el ancho de
+           * un título largo y la pantalla se sale por la derecha. En el ordenador, «Próximos días» pasa al final de la
+           * segunda fila y cada lista hace scroll dentro de su tarjeta (ADR-0050).
+           */}
+          <section
+            className={cn(
+              'grid grid-cols-1 gap-3 md:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-3',
+              totalTasks === 0
+                ? 'lg:grid-rows-[minmax(180px,1fr)]'
+                : 'lg:grid-rows-[minmax(180px,1fr)_minmax(180px,1fr)]',
+            )}
+          >
+            {totalTasks === 0 ? null : (
+              <>
+                <Card className="@container flex min-w-0 flex-col md:col-span-2 lg:min-h-0">
+                  <CardHeader
+                    title="Mis tareas"
+                    description="Vencidas, de hoy y las que has hecho hoy"
+                    action={
+                      <Link to="/proyectos" className="text-sm text-accent hover:text-accent-hover">
+                        Ver tableros
+                      </Link>
+                    }
+                  />
+                  {todayTasks.length === 0 && doneToday.length === 0 ? (
+                    <Clear next={upcoming[0] ?? data.upcoming[0]} today={today} />
+                  ) : (
+                    <ul className="min-h-0 overflow-y-auto">
+                      {rows(todayTasks)}
+                      {rows(doneToday, true)}
+                    </ul>
+                  )}
+                </Card>
 
-          <section className="grid gap-3 lg:min-h-[180px] lg:flex-1 lg:grid-cols-3">
-            <Card className="flex flex-col gap-3.5 overflow-y-auto p-4 lg:min-h-0">
+                <Card className="@container flex min-w-0 flex-col lg:min-h-0">
+                  <CardHeader title="En curso" description="Lo que tienes entre manos" />
+                  {data.inProgress.length === 0 ? (
+                    <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
+                      Ninguna tarea en curso. Mueve una a «En curso» en su tablero.
+                    </p>
+                  ) : (
+                    <ul className="min-h-0 overflow-y-auto">{rows(data.inProgress)}</ul>
+                  )}
+                </Card>
+              </>
+            )}
+
+            <Card className="flex min-w-0 flex-col lg:order-last lg:min-h-0">
+              <CardHeader
+                title="Próximos días"
+                description="Lo que vence esta semana y no está en curso"
+              />
+              {upcoming.length === 0 ? (
+                <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
+                  {data.upcoming.length
+                    ? 'Todo lo que vence esta semana ya está en curso.'
+                    : 'Nada vence en los próximos 7 días.'}
+                </p>
+              ) : (
+                <ul className="min-h-0 overflow-y-auto">
+                  {upcoming.slice(0, 6).map((t) => (
+                    <li
+                      key={t.id}
+                      className="flex items-center gap-2.5 border-t border-border-subtle px-4 py-3 first:border-t-0 md:py-2.5"
+                    >
+                      <ColorDot color={color.get(t.projectId) ?? 'gray'} />
+                      <Link
+                        to="/proyectos/$projectId/tareas/$taskId"
+                        params={{ projectId: t.projectId, taskId: t.id }}
+                        className="min-w-0 flex-1 text-md max-md:line-clamp-2 md:truncate md:text-sm"
+                      >
+                        {t.title}
+                      </Link>
+                      {t.dueDate ? (
+                        <DueDate due={t.dueDate} today={today} className="shrink-0 text-xs" />
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card className="flex min-w-0 flex-col gap-3.5 overflow-y-auto p-4 lg:min-h-0">
               <div className="flex items-center">
                 <h2 className="text-md font-semibold">Proyectos</h2>
                 <Link
@@ -349,10 +471,10 @@ export function Inicio() {
                     params={{ projectId: p.id }}
                     className="flex flex-col gap-1.5 rounded-sm"
                   >
-                    <span className="flex items-center gap-2 text-sm">
+                    <span className="flex items-center gap-2 text-md md:text-sm">
                       <ColorDot color={p.color} />
                       <span className="truncate">{p.name}</span>
-                      <span className="ml-auto text-xs text-fg-subtle tabular">
+                      <span className="ml-auto shrink-0 text-xs text-fg-subtle tabular">
                         {total ? `${p.done} de ${total}` : 'Sin tareas'}
                       </span>
                     </span>
@@ -366,7 +488,7 @@ export function Inicio() {
               })}
             </Card>
 
-            <Card className="flex flex-col gap-3 p-4">
+            <Card className="flex min-w-0 flex-col gap-3 p-4">
               <div className="flex items-baseline gap-2">
                 <h2 className="text-md font-semibold">Últimos 7 días</h2>
                 <span className="ml-auto text-xs text-fg-subtle">
@@ -376,7 +498,7 @@ export function Inicio() {
               <div
                 role="img"
                 aria-label={`Tareas hechas por día: ${week.map((d) => `${weekdayShort(d.date)} ${d.count}`).join(', ')}`}
-                className="grid min-h-[130px] flex-1 grid-cols-7 items-end gap-2"
+                className="grid min-h-[96px] flex-1 grid-cols-7 items-end gap-2 md:min-h-[130px]"
               >
                 {week.map((d, i) => {
                   const isToday = i === week.length - 1
@@ -387,7 +509,7 @@ export function Inicio() {
                     >
                       <span className="text-2xs text-fg-subtle tabular">{d.count || ''}</span>
                       {/* Las barras crecen con la tarjeta: alto en % del hueco libre, mínimo 4 px. */}
-                      <div className="flex min-h-[84px] w-full flex-1 items-end">
+                      <div className="flex min-h-[52px] w-full flex-1 items-end md:min-h-[84px]">
                         <div
                           title={`${d.count} hechas`}
                           className={cn(
@@ -409,36 +531,6 @@ export function Inicio() {
                   )
                 })}
               </div>
-            </Card>
-
-            <Card className="flex flex-col lg:min-h-0">
-              <CardHeader title="Próximos días" description="Lo que vence en la próxima semana" />
-              {data.upcoming.length === 0 ? (
-                <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
-                  Nada vence en los próximos 7 días.
-                </p>
-              ) : (
-                <ul className="min-h-0 overflow-y-auto">
-                  {data.upcoming.slice(0, 6).map((t) => (
-                    <li
-                      key={t.id}
-                      className="flex items-center gap-2.5 border-t border-border-subtle px-4 py-2.5 first:border-t-0"
-                    >
-                      <ColorDot color={color.get(t.projectId) ?? 'gray'} />
-                      <Link
-                        to="/proyectos/$projectId/tareas/$taskId"
-                        params={{ projectId: t.projectId, taskId: t.id }}
-                        className="min-w-0 flex-1 truncate text-sm"
-                      >
-                        {t.title}
-                      </Link>
-                      {t.dueDate ? (
-                        <DueDate due={t.dueDate} today={today} className="text-xs" />
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </Card>
           </section>
         </>

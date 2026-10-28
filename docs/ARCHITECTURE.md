@@ -43,12 +43,13 @@
 main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | demo | anonymous)
                                  ├─ /login (pública, chunk propio; supabase-js en diferido)
                                  └─ _app (sin sesión → /login · loader: loadMuninn → core + store del usuario)
-                                      └─ AppShell: Sidebar (≥ 768 px) · Dock (< 768 px) · ⌘K · diálogos
+                                      └─ AppShell: Sidebar (≥ 1024 px; raíl en 768–1023) · TabBar (< 768 px) · ⌘K · diálogos
                                            └─ <Outlet/>: screens/* (un chunk por pantalla)
 ```
 
 - **Rutas** en `src/router.tsx` (TanStack Router, tipadas): ver [ADR-0020](adr/0020-tanstack-router-carga-diferida.md).
-- **Navegación** compartida por barra lateral, dock y buscador en `src/shell/nav.ts`: ver [ADR-0021](adr/0021-shell-de-la-app.md).
+- **Navegación** compartida por barra lateral, barra de pestañas y buscador en `src/shell/nav.ts`: ver [ADR-0021](adr/0021-shell-de-la-app.md)
+  y [ADR-0054](adr/0054-shell-responsive-en-tres-tamanos.md) (teléfono, tablet y ordenador).
 - **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Un tablero es una sola entrada de caché (`keys.board`) que las
   acciones (`task-actions.ts`, `column-actions.ts`) actualizan al instante, escriben en el core de una en una por proyecto y
   deshacen si falla; todas dan feedback con «Deshacer» ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md)).
@@ -101,8 +102,8 @@ generan la misma clave, el core rebalancea la columna.
 
 ## Módulos
 
-Muninn se organiza en módulos activables (`user_settings.enabled_modules`). Desactivar un módulo lo oculta del menú, del
-dock y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md)):
+Muninn se organiza en módulos activables (`user_settings.enabled_modules`). Desactivar un módulo lo oculta del menú, de
+la barra de pestañas y del buscador; no borra datos ni cambia lo que ve el MCP ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md)):
 
 | Módulo | Estado |
 |---|---|

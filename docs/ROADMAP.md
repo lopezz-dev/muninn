@@ -11,10 +11,12 @@
 - [x] Esqueleto de Tauri 2 y de la PWA
 - [x] Sistema de documentación: ADRs, gotchas por área y docs de usuario
 - [x] Diseño de todas las pantallas (escritorio + móvil): [lienzo «Muninn — Pantallas»](https://claude.ai/artifact/BdNFHNmB8E3dxV2u7o27xB)
+- [x] Rediseño del móvil: [lienzo «Muninn — Móvil 2.0»](https://claude.ai/artifact/2T6zpnVrJUfTU7xvBUi9zg) (esquinas con el radio
+  del sistema y logo de Muninn en el botón del Asistente, como se acordó al revisarlo)
 - [x] `@muninn/ui`: tokens → CSS vars, tema Tailwind v4, iconos Phosphor, Geist autoalojada, modo cristal y acento
 - [x] Componentes base (`@muninn/ui`): Button, IconButton, Chip, ColorDot, Kbd, Avatar, ProgressBar, Separator, Card, TextField, TextArea, Switch, Checkbox, SegmentedControl, AmountField, Dialog, Sheet, Menu, Tooltip, notificaciones (`notify` + `Toaster`)
 - [x] Shell de la app: router con una pantalla por chunk (TanStack Router), barra lateral (escritorio), dock
-  con menisco (móvil), buscador ⌘K, pantallas vacías de todas las secciones y Ajustes › Apariencia
+  con menisco (móvil, sustituido por la barra de pestañas del ADR-0054), buscador ⌘K, pantallas vacías de todas las secciones y Ajustes › Apariencia
 - [x] Proyecto de Supabase (`muninn`, eu-west-3 París) con el esquema y los avisos del asesor resueltos
 - [x] Login con Supabase Auth: código por correo y GitHub (solo web), sesión persistente, rutas protegidas,
   cerrar sesión y modo demo sin cuenta ([ADR-0022](adr/0022-auth-y-sesion.md))
@@ -24,7 +26,7 @@
 - [x] Activar GitHub OAuth en el panel de Supabase (OAuth App de GitHub + Redirect URLs): pasos en
   [gotchas/db](gotchas/db.md#activar-github-oauth-paso-manual)
 - [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) y corregir lo que falle → en [Pruebas finales](#pruebas-finales)
-- [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, el dock y el buscador solo enseñan lo activo
+- [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, las pestañas y el buscador solo enseñan lo activo
 - [x] Ajustes rediseñados: menú por grupos con buscador, cabecera por sección, tarjetas con subtítulo, marca de «cambiado» y
   «Restablecer sección» con Deshacer ([ADR-0053](adr/0053-ajustes-por-grupos-buscador-y-restablecer.md))
   ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md))
@@ -237,6 +239,13 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   los últimos 6 meses; en Finanzas › Resumen y en el MCP (`finance_month_report`)
 - [ ] (v2) Importar CSV de Imagin / conexión bancaria. Fuera de la sesión del 21–22 de octubre por alcance; el modelo ya lo admite
   (movimientos en céntimos con concepto y fecha: `parseAmount`/`centsFromEuros` en el borde)
+- [ ] Rediseño responsive en tres tamaños (teléfono, tablet y ordenador), por fases. Diseño: [lienzo «Muninn — Móvil 2.0»](https://claude.ai/artifact/2T6zpnVrJUfTU7xvBUi9zg)
+  - [x] Fase 1 ([ADR-0054](adr/0054-shell-responsive-en-tres-tamanos.md)): barra de pestañas con el logo de Muninn para el Asistente
+    (teléfono), raíl de iconos (tablet), barra lateral completa (≥ 1024 px); Inicio sin desbordarse, con una franja de números,
+    «Día despejado» y sin tareas repetidas; rejillas con columnas declaradas en Finanzas, Proyectos y Cuentas
+  - [ ] Fase 2: Proyectos y tablero (cabecera con «‹ Proyectos», columnas como chips, «Añadir» dentro de la columna)
+  - [ ] Fase 3: detalle de tarea con las acciones abajo, al alcance del pulgar; nueva tarea y nuevo movimiento como hojas
+  - [ ] Fase 4: Finanzas, Notas, Más y el Asistente como hoja; repasar todas las pantallas a 390, 820 y 1280 px
 
 ## F4 · Jarvis
 > **Estado:** en código, salvo la voz. Cerebro, Asistente, Noticias e informe de la mañana están en `develop` desde el 26 de octubre

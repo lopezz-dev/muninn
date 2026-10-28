@@ -40,14 +40,18 @@ proyecto de Muninn con la etiqueta `iphone`.
 | Tocar una tarjeta | Abre el detalle a pantalla completa |
 | Activar un filtro (embudo) y arrastrar una tarjeta | La tarjeta cae donde la soltaste; al quitar el filtro el orden es el esperado |
 
-## 4. Dock y pantalla
+## 4. Pestañas y pantalla
 
 | Qué hacer | Esperado |
 |---|---|
-| Cambiar de pestaña en el dock | La burbuja se desliza y no queda a medio camino |
-| La barra del dock respecto al borde de abajo | Respeta la barra de gestos del iPhone (no la tapa) |
-| Ajustes › Módulos: desactivar Finanzas | El dock pasa a 4 pestañas y la burbuja sigue alineada |
-| Cerrar la app del todo y abrirla en Inicio (con pocos datos) | El dock está pegado abajo desde el primer momento, sin hueco debajo |
+| Cambiar de pestaña | La pestaña activa se colorea; las cuatro tienen su nombre |
+| Bajar por Inicio y volver a subir | La barra se encoge a la pestaña activa y vuelve entera al subir; encogida, un toque la despliega |
+| Tocar el botón con el logo | Abre el Asistente; el campo de escribir queda por encima de la barra |
+| La barra respecto al borde de abajo | Respeta la barra de gestos del iPhone (no la tapa) |
+| Ajustes › Módulos: desactivar Finanzas | Quedan 3 pestañas que se reparten el ancho |
+| Cerrar la app del todo y abrirla en Inicio (con pocos datos) | La barra está pegada abajo desde el primer momento, sin hueco debajo |
+| Inicio con títulos de tarea largos | Nada se sale por la derecha; los títulos ocupan hasta dos líneas |
+| iPad en vertical y en horizontal | En vertical, raíl de iconos con tooltips; en horizontal, la barra lateral completa |
 | Hacer algo que muestre un aviso (archivar y deshacer) | La píldora sale entera bajo la isla, sin taparse |
 | Ajustes desde **Más › Todos los ajustes** | Una lista de secciones; cada una se abre y vuelve con «‹ Ajustes» |
 | Finanzas › Movimientos: el botón de filtro | Se abre una hoja con tipo, categorías y cuenta; la búsqueda y el botón caben en una línea |

@@ -6,10 +6,10 @@ import { typingIn } from '../lib/keyboard'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import { settingsQuery } from '../lib/queries'
-import { Dock } from './Dock'
 import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
+import { TabBar } from './TabBar'
 
 // Diferidos: los diálogos, la pantalla de «módulo desactivado» y el aviso de «sin conexión» no viajan con el shell.
 // El buscador se pide nada más pintar el shell (fuera del JS del arranque) y casi siempre está listo al abrirlo.
@@ -32,8 +32,9 @@ const NewProjectDialog = lazy(() =>
 )
 
 /**
- * Estructura común de todas las pantallas: barra lateral en escritorio, dock en móvil (< 768 px),
- * buscador ⌘K y diálogos globales. Las pantallas se cargan en diferido dentro de `<Outlet />`.
+ * Estructura común de todas las pantallas (ADR-0054): barra lateral completa en el ordenador (≥ 1024 px), raíl de
+ * iconos en tablet (768–1023 px) y barra de pestañas en el teléfono (< 768 px); buscador ⌘K y diálogos globales.
+ * Las pantallas se cargan en diferido dentro de `<Outlet />`.
  */
 export function AppShell() {
   const [palette, setPalette] = useState<{ open: boolean; query: string }>({
@@ -118,7 +119,7 @@ export function AppShell() {
       {/*
        * Escritorio: la ventana no hace scroll; lo hace <main> (ADR-0050). Así una pantalla puede medir justo el
        * alto de la ventana (`Page fit`) y llevar el scroll dentro de su lista. En el móvil sigue el scroll de la
-       * página, que es el que conocen Safari y el dock.
+       * página, que es el que conocen Safari y la barra de pestañas.
        */}
       <div className="flex min-h-dvh md:h-dvh">
         <Sidebar className="hidden md:flex" />
@@ -128,10 +129,12 @@ export function AppShell() {
           tabIndex={-1}
           data-scroll-restoration-id="contenido"
           className={cn(
-            'flex min-w-0 flex-1 flex-col px-5 pt-[calc(env(safe-area-inset-top)+28px)] outline-none md:overflow-y-auto md:px-8 md:pt-7 md:pb-8',
+            // overflow-x-clip: red de seguridad para que nada empuje la pantalla hacia los lados en el teléfono. No
+            // crea contenedor de scroll, así que los `sticky` siguen pegándose a la ventana.
+            'flex min-w-0 flex-1 flex-col px-5 max-md:overflow-x-clip pt-[calc(env(safe-area-inset-top)+24px)] outline-none md:overflow-y-auto md:px-7 md:pt-7 md:pb-8 lg:px-8',
             immersive
               ? 'pb-[calc(env(safe-area-inset-bottom)+104px)]'
-              : 'pb-[calc(env(safe-area-inset-bottom)+148px)]',
+              : 'pb-[calc(env(safe-area-inset-bottom)+112px)]',
           )}
         >
           {off ? (
@@ -142,7 +145,7 @@ export function AppShell() {
             <Outlet />
           )}
         </main>
-        {immersive ? null : <Dock className="md:hidden" />}
+        {immersive ? null : <TabBar className="md:hidden" />}
       </div>
       <Suspense fallback={null}>
         <CommandPalette

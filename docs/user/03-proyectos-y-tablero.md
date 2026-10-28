@@ -18,7 +18,7 @@ icon: projects
 
 Un proyecto agrupa las tareas y notas de algo en lo que estás trabajando: una app, un cliente, una mudanza…
 
-En la pantalla **Proyectos** (en la barra lateral, o en el dock del móvil) ves todos los tuyos, cada uno con su color y
+En la pantalla **Proyectos** (en la barra lateral, o en las pestañas del móvil) ves todos los tuyos, cada uno con su color y
 su progreso: cuántas tareas llevas hechas de las que tiene, por ejemplo «3 de 8 hechas», y una barra. Pulsa uno para abrir su
 tablero.
 

@@ -204,7 +204,7 @@ function Apariencia() {
           icon="palette"
           tile="bg-accent-soft text-accent"
           title="Color de acento"
-          description="Botones, selección y la burbuja del dock. Por defecto, ámbar."
+          description="Botones, selección y el botón del Asistente en el móvil. Por defecto, ámbar."
           changed={changed.includes('accent')}
           onReset={() => reset(['accent'], 'Acento restablecido')}
           resetLabel="Volver a ámbar"
