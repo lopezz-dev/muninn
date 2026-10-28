@@ -49,8 +49,8 @@ Un consejo: deja las herramientas de consulta como «permitir siempre» y las qu
 ver qué va a hacer antes de que lo haga.
 
 > **Ten en cuenta:** si usas claude.ai dentro de una organización, quien la administra puede tener que permitir los conectores
-> personalizados. El conector sale de momento con un icono que no es el de Muninn. Y los permisos que le das a claude.ai **todavía no se
-> pueden ver ni quitar desde Muninn**.
+> personalizados. El conector sale de momento con un icono que no es el de Muninn. Los permisos que le das a claude.ai los ves y los
+> quitas en **Ajustes › Cuenta › Apps con acceso** ([Cuenta y seguridad](14-cuenta-y-seguridad.md#quitar-el-acceso-a-una-app)).
 
 > **Próximamente:** usarlo desde la app de Claude en el **iPhone**. Debería funcionar igual, pero aún no está probado.
 

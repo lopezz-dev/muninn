@@ -1,4 +1,4 @@
-import type { AccountSession, AssuranceLevel, MfaFactor } from './schemas'
+import type { AccountSession, AssuranceLevel, MfaFactor, OAuthAppGrant } from './schemas'
 import type { AccountStore } from './store'
 
 /** Lo que trae de partida la seguridad simulada. */
@@ -6,6 +6,8 @@ export interface MemoryAccountSeed {
   /** Sesiones abiertas; sin ninguna `current`, se añade la de este dispositivo. */
   sessions?: AccountSession[]
   factors?: MfaFactor[]
+  /** Apps con acceso por OAuth. */
+  grants?: OAuthAppGrant[]
 }
 
 /** En la demo y los tests vale cualquier código de seis cifras menos este. */
@@ -36,6 +38,7 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
     })
   }
   let factors = [...(seed.factors ?? [])]
+  let grants = [...(seed.grants ?? [])]
   const hasVerified = () => factors.some((f) => f.status === 'verified')
   // Con un factor confirmado de partida, la sesión ya pasó el código al entrar.
   let aal: AssuranceLevel['current'] = hasVerified() ? 'aal2' : 'aal1'
@@ -51,6 +54,14 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
     },
     async signOut(scope) {
       sessions = scope === 'global' ? [] : sessions.filter((s) => s.current)
+    },
+    oauthGrants: {
+      async list() {
+        return structuredClone(grants)
+      },
+      async revoke(clientId) {
+        grants = grants.filter((g) => g.clientId !== clientId)
+      },
     },
     mfa: {
       async factors() {

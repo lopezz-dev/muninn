@@ -11,6 +11,7 @@ import { useAuth, useMuninn } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { bySection, type PrefKey, resetPrefs, useChangedPrefs } from '../../lib/settings-changes'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { AppsConAcceso } from './AppsConAcceso'
 import { AsistenteAjustes, InformeAjustes } from './AsistenteAjustes'
 import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
@@ -112,6 +113,7 @@ function Cuenta() {
       </PrefGroup>
       <SegundoFactor />
       <Sesiones />
+      <AppsConAcceso />
     </>
   )
 }

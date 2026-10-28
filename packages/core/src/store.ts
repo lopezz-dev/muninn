@@ -16,6 +16,7 @@ import type {
   NewsItem,
   NewsSource,
   Note,
+  OAuthAppGrant,
   OutboxKind,
   Project,
   ProjectStatus,
@@ -291,6 +292,7 @@ export interface AccountStore {
   revokeSession(id: string): Promise<boolean>
   signOut(scope: SignOutScope): Promise<void>
   mfa: MfaStore
+  oauthGrants: OAuthGrantStore
 }
 
 /** Segundo factor TOTP (Supabase Auth MFA). */
@@ -301,4 +303,12 @@ export interface MfaStore {
   verify(factorId: string, code: string): Promise<void>
   unenroll(factorId: string): Promise<void>
   assurance(): Promise<AssuranceLevel>
+}
+
+/** Permisos OAuth dados a otras apps (servidor OAuth de Supabase Auth, ADR-0036). */
+export interface OAuthGrantStore {
+  /** Las apps con permiso, la más reciente primero. */
+  list(): Promise<OAuthAppGrant[]>
+  /** Quita el permiso: cierra sus sesiones y anula sus tokens. */
+  revoke(clientId: string): Promise<void>
 }

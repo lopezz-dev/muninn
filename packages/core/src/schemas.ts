@@ -737,3 +737,14 @@ export const mfaCode = z
   .pipe(z.string().regex(/^\d{6}$/, 'El código tiene 6 cifras'))
 
 export const mfaFactorName = z.string().trim().min(1).max(60)
+
+/** Una app a la que diste acceso a tu cuenta por OAuth (claude.ai y otros clientes del MCP remoto, ADR-0036). */
+export interface OAuthAppGrant {
+  clientId: string
+  name: string
+  /** Su web, si la dio al registrarse. */
+  uri: string | null
+  logoUri: string | null
+  scopes: string[]
+  grantedAt: string
+}

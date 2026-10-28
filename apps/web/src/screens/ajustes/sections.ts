@@ -31,13 +31,13 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: 'cuenta',
     label: 'Cuenta',
     icon: 'user',
-    subtitle: 'Con qué entras y dónde está abierta tu sesión.',
+    subtitle: 'Con qué entras, dónde está abierta tu sesión y qué apps usan tu cuenta.',
     group: 'tu',
     tile: 'bg-project-blue/15 text-project-blue',
     doc: {
       pagina: 'cuenta-y-seguridad',
       title: 'Cuenta y seguridad',
-      text: 'El segundo factor, dónde tienes la sesión abierta y cómo cerrarla en otros dispositivos.',
+      text: 'El segundo factor, las sesiones abiertas y las apps con acceso a tu cuenta.',
     },
   },
   {

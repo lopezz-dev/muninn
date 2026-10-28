@@ -1,15 +1,16 @@
-# ADR-0061: Seguridad de la cuenta en Ajustes › Cuenta (sesiones y segundo factor), a través del core
+# ADR-0061: Seguridad de la cuenta en Ajustes › Cuenta (sesiones, segundo factor y apps con acceso), a través del core
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-10-28
 - **Área:** core, db, web
-- **Complementa a:** [ADR-0022](0022-auth-y-sesion.md)
+- **Complementa a:** [ADR-0022](0022-auth-y-sesion.md), [ADR-0036](0036-pantalla-de-autorizacion-oauth.md)
 
 ## Contexto
 
 [ADR-0022](0022-auth-y-sesion.md) dejó para más adelante la gestión de sesiones y el segundo factor («Acceso y seguridad» del ROADMAP). Hace
 falta ver dónde está abierta la sesión de la cuenta y cerrarla en uno o en todos los dispositivos, y un segundo factor opcional con una app
-de códigos (TOTP). Restricciones:
+de códigos (TOTP). [ADR-0036](0036-pantalla-de-autorizacion-oauth.md) dejó en el Backlog ver y quitar los permisos OAuth dados a otras apps
+(claude.ai). Restricciones:
 
 - El cliente **no puede leer `auth.sessions`**: el esquema `auth` no está expuesto en PostgREST ni tiene RLS.
 - supabase-js solo sabe cerrar la sesión en este dispositivo, en los demás (`scope: 'others'`) o en todos (`'global'`); no cierra una
@@ -18,6 +19,8 @@ de códigos (TOTP). Restricciones:
 - Supabase Auth trae MFA TOTP (activado por defecto en los proyectos): `mfa.enroll`, `challengeAndVerify`, `unenroll` y
   `getAuthenticatorAssuranceLevel`. La sesión es `aal1` tras el código del correo o GitHub y `aal2` tras el código de la app. Quitar un
   factor confirmado exige `aal2`.
+- supabase-js 2.118 trae `auth.oauth.listGrants()` (cliente, *scopes* y fecha) y `revokeGrant({ clientId })`, que cierra las sesiones de
+  esa app y anula sus *refresh tokens*. Sin el servidor OAuth activado, Auth contesta 404.
 - Ni la lista de sesiones (con su IP) ni nada de seguridad debe acabar en la caché sin conexión ([ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md)).
 
 ## Decisión
@@ -43,8 +46,11 @@ de códigos (TOTP). Restricciones:
   de recuperación.
 - **Al entrar**, `getAuth()` mira el nivel de la sesión (sin red: lo leen el token y los factores de la sesión guardada). Si es `aal1` y
   podría ser `aal2`, el estado es `{ kind: 'mfa', account }`: `/_app` manda a `/login` y allí `Entrada` enseña el paso del código en lugar
-  del formulario (`screens/login/Entrada.tsx`, `lib/second-factor.ts`). Como el resto del login, habla con Supabase Auth desde la web,
+  del formulario (`screens/login/Entrada.tsx`, `AppsConAcceso.tsx`, `lib/second-factor.ts`). Como el resto del login, habla con Supabase Auth desde la web,
   porque el core aún no existe; «Usar otra cuenta» cierra esa sesión a medias. `Login.tsx` no cambia.
+- **Apps con acceso.** `m.account.apps` (`list`, `revoke`) sobre `listGrants`/`revokeGrant`; un 404 se lee como «ninguna». Cada fila enseña
+  el nombre, desde cuándo, su web y los *scopes* en palabras (los de la pantalla de consentimiento). «Quitar acceso» sin «Deshacer»: el
+  permiso solo se vuelve a dar desde la propia app, pasando por `/oauth/consent`. La pantalla de consentimiento ya dice dónde quitarlo.
 - Las consultas de seguridad usan claves `['account', …]` y **no se guardan sin conexión** (`shouldPersist`).
 
 ## Alternativas consideradas

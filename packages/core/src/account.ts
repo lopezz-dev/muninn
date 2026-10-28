@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import { z } from 'zod'
 import {
   type AccountSession,
   type MfaEnrollment,
@@ -130,9 +130,29 @@ export function createAccount({ store, parse }: AccountContext) {
 
   const assurance = () => auth().mfa.assurance()
 
+  // ─── Apps con acceso (OAuth) ─────────────────────────────────────────────
+
+  /** Apps a las que diste acceso a tu cuenta (claude.ai y otros clientes del MCP remoto), la más reciente primero. */
+  async function apps() {
+    const list = await auth().oauthGrants.list()
+    return [...list].sort((a, b) =>
+      a.grantedAt < b.grantedAt ? 1 : a.grantedAt > b.grantedAt ? -1 : 0,
+    )
+  }
+
+  /**
+   * Quita el acceso a una app: sus sesiones se cierran y sus tokens dejan de valer. No hay «Deshacer»: el permiso solo se
+   * da desde la propia app, pasando por la pantalla de autorización (ADR-0036).
+   */
+  async function revokeApp(clientId: string) {
+    const id = parse(z.uuid(), clientId)
+    await auth().oauthGrants.revoke(id)
+  }
+
   return {
     available,
     sessions: { list: sessions, revoke: revokeSession, signOut },
     mfa: { factors, active, enroll, confirm, disable, assurance },
+    apps: { list: apps, revoke: revokeApp },
   }
 }

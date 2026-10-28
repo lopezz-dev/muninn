@@ -53,6 +53,14 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     keywords: 'salir logout todos seguridad',
   },
   {
+    id: 'apps',
+    section: 'cuenta',
+    label: 'Apps con acceso',
+    description:
+      'Las apps que usan tu cuenta por el MCP remoto, como claude.ai. Quita las que no uses.',
+    keywords: 'oauth permisos claude conectores mcp revocar',
+  },
+  {
     id: 'tema',
     section: 'apariencia',
     label: 'Tema',

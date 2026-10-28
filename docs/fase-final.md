@@ -182,6 +182,8 @@ y el iPhone con la sesión abierta.
 - [ ] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
 - [ ] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código.
 - [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código.
+- [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
+  **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
 
 ## 5. iPhone (≈ 45 min)
 

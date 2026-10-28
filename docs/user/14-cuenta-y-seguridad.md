@@ -1,6 +1,6 @@
 ---
 title: Cuenta y seguridad
-description: Protege tu cuenta con un segundo factor y cierra la sesión en los dispositivos que ya no uses.
+description: Protege tu cuenta con un segundo factor, cierra la sesión en los dispositivos que ya no uses y quita el acceso a otras apps.
 order: 14
 status: disponible
 group: cuenta
@@ -66,3 +66,12 @@ Al final de la lista, en **Cerrar en otros dispositivos**:
 - **En todos:** sales también de este, y vuelves a la pantalla de entrada.
 
 En los dos casos, los demás dispositivos salen en menos de una hora.
+
+## Quitar el acceso a una app
+
+En **Apps con acceso** salen las apps a las que diste permiso para usar tu cuenta, como claude.ai o Claude Code al conectar
+el MCP de Muninn ([Conectar Claude y otros](06-asistentes-ia.md)). De cada una ves desde cuándo tiene acceso, su web y
+qué datos de tu perfil puede ver.
+
+Pulsa **Quitar acceso** y esa app deja de poder usar tu cuenta al momento: sus sesiones se cierran. No se puede deshacer
+desde aquí; para volver a usarla, conéctala otra vez desde esa app y acepta en la pantalla de autorización de Muninn.

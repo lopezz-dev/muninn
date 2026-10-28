@@ -129,6 +129,31 @@ describe('segundo factor', () => {
   })
 })
 
+describe('apps con acceso', () => {
+  const grant = (name: string, grantedAt: string) => ({
+    clientId: crypto.randomUUID(),
+    name,
+    uri: `https://${name}`,
+    logoUri: null,
+    scopes: ['email'],
+    grantedAt,
+  })
+
+  it('lista las apps, la más reciente primero, y quita una', async () => {
+    const claude = grant('claude.ai', '2026-10-21T10:00:00.000Z')
+    const code = grant('Claude Code', '2026-10-25T10:00:00.000Z')
+    const account = setup({ grants: [claude, code] })
+    expect((await account.apps.list()).map((g) => g.name)).toEqual(['Claude Code', 'claude.ai'])
+    await account.apps.revoke(claude.clientId)
+    expect((await account.apps.list()).map((g) => g.name)).toEqual(['Claude Code'])
+  })
+
+  it('valida el id de la app', async () => {
+    const account = setup()
+    await expect(account.apps.revoke('claude')).rejects.toBeInstanceOf(ValidationError)
+  })
+})
+
 describe('nombre del dispositivo', () => {
   it.each([
     [

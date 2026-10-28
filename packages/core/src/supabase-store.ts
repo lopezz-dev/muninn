@@ -495,6 +495,28 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       const { error } = await client.auth.signOut({ scope })
       if (error) throw error
     },
+    // Permisos OAuth (ADR-0036). Sin el servidor OAuth activado en el proyecto, Auth contesta 404: no hay ninguna app.
+    oauthGrants: {
+      async list() {
+        const { data, error } = await client.auth.oauth.listGrants()
+        if (error) {
+          if (error.status === 404) return []
+          throw error
+        }
+        return (data ?? []).map((g) => ({
+          clientId: g.client.id,
+          name: g.client.name || 'App sin nombre',
+          uri: g.client.uri || null,
+          logoUri: g.client.logo_uri || null,
+          scopes: g.scopes,
+          grantedAt: g.granted_at,
+        }))
+      },
+      async revoke(clientId) {
+        const { error } = await client.auth.oauth.revokeGrant({ clientId })
+        if (error) throw error
+      },
+    },
     mfa: {
       async factors() {
         const { data, error } = await client.auth.mfa.listFactors()
