@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
 import { connectAppearance } from './appearance'
 import { leaveDemo, signOut } from './auth'
-import { resetMuninn } from './muninn'
+import { currentMuninn, resetMuninn } from './muninn'
 import { queryClient } from './query-client'
 
 /** Olvida todo lo del usuario anterior (instancia del core, caché de react-query y su apariencia). */
@@ -23,8 +23,12 @@ export function forgetUserData() {
  */
 export async function endSession(kind: 'user' | 'demo'): Promise<boolean> {
   try {
-    if (kind === 'user') await signOut()
-    else leaveDemo()
+    if (kind === 'user') {
+      // Con la sesión aún abierta (RLS): este dispositivo deja de recibir los avisos de la cuenta (ADR-0040).
+      const m = await currentMuninn()?.catch(() => undefined)
+      await import('./push').then((p) => p.leaveThisDevice(m)).catch(() => undefined)
+      await signOut()
+    } else leaveDemo()
   } catch (err) {
     notify.error('No se pudo cerrar la sesión', {
       description: err instanceof Error ? err.message : undefined,

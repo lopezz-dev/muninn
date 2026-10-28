@@ -13,6 +13,7 @@ import { PALETTE_SHORTCUT } from '../../shell/shell-context'
 import { AsistenteAjustes, InformeAjustes } from './AsistenteAjustes'
 import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
+import { Notificaciones } from './Notificaciones'
 import { type SettingsSection, settingsSection } from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
@@ -329,6 +330,7 @@ const BODY: Record<string, () => ReactNode> = {
   apariencia: () => <Apariencia />,
   atajos: () => <Atajos />,
   modulos: () => <Modulos />,
+  notificaciones: () => <Notificaciones />,
   asistente: () => <AsistenteAjustes />,
   informe: () => <InformeAjustes />,
   integraciones: () => <Integraciones />,

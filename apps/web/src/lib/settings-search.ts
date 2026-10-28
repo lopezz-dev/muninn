@@ -104,10 +104,23 @@ export const SETTINGS_INDEX: SettingEntry[] = [
   {
     id: 'avisos',
     section: 'notificaciones',
+    label: 'Avisos en este dispositivo',
+    description: 'Actívalos para recibir avisos aunque Muninn esté cerrada.',
+    keywords: 'notificaciones push permiso iphone movil',
+  },
+  {
+    id: 'avisos-cobros',
+    section: 'notificaciones',
     label: 'Avisos antes de cada cobro',
     description: 'En el móvil, antes de que te cobren una suscripción.',
     keywords: 'notificaciones push suscripciones',
-    soon: true,
+  },
+  {
+    id: 'avisos-dispositivos',
+    section: 'notificaciones',
+    label: 'Dispositivos con avisos',
+    description: 'Los que reciben tus avisos. Quita los que ya no uses.',
+    keywords: 'notificaciones push quitar movil',
   },
   {
     id: 'ollama',

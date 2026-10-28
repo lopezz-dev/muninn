@@ -87,12 +87,13 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: 'notificaciones',
     label: 'Notificaciones',
     icon: 'bell',
-    subtitle: 'Avisos en el móvil y en el ordenador.',
+    subtitle: 'Avisos en el móvil y en el ordenador, aunque Muninn esté cerrada.',
     group: 'espacio',
-    tile: 'bg-surface-raised text-fg-faint',
-    soon: {
-      phase: 'Próximamente',
-      text: 'Avisos en el móvil antes de cada cobro y cuando un agente termine su trabajo.',
+    tile: 'bg-project-amber/15 text-project-amber',
+    doc: {
+      pagina: 'notificaciones',
+      title: 'Notificaciones',
+      text: 'Cómo activar los avisos en el iPhone y qué te avisa Muninn.',
     },
   },
   {
