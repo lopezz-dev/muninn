@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0](https://github.com/lopezz-dev/muninn/compare/v0.3.0...v0.4.0) (2026-10-28)
+
+
+### Features
+
+* **web:** logo y portada de proyecto por separado, con el color del logo (ADR-0056) ([e7ec2fc](https://github.com/lopezz-dev/muninn/commit/e7ec2fc5b6da1653e0cda2e1c07bac6dcb1a7dc2))
+* **web:** Proyectos en tres tamaños, editar proyecto e imagen de proyecto (ADR-0055) ([adb73ae](https://github.com/lopezz-dev/muninn/commit/adb73aecc3024cf06cf1fc36bde88da8326c8baa))
+* **web:** shell en tres tamaños e Inicio responsive (ADR-0054) ([338c8b3](https://github.com/lopezz-dev/muninn/commit/338c8b38a740e60ea7d6374a1a57c0b6b398a8ef))
+
 ## [0.3.0](https://github.com/lopezz-dev/muninn/compare/v0.2.1...v0.3.0) (2026-10-28)
 
 
