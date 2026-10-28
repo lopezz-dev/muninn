@@ -6,6 +6,7 @@ import type {
   NewsDigest,
   NewsItem,
   NewsSource,
+  PushDevice,
   UserSettings,
 } from './schemas'
 import { imageExt } from './schemas'
@@ -24,6 +25,9 @@ import {
   NotFoundError,
   type OutboxEntry,
   type ProjectStoreQuery,
+  type PushDeviceStore,
+  type PushLogStore,
+  type PushSendSummary,
   type SettingsStore,
   type Store,
   type TaskStoreQuery,
@@ -343,6 +347,76 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Avisos push (ADR-0040, migración 20261028180000_push_subscriptions). Sin borrado lógico: un dispositivo que se quita
+  // ya no recibe nada, y «Deshacer» lo vuelve a guardar con las mismas claves.
+  const pushDevices: PushDeviceStore = {
+    async list() {
+      const { data, error } = await client
+        .from('push_subscriptions')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .order('last_seen_at', { ascending: false })
+      if (error) throw error
+      return (data as Row[]).map((r) => fromRow<PushDevice>(r))
+    },
+    async upsert(row) {
+      const { data, error } = await client
+        .from('push_subscriptions')
+        .upsert({ ...toRow(row), owner_id: ownerId }, { onConflict: 'owner_id,endpoint' })
+        .select('*')
+        .single()
+      if (error) throw error
+      return fromRow<PushDevice>(data)
+    },
+    async remove(id) {
+      const { error } = await client
+        .from('push_subscriptions')
+        .delete()
+        .eq('owner_id', ownerId)
+        .eq('id', id)
+      if (error) throw error
+    },
+    async removeEndpoint(endpoint) {
+      const { error } = await client
+        .from('push_subscriptions')
+        .delete()
+        .eq('owner_id', ownerId)
+        .eq('endpoint', endpoint)
+      if (error) throw error
+    },
+  }
+  const pushLog: PushLogStore = {
+    async sent(keys) {
+      if (!keys.length) return []
+      const { data, error } = await client
+        .from('push_log')
+        .select('key')
+        .eq('owner_id', ownerId)
+        .in('key', keys)
+      if (error) throw error
+      return (data as Row[]).map((r) => r.key as string)
+    },
+    async record(keys) {
+      if (!keys.length) return
+      const { error } = await client.from('push_log').upsert(
+        keys.map((key) => ({ key, owner_id: ownerId })),
+        { onConflict: 'owner_id,key', ignoreDuplicates: true },
+      )
+      if (error) throw error
+    },
+  }
+  // El aviso de prueba lo envía la Edge Function `push` (POST /push/test con la sesión: solo a tus dispositivos).
+  const pushDelivery = {
+    async test() {
+      const { data, error } = await client.functions.invoke('push/test', {
+        method: 'POST',
+        body: {},
+      })
+      if (error) throw error
+      return data as PushSendSummary
+    },
+  }
+
   // Imágenes de proyecto (ADR-0055): bucket privado `project-images`; la primera carpeta es el dueño (la política RLS
   // de Storage lo exige). Se leen con URL firmadas de un día: la app las pide cuando las pinta, nunca las guarda.
   const projectImages = {
@@ -380,6 +454,9 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     newsItems,
     newsDigests,
     newsFeeds,
+    pushDevices,
+    pushLog,
+    pushDelivery,
     // Finanzas (ADR-0037, migración 20261021120000_finance).
     async accountTotals() {
       const { data, error } = await client
@@ -503,4 +580,21 @@ export async function pruneNews(client: Client, { itemDays = 30, digestDays = 12
     .lt('date', ago(digestDays).slice(0, 10))
   if (digests.error) throw digests.error
   return { items: items.count ?? 0, digests: digests.count ?? 0 }
+}
+
+/** Dueños con algún dispositivo suscrito, para el cron de la Edge Function `push` (con la service role, ADR-0040). */
+export async function listPushOwners(client: Client): Promise<string[]> {
+  const { data, error } = await client.from('push_subscriptions').select('owner_id')
+  if (error) throw error
+  return [...new Set((data as Row[]).map((r) => r.owner_id as string))]
+}
+
+/** Limpieza del cron: el registro de avisos solo hace falta mientras el cobro está cerca. */
+export async function prunePushLog(client: Client, { days = 90 } = {}) {
+  const { error, count } = await client
+    .from('push_log')
+    .delete({ count: 'exact' })
+    .lt('sent_at', new Date(Date.now() - days * 86_400_000).toISOString())
+  if (error) throw error
+  return count ?? 0
 }

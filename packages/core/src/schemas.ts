@@ -617,3 +617,38 @@ export type CreateNewsSourceInput = z.input<typeof createNewsSourceInput>
 export type UpdateNewsSourceInput = z.input<typeof updateNewsSourceInput>
 export type NewsQuery = z.input<typeof newsQuery>
 export type SaveDigestInput = z.input<typeof saveDigestInput>
+
+// ─── Avisos push (ADR-0040) ─────────────────────────────────────────────────
+
+/** Un dispositivo que aceptó los avisos: la suscripción Web Push de su navegador. */
+export interface PushDevice {
+  id: string
+  /** Dirección del servicio de push. Secreta: quien la tiene puede enviar avisos a ese dispositivo. */
+  endpoint: string
+  p256dh: string
+  auth: string
+  userAgent: string | null
+  /** Nombre que enseña Ajustes («iPhone · Safari»). */
+  label: string | null
+  lastSeenAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** Lo que da `PushSubscription.toJSON()` en el navegador, más el nombre del dispositivo. */
+export const pushSubscribeInput = z.object({
+  endpoint: z
+    .string()
+    .trim()
+    .min(12)
+    .max(2000)
+    .regex(/^https:\/\/[^\s]+$/i, 'Tiene que ser una dirección https'),
+  keys: z.object({
+    p256dh: z.string().trim().min(1).max(200),
+    auth: z.string().trim().min(1).max(100),
+  }),
+  userAgent: z.string().max(400).nullable().optional(),
+  label: z.string().trim().min(1).max(60).nullable().optional(),
+})
+
+export type PushSubscribeInput = z.input<typeof pushSubscribeInput>

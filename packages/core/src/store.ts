@@ -15,6 +15,7 @@ import type {
   OutboxKind,
   Project,
   ProjectStatus,
+  PushDevice,
   Subscription,
   Task,
   TaskPriority,
@@ -60,6 +61,14 @@ export interface Store {
    * que es quien puede leer los feeds sin CORS); sin él, la app lo dice.
    */
   newsFeeds?: { fetchNow(): Promise<NewsFetchSummary> }
+  /** Avisos push (ADR-0040): los dispositivos suscritos y lo que ya se avisó. */
+  pushDevices: PushDeviceStore
+  pushLog: PushLogStore
+  /**
+   * Manda un aviso de prueba a los dispositivos del usuario. Solo lo sabe hacer el store de Supabase (se lo pide a la
+   * Edge Function `push`, que es quien tiene la clave privada VAPID); sin él, la app no ofrece el botón.
+   */
+  pushDelivery?: { test(): Promise<PushSendSummary> }
   /**
    * Repos a los que llega el token de la sincronización. Solo lo sabe el store de Supabase (se lo pregunta
    * a la Edge Function `github`, que es quien tiene el token); sin él, la UI pide el repo a mano.
@@ -112,6 +121,31 @@ export interface NewsFetchSummary {
   added: number
   notModified: number
   errors: { sourceId: string; error: string }[]
+}
+
+/** Dispositivos con avisos, del visto más recientemente al más antiguo. */
+export interface PushDeviceStore {
+  list(): Promise<PushDevice[]>
+  /** Crea la fila del dispositivo o, si ya está (mismo `endpoint`), la actualiza. */
+  upsert(row: NewRow<PushDevice>): Promise<PushDevice>
+  remove(id: string): Promise<void>
+  removeEndpoint(endpoint: string): Promise<void>
+}
+
+/** Avisos ya enviados, por clave (`charge:<suscripción>:<fecha>`). */
+export interface PushLogStore {
+  /** Cuáles de estas claves ya se enviaron. */
+  sent(keys: string[]): Promise<string[]>
+  /** Las apunta como enviadas; las que ya estaban no cambian. */
+  record(keys: string[]): Promise<void>
+}
+
+export interface PushSendSummary {
+  /** Avisos entregados al servicio de push (uno por aviso y dispositivo). */
+  sent: number
+  /** Dispositivos borrados porque el navegador ya no reconoce su suscripción (404/410). */
+  removed: number
+  failed: number
 }
 
 export interface OutboxEntry {
