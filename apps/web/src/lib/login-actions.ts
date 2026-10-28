@@ -1,5 +1,6 @@
 import type { AuthError } from '@supabase/supabase-js'
 import { loadSupabase, resetAuth, safeRedirect, toAccount } from './auth'
+import { captchaOptions } from './captcha'
 
 /**
  * Acciones del formulario de login. Viven aparte de `auth.ts` para que solo las descargue la
@@ -25,6 +26,8 @@ export function authErrorMessage(err: unknown): string {
       return 'Este correo no tiene cuenta y el registro está cerrado.'
     case 'provider_disabled':
       return 'Este método de acceso no está activado.'
+    case 'captcha_failed':
+      return 'No hemos podido comprobar que no eres un robot. Inténtalo de nuevo.'
   }
   if (e.status === 429) return 'Demasiados intentos. Espera un minuto y vuelve a intentarlo.'
   if (e.name === 'AuthRetryableFetchError' || err instanceof TypeError)
@@ -32,10 +35,16 @@ export function authErrorMessage(err: unknown): string {
   return e.message || 'Algo ha fallado. Inténtalo de nuevo.'
 }
 
-/** Envía un código de un solo uso al correo (crea la cuenta si no existe). */
-export async function sendEmailCode(email: string) {
+/**
+ * Envía un código de un solo uso al correo (crea la cuenta si no existe). Con el CAPTCHA activo en
+ * Supabase, `captchaToken` es obligatorio; es la única llamada del login que lo pide (ADR-0060).
+ */
+export async function sendEmailCode(email: string, captchaToken?: string | null) {
   const c = await loadSupabase()
-  const { error } = await c.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+  const { error } = await c.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, ...captchaOptions(captchaToken) },
+  })
   if (error) throw error
 }
 

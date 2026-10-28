@@ -559,6 +559,7 @@
     - `OLLAMA_ORIGINS` en cada ordenador que use el Asistente desde la web, y reiniciar Ollama;
     - el secreto `MUNINN_MCP_ALLOWED_ORIGINS` de la función `mcp`, si incluye la URL de la web;
     - Search Console (cuando esté dado de alta): añadir la propiedad nueva y volver a enviar `sitemap.xml`.
+    - Cloudflare › Turnstile: añadir el dominio a los *hostnames* del widget del CAPTCHA (ADR-0060), o el login fallará.
   - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
     Las apps instaladas (PWA) de la URL vieja no se mudan solas: hay que instalarlas otra vez desde la nueva.
 - **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)
@@ -610,3 +611,20 @@
   verdad. Con `qwen3:8b` cargado eso tarda más de 5 s. En el CI no hay Ollama y el informe sale sin entradilla.
 - **Solución:** para `pnpm test`, apaga Ollama (o descarga el modelo de memoria). Pendiente: que el test inyecte un proveedor
   falso en lugar de depender de lo que haya en el equipo.
+
+### CAPTCHA de la entrada: Turnstile (pasos manuales)
+
+- **Síntoma:** con el CAPTCHA activo en Supabase, «Enviar código» falla con «No hemos podido comprobar que no eres un
+  robot» (`captcha_failed`), o el botón se queda en «Comprobando…».
+- **Causa:** Supabase exige `captchaToken` en `signInWithOtp` y el build no lleva `VITE_TURNSTILE_SITE_KEY`, el
+  *hostname* no está en el widget de Cloudflare (Turnstile da error 110200) o se reutilizó un token (son de un solo uso).
+- **Solución / orden para activarlo** (ADR-0060; la lista viva está en `docs/fase-final.md`, paso 4c):
+  1. Cloudflare › Turnstile › *Add widget* con los *hostnames* de la web publicada, `localhost` y `tauri.localhost`.
+  2. `VITE_TURNSTILE_SITE_KEY` en Vercel (Production y Preview) y en `.env.local`; redesplegar y ver que el widget carga.
+  3. **Después**, Supabase › Authentication › Attack Protection: Turnstile con la clave **secreta**. Al revés, el login
+     publicado deja de funcionar hasta que llegue el despliegue con la variable.
+- Sin la variable no se descarga nada de Cloudflare: los entornos locales y la demo no necesitan clave. Para probar el
+  widget en local sin cuenta, Cloudflare publica claves de prueba (`1x00000000000000000000AA` siempre pasa).
+- `verifyOtp` y GitHub no llevan token: Supabase solo lo comprueba al pedir el código. Si algún día se añade otra
+  llamada protegida (contraseñas, `resend`, registro anónimo), tiene que pedir su propio token.
+- Si cambias el dominio, añádelo también a los *hostnames* del widget (lista de «Cambiar el dominio de la web»).

@@ -81,6 +81,15 @@ dirección, pulsa **Usar otro correo**.
 
 Usa el mismo correo en el ordenador y en el móvil para ver lo mismo en los dos.
 
+### La comprobación anti-robots
+
+Para que nadie cree cuentas en masa, Muninn comprueba que eres una persona antes de enviarte el código.
+Casi siempre no ves nada: pasa sola en un segundo. Mientras tanto el botón dice **Comprobando…**. A veces
+te pedirá marcar una casilla debajo del formulario.
+
+Si dice **No se pudo completar la comprobación anti-robots**, revisa tu conexión y pulsa **Reintentar**.
+Algunos bloqueadores de anuncios muy estrictos la impiden: permite `challenges.cloudflare.com` en ellos.
+
 ### Con GitHub
 
 En el navegador y en el móvil puedes pulsar **Continuar con GitHub**: te lleva a GitHub para dar permiso y
