@@ -110,6 +110,19 @@ jobs:
             exit 1
           fi
 
+      # Sin ellas el instalador arranca solo en modo demo («Este build no tiene servidor»): la web las saca de Vercel,
+      # pero aquí el bundle se compila en CI. Son públicas (URL y clave publicable), por eso van en variables, no en secretos.
+      - name: Comprobar las variables de Supabase
+        shell: bash
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Faltan las variables VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY (Settings › Secrets and variables › Actions › Variables)."
+            exit 1
+          fi
+
       - run: pnpm install --frozen-lockfile
 
       # Solo aquí: en local `tauri build` exigiría la clave privada para firmar.
@@ -126,6 +139,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
         with:
           projectPath: apps/desktop
           tagName: ${{ needs.release-please.outputs.tag_name }}
