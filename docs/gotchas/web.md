@@ -391,14 +391,53 @@
      *Homepage URL* puede pasar a la publicada (el *callback* no cambia).
   5. Comprueba: abrir `https://<tu-url>/finanzas` y recargar no da 404; en el iPhone, Safari › Compartir › **Añadir a pantalla de inicio**
      y abrirla desde el icono (pantalla completa, sin barra de Safari). La lista de [pruebas-iphone](../pruebas-iphone.md) ya se puede pasar.
-- **Solución (Web Push, cuando se implemente la suscripción):**
-  1. Claves VAPID (una vez, en tu equipo; no las pegues en el chat ni en el repo): `npx web-push generate-vapid-keys`.
-  2. Supabase › **Edge Functions › Secrets**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:<tu correo>`).
-  3. Vercel › Environment Variables: `VITE_VAPID_PUBLIC_KEY` = la **pública** (es pública por diseño) y vuelve a desplegar.
-  4. Migración de `push_subscriptions`, despliegue de la función `push` y su `cron.schedule` diario: llegarán con la implementación
-     (mismo patrón que «Sincronización con GitHub (pasos manuales)» en [gotchas/db](db.md)).
-- **Ojo:** en iOS el permiso solo se puede pedir desde la PWA **instalada** y tras un toque; si la desinstalas, la suscripción muere y
-  la función la borrará al recibir `410`. `public/push-sw.js` ya está en el service worker: hoy no hace nada porque nadie envía avisos.
+- **Solución (Web Push):** el código está hecho (tablas `push_subscriptions` y `push_log`, `m.push` en el core, Ajustes › Notificaciones,
+  `public/push-sw.js` y la Edge Function `push`). Falta, en este orden:
+  1. **Claves VAPID** (una vez, en tu equipo; no las pegues en el chat ni en el repo): `npx web-push generate-vapid-keys`. Guarda las dos
+     en tu gestor de contraseñas: si cambias la pública, todas las suscripciones dejan de valer y hay que volver a activar cada dispositivo.
+  2. **Migración:** aplica `supabase/migrations/20261028180000_push_subscriptions.sql` (SQL Editor o `npx supabase@2 db push`). Si usas
+     `apply_migration` del MCP de Supabase, alinea la versión (ver [gotchas/db](db.md)).
+  3. **Secretos de la función** (Supabase › **Edge Functions › Secrets**, o `npx supabase@2 secrets set NOMBRE=valor`):
+     `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:<tu correo>`: los servicios de push escriben ahí si algo va mal).
+     Reutiliza `MUNINN_SYNC_SECRET` (el del cron de GitHub) y, opcional, `MUNINN_TIME_ZONE` (`Europe/Madrid` por defecto).
+  4. **Desplegar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/push/_core/muninn.js`, fuera de git) y
+     `npx supabase@2 functions deploy push --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. `--no-verify-jwt` porque el cron no
+     manda JWT; la función comprueba su secreto (`/push/send`) o la sesión (`/push/test`).
+  5. **Web:** Vercel › Environment Variables (Production y Preview): `VITE_VAPID_PUBLIC_KEY` = la **pública** (lo es por diseño; nunca la
+     privada) y vuelve a desplegar. En local, en `apps/web/.env.local`. Sin ella, Ajustes › Notificaciones dice «Avisos sin configurar».
+  6. **Cron diario** (SQL Editor; `pg_cron`, `pg_net` y el secreto `muninn_sync_secret` del Vault ya existen por GitHub). `0 7 * * *` es
+     UTC: las 8 en invierno y las 9 en verano en Madrid.
+     ```sql
+     select cron.schedule('muninn-push-charges', '0 7 * * *', $
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/push/send',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 30000
+       );
+     $);
+     ```
+  7. **Site URL:** la de Supabase (paso 4 de arriba) debe ser la URL publicada. El permiso de avisos va por origen: lo concedido en una
+     vista previa de Vercel no vale en producción, y el enlace del aviso abre la app en el origen donde se activó.
+  8. **Probar a mano:** `curl -X POST -H "x-muninn-sync-secret: <MUNINN_SYNC_SECRET>" https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/push/send`
+     responde `{ users, results: [{ alerts, sent, removed, failed }], pruned }`; sin secreto, 401. Desde la app, **Enviar prueba**.
+- **Ojo:** en iOS el permiso solo se puede pedir desde la PWA **instalada** y tras un toque (`enablePush` llama a `requestPermission` lo
+  primero, antes de cualquier otra espera). Si la desinstalas, la suscripción muere y la función la borra al recibir `404`/`410`.
+- **Ojo:** un aviso de cobro se apunta en `push_log` (`charge:<suscripción>:<fecha>`) cuando llega al menos a un dispositivo: si el cron
+  corre dos veces no repite, y si un día no corre (proyecto pausado), el siguiente avisa de lo que siga dentro de la ventana. Si todos los
+  dispositivos fallan, se reintenta al día siguiente. El cron borra el registro de más de 90 días.
+- **Ojo:** `push_subscriptions` es única por `(owner_id, endpoint)`, no por `endpoint`: con RLS, un `upsert` no ve la fila de otro usuario.
+  Por eso al **cerrar sesión** la app borra la fila de este dispositivo y cancela la suscripción del navegador (`leaveThisDevice`).
+- **Ojo:** solo se admiten direcciones de servicios de push conocidos (`isPushServiceUrl` en `schemas.ts`: FCM, Mozilla, Apple y
+  Windows), en el core, en un `check` de la tabla y otra vez antes de enviar. La función hace un POST a esa dirección desde la red de
+  Supabase: aceptar cualquier `https://` sería un SSRF. Si un navegador nuevo usa otro servicio, añádelo en los tres sitios.
+- **Ojo:** la función usa `npm:web-push`, que tira de `crypto` y `https` de Node. Si el runtime de Supabase lo rompe (errores de
+  `createECDH` en los logs), cámbialo por una librería nativa de Deno con la misma forma (`sendNotification` → código HTTP): lo demás
+  (qué avisar, a quién, borrar con 410) está en el core y no cambia.
 
 ### Asistente: todo en su chunk, y el historial en el dispositivo
 

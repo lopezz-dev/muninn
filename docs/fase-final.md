@@ -148,6 +148,18 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
   local», acéptalo.
 
+## 4b. Avisos push (≈ 20 min)
+
+Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales). El código está montado desde el
+28 de octubre; nada de esto se ha hecho todavía.
+- [ ] Generar las claves VAPID en tu equipo (`npx web-push generate-vapid-keys`) y guardarlas en tu gestor de contraseñas.
+- [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
+- [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
+- [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
+- [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
+- [ ] Programar el cron `muninn-push-charges` (`0 7 * * *`).
+- [ ] Comprobar: `curl -X POST` a `/push/send` sin secreto da 401 y con el secreto responde `{ users, results, pruned }`.
+
 ## 5. iPhone (≈ 45 min)
 
 Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra con tu cuenta.
@@ -164,6 +176,14 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
 - [ ] En Noticias, «Abrir» y el título abren el artículo en Safari sin cerrar Muninn, y al volver sale leída. Igual con un enlace de una
   nota y con una imagen adjunta del Asistente.
 - [ ] El informe de la mañana se lee en Notas y en el Asistente, y el iPhone no genera ninguno.
+- [ ] **Avisos push** (necesita el paso 4b):
+  - antes de instalar, en Safari, Ajustes › Notificaciones dice «Añade Muninn a tu pantalla de inicio»;
+  - con la app instalada y abierta desde el icono, activa **Avisos en este dispositivo** y pulsa **Permitir**: sale en Dispositivos como
+    «iPhone · App» con la marca **Este**;
+  - **Enviar prueba**: llega «Los avisos funcionan en este dispositivo» con la app cerrada, y al tocarlo abre Ajustes › Notificaciones;
+  - crea una suscripción «Prueba final» que se cobre **mañana** y lanza el cron a mano (el `curl` del paso 4b): llega «Mañana te cobran
+    Prueba final · …» y al tocarlo abre Finanzas › Suscripciones. Lanzarlo otra vez no lo repite. Archiva la suscripción al acabar;
+  - en el ordenador, quita el iPhone de la lista y pulsa **Deshacer**: vuelve, y «Enviar prueba» sigue llegando.
 
 ## 6. OAuth del MCP remoto con Claude Code (≈ 10 min)
 
@@ -249,8 +269,5 @@ actualizaciones.
 ## Después (trabajo de código que necesita lo anterior)
 
 No son pasos manuales; pídeselos a Claude cuando lo de arriba esté hecho.
-- **Avisos push (Web Push, F3):** necesitan la web publicada y unas claves VAPID que generas tú
-  ([gotchas/web](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales), pasos 1–3). Luego se implementa la suscripción,
-  `push_subscriptions` y la función `push`, y se prueba en el iPhone instalado.
 - **Voz (F4):** implementar [ADR-0044](adr/0044-voz-local-whisper-y-piper.md) si lo aceptas. Para probarla, instala whisper.cpp, Python y Piper
   ([gotchas/desktop](gotchas/desktop.md#instalar-la-voz-whispercpp-y-piper-pasos-manuales-cuando-se-implemente)).

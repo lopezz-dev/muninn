@@ -4,6 +4,7 @@ import { createFinance } from './finance'
 import { DEFAULT_SETTINGS } from './memory-store'
 import { createNews } from './news'
 import { positionAt, positionsAfter, positionsFor } from './ordering'
+import { createPush } from './push'
 import {
   type Activity,
   type ActorKind,
@@ -252,6 +253,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   const finance = createFinance({ store, nowIso, today, parse, log })
   const news = createNews({ store, nowIso, today, parse, log })
+  const push = createPush({ store, nowIso, today, parse })
 
   const must = async <T>(p: Promise<T | null>, entity: string, id: string) => {
     const v = await p
@@ -1350,6 +1352,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     },
     finance,
     news,
+    push,
     overview,
     recentActivity,
   }

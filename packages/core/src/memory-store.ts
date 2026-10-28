@@ -9,6 +9,7 @@ import type {
   NewsSource,
   Note,
   Project,
+  PushDevice,
   Subscription,
   Task,
   Transaction,
@@ -48,6 +49,9 @@ export interface MemorySnapshot {
   newsSources: NewsSource[]
   newsItems: NewsItem[]
   newsDigests: NewsDigest[]
+  pushDevices?: PushDevice[]
+  /** Claves de los avisos ya enviados. */
+  pushLog?: string[]
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -167,6 +171,9 @@ export function createMemoryStore(
   const newsSources = toMap(initial.newsSources ?? [])
   const newsItems = toMap(initial.newsItems ?? [])
   const newsDigests = toMap(initial.newsDigests ?? [])
+  // Ni los de antes de los avisos push.
+  const pushDevices = toMap(initial.pushDevices ?? [])
+  const pushLog = new Set(initial.pushLog ?? [])
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -185,6 +192,8 @@ export function createMemoryStore(
       newsSources: [...newsSources.values()],
       newsItems: [...newsItems.values()],
       newsDigests: [...newsDigests.values()],
+      pushDevices: [...pushDevices.values()],
+      pushLog: [...pushLog],
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -299,6 +308,40 @@ export function createMemoryStore(
         newsDigests.set(full.id, full)
         changed()
         return structuredClone(full)
+      },
+    },
+    pushDevices: {
+      async list() {
+        return [...pushDevices.values()]
+          .sort((a, b) => (a.lastSeenAt < b.lastSeenAt ? 1 : a.lastSeenAt > b.lastSeenAt ? -1 : 0))
+          .map((d) => structuredClone(d))
+      },
+      async upsert(row) {
+        const current = [...pushDevices.values()].find((d) => d.endpoint === row.endpoint)
+        const ts = now()
+        const full: PushDevice = current
+          ? { ...current, ...row, updatedAt: ts }
+          : { ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }
+        pushDevices.set(full.id, full)
+        changed()
+        return structuredClone(full)
+      },
+      async remove(id) {
+        pushDevices.delete(id)
+        changed()
+      },
+      async removeEndpoint(endpoint) {
+        for (const d of pushDevices.values()) if (d.endpoint === endpoint) pushDevices.delete(d.id)
+        changed()
+      },
+    },
+    pushLog: {
+      async sent(keys) {
+        return keys.filter((k) => pushLog.has(k))
+      },
+      async record(keys) {
+        for (const k of keys) pushLog.add(k)
+        changed()
       },
     },
     async accountTotals() {

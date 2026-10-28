@@ -625,3 +625,63 @@ export type CreateNewsSourceInput = z.input<typeof createNewsSourceInput>
 export type UpdateNewsSourceInput = z.input<typeof updateNewsSourceInput>
 export type NewsQuery = z.input<typeof newsQuery>
 export type SaveDigestInput = z.input<typeof saveDigestInput>
+
+// ─── Avisos push (ADR-0040) ─────────────────────────────────────────────────
+
+/** Un dispositivo que aceptó los avisos: la suscripción Web Push de su navegador. */
+export interface PushDevice {
+  id: string
+  /** Dirección del servicio de push. Secreta: quien la tiene puede enviar avisos a ese dispositivo. */
+  endpoint: string
+  p256dh: string
+  auth: string
+  userAgent: string | null
+  /** Nombre que enseña Ajustes («iPhone · Safari»). */
+  label: string | null
+  lastSeenAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Servicios de push de los navegadores (Chrome/Edge/Android, Firefox, Safari/iOS y Windows). La Edge Function `push`
+ * hace un POST a la dirección de la suscripción desde la red de Supabase: si se admitiera cualquier `https://`, una
+ * suscripción falsa la convertiría en un proxy hacia dentro (SSRF). Solo se aceptan estos dominios.
+ */
+const PUSH_SERVICE_HOSTS = [
+  /^fcm\.googleapis\.com$/,
+  /^updates\.push\.services\.mozilla\.com$/,
+  /^([a-z0-9-]+\.)*push\.apple\.com$/,
+  /^([a-z0-9-]+\.)*notify\.windows\.com$/,
+]
+
+/** Si `url` es una dirección https de un servicio de push conocido (sin usuario, contraseña ni puerto raro). */
+export function isPushServiceUrl(url: string) {
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443'))
+      return false
+    const host = u.hostname.toLowerCase().replace(/\.$/, '')
+    return PUSH_SERVICE_HOSTS.some((r) => r.test(host))
+  } catch {
+    return false
+  }
+}
+
+/** Lo que da `PushSubscription.toJSON()` en el navegador, más el nombre del dispositivo. */
+export const pushSubscribeInput = z.object({
+  endpoint: z
+    .string()
+    .trim()
+    .min(12)
+    .max(2000)
+    .refine(isPushServiceUrl, 'No es la dirección de un servicio de push conocido'),
+  keys: z.object({
+    p256dh: z.string().trim().min(1).max(200),
+    auth: z.string().trim().min(1).max(100),
+  }),
+  userAgent: z.string().max(400).nullable().optional(),
+  label: z.string().trim().min(1).max(60).nullable().optional(),
+})
+
+export type PushSubscribeInput = z.input<typeof pushSubscribeInput>

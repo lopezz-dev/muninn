@@ -68,6 +68,9 @@ export function loadMuninn(auth: Exclude<AuthState, { kind: 'anonymous' }>): Pro
   return instance.muninn
 }
 
+/** La instancia ya creada, sin crear otra (para limpiar al cerrar sesión). */
+export const currentMuninn = () => instance?.muninn
+
 /** Olvida la instancia actual (al cerrar sesión o salir de la demo). */
 export function resetMuninn() {
   instance = undefined

@@ -1,6 +1,7 @@
 # ADR-0040: PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron
 
-- **Estado:** Aceptado en parte: el hosting en Vercel (26-10-2026, publicada en `muninn-sepia.vercel.app`). Web Push sigue propuesto.
+- **Estado:** Aceptado en parte: el hosting en Vercel (26-10-2026, publicada en `muninn-sepia.vercel.app`). Web Push, implementado el
+  28-10-2026 y pendiente de probar en el iPhone (fase final): se acepta al pasar esas pruebas. Ver «Implementación», al final.
 - **Fecha:** 2026-10-22
 - **Área:** web, db, ci
 
@@ -66,3 +67,19 @@ No cambia la caché ni nada más; pasar a `injectManifest` solo haría falta si 
 - Pasos manuales exactos: [gotchas/web](../gotchas/web.md) › «Publicar la PWA y activar Web Push (pasos manuales)».
 - Relacionado: [ADR-0008](0008-tauri-escritorio-pwa-movil.md), [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md),
   [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md).
+
+## Implementación (28-10-2026)
+
+Lo que se concretó al implementar la parte de push, dentro de lo propuesto:
+
+- **Tablas** (`20261028180000_push_subscriptions`): `push_subscriptions` con lo previsto más `label` («iPhone · App», para la lista) y
+  `updated_at`. El `endpoint` es único **por dueño** (`owner_id, endpoint`), no global: con RLS, un `upsert` no puede ver la fila de otro
+  usuario en el mismo navegador. Para que un dispositivo compartido no siga recibiendo los avisos de otra cuenta, al cerrar sesión la app
+  borra su fila y cancela la suscripción del navegador. De las dos opciones contra avisos repetidos se eligió **`push_log`**
+  (`charge:<suscripción>:<próximo cobro>`): si el cron no corre un día, el siguiente avisa de lo que siga en la ventana.
+- **Qué avisa:** las suscripciones sin archivar con el cobro entre hoy y sus `remind_days` (no las vencidas, que ya salen en Inicio). Un
+  aviso por cobro: «Mañana te cobran Vercel Pro · 20,00 €», con enlace a `/finanzas?vista=suscripciones`.
+- **Función `push`:** `POST /push/send` (cron, `x-muninn-sync-secret`) y `POST /push/test` (la sesión del usuario, para «Enviar prueba»).
+  Firma con `npm:web-push`. Qué avisar, a quién y qué borrar (404/410) está en el core (`push.ts`, con tests); la función solo firma y envía.
+- **Ajustes › Notificaciones** trata los estados no soportado, permiso denegado, iOS sin instalar y sin clave (`VITE_VAPID_PUBLIC_KEY`
+  vacía). Quitar un dispositivo de la lista borra la fila (no es dato del usuario; «Deshacer» la vuelve a crear con las mismas claves).

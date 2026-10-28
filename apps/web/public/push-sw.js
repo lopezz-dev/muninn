@@ -1,6 +1,6 @@
 // Avisos Web Push (ADR-0040). El service worker de Workbox lo importa (`workbox.importScripts` en vite.config.ts):
-// solo escucha `push` y `notificationclick`, sin tocar la caché. Hasta que haya suscripciones y una función que
-// envíe avisos, no hace nada.
+// solo escucha `push` y `notificationclick`, sin tocar la caché. Los avisos los manda la Edge Function `push`
+// (cobros de suscripciones, y el de prueba de Ajustes › Notificaciones); el texto lo arma el core (`push.ts`).
 //
 // Carga esperada (JSON): { "title": "…", "body": "…", "url": "/finanzas?vista=suscripciones", "tag": "…" }
 

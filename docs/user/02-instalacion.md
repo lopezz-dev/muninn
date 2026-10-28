@@ -59,8 +59,8 @@ Muninn se instala desde Safari como una app más, sin pasar por la App Store:
 3. Elige **Añadir a pantalla de inicio**.
 4. Abre Muninn desde el icono nuevo, el del cuervo sobre fondo ámbar.
 
-> **Próximamente:** **notificaciones** en el móvil (por ejemplo, antes de cada cobro). Aún no hay avisos: **Ajustes ›
-> Notificaciones** está marcado como próximamente. En iPhone solo funcionarán con Muninn instalada así (iOS 16.4 o superior).
+> **Avisos en el móvil:** con Muninn instalada así (iOS 16.4 o superior), activa los avisos en **Ajustes › Notificaciones** para
+> enterarte antes de cada cobro. Paso a paso en [Notificaciones](13-notificaciones.md).
 
 ## Android
 
