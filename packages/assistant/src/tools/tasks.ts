@@ -1,6 +1,6 @@
 import { columnKind, type Muninn, type Task, taskPriority, ValidationError } from '@muninn/core'
 import { z } from 'zod'
-import { type AnyTool, byName, defineTool, UUID } from './define'
+import { type AnyTool, defineTool, UUID } from './define'
 
 const projectRef = z
   .string()
@@ -8,10 +8,25 @@ const projectRef = z
   .describe('Id del proyecto o su nombre (no distingue mayúsculas)')
 const isoDate = z.iso.date().describe('Fecha AAAA-MM-DD')
 
+/**
+ * Por id o por nombre (ADR-0009): primero el nombre exacto y, si no hay, los que lo contienen. Entre varios
+ * candidatos gana el activo o pausado sobre el archivado (al archivar un proyecto, su nombre se reutiliza); si
+ * quedan varios sin archivar, error con sus ids en vez de elegir uno al azar.
+ */
 export async function resolveProject(app: Muninn, ref: string) {
   if (UUID.test(ref)) return app.projects.get(ref)
   const all = await app.projects.list({ includeArchived: true })
-  const match = byName(all, ref)
+  const needle = ref.trim().toLowerCase()
+  const exact = all.filter((p) => p.name.toLowerCase() === needle)
+  const candidates =
+    exact.length > 0 ? exact : all.filter((p) => p.name.toLowerCase().includes(needle))
+  const live = candidates.filter((p) => p.status !== 'archived')
+  if (live.length > 1) {
+    throw new ValidationError(
+      `Hay ${live.length} proyectos que encajan con "${ref}": ${live.map((p) => `${p.name} (${p.id})`).join(', ')}. Usa el id.`,
+    )
+  }
+  const match = live[0] ?? candidates[0]
   if (!match) {
     throw new ValidationError(
       `No hay ningún proyecto llamado "${ref}". Proyectos: ${all.map((p) => p.name).join(', ') || '(ninguno)'}`,
