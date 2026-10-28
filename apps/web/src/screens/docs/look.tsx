@@ -1,17 +1,12 @@
-import { cn, type IconProps, icons, screenIcons } from '@muninn/ui'
-import type { ComponentType } from 'react'
+import { cn } from '@muninn/ui'
+import { AppIcon, isAppIcon } from '../../components/AppIcon'
 import type { Doc, DocGroupId } from '../../lib/docs'
 
-/** Los iconos que puede pedir una guía con `icon:` (ADR-0052). */
-export const DOC_ICONS: Record<string, ComponentType<IconProps>> = { ...icons, ...screenIcons }
-
-export const isDocIcon = (name: string) => name in DOC_ICONS
+/** Los iconos que puede pedir una guía con `icon:` (ADR-0052): los de `icons` y `screenIcons`. */
+export const isDocIcon = isAppIcon
 
 /** El icono de una guía; si el nombre no existe, el del libro. */
-export function DocIcon({ name, ...props }: IconProps & { name: string }) {
-  const Component = DOC_ICONS[name] ?? icons.docs
-  return <Component aria-hidden="true" {...props} />
-}
+export const DocIcon = AppIcon
 
 /** Icono del título de cada grupo. */
 export const GROUP_ICON: Record<DocGroupId, string> = {

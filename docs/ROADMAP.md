@@ -25,6 +25,8 @@
   [gotchas/db](gotchas/db.md#activar-github-oauth-paso-manual)
 - [ ] Pasar la [lista de pruebas del iPhone](pruebas-iphone.md) y corregir lo que falle → en [Pruebas finales](#pruebas-finales)
 - [x] Módulos en `user_settings.enabled_modules` (Ajustes › Módulos): el menú, el dock y el buscador solo enseñan lo activo
+- [x] Ajustes rediseñados: menú por grupos con buscador, cabecera por sección, tarjetas con subtítulo, marca de «cambiado» y
+  «Restablecer sección» con Deshacer ([ADR-0053](adr/0053-ajustes-por-grupos-buscador-y-restablecer.md))
   ([ADR-0028](adr/0028-modulos-activables-solo-en-la-interfaz.md))
 - [x] Inicio (hoy, vencidas, en curso, próximos días, hechas hoy y gráfica de 7 días) con datos reales
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas

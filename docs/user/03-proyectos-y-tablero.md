@@ -41,7 +41,7 @@ En el tablero, el menú **⋯** de arriba tiene:
 
 ### Vincular un repositorio de GitHub
 
-Opcional, desde **Ajustes › Integraciones**: cada proyecto puede ir con un repositorio, y sus issues aparecen como tareas
+Opcional, desde **Ajustes › GitHub**: cada proyecto puede ir con un repositorio, y sus issues aparecen como tareas
 del proyecto y se mantienen al día solas (ver [GitHub](09-github.md)).
 
 ## El tablero

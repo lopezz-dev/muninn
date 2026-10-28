@@ -30,7 +30,7 @@ El diseño tiene también un interruptor para pausar un repositorio. Todavía no
 
 ## Vincular un repositorio
 
-Además de en la pantalla **GitHub**, en **Ajustes › Integraciones** verás tus proyectos, cada uno con un selector para su repositorio.
+Además de en la pantalla **GitHub**, en **Ajustes › GitHub** verás tus proyectos, cada uno con un selector para su repositorio.
 Ábrelo y elige uno de la lista. Te lo confirma un aviso con **Deshacer**. Para desvincularlo, elige **Sin repositorio**.
 
 En la lista salen tus repositorios privados a los que la sincronización tiene acceso y **todos** tus repositorios públicos. Al elegir uno

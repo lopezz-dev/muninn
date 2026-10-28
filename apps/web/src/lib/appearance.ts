@@ -136,7 +136,8 @@ export function connectAppearance(
 /** Hay cuenta conectada: los cambios se guardan también allí. */
 export const isAppearanceSynced = () => remote !== null
 
-function saveRemote(appearance: Appearance) {
+/** Guarda en la cuenta (si hay); si falla, avisa y se queda en este dispositivo. */
+export function saveAppearanceRemote(appearance: Appearance) {
   remote?.(appearance).catch(() => {
     notify.error('No se pudo guardar en tu cuenta', {
       description: 'El cambio se queda en este dispositivo',
@@ -160,7 +161,7 @@ export const ACCENT_LABEL: Record<AccentName, string> = {
 export function changeAppearance(patch: Partial<Appearance>) {
   const prev = appearanceStore.set((a) => ({ ...a, ...patch }))
   const now = appearanceStore.get()
-  saveRemote(now)
+  saveAppearanceRemote(now)
   const isGlass = patch.glass !== undefined
   notify.success(
     isGlass
@@ -173,7 +174,7 @@ export function changeAppearance(patch: Partial<Appearance>) {
         label: 'Deshacer',
         onClick: () => {
           appearanceStore.set(prev)
-          saveRemote(prev)
+          saveAppearanceRemote(prev)
           notify.info('Apariencia restaurada', { icon: isGlass ? 'glass' : 'palette' })
         },
       },

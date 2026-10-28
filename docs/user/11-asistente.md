@@ -36,7 +36,7 @@ Puedes enseñarle hasta **4 imágenes** por mensaje: con el clip, arrastrándola
 - Se reducen antes de enviarlas (una foto de varios MB se queda en unos cientos de KB) y **no salen de tu ordenador**:
   van al modelo local y se guardan en el historial de este dispositivo.
 - Hace falta un **modelo con visión** en Ollama, como `gemma3`, `qwen2.5vl` o `llama3.2-vision`
-  (`ollama pull gemma3` y elígelo en **Ajustes › Asistente e IA**). Si el tuyo no ve imágenes, la pantalla te lo avisa y
+  (`ollama pull gemma3` y elígelo en **Ajustes › Modelo local**). Si el tuyo no ve imágenes, la pantalla te lo avisa y
   no deja enviarlas.
 - El modelo ve las imágenes en el mensaje en que las mandas. Si en otro mensaje quieres que vuelva a mirarlas, adjúntalas
   otra vez.
@@ -82,12 +82,12 @@ Si algo falta, la pantalla te dice qué es y cómo arreglarlo:
 3. Descarga el modelo: `ollama pull qwen3:8b` (unos 5 GB).
 4. Abre el Asistente: arriba verás **Local · Ollama · qwen3:8b** con un punto verde.
 
-En **Ajustes › Asistente e IA** puedes cambiar la dirección de Ollama (casi nunca hace falta) y el modelo, y pulsar
+En **Ajustes › Modelo local** puedes cambiar la dirección de Ollama (casi nunca hace falta) y el modelo, y pulsar
 **Probar conexión**.
 
 ## Informe de la mañana
 
-Si lo activas en **Ajustes › Asistente e IA**, cada día a la hora que elijas Muninn te prepara un informe con tus tareas
+Si lo activas en **Ajustes › Informe de la mañana**, cada día a la hora que elijas Muninn te prepara un informe con tus tareas
 vencidas, las de hoy y las que tienes en curso, los cobros de los próximos días y el resumen de [Noticias](12-noticias.md).
 Se guarda como una **nota fijada** («Informe de la mañana · jueves, 22 oct»), así lo lees en cualquier dispositivo, y sale
 arriba en la lista de conversaciones del Asistente.
