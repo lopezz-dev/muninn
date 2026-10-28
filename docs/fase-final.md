@@ -120,6 +120,7 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
   `*.vercel.app` libre.)* Al cambiarlo, sigue [la lista de gotchas/web](gotchas/web.md#cambiar-el-dominio-de-la-web-lista-completa):
   la URL está escrita en el repo y en varios servicios.
 - [x] Supabase › URL Configuration: *Site URL* = la URL publicada, y `https://<tu-url>/**` en *Redirect URLs*. Deja las de `localhost`.
+  *(El 28 de octubre la autorización OAuth aún mandaba a `localhost:5174`; ya está. Compruébalo siempre con la redirección: [gotchas/mcp](gotchas/mcp.md#el-servidor-oauth-manda-a-localhost).)*
 - [ ] GitHub › la OAuth App de Muninn: *Homepage URL* = la URL publicada (el *callback* no cambia).
 - [ ] Añadir la URL publicada a `OLLAMA_ORIGINS` y reiniciar Ollama.
 - [ ] Comprobar:

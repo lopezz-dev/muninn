@@ -39,7 +39,7 @@
 
 ## F2 · Claude y GitHub
 > **Estado:** en curso. La tanda del 19 de octubre ([#15](https://github.com/lopezz-dev/muninn/pull/15) a [#20](https://github.com/lopezz-dev/muninn/pull/20)) ya está en `develop`.
-> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto está **desplegado** (21 de octubre); falta activar OAuth en Supabase para claude.ai. Lo pendiente, en [Pruebas finales](#pruebas-finales).
+> La sincronización con GitHub está en marcha y **probada con issues reales** (20 de octubre, con `huginnDB`), y el agente también (21 de octubre: PR real fusionado, cancelación e issue imposible). El MCP remoto está **desplegado** (21 de octubre) y **conectado a claude.ai** por OAuth (28 de octubre). Lo pendiente, en [Pruebas finales](#pruebas-finales).
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
@@ -64,9 +64,8 @@
   - [x] Pantalla de autorización `/oauth/consent` para el servidor OAuth de Supabase (ADR-0036): sin ella, OAuth no funciona
   - [x] Servidor OAuth activado en Supabase el 21 de octubre (*Authorization Path* `/oauth/consent`, registro dinámico, *Site URL*
     `localhost:5174`); el descubrimiento responde 200
-  - [ ] Conectar claude.ai (sin verificar) → [Pruebas finales](#pruebas-finales). **En espera:** añadir conectores personalizados en
-    claude.ai necesita permisos de la organización que aún no tienes (los tiene que dar Edgar). En el iPhone, cuando la PWA esté publicada
-    (F3): hoy la *Site URL* es `localhost`
+  - [x] Conectar claude.ai: **funciona desde el 28 de octubre** (conector personalizado en la organización del trabajo, con registro dinámico;
+    ve las 36 herramientas). Falta el iPhone → [Pruebas finales](#pruebas-finales)
 - [ ] **Escribir sin conexión:** cola de intenciones persistente, UUID del cliente, orden por ancla, conflictos y «Deshacer» sobre lo
   pendiente. ADR-0034 **propuesto** ([#19](https://github.com/lopezz-dev/muninn/pull/19)), para revisarlo juntos antes de implementar; hoy sin red solo se puede leer
   ([ADR-0029](adr/0029-tiempo-real-y-cache-sin-conexion.md))
@@ -134,14 +133,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] Desplegar la función `mcp` y comprobar con `curl` el 401 y los metadatos: [gotchas/mcp](gotchas/mcp.md) › «MCP remoto (pasos manuales)».
   Hecho el 21 de octubre: sin token 401 con `resource_metadata`, metadatos 200, GET 405, token inventado 401 y `Origin` no permitido 403
 - [ ] Claude Code con `--header "Authorization: Bearer <token>"`: «¿Cómo voy hoy?» responde con tus datos; con el token caducado, 401
-- [ ] Pantalla `/oauth/consent`: comprobada en el navegador con respuestas simuladas de Supabase (permiso, error de solicitud caducada, móvil
-  sin scroll horizontal); falta con una solicitud real
+- [x] Pantalla `/oauth/consent` con una solicitud real (28 de octubre, desde claude.ai). Antes, la autorización aún redirigía a
+  `localhost:5174`: la *Site URL* de Supabase no estaba en la web publicada ([gotchas/mcp](gotchas/mcp.md#el-servidor-oauth-manda-a-localhost))
 - [x] Activar el servidor OAuth (paso 4 de gotchas/mcp): hecho el 21 de octubre; `/.well-known/oauth-authorization-server/auth/v1` da 200
   con `registration_endpoint` (tarda un par de minutos en aplicarse tras guardar)
 - [ ] OAuth sin claude.ai, con Claude Code: `claude mcp add --transport http muninn-remoto <URL>` sin cabecera y, en una sesión interactiva,
   `/mcp` › muninn-remoto › *Authenticate*: abre el navegador en `/oauth/consent` y, tras «Permitir acceso», lista tus proyectos
-- [ ] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y lista tus proyectos (**sin
-  verificar**). En espera de permisos de la organización (Edgar)
+- [x] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y salen las herramientas (28 de
+  octubre: 15 de lectura y 21 de escritura, el catálogo actual). Sale con el icono de Supabase (Backlog)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
 ### F3 · Finanzas
@@ -295,6 +294,7 @@ más o menos en este orden:
 
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
+- Icono de Muninn en el conector de claude.ai (hoy sale el de Supabase): [gotchas/mcp](gotchas/mcp.md#el-conector-sale-con-el-icono-de-supabase)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
 - Ver y quitar los permisos OAuth dados a otras apps (claude.ai…) en Ajustes › Cuenta (ADR-0036; la API `oauth` de supabase-js ya lo permite)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
