@@ -33,6 +33,14 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - UX: toda acción del usuario da feedback con `notify` de `@muninn/ui`. Lo que cambia o destruye datos ofrece
   «Deshacer» (no diálogos de confirmación). Dinero siempre en céntimos (`AmountField`).
 
+## Tablero de tareas (Muninn)
+- Lo pendiente vive en el propio Muninn: proyecto **Muninn** (`403234a0-415b-4d02-8b73-d338bcfdf975`), vía su MCP. Usa el id:
+  hay un proyecto archivado con el mismo nombre.
+- Cada conversación mantiene al día las tareas que toca: al empezar → «En curso»; con el PR abierto → «Revisión»; con el PR
+  fusionado → «Hecho». Un PR que cubre varias tareas las mueve todas. Si se lanza en sesiones paralelas, cada una mueve las suyas.
+- Lo que aparezca por el camino (un fallo, un *follow-up*) se crea como tarea en «Pendiente» o «Backlog», no se queda en el chat.
+- Las tareas «Pruebas: …» son manuales de la fase final (`docs/fase-final.md`): no las cierra ningún PR.
+
 ## Git
 - `main` producción (por defecto), `develop` integración. Ramas `feat/*`, `fix/*`, `docs/*` → PR a `develop`.
 - Conventional Commits con área: `feat(core): …`, `fix(mcp): …`, `docs(adr): …`.
