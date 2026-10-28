@@ -202,6 +202,9 @@ actualizaciones.
 3. **Secretos en GitHub:**
    - [ ] `Get-Content $HOME\.tauri\muninn.key -Raw | gh secret set TAURI_SIGNING_PRIVATE_KEY -R lopezz-dev/muninn`
    - [ ] `gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD -R lopezz-dev/muninn` (te pide la contraseña sin mostrarla).
+   - [ ] Variables (no secretos: son públicas) con la URL y la clave publicable de Supabase, las mismas que en Vercel:
+     `gh variable set VITE_SUPABASE_URL -R lopezz-dev/muninn` y `gh variable set VITE_SUPABASE_PUBLISHABLE_KEY -R lopezz-dev/muninn`.
+     Sin ellas la app instalada solo ofrece el modo demo, y la release se para antes de compilar.
 4. **Clave pública en la app:**
    - [ ] Copia el contenido de `$HOME\.tauri\muninn.key.pub` (una línea; no es secreta) en `plugins.updater.pubkey` de
      `apps/desktop/src-tauri/tauri.conf.json`, en lugar de `PENDIENTE_CLAVE_PUBLICA_DE_TAURI_SIGNER_GENERATE`. PR a `develop` con
