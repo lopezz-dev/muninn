@@ -113,18 +113,39 @@ sigue a todos tus dispositivos; en modo demo, solo en este.
 
 ## Ajustes
 
-En **Ajustes** (abajo en la barra lateral, o en **Más** en el móvil) tienes estas secciones:
+En **Ajustes** (abajo en la barra lateral, o en **Más** en el móvil) las secciones van por grupos. Al lado de cada una ves
+lo más útil sin abrirla: con qué entras, cuántos módulos tienes activos o a qué hora va el informe.
 
-| Sección | Qué hay |
-|---|---|
-| **Cuenta** | Tu nombre y correo, cómo entras (código o GitHub) y **Cerrar sesión**. En modo demo, **Salir del modo demo** |
-| **Módulos** | Activar y desactivar módulos (ver arriba) |
-| **Apariencia** | Cristal y color de acento (ver abajo) |
-| **Asistente e IA** | Dónde está Ollama, qué modelo usa el [Asistente](11-asistente.md), **Probar conexión** y el informe de la mañana |
-| **Integraciones** | El repositorio de GitHub de cada proyecto y el estado de la sincronización (ver [GitHub](09-github.md)) |
-| **Notificaciones** | *Próximamente:* avisos en el móvil antes de cada cobro y cuando un agente termine |
-| **Datos y sincronización** | Dónde se guardan tus datos, cómo van entre dispositivos y qué pasa sin conexión (ver [Tus datos](07-datos-y-privacidad.md)) |
-| **Atajos de teclado** | La lista de atajos del buscador |
+| Grupo | Sección | Qué hay |
+|---|---|---|
+| Tú | **Cuenta** | Tu nombre y correo, cómo entras (código o GitHub) y **Cerrar sesión**. En modo demo, **Salir del modo demo** |
+| Tú | **Apariencia** | Cristal y color de acento (ver arriba) |
+| Tú | **Atajos de teclado** | Los atajos del buscador, del tablero y de toda la app |
+| Espacio de trabajo | **Módulos** | Activar y desactivar módulos (ver arriba) |
+| Espacio de trabajo | **Notificaciones** | *Próximamente:* avisos en el móvil antes de cada cobro y cuando un agente termine |
+| Asistente | **Modelo local** | Dónde está Ollama, qué modelo usa el [Asistente](11-asistente.md) y **Probar conexión** |
+| Asistente | **Informe de la mañana** | Activarlo, la hora y **Hacer ahora** (ver [Asistente](11-asistente.md#informe-de-la-mañana)) |
+| Integraciones | **GitHub** | El repositorio de cada proyecto y el estado de la sincronización (ver [GitHub](09-github.md)) |
+| Datos | **Datos y sincronización** | Dónde se guardan tus datos, cómo van entre dispositivos y qué pasa sin conexión (ver [Tus datos](07-datos-y-privacidad.md)) |
+
+Al pie, **Acerca de Muninn** dice qué versión tienes y enlaza a esta documentación y al código.
+
+### Buscar un ajuste
+
+Arriba del menú hay un buscador (pulsa **/** para ir a él). Escribe, por ejemplo, «hora» o «cristal»: salen los ajustes que
+coinciden, agrupados por sección. Elige uno (con el ratón, o con **↑ ↓** e **Intro**) y Muninn te lleva a esa sección y lo
+resalta un momento. **Esc** borra la búsqueda.
+
+### Lo que has cambiado
+
+Algunos ajustes tienen un valor de fábrica: el cristal, el color de acento y el informe de la mañana (apagado, a las 08:30).
+Cuando uno no está en ese valor, lleva un **punto** al lado, y la sección también en el menú. Junto al ajuste tienes un botón
+con una flecha para devolverlo a su valor, y arriba de la sección, **Restablecer sección** para devolverlos todos. Como
+siempre, el aviso te deja **Deshacer**.
+
+Los módulos, la dirección de Ollama y el modelo no llevan punto: son cosas de tu equipo, no preferencias con un valor «bueno».
+
+En pantallas muy anchas, a la derecha de cada sección sale la guía de esta documentación que la explica.
 
 ## Atajos de teclado
 

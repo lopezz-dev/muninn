@@ -1,5 +1,5 @@
 import type { GithubRepoSummary, Project } from '@muninn/core'
-import { Button, Card, ColorDot, cn, Icon, TextField } from '@muninn/ui'
+import { Button, ColorDot, cn, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { type ReactNode, useEffect, useState } from 'react'
@@ -10,6 +10,7 @@ import { parseRepoInput, pickProjectRepo, repoChoices, setProjectRepo } from '..
 import { useEnabledModules } from '../../lib/modules'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { githubReposQuery, projectsQuery } from '../../lib/queries'
+import { PrefGroup } from './ui'
 
 /** Lo que se sabe de la sincronización mirando los datos: cuántas tareas han llegado de GitHub y cuándo. */
 function useGithubActivity() {
@@ -146,21 +147,14 @@ export function Integraciones() {
 
   return (
     <>
-      <Card className="flex flex-col gap-3 px-[18px] py-4">
-        <div className="flex items-center gap-3">
-          <span className="grid size-[30px] shrink-0 place-items-center rounded-md bg-project-violet/15 text-project-violet">
-            <Icon name="github" />
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h2 className="text-md font-semibold">GitHub</h2>
-            <p className="text-[12.5px] text-fg-subtle">
-              Las issues de un repositorio llegan como tareas de su proyecto. Cerrar la issue
-              completa la tarea, y completar la tarea cierra la issue.
-            </p>
-          </div>
-        </div>
-        <dl className="flex flex-col text-sm">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle py-2.5">
+      <PrefGroup
+        title="Estado"
+        icon="github"
+        description="Las issues de un repositorio llegan como tareas de su proyecto. Cerrar la issue completa la tarea, y completar la tarea cierra la issue."
+        padded
+      >
+        <dl id="ajuste-github-estado" className="-my-2.5 flex flex-col text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle py-2.5 first:border-t-0">
             <dt className="flex-[1_1_180px] text-fg-subtle">Módulo</dt>
             <dd className="flex items-center gap-2">
               <span
@@ -198,64 +192,69 @@ export function Integraciones() {
             la puesta en marcha.
           </p>
         )}
-      </Card>
+      </PrefGroup>
 
-      <Card className="px-[18px] py-1.5">
-        <h2 className="pt-3 text-md font-semibold">Repositorio de cada proyecto</h2>
-        {picker ? (
-          <p className="pb-2 text-[12.5px] text-fg-subtle">
-            Un repositorio por proyecto. Salen los repositorios que ve el token de la
-            sincronización; al elegir uno público se comprueba que el token pueda usarlo. Si falta
-            alguno, dale acceso en GitHub y vuelve a esta página.
-          </p>
-        ) : (
-          <p className="pb-2 text-[12.5px] text-fg-subtle">
-            Un repositorio por proyecto. Escribe{' '}
-            <span className="font-mono">usuario/repositorio</span> o pega su dirección de GitHub;
-            déjalo vacío para desvincularlo.
-          </p>
-        )}
-        {repos.isError ? (
-          <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-            No se pudo cargar la lista de repositorios, así que toca escribirlo a mano.{' '}
-            <button
-              type="button"
-              onClick={() => void repos.refetch()}
-              className="cursor-pointer text-accent hover:underline"
+      <PrefGroup title="Repositorio de cada proyecto" icon="link">
+        <div id="ajuste-repos" className="px-4 md:px-[18px]">
+          {picker ? (
+            <p className="pt-3 pb-2 text-[12.5px] text-fg-subtle">
+              Un repositorio por proyecto. Salen los repositorios que ve el token de la
+              sincronización; al elegir uno público se comprueba que el token pueda usarlo. Si falta
+              alguno, dale acceso en GitHub y vuelve a esta página.
+            </p>
+          ) : (
+            <p className="pt-3 pb-2 text-[12.5px] text-fg-subtle">
+              Un repositorio por proyecto. Escribe{' '}
+              <span className="font-mono">usuario/repositorio</span> o pega su dirección de GitHub;
+              déjalo vacío para desvincularlo.
+            </p>
+          )}
+          {repos.isError ? (
+            <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
+              No se pudo cargar la lista de repositorios, así que toca escribirlo a mano.{' '}
+              <button
+                type="button"
+                onClick={() => void repos.refetch()}
+                className="cursor-pointer text-accent hover:underline"
+              >
+                Reintentar
+              </button>
+            </p>
+          ) : repos.data?.length === 0 ? (
+            <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
+              El token de la sincronización todavía no tiene acceso a ningún repositorio: dáselo en
+              GitHub o escríbelo a mano.
+            </p>
+          ) : null}
+          {auth.kind === 'demo' ? (
+            <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
+              En modo demo puedes probar el campo, pero nada llegará de GitHub: la sincronización
+              necesita una cuenta.
+            </p>
+          ) : null}
+          {projects.length === 0 ? (
+            <EmptyState
+              icon="projects"
+              title="Aún no tienes proyectos"
+              className="mb-3 shadow-none"
             >
-              Reintentar
-            </button>
-          </p>
-        ) : repos.data?.length === 0 ? (
-          <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-            El token de la sincronización todavía no tiene acceso a ningún repositorio: dáselo en
-            GitHub o escríbelo a mano.
-          </p>
-        ) : null}
-        {auth.kind === 'demo' ? (
-          <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-            En modo demo puedes probar el campo, pero nada llegará de GitHub: la sincronización
-            necesita una cuenta.
-          </p>
-        ) : null}
-        {projects.length === 0 ? (
-          <EmptyState icon="projects" title="Aún no tienes proyectos" className="mb-3 shadow-none">
-            Crea uno desde Proyectos y vuelve para vincularle un repositorio.
-          </EmptyState>
-        ) : (
-          projects.map((p) => (
-            <RepoRow key={p.id} project={p}>
-              {picker ? (
-                <RepoPicker project={p} projects={projects} repos={repos.data ?? undefined} />
-              ) : (
-                <RepoField project={p} />
-              )}
-            </RepoRow>
-          ))
-        )}
-      </Card>
+              Crea uno desde Proyectos y vuelve para vincularle un repositorio.
+            </EmptyState>
+          ) : (
+            projects.map((p) => (
+              <RepoRow key={p.id} project={p}>
+                {picker ? (
+                  <RepoPicker project={p} projects={projects} repos={repos.data ?? undefined} />
+                ) : (
+                  <RepoField project={p} />
+                )}
+              </RepoRow>
+            ))
+          )}
+        </div>
+      </PrefGroup>
 
-      <p className="text-xs text-fg-faint">
+      <p className="px-0.5 text-xs text-fg-faint">
         Las tareas que vienen de GitHub llevan su insignia y su número de issue. Su título y su
         descripción se cambian en GitHub; lo demás (columna, prioridad, fecha, subtareas y notas) es
         tuyo.{' '}
