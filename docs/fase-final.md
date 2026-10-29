@@ -171,6 +171,22 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 - [ ] Programar el cron `muninn-push-charges` (`0 7 * * *`).
 - [ ] Comprobar: `curl -X POST` a `/push/send` sin secreto da 401 y con el secreto responde `{ users, results, pruned }`.
 
+## 4c. CAPTCHA de la entrada (≈ 20 min)
+
+El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha hecho todavía. Pasos de
+[gotchas/web › CAPTCHA](gotchas/web.md#captcha-de-la-entrada-turnstile-pasos-manuales). **Hazlo antes de abrir el registro.**
+- [ ] Cloudflare › Turnstile › *Add widget*: modo **Managed** (o *Invisible*), con los *hostnames* `muninn-sepia.vercel.app` (y el
+  dominio propio si lo hay), `localhost` y `tauri.localhost`. Guarda la clave del sitio y la secreta en tu gestor de contraseñas.
+- [ ] `VITE_TURNSTILE_SITE_KEY` (la del sitio) en Vercel, Production y Preview, y en `apps/web/.env.local`. Vuelve a desplegar.
+- [ ] Comprobar en la web publicada que el widget carga (el botón pasa de «Comprobando…» a «Enviar código») **antes** del paso siguiente.
+- [ ] Supabase › Authentication › Attack Protection › *Enable Captcha protection*: proveedor **Turnstile** y la clave **secreta**.
+- [ ] Comprobar:
+  - entrar con el código del correo en la web publicada funciona, y **Reenviar código** también;
+  - en la app de escritorio (Windows: `http://tauri.localhost`; macOS: `tauri://localhost`) el widget carga y se entra;
+  - en la PWA del iPhone se entra;
+  - con `curl` a `/auth/v1/otp` sin `gotrue_meta_security.captcha_token`, Supabase responde `captcha_failed`.
+- [ ] Si en macOS el widget falla por el origen `tauri://`, apúntalo como tarea (ver gotchas/desktop).
+
 ## 5. iPhone (≈ 45 min)
 
 Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra con tu cuenta.

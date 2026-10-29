@@ -46,6 +46,11 @@
 
 - `tauri.conf.json` restringe `connect-src` a `self`, `*.supabase.co` y `localhost`. Si añades otro
   backend (servidor propio, Ollama en `localhost:11434`…), actualiza la CSP o las peticiones se bloquearán sin un error claro.
+- `script-src` y `frame-src` permiten `https://challenges.cloudflare.com` para el CAPTCHA de la entrada (Turnstile, ADR-0060).
+  Sin ellos el widget no carga y el login se queda en «Comprobando…». En Cloudflare, el widget debe tener el *hostname*
+  `tauri.localhost` (Windows sirve la app en `http://tauri.localhost`). En macOS el origen es `tauri://localhost`, que no es
+  `http(s)`: está sin comprobar si Turnstile lo acepta (fase final, paso 4c). Si no, la salida es activar
+  `app.windows[].useHttpsScheme` o el protocolo `http` de Tauri, que cambia el origen y con él el localStorage de la sesión.
 
 ### Versión
 

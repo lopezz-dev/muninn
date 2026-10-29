@@ -320,6 +320,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ## Acceso y seguridad
 Hoy se entra con un código por correo o con GitHub ([ADR-0022](adr/0022-auth-y-sesion.md)). Siguientes pasos,
 más o menos en este orden:
+- [x] **CAPTCHA en la entrada** con Cloudflare Turnstile antes de abrir el registro
+  ([ADR-0060](adr/0060-captcha-con-turnstile-en-la-entrada.md)). Montado; falta activarlo (fase final, paso 4c)
 - [ ] Dominio propio de Muninn como remitente (hoy, provisional: `no-reply@shion.es`)
 - [ ] **Claves de acceso (passkeys, WebAuthn):** entrar con Face ID, Touch ID, Windows Hello o una llave
   física, sin correo ni contraseña. Funciona en la PWA del iPhone y en el navegador; en Tauri, según el
