@@ -35,6 +35,7 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
       ip: null,
       aal: 'aal1',
       current: true,
+      appName: null,
     })
   }
   let factors = [...(seed.factors ?? [])]

@@ -20,7 +20,7 @@ function SessionRow({ session }: { session: AccountSession }) {
   const m = useMuninn()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
-  const label = sessionDeviceLabel(session.userAgent)
+  const label = sessionDeviceLabel(session.userAgent, session.appName)
   const revoke = async () => {
     setBusy(true)
     try {

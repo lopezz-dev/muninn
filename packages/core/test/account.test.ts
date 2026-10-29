@@ -17,6 +17,7 @@ const session = (over: Partial<AccountSession>): AccountSession => ({
   ip: null,
   aal: 'aal1',
   current: false,
+  appName: null,
   ...over,
 })
 
@@ -172,9 +173,29 @@ describe('nombre del dispositivo', () => {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Tauri/2.0',
       'Muninn para Windows',
     ],
+    // UA real de WebView2: igual que el de Edge. Sin la marca de Muninn, la app de escritorio no se distingue.
+    [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0',
+      'Windows · Edge',
+    ],
+    [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0 Muninn/0.4.0',
+      'Muninn para Windows',
+    ],
+    [
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Muninn/0.4.0',
+      'Muninn para Mac',
+    ],
     ['node', 'Programa o servidor'],
+    ['python-httpx/0.28.1', 'Programa o servidor'],
     [null, 'Dispositivo desconocido'],
   ])('%s → %s', (ua, label) => {
     expect(sessionDeviceLabel(ua)).toBe(label)
+  })
+
+  it('una sesión abierta por una app OAuth lleva su nombre, diga lo que diga el user agent', () => {
+    expect(sessionDeviceLabel('python-httpx/0.28.1', 'Claude')).toBe('Claude · app conectada')
+    expect(sessionDeviceLabel(null, 'Claude')).toBe('Claude · app conectada')
+    expect(sessionDeviceLabel('python-httpx/0.28.1', null)).toBe('Programa o servidor')
   })
 })

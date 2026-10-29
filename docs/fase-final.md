@@ -200,6 +200,11 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   y desvincula pero no vincula; 16 políticas `require_mfa` = 15 tablas + `storage.objects`. Aplicadas desde el editor SQL, con la versión
   registrada a mano en `schema_migrations` (el MCP de Supabase rechazaba escribir). `get_advisors`: solo tres avisos nuevos,
   intencionados, de funciones `security definer` ejecutables por `authenticated` (`list_my_sessions`, `revoke_my_session`, `mfa_satisfied`).)*
+- [ ] Aplicar después `20261029170000_sesiones_con_app` (nombre de la app OAuth en la lista). Comprobar en el editor SQL, con el
+  `sub` y `session_id` de tu usuario, que `select * from list_my_sessions()` trae `app_name` = «Claude» en las de claude.ai y que
+  `list_my_sessions` sigue con `execute` solo para `authenticated`. En la app, esas sesiones salen como **Claude · app conectada**.
+- [ ] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
+  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge».
 - [x] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
   última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
   `select * from list_my_sessions()` con otro `sub` devuelve 0 filas). *(Sí; lo de otro usuario lo cubre la prueba SQL. Fallo: la app de
@@ -233,7 +238,6 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   reteniendo su repo de GitHub». La regla del servidor sí la cubre la prueba SQL.)*
 - [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
   **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
-- [ ] Al acabar, aplicar la migración de #74 (nombre de la app en `list_my_sessions`) cuando se fusione, con la misma prueba previa.
 
 ## 5. iPhone (≈ 45 min)
 

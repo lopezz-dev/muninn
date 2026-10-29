@@ -42,6 +42,16 @@
   «Not allowed to open url». Las imágenes adjuntas al Asistente son `data:`: en la web se abren como `blob:` (`openImage`) y en
   escritorio no llevan enlace. No pongas un `<a target="_blank">` a pelo en la web: en escritorio no hará nada.
 
+### El user agent de la app es el de Edge (o Safari) más `Muninn/<versión>`
+
+- **Síntoma:** la lista de sesiones (ADR-0061) enseña la app de escritorio como «Windows · Edge».
+- **Causa:** WebView2 manda el user agent de Edge tal cual, sin «Tauri»; WKWebView, el de Safari sin versión.
+- **Solución:** `mark_user_agent` en `src/lib.rs` añade `Muninn/<versión>` al arrancar: en Windows lee el de WebView2 y le pone la
+  marca al final; en macOS fija el de WKWebView (congelado por Apple) con la marca. `sessionDeviceLabel` (core) la reconoce.
+  En Linux no se marca. No uses `userAgent` en `tauri.conf.json`: sustituye el user agent entero.
+- **Ojo:** la sesión guarda el user agent del momento de entrar: las abiertas antes siguen como «Windows · Edge» hasta volver a
+  entrar. La parte de macOS no se ha compilado en un Mac (desde Windows no se puede: `objc2` necesita el compilador de Apple).
+
 ### CSP
 
 - `tauri.conf.json` restringe `connect-src` a `self`, `*.supabase.co` y `localhost`. Si añades otro
