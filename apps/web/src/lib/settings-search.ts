@@ -32,6 +32,35 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     keywords: 'salir logout',
   },
   {
+    id: 'segundo-factor',
+    section: 'cuenta',
+    label: 'Segundo factor',
+    description: 'Un código de una app de tu móvil al entrar, además del correo o GitHub.',
+    keywords: 'mfa 2fa totp autenticador authenticator verificación dos pasos seguridad',
+  },
+  {
+    id: 'sesiones',
+    section: 'cuenta',
+    label: 'Sesiones y dispositivos',
+    description: 'Dónde tienes la sesión abierta, con su última actividad.',
+    keywords: 'dispositivos navegadores seguridad',
+  },
+  {
+    id: 'cerrar-sesiones',
+    section: 'cuenta',
+    label: 'Cerrar sesión en otros dispositivos',
+    description: 'En los demás o en todos, también en este.',
+    keywords: 'salir logout todos seguridad',
+  },
+  {
+    id: 'apps',
+    section: 'cuenta',
+    label: 'Apps con acceso',
+    description:
+      'Las apps que usan tu cuenta por el MCP remoto, como claude.ai. Quita las que no uses.',
+    keywords: 'oauth permisos claude conectores mcp revocar',
+  },
+  {
     id: 'tema',
     section: 'apariencia',
     label: 'Tema',

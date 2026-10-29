@@ -112,6 +112,6 @@ la memoria del navegador y **se pierde al recargar**. Para salir, ve a **Ajustes
 
 Ve a **Ajustes › Cuenta** y pulsa **Cerrar sesión**, o busca «cerrar sesión» con **⌘K** / **Ctrl K**. La
 sesión se cierra solo en ese dispositivo: tus datos siguen en tu cuenta y en los demás dispositivos sigues
-dentro.
+dentro. Para cerrarla en otros dispositivos, mira [Cuenta y seguridad](14-cuenta-y-seguridad.md).
 
 Al recargar la página o volver a abrir la app, la sesión se mantiene: no tienes que entrar cada vez.

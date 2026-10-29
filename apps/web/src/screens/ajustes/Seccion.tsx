@@ -11,10 +11,13 @@ import { useAuth, useMuninn } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { bySection, type PrefKey, resetPrefs, useChangedPrefs } from '../../lib/settings-changes'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { AppsConAcceso } from './AppsConAcceso'
 import { AsistenteAjustes, InformeAjustes } from './AsistenteAjustes'
 import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
 import { Notificaciones } from './Notificaciones'
+import { SegundoFactor } from './SegundoFactor'
+import { Sesiones } from './Seguridad'
 import { type SettingsSection, settingsSection } from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
@@ -108,6 +111,9 @@ function Cuenta() {
           </Button>
         </PrefRow>
       </PrefGroup>
+      <SegundoFactor />
+      <Sesiones />
+      <AppsConAcceso />
     </>
   )
 }

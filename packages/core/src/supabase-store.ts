@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
+  AccountSession,
   Activity,
   GithubRepoSummary,
   GithubSyncScope,
@@ -11,6 +12,7 @@ import type {
 } from './schemas'
 import { imageExt } from './schemas'
 import {
+  type AccountStore,
   type AccountStoreQuery,
   type ActivityLog,
   type CategoryStoreQuery,
@@ -66,6 +68,25 @@ const PROJECT_IMAGES_BUCKET = 'project-images'
 
 /** Filas por petición: el `max-rows` por defecto de PostgREST en Supabase. */
 const PAGE = 1000
+
+/** Los errores de Supabase Auth MFA que puede ver el usuario, en español (el resto, tal cual). */
+function mfaError(error: { code?: string; message: string }) {
+  switch (error.code) {
+    case 'mfa_verification_failed':
+    case 'mfa_challenge_expired':
+      return new Error(
+        'El código no es correcto o ha caducado. Escribe el que sale ahora en tu app.',
+      )
+    case 'mfa_verification_rejected':
+      return new Error('Demasiados intentos. Espera un minuto y vuelve a probar.')
+    case 'insufficient_aal':
+      return new Error('Antes, entra con el código de tu app (cierra sesión y vuelve a entrar).')
+    case 'mfa_totp_enroll_not_enabled':
+    case 'mfa_totp_verify_not_enabled':
+      return new Error('El segundo factor no está activado en este servidor.')
+  }
+  return error
+}
 
 class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q> {
   constructor(
@@ -454,12 +475,100 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Seguridad de la cuenta (ADR-0061). `auth.sessions` no se puede leer desde el cliente: las funciones
+  // `list_my_sessions` y `revoke_my_session` (migración 20261029120000_account_sessions) solo ven las del usuario.
+  const account: AccountStore = {
+    async sessions() {
+      const { data, error } = await client.rpc('list_my_sessions')
+      if (error) throw error
+      return (data as Row[]).map((r) => {
+        const { isCurrent, ...rest } = fromRow<AccountSession & { isCurrent: boolean }>(r)
+        return { ...rest, current: Boolean(isCurrent) }
+      })
+    },
+    async revokeSession(id) {
+      const { data, error } = await client.rpc('revoke_my_session', { session_id: id })
+      if (error) throw error
+      return Boolean(data)
+    },
+    async signOut(scope) {
+      const { error } = await client.auth.signOut({ scope })
+      if (error) throw error
+    },
+    // Permisos OAuth (ADR-0036). Sin el servidor OAuth activado en el proyecto, Auth contesta 404: no hay ninguna app.
+    oauthGrants: {
+      async list() {
+        const { data, error } = await client.auth.oauth.listGrants()
+        if (error) {
+          if (error.status === 404) return []
+          throw error
+        }
+        return (data ?? []).map((g) => ({
+          clientId: g.client.id,
+          name: g.client.name || 'App sin nombre',
+          uri: g.client.uri || null,
+          logoUri: g.client.logo_uri || null,
+          scopes: g.scopes,
+          grantedAt: g.granted_at,
+        }))
+      },
+      async revoke(clientId) {
+        const { error } = await client.auth.oauth.revokeGrant({ clientId })
+        if (error) throw error
+      },
+    },
+    mfa: {
+      async factors() {
+        const { data, error } = await client.auth.mfa.listFactors()
+        if (error) throw error
+        // `all` trae también los que están a medias (`totp`, solo los confirmados).
+        return data.all
+          .filter((f) => f.factor_type === 'totp')
+          .map((f) => ({
+            id: f.id,
+            name: f.friendly_name ?? null,
+            status: f.status === 'verified' ? 'verified' : 'unverified',
+            createdAt: f.created_at,
+          }))
+      },
+      async enroll(name) {
+        const { data, error } = await client.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: name,
+          issuer: 'Muninn',
+        })
+        if (error) throw mfaError(error)
+        return {
+          factorId: data.id,
+          qrCode: data.totp.qr_code,
+          secret: data.totp.secret,
+          uri: data.totp.uri,
+        }
+      },
+      async verify(factorId, code) {
+        const { error } = await client.auth.mfa.challengeAndVerify({ factorId, code })
+        if (error) throw mfaError(error)
+      },
+      async unenroll(factorId) {
+        const { error } = await client.auth.mfa.unenroll({ factorId })
+        if (error) throw mfaError(error)
+      },
+      async assurance() {
+        const { data, error } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (error) throw error
+        const level = (l: string | null) => (l === 'aal1' || l === 'aal2' ? l : null)
+        return { current: level(data.currentLevel), next: level(data.nextLevel) }
+      },
+    },
+  }
+
   return {
     activity,
     settings,
     githubOutbox,
     githubRepos,
     projectImages,
+    account,
     newsSources: col<NewsSource, { includeArchived?: boolean }>(
       'news_sources',
       'Fuente',

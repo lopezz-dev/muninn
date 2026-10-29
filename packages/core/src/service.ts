@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { createAccount } from './account'
 import { ValidationError } from './errors'
 import { createFinance } from './finance'
 import { DEFAULT_SETTINGS } from './memory-store'
@@ -254,6 +255,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   const finance = createFinance({ store, nowIso, today, parse, log })
   const news = createNews({ store, nowIso, today, parse, log })
   const push = createPush({ store, nowIso, today, parse })
+  const account = createAccount({ store, parse })
 
   const must = async <T>(p: Promise<T | null>, entity: string, id: string) => {
     const v = await p
@@ -1353,6 +1355,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     finance,
     news,
     push,
+    account,
     overview,
     recentActivity,
   }

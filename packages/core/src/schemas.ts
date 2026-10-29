@@ -685,3 +685,66 @@ export const pushSubscribeInput = z.object({
 })
 
 export type PushSubscribeInput = z.input<typeof pushSubscribeInput>
+
+// ─── Cuenta: sesiones y seguridad (ADR-0061) ────────────────────────────────
+
+/** Una sesión abierta de la cuenta: un navegador o una app con la sesión iniciada. Nunca lleva tokens. */
+export interface AccountSession {
+  id: string
+  createdAt: string
+  /** Última vez que renovó la sesión (cada hora mientras está abierta). */
+  lastActiveAt: string
+  userAgent: string | null
+  ip: string | null
+  /** `aal1` (solo código o GitHub) o `aal2` (con el segundo factor). */
+  aal: string | null
+  /** La sesión de este dispositivo. */
+  current: boolean
+}
+
+/** Cerrar en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
+export const signOutScope = z.enum(['others', 'global'])
+export type SignOutScope = z.infer<typeof signOutScope>
+
+/** Segundo factor con una app de códigos (TOTP). `unverified`: dado de alta pero sin confirmar con un primer código. */
+export interface MfaFactor {
+  id: string
+  name: string | null
+  status: 'verified' | 'unverified'
+  createdAt: string
+}
+
+/** Lo que enseña el alta: el QR (imagen SVG en `data:`) y el secreto para teclearlo a mano. */
+export interface MfaEnrollment {
+  factorId: string
+  qrCode: string
+  secret: string
+  /** `otpauth://…`, lo que lleva el QR. */
+  uri: string
+}
+
+/** Nivel de seguridad de la sesión: `aal1` (código o GitHub) o `aal2` (con el segundo factor). */
+export interface AssuranceLevel {
+  current: 'aal1' | 'aal2' | null
+  /** El que podría tener: `aal2` si la cuenta tiene un segundo factor confirmado. */
+  next: 'aal1' | 'aal2' | null
+}
+
+/** Un código de la app de códigos: seis cifras (se ignoran los espacios). */
+export const mfaCode = z
+  .string()
+  .transform((s) => s.replace(/\s/g, ''))
+  .pipe(z.string().regex(/^\d{6}$/, 'El código tiene 6 cifras'))
+
+export const mfaFactorName = z.string().trim().min(1).max(60)
+
+/** Una app a la que diste acceso a tu cuenta por OAuth (claude.ai y otros clientes del MCP remoto, ADR-0036). */
+export interface OAuthAppGrant {
+  clientId: string
+  name: string
+  /** Su web, si la dio al registrarse. */
+  uri: string | null
+  logoUri: string | null
+  scopes: string[]
+  grantedAt: string
+}

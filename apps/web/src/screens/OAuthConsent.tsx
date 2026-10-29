@@ -169,8 +169,8 @@ function Ask({
         </Button>
       </div>
       <p className="text-[12.5px] leading-normal text-fg-faint">
-        Da permiso solo a apps en las que confíes. Todavía no puedes ver ni quitar estos permisos
-        desde Muninn.
+        Da permiso solo a apps en las que confíes. Puedes quitarlo cuando quieras en Ajustes ›
+        Cuenta › Apps con acceso.
       </p>
     </>
   )

@@ -20,6 +20,7 @@ se renderizan tal cual, así que se escriben pensando en la persona usuaria, no 
 | 11 | [Asistente](11-asistente.md) | ia | assistant | parcial |
 | 12 | [Noticias](12-noticias.md) | modulos | news | parcial |
 | 13 | [Notificaciones](13-notificaciones.md) | cuenta | bell | parcial |
+| 14 | [Cuenta y seguridad](14-cuenta-y-seguridad.md) | cuenta | shield | disponible |
 
 ## Cómo se escribe una página
 

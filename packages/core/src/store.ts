@@ -1,6 +1,8 @@
 import type {
   AccountKind,
+  AccountSession,
   Activity,
+  AssuranceLevel,
   BoardColumn,
   CategoryKind,
   ChecklistItem,
@@ -8,14 +10,18 @@ import type {
   FinanceCategory,
   GithubRepoSummary,
   GithubSyncScope,
+  MfaEnrollment,
+  MfaFactor,
   NewsDigest,
   NewsItem,
   NewsSource,
   Note,
+  OAuthAppGrant,
   OutboxKind,
   Project,
   ProjectStatus,
   PushDevice,
+  SignOutScope,
   Subscription,
   Task,
   TaskPriority,
@@ -83,6 +89,11 @@ export interface Store {
     /** URL para pintarla. En Supabase es firmada y caduca: no la guardes. */
     url(path: string): Promise<string>
   }
+  /**
+   * Seguridad de la cuenta (ADR-0061). Es Supabase Auth, no datos: el store de Supabase lo pide a sus funciones y a la
+   * API de Auth; el de memoria (demo y tests) lo simula. Sin él (el fichero local del MCP), Ajustes › Cuenta no lo enseña.
+   */
+  account?: AccountStore
   githubRepos?: {
     list(): Promise<GithubRepoSummary[]>
     /** Si el token puede escribir issues en `repo` (los públicos salen en la lista aunque no pueda). */
@@ -272,3 +283,32 @@ export class NotFoundError extends Error {
 /** Compara claves de fractional-indexing: orden binario, no el de la locale. */
 export const byPosition = (a: { position: string }, b: { position: string }) =>
   a.position < b.position ? -1 : a.position > b.position ? 1 : 0
+
+/** Lo que el core necesita de Supabase Auth para Ajustes › Cuenta (ADR-0061). */
+export interface AccountStore {
+  /** Sesiones abiertas, de la usada más recientemente a la más antigua. */
+  sessions(): Promise<AccountSession[]>
+  /** Cierra una sesión de la cuenta; devuelve si existía. */
+  revokeSession(id: string): Promise<boolean>
+  signOut(scope: SignOutScope): Promise<void>
+  mfa: MfaStore
+  oauthGrants: OAuthGrantStore
+}
+
+/** Segundo factor TOTP (Supabase Auth MFA). */
+export interface MfaStore {
+  factors(): Promise<MfaFactor[]>
+  enroll(name: string): Promise<MfaEnrollment>
+  /** Comprueba un código del factor; si vale, la sesión pasa a `aal2`. Lanza si no vale. */
+  verify(factorId: string, code: string): Promise<void>
+  unenroll(factorId: string): Promise<void>
+  assurance(): Promise<AssuranceLevel>
+}
+
+/** Permisos OAuth dados a otras apps (servidor OAuth de Supabase Auth, ADR-0036). */
+export interface OAuthGrantStore {
+  /** Las apps con permiso, la más reciente primero. */
+  list(): Promise<OAuthAppGrant[]>
+  /** Quita el permiso: cierra sus sesiones y anula sus tokens. */
+  revoke(clientId: string): Promise<void>
+}

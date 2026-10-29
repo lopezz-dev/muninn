@@ -28,8 +28,12 @@ const store = () => {
   return db
 }
 
-/** Lo que se guarda: lo que ya se leyó bien. Nada de peticiones a medias ni errores. */
-export const shouldPersist = (q: { state: { status: string } }) => q.state.status === 'success'
+/**
+ * Lo que se guarda: lo que ya se leyó bien. Nada de peticiones a medias ni errores, ni la seguridad de la cuenta
+ * (`['account', …]`: sesiones con su IP, el secreto del segundo factor), que no hace falta sin conexión (ADR-0061).
+ */
+export const shouldPersist = (q: { queryKey?: readonly unknown[]; state: { status: string } }) =>
+  q.state.status === 'success' && q.queryKey?.[0] !== 'account'
 
 function persister(userId: string, isOff: () => boolean): Persister {
   const key = `queries:${userId}`

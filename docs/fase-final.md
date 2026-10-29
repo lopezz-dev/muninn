@@ -187,6 +187,31 @@ El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha h
   - con `curl` a `/auth/v1/otp` sin `gotrue_meta_security.captcha_token`, Supabase responde `captcha_failed`.
 - [ ] Si en macOS el widget falla por el origen `tauri://`, apúntalo como tarea (ver gotchas/desktop).
 
+## 4d. Seguridad de la cuenta (≈ 20 min)
+
+Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
+y el iPhone con la sesión abierta.
+- [ ] Aplicar la migración `20261029120000_account_sessions` (y alinear la versión si usas `apply_migration`).
+- [ ] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
+  última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
+  `select * from list_my_sessions()` con otro `sub` devuelve 0 filas).
+- [ ] **Cerrar** en la fila del iPhone: sale el aviso y desaparece de la lista; en menos de una hora el iPhone vuelve a la pantalla de
+  entrada.
+- [ ] Vuelve a entrar en el iPhone y pulsa **En los demás** en el ordenador: el ordenador sigue dentro y el iPhone sale.
+- [ ] **En todos**: el ordenador vuelve a la pantalla de entrada con el aviso; el iPhone sale en menos de una hora.
+- [ ] **Segundo factor:** en Supabase, **Authentication › Multi-Factor**, comprueba que *TOTP (App Authenticator)* está activado (lo
+  está por defecto). Si no, «Activar» dice «El segundo factor no está activado en este servidor».
+- [ ] En Ajustes › Cuenta › **Segundo factor**, «Activar»: sale el QR; escanéalo con tu app de códigos (o teclea la clave) y guarda la clave
+  en tu gestor de contraseñas. Un código equivocado da «El código no es correcto…»; el bueno, «Segundo factor activado».
+- [ ] Cierra sesión y entra con el código del correo: sale **Falta un paso** y no deja ir a ninguna pantalla sin el código de la app. Con
+  el código, entras donde ibas. Lo mismo entrando con GitHub.
+- [ ] En el iPhone (sesión abierta de antes de activarlo): al volver a abrir la app (como mucho, una hora después) pide el código.
+- [ ] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
+- [ ] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código.
+- [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código.
+- [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
+  **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
+
 ## 5. iPhone (≈ 45 min)
 
 Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra con tu cuenta.

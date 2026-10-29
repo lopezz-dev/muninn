@@ -326,10 +326,16 @@ más o menos en este orden:
 - [ ] **Claves de acceso (passkeys, WebAuthn):** entrar con Face ID, Touch ID, Windows Hello o una llave
   física, sin correo ni contraseña. Funciona en la PWA del iPhone y en el navegador; en Tauri, según el
   soporte de WebAuthn de cada sistema
-- [ ] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional, y obligatorio para conectar integraciones
-  sensibles (finanzas, GitHub con permisos de escritura)
-- [ ] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
-  o en todos (`signOut({ scope: 'global' })`)
+- [x] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional: alta con QR y clave, código al entrar y desactivar con un
+  código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4d)
+  - [ ] Exigirlo en el servidor (RLS) y para conectar integraciones sensibles (finanzas, GitHub con permisos de escritura):
+    propuesto en [ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)
+  - [ ] Códigos de recuperación (en supabase-js aún experimentales)
+- [x] **Apps con acceso** en Ajustes › Cuenta: ver y quitar los permisos OAuth dados a otras apps, como claude.ai
+  ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4d)
+- [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
+  o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
+  prueba real, en la fase final (4d)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
 - [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
@@ -340,7 +346,6 @@ más o menos en este orden:
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
-- Ver y quitar los permisos OAuth dados a otras apps (claude.ai…) en Ajustes › Cuenta (ADR-0036; la API `oauth` de supabase-js ya lo permite)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Borrado definitivo de tareas desde la app (hoy solo se archivan)
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
