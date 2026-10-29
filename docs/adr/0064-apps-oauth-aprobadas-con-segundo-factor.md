@@ -1,4 +1,4 @@
-# ADR-0063: Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
+# ADR-0064: Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 
 - **Estado:** Aceptado (29 de octubre de 2026; falta implementarlo)
 - **Fecha:** 2026-10-29

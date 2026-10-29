@@ -317,7 +317,7 @@
   tokens del servidor OAuth de Supabase son `aal1`, también al reconectar después de activarlo (`auth.sessions.aal` de la sesión con
   `oauth_client_id`). Comprobado en la fase final, paso 4d, con el consentimiento servido por `main`, que aún no pide el código: falta
   ver si con el de `develop` cambia.
-- **Solución:** [ADR-0063](../adr/0063-apps-oauth-aprobadas-con-segundo-factor.md) (aceptado, sin implementar): la app aprobada en
+- **Solución:** [ADR-0064](../adr/0064-apps-oauth-aprobadas-con-segundo-factor.md) (aceptado, sin implementar): la app aprobada en
   `/oauth/consent` con una sesión `aal2` contará como `aal2`. Mientras, no actives el segundo factor en una cuenta que use el MCP remoto. Al desactivarlo vuelve a funcionar, pero hay que reconectar el conector.
 - **Ojo:** cerrar la sesión de claude.ai en **Sesiones y dispositivos**, «En los demás» o «En todos», y desactivar el segundo factor
   invalidan el conector: hay que reconectarlo en claude.ai. Al reconectar, cierra antes la sesión de Muninn en el navegador (o usa una
