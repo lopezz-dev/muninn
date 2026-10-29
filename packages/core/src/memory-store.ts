@@ -476,18 +476,39 @@ export function createMemoryStore(
         return structuredClone(settings)
       },
     },
-    projects: new MemoryCollection<Project, ProjectStoreQuery>(
-      'Proyecto',
-      projects,
-      (rows, q) =>
-        rows
-          .filter((p) => !q.statuses || q.statuses.includes(p.status))
-          .filter(
-            (p) => !q.githubRepo || p.githubRepo?.toLowerCase() === q.githubRepo.toLowerCase(),
-          )
-          .sort(byPosition),
-      changed,
-      now,
+    projects: Object.assign(
+      new MemoryCollection<Project, ProjectStoreQuery>(
+        'Proyecto',
+        projects,
+        (rows, q) =>
+          rows
+            .filter((p) => !q.statuses || q.statuses.includes(p.status))
+            .filter(
+              (p) => !q.githubRepo || p.githubRepo?.toLowerCase() === q.githubRepo.toLowerCase(),
+            )
+            .sort(byPosition),
+        changed,
+        now,
+      ),
+      {
+        // Lo que en Supabase hacen las claves ajenas: columnas, tareas (con sus subtareas) y actividad se van con el
+        // proyecto; las notas se quedan sin él.
+        async remove(id: string) {
+          for (const t of [...tasks.values()].filter((t) => t.projectId === id)) {
+            for (const c of [...checklist.values()].filter((c) => c.taskId === t.id))
+              checklist.delete(c.id)
+            tasks.delete(t.id)
+          }
+          for (const c of [...columns.values()].filter((c) => c.projectId === id))
+            columns.delete(c.id)
+          for (const n of notes.values())
+            if (n.projectId === id) notes.set(n.id, { ...n, projectId: null, taskId: null })
+          for (let i = activity.length - 1; i >= 0; i--)
+            if (activity[i]?.projectId === id) activity.splice(i, 1)
+          projects.delete(id)
+          changed()
+        },
+      },
     ),
     columns: new MemoryCollection<BoardColumn, { projectId: string }>(
       'Columna',

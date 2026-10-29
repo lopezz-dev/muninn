@@ -12,6 +12,7 @@ import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import {
   archivedProjectsQuery,
+  deleteArchivedWithUndo,
   overviewQuery,
   projectsQuery,
   unarchiveProjectWithUndo,
@@ -232,23 +233,42 @@ function Archived() {
   const m = useMuninn()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
-  const archived = useQuery(archivedProjectsQuery(m)).data ?? []
+  // Los que se están eliminando: desaparecen ya y vuelven con «Deshacer» (ADR-0065).
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
+  const view = {
+    hide: (ids: string[]) => setHidden((h) => new Set([...h, ...ids])),
+    show: (ids: string[]) => setHidden((h) => new Set([...h].filter((id) => !ids.includes(id)))),
+  }
+  const archived = (useQuery(archivedProjectsQuery(m)).data ?? []).filter((p) => !hidden.has(p.id))
   if (!archived.length) return null
   return (
     <section aria-label="Archivados" className="flex flex-col gap-2">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="flex min-h-11 items-center gap-2 self-start rounded-md px-1 text-sm font-medium text-fg-muted transition-colors hover:text-fg md:min-h-8"
-      >
-        <icons.chevronRight
-          aria-hidden="true"
-          className={cn('transition-transform', open && 'rotate-90')}
-        />
-        Archivados
-        <span className="text-fg-faint tabular">{archived.length}</span>
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="flex min-h-11 items-center gap-2 rounded-md px-1 text-sm font-medium text-fg-muted transition-colors hover:text-fg md:min-h-8"
+        >
+          <icons.chevronRight
+            aria-hidden="true"
+            className={cn('transition-transform', open && 'rotate-90')}
+          />
+          Archivados
+          <span className="text-fg-faint tabular">{archived.length}</span>
+        </button>
+        {open && archived.length > 1 ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto max-md:h-10"
+            onClick={() => deleteArchivedWithUndo(m, qc, archived, view)}
+          >
+            <Icon name="trash" />
+            Eliminar todos
+          </Button>
+        ) : null}
+      </div>
       {open ? (
         <Card className="overflow-hidden">
           <ul>
@@ -258,7 +278,14 @@ function Archived() {
                 className="flex min-h-14 items-center gap-3 border-t border-border-subtle px-4 first:border-t-0 md:min-h-12"
               >
                 <ProjectAvatar project={p} size="sm" />
-                <span className="min-w-0 flex-1 truncate text-sm">{p.name}</span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm">{p.name}</span>
+                  {p.githubRepo ? (
+                    <span className="truncate text-xs text-fg-subtle">
+                      Sigue vinculado a {p.githubRepo}
+                    </span>
+                  ) : null}
+                </span>
                 <Button
                   size="sm"
                   className="max-md:h-10"
@@ -266,6 +293,15 @@ function Archived() {
                 >
                   Recuperar
                 </Button>
+                <IconButton
+                  size="sm"
+                  variant="danger"
+                  aria-label={`Eliminar «${p.name}»`}
+                  title="Eliminar para siempre"
+                  className="max-md:size-10"
+                  icon={<Icon name="trash" />}
+                  onClick={() => deleteArchivedWithUndo(m, qc, [p], view)}
+                />
               </li>
             ))}
           </ul>
@@ -392,6 +428,9 @@ export function Proyectos() {
           Un proyecto agrupa tareas en un tablero Kanban. Ponle una imagen y una descripción para
           reconocerlo de un vistazo, y vincúlalo a un repositorio de GitHub si quieres.
         </EmptyState>
+      ) : null}
+      {projects && projects.length === 0 ? (
+        <Archived />
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">

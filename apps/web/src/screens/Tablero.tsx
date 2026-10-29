@@ -141,7 +141,7 @@ export function Tablero() {
   }
 
   const archive = async () => {
-    if (await archiveProjectWithUndo(m, qc, p.id, p.name)) navigate({ to: '/proyectos' })
+    if (await archiveProjectWithUndo(m, qc, p)) navigate({ to: '/proyectos' })
   }
 
   return (
