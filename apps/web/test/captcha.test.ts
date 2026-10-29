@@ -7,6 +7,7 @@ vi.mock('../src/lib/auth', () => ({
   resetAuth: () => {},
   safeRedirect: (s: string) => s,
   toAccount: () => null,
+  isTauri: false,
 }))
 
 const { captchaOptions, loadTurnstile } = await import('../src/lib/captcha')
