@@ -2,9 +2,21 @@ import type { Muninn } from '@muninn/core'
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import { issueNumber } from '../src/components/task-meta'
-import { moveProjectRepo, parseRepoInput, pickProjectRepo, repoChoices } from '../src/lib/github'
+import {
+  isMfaRequired,
+  moveProjectRepo,
+  parseRepoInput,
+  pickProjectRepo,
+  repoChoices,
+} from '../src/lib/github'
 
 describe('repositorio de un proyecto', () => {
+  it('reconoce el rechazo del servidor por falta de segundo factor (ADR-0062)', () => {
+    expect(isMfaRequired(new Error('Conectar GitHub requiere el segundo factor'))).toBe(true)
+    expect(isMfaRequired(new Error('duplicate key value violates unique constraint'))).toBe(false)
+    expect(isMfaRequired('segundo factor')).toBe(false)
+  })
+
   it('acepta owner/repo y la dirección que se copia de GitHub', () => {
     expect(parseRepoInput('lopezz-dev/muninn')).toBe('lopezz-dev/muninn')
     expect(parseRepoInput('  lopezz-dev/muninn  ')).toBe('lopezz-dev/muninn')

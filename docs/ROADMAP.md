@@ -328,8 +328,8 @@ más o menos en este orden:
   soporte de WebAuthn de cada sistema
 - [x] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional: alta con QR y clave, código al entrar y desactivar con un
   código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4d)
-  - [ ] Exigirlo en el servidor (RLS) y para conectar integraciones sensibles (finanzas, GitHub con permisos de escritura):
-    propuesto en [ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)
+  - [x] Exigirlo en el servidor (RLS, también en las funciones de sesiones) y para conectar GitHub
+    ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)). Finanzas, cuando conecte algo externo. La prueba real, en la fase final (4d)
   - [ ] Códigos de recuperación (en supabase-js aún experimentales)
 - [x] **Apps con acceso** en Ajustes › Cuenta: ver y quitar los permisos OAuth dados a otras apps, como claude.ai
   ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4d)

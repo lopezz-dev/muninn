@@ -38,9 +38,12 @@ Pulsa **Desactivar** y escribe el código que sale en ese momento en tu app. Des
 código del correo o con GitHub. No se puede deshacer: para volver a activarlo, tendrás que añadir Muninn otra vez a tu
 app (con una clave nueva). Puedes borrar la cuenta vieja de Muninn de tu app.
 
-> **Próximamente:** hoy el código lo pide la app al entrar; más adelante también lo exigirá el servidor en cada acceso a
-> tus datos, y conectar las integraciones con más riesgo (GitHub con permiso para escribir, y las de finanzas cuando
-> lleguen) pedirá tenerlo activado.
+Con el segundo factor activado, el servidor no deja leer ni cambiar tus datos a ninguna sesión que no haya pasado el
+código, aunque alguien consiga el del correo.
+
+Para **conectar un repositorio de GitHub** a un proyecto necesitas el segundo factor activado, porque Muninn podrá
+escribir en él. Si no lo tienes, al vincularlo te lo dirá: actívalo aquí y vuelve a vincularlo. Quitar un repositorio
+no lo pide. Las integraciones de finanzas lo pedirán también cuando lleguen.
 
 ## Ver dónde tienes la sesión abierta
 

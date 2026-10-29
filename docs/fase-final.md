@@ -191,7 +191,9 @@ El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha h
 
 Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
 y el iPhone con la sesión abierta.
-- [ ] Aplicar la migración `20261029120000_account_sessions` (y alinear la versión si usas `apply_migration`).
+- [ ] Aplicar **juntas** las migraciones `20261029120000_account_sessions` y `20261029150000_aal2_en_el_servidor` ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)),
+  en ese orden (y alinear las versiones si usas `apply_migration`). La segunda no se ha probado contra la base: antes, en el editor SQL,
+  la prueba de [gotchas/db › Probar el segundo factor en el servidor](gotchas/db.md#probar-el-segundo-factor-en-el-servidor).
 - [ ] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
   última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
   `select * from list_my_sessions()` con otro `sub` devuelve 0 filas).
@@ -209,6 +211,11 @@ y el iPhone con la sesión abierta.
 - [ ] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
 - [ ] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código.
 - [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código.
+- [ ] **Servidor (ADR-0062), con el segundo factor activado:** en claude.ai, «¿Qué tareas tiene Muninn?» sigue respondiendo. Si
+  responde vacío o con error de permisos, sus tokens son `aal1`: quita el acceso en **Apps con acceso**, vuelve a conectar el conector
+  (el consentimiento pide el código) y repite. Si aun así falla, apúntalo como tarea: el MCP remoto necesita otra salida.
+- [ ] Vincular un repo en Ajustes › Integraciones funciona con el segundo factor. Desactívalo, vuelve a entrar e intenta vincular otro:
+  sale «Para conectar GitHub necesitas el segundo factor» y no se guarda. Quitar un repo sí deja. La sincronización (`github`) sigue igual.
 - [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
   **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
 

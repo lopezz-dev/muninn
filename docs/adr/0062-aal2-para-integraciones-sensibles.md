@@ -1,6 +1,6 @@
 # ADR-0062: El servidor exige el segundo factor (AAL2): para los datos si está activado y para conectar integraciones sensibles
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado (29 de octubre de 2026)
 - **Fecha:** 2026-10-28
 - **Área:** db, core, web, mcp
 - **Complementa a:** [ADR-0061](0061-seguridad-de-la-cuenta.md)
@@ -48,3 +48,14 @@ Por eso no se ha montado en el PR de ADR-0061: sería una comprobación en el cl
 - Costes: una política más en cada tabla (y en cada tabla nueva: checklist de [gotchas/db](../gotchas/db.md)) y una consulta a
   `auth.mfa_factors` por petición (cacheada por sentencia con `(select …)`). Riesgo de dejar fuera al MCP remoto si sus tokens son `aal1`.
 - Tarea en el tablero: «Exigir el segundo factor en el servidor (RLS) e integraciones sensibles (ADR-0062)».
+
+## Cómo quedó (29 de octubre)
+
+Migración `20261029150000_aal2_en_el_servidor`: `mfa_satisfied()`, la política restrictiva `require_mfa` en todas las tablas de
+`public` con RLS y en `storage.objects`, la misma comprobación dentro de `list_my_sessions` y `revoke_my_session` (son
+`security definer` y se saltan el RLS; lo señaló la revisión de seguridad de #72) y el *trigger* `projects_github_repo_aal2`.
+La app traduce el rechazo a «Para conectar GitHub necesitas el segundo factor». Finanzas no tiene aún nada que proteger.
+
+Lo del punto 4 queda para la fase final (paso 4d): la documentación de Supabase dice que los tokens del servidor OAuth llevan
+`aal` y `amr` como cualquier sesión, pero no que hereden el nivel de la sesión que aprobó el consentimiento. Si claude.ai deja de
+ver datos al activar el segundo factor, se reconecta el conector (el consentimiento ya pasa por el código).
