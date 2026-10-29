@@ -314,14 +314,18 @@
   que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual).
 - **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
 
-### Segundo factor: lo pide la app, RLS no lo mira
+### Con el segundo factor activado, el MCP remoto no ve nada
 
-- **Síntoma:** con el segundo factor activado, una petición a la API con un token recién sacado del código del correo (`aal1`) sigue
-  leyendo y escribiendo datos.
-- **Causa:** las políticas solo comparan `owner_id` con `auth.uid()`; ninguna mira `auth.jwt() ->> 'aal'`. El código de la app lo exige la
-  web al entrar (estado `mfa` en `getAuth()`), no el servidor.
-- **Solución:** es lo previsto por ahora ([ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)). Exigirlo en RLS está propuesto en
-  [ADR-0062](../adr/0062-aal2-para-integraciones-sensibles.md): no lo añadas a una tabla suelta sin comprobar antes qué `aal` llevan los
-  tokens del MCP remoto.
-- **Ojo:** MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por defecto). Quitar un factor confirmado exige una sesión
-  `aal2`; por eso «Desactivar» pide un código antes.
+- **Síntoma:** al activar el segundo factor, claude.ai (o cualquier cliente del MCP remoto por OAuth) responde vacío o «Proyecto … no
+  existe». Reconectar el conector no lo arregla.
+- **Causa:** el servidor exige `aal2` en RLS desde el 29 de octubre ([ADR-0062](../adr/0062-aal2-para-integraciones-sensibles.md)), y los
+  tokens del servidor OAuth de Supabase son `aal1`, también al reconectar después de activarlo (`auth.sessions.aal` de la sesión con
+  `oauth_client_id`). Comprobado en la fase final, paso 4d, con el consentimiento servido por `main`, que aún no pide el código: falta
+  ver si con el de `develop` cambia.
+- **Solución:** [ADR-0064](../adr/0064-apps-oauth-aprobadas-con-segundo-factor.md) (aceptado, sin implementar): la app aprobada en
+  `/oauth/consent` con una sesión `aal2` contará como `aal2`. Mientras, no actives el segundo factor en una cuenta que use el MCP remoto. Al desactivarlo vuelve a funcionar, pero hay que reconectar el conector.
+- **Ojo:** cerrar la sesión de claude.ai en **Sesiones y dispositivos**, «En los demás» o «En todos», y desactivar el segundo factor
+  invalidan el conector: hay que reconectarlo en claude.ai. Al reconectar, cierra antes la sesión de Muninn en el navegador (o usa una
+  ventana privada): si no, el consentimiento se aprueba (200 en los logs de Auth) pero claude.ai nunca canjea el código y dice «Error
+  Starting Authentication». MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por
+  defecto); quitar un factor confirmado exige una sesión `aal2`, por eso «Desactivar» pide un código antes.
