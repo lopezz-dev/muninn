@@ -310,10 +310,10 @@ export interface OAuthGrantStore {
   /** Las apps con permiso, la más reciente primero. */
   list(): Promise<OAuthAppGrant[]>
   /**
-   * Apunta que la app se aprobó con el segundo factor (ADR-0064): sus tokens `aal1` cuentan como `aal2`. Solo lo hace si
-   * esta sesión es `aal2`; devuelve si quedó apuntada.
+   * Apunta que esta autorización se aprueba con el segundo factor (ADR-0064, ADR-0066): la sesión que nazca de ella cuenta
+   * como `aal2`. Solo lo hace si esta sesión es `aal2` y la autorización es suya y sigue pendiente; devuelve si quedó apuntada.
    */
-  approveWithMfa(clientId: string): Promise<boolean>
+  approveWithMfa(authorizationId: string): Promise<boolean>
   /** Quita el permiso: borra la aprobación con el segundo factor, cierra sus sesiones y anula sus tokens. */
   revoke(clientId: string): Promise<void>
 }

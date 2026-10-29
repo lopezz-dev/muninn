@@ -234,11 +234,13 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   *(**Falla.** Con el factor activado, el MCP responde «Proyecto … no existe». Reconectado después de activarlo, la sesión OAuth nueva
   sigue siendo `aal1`: el servidor OAuth no hereda el `aal2`. Al desactivarlo, vuelve. Tarea «El MCP remoto no ve datos con el
   segundo factor activado»: necesita un ADR que complemente a ADR-0062. Mientras, no activar el segundo factor si se usa el MCP.)*
-- [ ] **Apps aprobadas con el segundo factor ([ADR-0064](adr/0064-apps-oauth-aprobadas-con-segundo-factor.md)), cuando `develop` esté
+- [ ] **Apps aprobadas con el segundo factor ([ADR-0064](adr/0064-apps-oauth-aprobadas-con-segundo-factor.md), [ADR-0066](adr/0066-aprobacion-oauth-atada-a-una-sesion.md)), cuando `develop` esté
   en `main`:** antes, en el editor SQL, `begin;` + la migración `20261029200000_oauth_mfa_grants` + `supabase/tests/oauth_mfa_grants.sql`:
-  acaba en «RESULTADO 1:0 2:false 3:true 3b:false 3c:42501 4:1 4b:1 4c:42501 5:0 6:1 6b:0 6c:ok 7:1 7b:0» y no deja nada. Después,
+  acaba en «RESULTADO 1:false 2:false 2b:true 2c:42501 3:true 4:1 4b:42501 5:0 6:0 7:0 7b:0 8:1 9:1 9b:0» y no deja nada. Después,
   aplicarla (y alinear la versión). Con el factor activado: en **Apps con acceso**, quitar claude.ai; reconectar el conector (el
-  consentimiento pide el código); «¿Qué tareas tiene Muninn?» responde con tus datos y `select * from oauth_mfa_grants` tiene una fila.
+  consentimiento pide el código); «¿Qué tareas tiene Muninn?» responde con tus datos y `select * from oauth_mfa_grants` tiene una fila
+  con `session_id` = el de la sesión de claude.ai en Sesiones y dispositivos. Si `session_id` queda vacío, mira los avisos de Postgres
+  (`bind_oauth_mfa_grant`): Supabase puede haber cambiado sus tablas.
   Quitar otra vez el acceso: la fila desaparece y el conector deja de ver datos al momento.
 - [ ] Vincular un repo en Ajustes › Integraciones funciona con el segundo factor. Desactívalo, vuelve a entrar e intenta vincular otro:
   sale «Para conectar GitHub necesitas el segundo factor» y no se guarda. Quitar un repo sí deja. La sincronización (`github`) sigue igual.

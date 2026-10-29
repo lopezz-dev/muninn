@@ -147,12 +147,13 @@ export function createAccount({ store, parse }: AccountContext) {
   }
 
   /**
-   * Apunta en el servidor que esta app se aprueba con el segundo factor (ADR-0064): con él activado, sus tokens (que
-   * Supabase emite `aal1`) ven los datos. La llama la pantalla de autorización justo antes de aprobar. Si esta sesión no
-   * pasó el segundo factor, no hace nada y devuelve `false`.
+   * Apunta en el servidor que esta autorización se aprueba con el segundo factor (ADR-0064, ADR-0066): con él activado, la
+   * sesión que nazca de ella (con tokens que Supabase emite `aal1`) ve los datos; otra sesión de la misma app, no. La llama
+   * la pantalla de autorización justo antes de aprobar. Si esta sesión no pasó el segundo factor, no hace nada y devuelve
+   * `false`.
    */
-  async function approveAppWithMfa(clientId: string) {
-    const id = parse(z.uuid(), clientId)
+  async function approveAppWithMfa(authorizationId: string) {
+    const id = parse(z.string().trim().min(1).max(200), authorizationId)
     return auth().oauthGrants.approveWithMfa(id)
   }
 

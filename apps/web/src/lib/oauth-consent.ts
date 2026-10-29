@@ -46,11 +46,11 @@ export async function getConsentRequest(authorizationId: string): Promise<Consen
 }
 
 /**
- * Apunta que apruebas la app con el segundo factor (ADR-0064), para que sus tokens `aal1` vean tus datos. Por el core,
- * pero sin `loadMuninn` (caché sin conexión, tiempo real): aquí no hace falta. Devuelve si quedó apuntada; sin segundo
- * factor en esta sesión, `false`.
+ * Apunta que apruebas esta autorización con el segundo factor (ADR-0064, ADR-0066): la sesión que nazca de ella verá tus
+ * datos aunque sus tokens sean `aal1`. Por el core, pero sin `loadMuninn` (caché sin conexión, tiempo real): aquí no hace
+ * falta. Devuelve si quedó apuntada; sin segundo factor en esta sesión, `false`.
  */
-export async function approveAppWithMfa(clientId: string, userId: string): Promise<boolean> {
+export async function approveAppWithMfa(authorizationId: string, userId: string): Promise<boolean> {
   const [{ createMuninn }, { createSupabaseStore }, client] = await Promise.all([
     import('@muninn/core'),
     import('@muninn/core/supabase'),
@@ -58,7 +58,7 @@ export async function approveAppWithMfa(clientId: string, userId: string): Promi
   ])
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
   const m = createMuninn(createSupabaseStore(client, userId), { timeZone })
-  return m.account.apps.approveWithMfa(clientId)
+  return m.account.apps.approveWithMfa(authorizationId)
 }
 
 /** Aprueba o rechaza; devuelve la dirección del cliente (con el código, o con el error si se rechaza). */

@@ -40,7 +40,7 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
   }
   let factors = [...(seed.factors ?? [])]
   let grants = [...(seed.grants ?? [])]
-  // Apps aprobadas con el segundo factor (ADR-0064); en memoria no cambia lo que ven, solo se apunta.
+  // Autorizaciones aprobadas con el segundo factor (ADR-0066); en memoria no cambia lo que ven las apps, solo se apunta.
   const mfaApproved = new Set<string>()
   const hasVerified = () => factors.some((f) => f.status === 'verified')
   // Con un factor confirmado de partida, la sesión ya pasó el código al entrar.
@@ -62,13 +62,12 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
       async list() {
         return structuredClone(grants)
       },
-      async approveWithMfa(clientId) {
+      async approveWithMfa(authorizationId) {
         if (aal !== 'aal2') return false
-        mfaApproved.add(clientId)
+        mfaApproved.add(authorizationId)
         return true
       },
       async revoke(clientId) {
-        mfaApproved.delete(clientId)
         grants = grants.filter((g) => g.clientId !== clientId)
       },
     },

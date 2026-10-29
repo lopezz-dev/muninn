@@ -1,12 +1,17 @@
--- Una app OAuth aprobada con el segundo factor cuenta como `aal2` (ADR-0064). El servidor OAuth de Supabase emite tokens
--- `aal1` aunque quien aprueba haya pasado el código, así que con el factor activado claude.ai no veía nada.
+-- Una app OAuth aprobada con el segundo factor cuenta como `aal2` (ADR-0064), pero solo la sesión que nace de esa
+-- aprobación (ADR-0066). El servidor OAuth de Supabase emite tokens `aal1` aunque quien aprueba haya pasado el código, así
+-- que con el factor activado claude.ai no veía nada. Atarlo a la app y no a la sesión dejaba entrar a quien solo tuviera
+-- el código del correo: podía aprobar por la API (sin `/oauth/consent`) desde su propia cuenta de la misma app.
 
--- «Esta app la aprobé con el segundo factor». Solo la escribe `approve_oauth_client_mfa`; se lee y se borra con RLS
--- (quitar el acceso en Apps con acceso borra la fila). Sin factor no hace falta ninguna fila.
+-- «Esta autorización la aprobé con el segundo factor» y, en cuanto se canjea, la sesión que salió de ella. Una fila por
+-- app: aprobarla otra vez sustituye la anterior. Solo la escriben `approve_oauth_client_mfa` y el trigger de abajo; se lee
+-- y se borra con RLS (quitar el acceso en Apps con acceso borra la fila).
 create table public.oauth_mfa_grants (
   owner_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   client_id uuid not null references auth.oauth_clients (id) on delete cascade,
+  authorization_id text not null,
   approved_at timestamptz not null default now(),
+  session_id uuid references auth.sessions (id) on delete set null,
   primary key (owner_id, client_id)
 );
 
@@ -42,9 +47,9 @@ $$;
 revoke all on function public.mfa_satisfied_strict() from public, anon;
 grant execute on function public.mfa_satisfied_strict() to authenticated;
 
--- Lo de siempre y, al final (solo con factor y `aal1`), si la sesión del JWT es de una app OAuth aprobada con el factor.
--- En plpgsql para que el orden sea este: lo normal no paga la consulta a `auth.sessions`. `security definer` con dueño
--- `postgres` (que se salta el RLS): leer `oauth_mfa_grants` no vuelve a evaluar `require_mfa`.
+-- Lo de siempre y, al final (solo con factor y `aal1`), si la sesión del JWT es la atada a una aprobación con el factor.
+-- En plpgsql para que el orden sea este: lo normal no paga la consulta. `security definer` con dueño `postgres` (que se
+-- salta el RLS): leer `oauth_mfa_grants` no vuelve a evaluar `require_mfa`.
 create or replace function public.mfa_satisfied()
 returns boolean
 language plpgsql
@@ -64,10 +69,10 @@ begin
   end if;
   return exists (
     select 1
-    from auth.sessions s
-    join public.oauth_mfa_grants g on g.client_id = s.oauth_client_id and g.owner_id = s.user_id
-    where s.id = sid::uuid
-      and s.user_id = uid
+    from public.oauth_mfa_grants g
+    join auth.sessions s on s.id = g.session_id and s.user_id = g.owner_id
+    where g.owner_id = uid
+      and g.session_id = sid::uuid
   );
 end;
 $$;
@@ -75,9 +80,10 @@ $$;
 revoke all on function public.mfa_satisfied() from public, anon;
 grant execute on function public.mfa_satisfied() to authenticated;
 
--- La llama `/oauth/consent` al pulsar «Permitir acceso», antes de aprobar. Solo apunta la app si quien llama es `aal2`
--- (pasó el código de la app) y el cliente existe; si no, no hace nada y devuelve `false`.
-create function public.approve_oauth_client_mfa(client_id uuid)
+-- La llama `/oauth/consent` al pulsar «Permitir acceso», antes de aprobar. Solo apunta si quien llama es `aal2` (pasó el
+-- código de la app) y la autorización es suya, sigue pendiente y no ha caducado; la app sale de la autorización. Si no,
+-- no hace nada y devuelve `false`.
+create function public.approve_oauth_client_mfa(authorization_id text)
 returns boolean
 language plpgsql
 volatile
@@ -86,6 +92,7 @@ set search_path = ''
 as $$
 declare
   uid uuid := (select auth.uid());
+  client uuid;
 begin
   if uid is null then
     raise exception 'Sin sesión' using errcode = '42501';
@@ -93,21 +100,69 @@ begin
   if coalesce((select auth.jwt() ->> 'aal'), 'aal1') <> 'aal2' then
     return false;
   end if;
-  if not exists (
-    select 1 from auth.oauth_clients c
-    where c.id = approve_oauth_client_mfa.client_id and c.deleted_at is null
-  ) then
+  select a.client_id into client
+  from auth.oauth_authorizations a
+  join auth.oauth_clients c on c.id = a.client_id and c.deleted_at is null
+  where a.authorization_id = approve_oauth_client_mfa.authorization_id
+    -- Supabase puede no rellenar `user_id` hasta aprobarla; el trigger lo exige ya aprobada.
+    and (a.user_id = uid or a.user_id is null)
+    and a.status = 'pending'
+    and a.expires_at > now();
+  if client is null then
     return false;
   end if;
-  insert into public.oauth_mfa_grants (owner_id, client_id)
-  values (uid, approve_oauth_client_mfa.client_id)
-  on conflict (owner_id, client_id) do update set approved_at = now();
+  insert into public.oauth_mfa_grants (owner_id, client_id, authorization_id, approved_at, session_id)
+  values (uid, client, approve_oauth_client_mfa.authorization_id, now(), null)
+  on conflict (owner_id, client_id) do update
+    set authorization_id = excluded.authorization_id, approved_at = excluded.approved_at, session_id = null;
   return true;
 end;
 $$;
 
-revoke all on function public.approve_oauth_client_mfa(uuid) from public, anon;
-grant execute on function public.approve_oauth_client_mfa(uuid) to authenticated;
+revoke all on function public.approve_oauth_client_mfa(text) from public, anon;
+grant execute on function public.approve_oauth_client_mfa(text) to authenticated;
+
+-- Al nacer la sesión de una app OAuth (al canjear el código), la ata a la aprobación pendiente si la autorización apuntada
+-- es la última aprobada de esa app para ese usuario y es de hace menos de 15 minutos. Una vez: con `session_id` puesto, ya
+-- no se ata otra. Si algo falla, la sesión nace igual (sin acceso con el factor): no puede romper la entrada.
+create function public.bind_oauth_mfa_grant()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.oauth_client_id is null then
+    return new;
+  end if;
+  begin
+    update public.oauth_mfa_grants g
+    set session_id = new.id
+    where g.owner_id = new.user_id
+      and g.client_id = new.oauth_client_id
+      and g.session_id is null
+      and g.approved_at > now() - interval '15 minutes'
+      and g.authorization_id = (
+        select a.authorization_id
+        from auth.oauth_authorizations a
+        where a.user_id = new.user_id
+          and a.client_id = new.oauth_client_id
+          and a.approved_at is not null
+        order by a.approved_at desc
+        limit 1
+      );
+  exception when others then
+    raise warning 'bind_oauth_mfa_grant: %', sqlerrm;
+  end;
+  return new;
+end;
+$$;
+
+revoke all on function public.bind_oauth_mfa_grant() from public, anon, authenticated;
+
+create trigger oauth_mfa_grants_bind
+  after insert on auth.sessions
+  for each row execute function public.bind_oauth_mfa_grant();
 
 -- Las funciones de sesiones, con la comprobación estricta. El resto, igual que en 20261029150000 y 20261029170000.
 create or replace function public.list_my_sessions()

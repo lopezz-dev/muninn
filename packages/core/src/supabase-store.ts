@@ -515,9 +515,9 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         }))
       },
       // `approve_oauth_client_mfa` y `oauth_mfa_grants` llegan con la migración 20261029200000_oauth_mfa_grants.
-      async approveWithMfa(clientId) {
+      async approveWithMfa(authorizationId) {
         const { data, error } = await client.rpc('approve_oauth_client_mfa', {
-          client_id: clientId,
+          authorization_id: authorizationId,
         })
         if (error) throw error
         return Boolean(data)

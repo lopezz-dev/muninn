@@ -58,11 +58,11 @@ export function OAuthConsent() {
     const app = state.details.client.name || 'La app'
     setBusy(approve ? 'approve' : 'deny')
     try {
-      // Antes de aprobar, que el servidor sepa que la aprobaste con el segundo factor (ADR-0064). Si falla, se aprueba
+      // Antes de aprobar, que el servidor sepa que la aprobaste con el segundo factor (ADR-0066). Si falla, se aprueba
       // igual: sin la fila, la app solo pierde acceso con el factor activado, y se avisa.
       let mfaFailed = false
       if (approve && auth.kind === 'user')
-        await approveAppWithMfa(state.details.client.id, auth.account.id).catch((err) => {
+        await approveAppWithMfa(state.details.authorization_id, auth.account.id).catch((err) => {
           console.warn('No se pudo apuntar la aprobación con el segundo factor', err)
           mfaFailed = true
         })
