@@ -29,6 +29,15 @@ tauri-plugin-updater = "2"
 # Con `deep-link`, pasa el enlace `muninn://` a la ventana abierta en vez de abrir otra (Windows y Linux).
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
+# Marca `Muninn/<versión>` en el user agent del webview, para reconocer la app en «Sesiones» (ADR-0061).
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows = "0.62"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSString"] }
+
 [profile.release]
 codegen-units = 1
 lto = true
