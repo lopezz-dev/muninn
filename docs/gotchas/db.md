@@ -323,8 +323,14 @@
   tokens del servidor OAuth de Supabase son `aal1`, también al reconectar después de activarlo (`auth.sessions.aal` de la sesión con
   `oauth_client_id`). Comprobado en la fase final, paso 4d, con el consentimiento servido por `main`, que aún no pide el código: falta
   ver si con el de `develop` cambia.
-- **Solución:** [ADR-0064](../adr/0064-apps-oauth-aprobadas-con-segundo-factor.md) (aceptado, sin implementar): la app aprobada en
-  `/oauth/consent` con una sesión `aal2` contará como `aal2`. Mientras, no actives el segundo factor en una cuenta que use el MCP remoto. Al desactivarlo vuelve a funcionar, pero hay que reconectar el conector.
+- **Solución:** [ADR-0064](../adr/0064-apps-oauth-aprobadas-con-segundo-factor.md), migración `20261029200000_oauth_mfa_grants`: la
+  app aprobada en `/oauth/consent` con una sesión `aal2` queda en `oauth_mfa_grants` y `mfa_satisfied()` la deja pasar. Hasta aplicar la
+  migración y publicar `develop` en `main`, no actives el segundo factor en una cuenta que use el MCP remoto. Una app conectada antes
+  de activarlo no tiene fila: **Quitar acceso** y reconectar. Reconectar sin quitarlo no basta: Supabase ve el permiso dado y vuelve a
+  claude.ai sin pasar por «Permitir acceso». Prueba la migración con `supabase/tests/oauth_mfa_grants.sql` (deshace todo al acabar).
+- **Ojo:** las funciones de sesiones usan `mfa_satisfied_strict()` (sin la excepción OAuth). Una función `security definer` nueva que
+  no deba abrirse a las apps, igual. `mfa_satisfied()` lee `oauth_mfa_grants`, que tiene `require_mfa`: no se repite en bucle porque la
+  función es de `postgres`, que se salta el RLS; si cambias el dueño, cambia eso.
 - **Ojo:** cerrar la sesión de claude.ai en **Sesiones y dispositivos**, «En los demás» o «En todos», y desactivar el segundo factor
   invalidan el conector: hay que reconectarlo en claude.ai. Al reconectar, cierra antes la sesión de Muninn en el navegador (o usa una
   ventana privada): si no, el consentimiento se aprueba (200 en los logs de Auth) pero claude.ai nunca canjea el código y dice «Error

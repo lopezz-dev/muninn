@@ -147,6 +147,16 @@ export function createAccount({ store, parse }: AccountContext) {
   }
 
   /**
+   * Apunta en el servidor que esta app se aprueba con el segundo factor (ADR-0064): con él activado, sus tokens (que
+   * Supabase emite `aal1`) ven los datos. La llama la pantalla de autorización justo antes de aprobar. Si esta sesión no
+   * pasó el segundo factor, no hace nada y devuelve `false`.
+   */
+  async function approveAppWithMfa(clientId: string) {
+    const id = parse(z.uuid(), clientId)
+    return auth().oauthGrants.approveWithMfa(id)
+  }
+
+  /**
    * Quita el acceso a una app: sus sesiones se cierran y sus tokens dejan de valer. No hay «Deshacer»: el permiso solo se
    * da desde la propia app, pasando por la pantalla de autorización (ADR-0036).
    */
@@ -159,6 +169,6 @@ export function createAccount({ store, parse }: AccountContext) {
     available,
     sessions: { list: sessions, revoke: revokeSession, signOut },
     mfa: { factors, active, enroll, confirm, disable, assurance },
-    apps: { list: apps, revoke: revokeApp },
+    apps: { list: apps, approveWithMfa: approveAppWithMfa, revoke: revokeApp },
   }
 }

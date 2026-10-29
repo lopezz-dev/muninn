@@ -1,6 +1,6 @@
 # ADR-0064: Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 
-- **Estado:** Aceptado (29 de octubre de 2026; falta implementarlo)
+- **Estado:** Aceptado (29 de octubre de 2026; implementado en `20261029200000_oauth_mfa_grants`)
 - **Fecha:** 2026-10-29
 - **Área:** db, core, web, mcp
 - **Complementa a:** [ADR-0062](0062-aal2-para-integraciones-sensibles.md), [ADR-0036](0036-pantalla-de-autorizacion-oauth.md)

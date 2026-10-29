@@ -50,6 +50,11 @@ app (con una clave nueva). Puedes borrar la cuenta vieja de Muninn de tu app.
 Con el segundo factor activado, el servidor no deja leer ni cambiar tus datos a ninguna sesión que no haya pasado el
 código, aunque alguien consiga el del correo.
 
+Las apps que conectes **con el segundo factor ya activado** (como claude.ai) siguen viendo tus datos: al pulsar
+**Permitir acceso** ya habías escrito el código al entrar. Si conectaste una app **antes** de activarlo, deja de ver tus
+datos: quítale el acceso en **Apps con acceso** (más abajo) y vuelve a conectarla una vez desde esa app. Aunque la
+apruebes con el segundo factor, una app conectada no puede ver ni cerrar tus sesiones ni conectar GitHub.
+
 Para **conectar un repositorio de GitHub** a un proyecto necesitas el segundo factor activado, porque Muninn podrá
 escribir en él. Si no lo tienes, al vincularlo te lo dirá: actívalo aquí y vuelve a vincularlo. Quitar un repositorio
 no lo pide. Las integraciones de finanzas lo pedirán también cuando lleguen.

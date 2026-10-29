@@ -514,7 +514,22 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
           grantedAt: g.granted_at,
         }))
       },
+      // `approve_oauth_client_mfa` y `oauth_mfa_grants` llegan con la migración 20261029200000_oauth_mfa_grants.
+      async approveWithMfa(clientId) {
+        const { data, error } = await client.rpc('approve_oauth_client_mfa', {
+          client_id: clientId,
+        })
+        if (error) throw error
+        return Boolean(data)
+      },
       async revoke(clientId) {
+        // Primero la aprobación: si falla lo de Auth, la app ya no ve datos con el segundo factor.
+        const { error: grantError } = await client
+          .from('oauth_mfa_grants')
+          .delete()
+          .eq('owner_id', ownerId)
+          .eq('client_id', clientId)
+        if (grantError) throw grantError
         const { error } = await client.auth.oauth.revokeGrant({ clientId })
         if (error) throw error
       },

@@ -152,6 +152,21 @@ describe('apps con acceso', () => {
   it('valida el id de la app', async () => {
     const account = setup()
     await expect(account.apps.revoke('claude')).rejects.toBeInstanceOf(ValidationError)
+    await expect(account.apps.approveWithMfa('claude')).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('solo apunta la aprobación con el segundo factor si la sesión es aal2', async () => {
+    const claude = grant('claude.ai', '2026-10-21T10:00:00.000Z')
+    expect(await setup({ grants: [claude] }).apps.approveWithMfa(claude.clientId)).toBe(false)
+    const withFactor = setup({
+      grants: [claude],
+      factors: [
+        { id: crypto.randomUUID(), name: 'App', status: 'verified', createdAt: claude.grantedAt },
+      ],
+    })
+    expect(await withFactor.apps.approveWithMfa(claude.clientId)).toBe(true)
+    await withFactor.apps.revoke(claude.clientId)
+    expect(await withFactor.apps.list()).toEqual([])
   })
 })
 

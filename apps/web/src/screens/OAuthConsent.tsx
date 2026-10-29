@@ -2,7 +2,9 @@ import { Button, Card, Icon, type IconName, notify } from '@muninn/ui'
 import type { OAuthAuthorizationDetails } from '@supabase/supabase-js'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { useAuth } from '../lib/muninn'
 import {
+  approveAppWithMfa,
   consentErrorMessage,
   decideConsent,
   getConsentRequest,
@@ -25,6 +27,7 @@ type State =
  */
 export function OAuthConsent() {
   const { authorization_id: id } = route.useSearch()
+  const auth = useAuth()
   const [state, setState] = useState<State>(
     id ? { kind: 'loading' } : { kind: 'error', message: 'Falta la solicitud de autorización.' },
   )
@@ -55,12 +58,22 @@ export function OAuthConsent() {
     const app = state.details.client.name || 'La app'
     setBusy(approve ? 'approve' : 'deny')
     try {
+      // Antes de aprobar, que el servidor sepa que la aprobaste con el segundo factor (ADR-0064). Si falla, se aprueba
+      // igual: sin la fila, la app solo pierde acceso con el factor activado, y se avisa.
+      let mfaFailed = false
+      if (approve && auth.kind === 'user')
+        await approveAppWithMfa(state.details.client.id, auth.account.id).catch((err) => {
+          console.warn('No se pudo apuntar la aprobación con el segundo factor', err)
+          mfaFailed = true
+        })
       const url = await decideConsent(id, approve)
       const host = redirectHost(url)
       if (approve)
         notify.success(`${app} ya puede usar tu Muninn`, {
           icon: 'check',
-          description: `Volviendo a ${host}…`,
+          description: mfaFailed
+            ? `Con el segundo factor activado no verá tus datos: quítale el acceso y vuelve a conectarla. Volviendo a ${host}…`
+            : `Volviendo a ${host}…`,
         })
       else notify.info('Acceso rechazado', { icon: 'close', description: `Volviendo a ${host}…` })
       setState({ kind: 'leaving', host })
