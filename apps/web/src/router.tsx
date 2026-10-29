@@ -64,7 +64,7 @@ export interface OAuthConsentSearch {
 }
 
 /**
- * Autorizar a una app (claude.ai) a usar el MCP remoto (ADR-0036). Fuera del shell y sin cargar el core;
+ * Autorizar a una app (claude.ai) a usar el MCP remoto (ADR-0036). Fuera del shell; el core solo se carga al aprobar (ADR-0064);
  * necesita una cuenta de verdad: sin sesión (o en modo demo), a /login y vuelta aquí.
  */
 const oauthConsentRoute = createRoute({
