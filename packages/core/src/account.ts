@@ -15,8 +15,12 @@ export interface AccountContext {
   parse: <S extends z.ZodType>(schema: S, value: unknown) => z.output<S>
 }
 
-/** «Mac · Chrome», «iPhone · Safari», «Muninn para Windows»: el nombre que enseña la lista de sesiones. */
-export function sessionDeviceLabel(ua: string | null | undefined): string {
+/**
+ * «Mac · Chrome», «iPhone · Safari», «Muninn para Windows», «Claude · app conectada»: el nombre que enseña la lista de
+ * sesiones. `appName` es la app OAuth que abrió la sesión (claude.ai manda `python-httpx/…`, que no dice nada).
+ */
+export function sessionDeviceLabel(ua: string | null | undefined, appName?: string | null): string {
+  if (appName) return `${appName} · app conectada`
   if (!ua) return 'Dispositivo desconocido'
   const os = /iPhone|iPod/.test(ua)
     ? 'iPhone'
@@ -31,9 +35,11 @@ export function sessionDeviceLabel(ua: string | null | undefined): string {
             : /Linux|CrOS/.test(ua)
               ? 'Linux'
               : null
-  // La app de escritorio (Tauri) y clientes que no son un navegador (el MCP, scripts).
-  if (/Tauri/i.test(ua)) return os ? `Muninn para ${os}` : 'Muninn de escritorio'
-  if (/^node|undici|Deno|supabase-js-node|curl/i.test(ua)) return 'Programa o servidor'
+  // La app de escritorio (Tauri añade `Muninn/<versión>` al de WebView2 o WKWebView) y clientes que no son un navegador
+  // (el MCP, scripts, servidores OAuth como el de claude.ai).
+  if (/\bMuninn\/|Tauri/i.test(ua)) return os ? `Muninn para ${os}` : 'Muninn de escritorio'
+  if (/^node|undici|Deno|supabase-js-node|curl|python-httpx|python-requests|aiohttp/i.test(ua))
+    return 'Programa o servidor'
   const browser = /Edg\//.test(ua)
     ? 'Edge'
     : /Firefox\/|FxiOS/.test(ua)

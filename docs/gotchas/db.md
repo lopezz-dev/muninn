@@ -307,6 +307,11 @@
 - **Ojo:** cerrar una sesión borra su fila y sus *refresh tokens*, pero su token de acceso sigue valiendo hasta que caduca (una hora
   como mucho, el *JWT expiry* del proyecto). Por eso la app dice «saldrá en menos de una hora». `is_current` compara con el claim
   `session_id` del JWT de quien pregunta.
+- **Ojo:** las sesiones que abre el servidor OAuth (claude.ai) llevan el user agent de su backend (`python-httpx/…`), no el del
+  navegador. Por eso `list_my_sessions()` devuelve también `app_name` (`auth.oauth_clients.client_name` por
+  `auth.sessions.oauth_client_id`, migración `20261029170000_sesiones_con_app`); para cambiar sus columnas hay que hacer
+  `drop function` + `create` y volver a dar los permisos. La app de escritorio se reconoce por `Muninn/<versión>` en el user agent,
+  que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual).
 - **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
 
 ### Segundo factor: lo pide la app, RLS no lo mira
