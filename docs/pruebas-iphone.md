@@ -50,6 +50,7 @@ proyecto de Muninn con la etiqueta `iphone`.
 | La barra respecto al borde de abajo | Respeta la barra de gestos del iPhone (no la tapa) |
 | Ajustes › Módulos: desactivar Finanzas | Quedan 3 pestañas que se reparten el ancho |
 | Cerrar la app del todo y abrirla en Inicio (con pocos datos) | La barra está pegada abajo desde el primer momento, sin hueco debajo |
+| Con la app abierta un rato, cambiar de sección, salir a la pantalla de inicio y volver | La barra sigue entera por encima de la barra de gestos: nunca se corta por abajo |
 | Inicio con títulos de tarea largos | Nada se sale por la derecha; los títulos ocupan hasta dos líneas |
 | iPad en vertical y en horizontal | En vertical, raíl de iconos con tooltips; en horizontal, la barra lateral completa |
 | Hacer algo que muestre un aviso (archivar y deshacer) | La píldora sale entera bajo la isla, sin taparse |
