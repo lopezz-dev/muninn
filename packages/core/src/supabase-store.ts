@@ -478,13 +478,14 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
 
   // Seguridad de la cuenta (ADR-0061). `auth.sessions` no se puede leer desde el cliente: las funciones
   // `list_my_sessions` y `revoke_my_session` (migración 20261029120000_account_sessions) solo ven las del usuario.
+  // `app_name` llega con la migración 20261029170000_sesiones_con_app; sin ella, no viene.
   const account: AccountStore = {
     async sessions() {
       const { data, error } = await client.rpc('list_my_sessions')
       if (error) throw error
       return (data as Row[]).map((r) => {
         const { isCurrent, ...rest } = fromRow<AccountSession & { isCurrent: boolean }>(r)
-        return { ...rest, current: Boolean(isCurrent) }
+        return { ...rest, current: Boolean(isCurrent), appName: rest.appName ?? null }
       })
     },
     async revokeSession(id) {

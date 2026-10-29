@@ -64,6 +64,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
 - [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 - [ADR-0065](0065-eliminar-proyectos-archivados.md) — Los proyectos archivados se pueden eliminar para siempre, con «Deshacer» diferido, y archivar suelta el repo de GitHub
 
 ### db
@@ -85,6 +86,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
 - [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -93,6 +95,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0036](0036-pantalla-de-autorizacion-oauth.md) — La autorización OAuth del MCP remoto la aprueba una pantalla propia de la web, `/oauth/consent`
 - [ADR-0041](0041-asistente-local-con-catalogo-unico.md) — Asistente con modelo local (Ollama) en la app, con un catálogo único de herramientas compartido con el MCP
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 
 ### ui
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
@@ -109,6 +112,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
 - [ADR-0053](0053-ajustes-por-grupos-buscador-y-restablecer.md) — Ajustes por grupos, con buscador, marca de «cambiado» y «Restablecer» con Deshacer
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador
+- [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -145,6 +149,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
 - [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 - [ADR-0057](0057-lector-de-noticias-integrado.md) — Lector de noticias integrado: modo lectura con el contenido del feed, sin iframe *(propuesto)*
 - [ADR-0059](0059-deep-links-para-oauth-en-escritorio.md) — GitHub OAuth en escritorio con el deep link `muninn://auth/callback`
 - [ADR-0060](0060-captcha-con-turnstile-en-la-entrada.md) — CAPTCHA de la entrada con Cloudflare Turnstile, invisible y opcional por variable

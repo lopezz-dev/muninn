@@ -190,32 +190,52 @@ El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha h
 ## 4d. Seguridad de la cuenta (≈ 20 min)
 
 Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
-y el iPhone con la sesión abierta.
-- [ ] Aplicar **juntas** las migraciones `20261029120000_account_sessions` y `20261029150000_aal2_en_el_servidor` ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)),
+y el iPhone con la sesión abierta. **29 de octubre:** probado en la vista previa de `develop` (`https://muninn-git-develop-kodemaru.vercel.app`,
+pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de producción.
+- [x] Aplicar **juntas** las migraciones `20261029120000_account_sessions` y `20261029150000_aal2_en_el_servidor` ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)),
   en ese orden (y alinear las versiones si usas `apply_migration`). La segunda no se ha probado contra la base: antes, en el editor SQL,
   la prueba de [gotchas/db › Probar el segundo factor en el servidor](gotchas/db.md#probar-el-segundo-factor-en-el-servidor).
-- [ ] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
+  *(29 de octubre. La prueba, en un bloque `DO` que acaba con `raise exception`, pasa entera: con factor y `aal1`, 0 proyectos y
+  `list_my_sessions`/`revoke_my_session`/`insert` fallan con 42501; con `aal2`, ve lo suyo y vincula; sin factor y `aal1`, ve, renombra
+  y desvincula pero no vincula; 16 políticas `require_mfa` = 15 tablas + `storage.objects`. Aplicadas desde el editor SQL, con la versión
+  registrada a mano en `schema_migrations` (el MCP de Supabase rechazaba escribir). `get_advisors`: solo tres avisos nuevos,
+  intencionados, de funciones `security definer` ejecutables por `authenticated` (`list_my_sessions`, `revoke_my_session`, `mfa_satisfied`).)*
+- [ ] Aplicar después `20261029170000_sesiones_con_app` (nombre de la app OAuth en la lista). Comprobar en el editor SQL, con el
+  `sub` y `session_id` de tu usuario, que `select * from list_my_sessions()` trae `app_name` = «Claude» en las de claude.ai y que
+  `list_my_sessions` sigue con `execute` solo para `authenticated`. En la app, esas sesiones salen como **Claude · app conectada**.
+- [ ] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
+  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge».
+- [x] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
   última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
-  `select * from list_my_sessions()` con otro `sub` devuelve 0 filas).
-- [ ] **Cerrar** en la fila del iPhone: sale el aviso y desaparece de la lista; en menos de una hora el iPhone vuelve a la pantalla de
-  entrada.
-- [ ] Vuelve a entrar en el iPhone y pulsa **En los demás** en el ordenador: el ordenador sigue dentro y el iPhone sale.
-- [ ] **En todos**: el ordenador vuelve a la pantalla de entrada con el aviso; el iPhone sale en menos de una hora.
-- [ ] **Segundo factor:** en Supabase, **Authentication › Multi-Factor**, comprueba que *TOTP (App Authenticator)* está activado (lo
+  `select * from list_my_sessions()` con otro `sub` devuelve 0 filas). *(Sí; lo de otro usuario lo cubre la prueba SQL. Fallo: la app de
+  escritorio sale como «Windows · Edge» y claude.ai como «Dispositivo desconocido» → PR #74.)*
+- [x] **Cerrar** en la fila del iPhone: sale el aviso y desaparece de la lista; en menos de una hora el iPhone vuelve a la pantalla de
+  entrada. *(Probado cerrando varias sesiones una a una. Ojo: cerrar la de claude.ai invalida el conector, hay que reconectarlo.)*
+- [ ] Vuelve a entrar en el iPhone y pulsa **En los demás** en el ordenador: el ordenador sigue dentro y el iPhone sale. *(Sin probar a
+  propósito: también cierra el conector de claude.ai.)*
+- [ ] **En todos**: el ordenador vuelve a la pantalla de entrada con el aviso; el iPhone sale en menos de una hora. *(Igual.)*
+- [x] **Segundo factor:** en Supabase, **Authentication › Multi-Factor**, comprueba que *TOTP (App Authenticator)* está activado (lo
   está por defecto). Si no, «Activar» dice «El segundo factor no está activado en este servidor».
-- [ ] En Ajustes › Cuenta › **Segundo factor**, «Activar»: sale el QR; escanéalo con tu app de códigos (o teclea la clave) y guarda la clave
+- [x] En Ajustes › Cuenta › **Segundo factor**, «Activar»: sale el QR; escanéalo con tu app de códigos (o teclea la clave) y guarda la clave
   en tu gestor de contraseñas. Un código equivocado da «El código no es correcto…»; el bueno, «Segundo factor activado».
-- [ ] Cierra sesión y entra con el código del correo: sale **Falta un paso** y no deja ir a ninguna pantalla sin el código de la app. Con
-  el código, entras donde ibas. Lo mismo entrando con GitHub.
+- [x] Cierra sesión y entra con el código del correo: sale **Falta un paso** y no deja ir a ninguna pantalla sin el código de la app. Con
+  el código, entras donde ibas. Lo mismo entrando con GitHub. *(Con el correo; GitHub no se probó.)*
 - [ ] En el iPhone (sesión abierta de antes de activarlo): al volver a abrir la app (como mucho, una hora después) pide el código.
-- [ ] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
-- [ ] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código.
-- [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código.
-- [ ] **Servidor (ADR-0062), con el segundo factor activado:** en claude.ai, «¿Qué tareas tiene Muninn?» sigue respondiendo. Si
+- [x] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
+- [x] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código. *(Al desactivarlo,
+  el conector de claude.ai también quedó invalidado y hubo que reconectarlo.)*
+- [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código. *(Pendiente: la
+  *Site URL* sirve `main`, que aún no lo tiene. Repetir cuando `develop` pase a `main`.)*
+- [x] **Servidor (ADR-0062), con el segundo factor activado:** en claude.ai, «¿Qué tareas tiene Muninn?» sigue respondiendo. Si
   responde vacío o con error de permisos, sus tokens son `aal1`: quita el acceso en **Apps con acceso**, vuelve a conectar el conector
   (el consentimiento pide el código) y repite. Si aun así falla, apúntalo como tarea: el MCP remoto necesita otra salida.
+  *(**Falla.** Con el factor activado, el MCP responde «Proyecto … no existe». Reconectado después de activarlo, la sesión OAuth nueva
+  sigue siendo `aal1`: el servidor OAuth no hereda el `aal2`. Al desactivarlo, vuelve. Tarea «El MCP remoto no ve datos con el
+  segundo factor activado»: necesita un ADR que complemente a ADR-0062. Mientras, no activar el segundo factor si se usa el MCP.)*
 - [ ] Vincular un repo en Ajustes › Integraciones funciona con el segundo factor. Desactívalo, vuelve a entrar e intenta vincular otro:
   sale «Para conectar GitHub necesitas el segundo factor» y no se guarda. Quitar un repo sí deja. La sincronización (`github`) sigue igual.
+  *(Sin probar: huginnDB no se deja vincular porque lo retiene el proyecto archivado «Muninn» → tarea «Un proyecto archivado sigue
+  reteniendo su repo de GitHub». La regla del servidor sí la cubre la prueba SQL.)*
 - [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
   **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
 

@@ -17,13 +17,21 @@ El segundo factor es opcional. Con él, para entrar no basta con el código del 
 pide un código de seis cifras de una app de tu móvil (Google Authenticator, 1Password, Authy o la que uses). Si alguien
 consigue el código de tu correo, sin tu móvil no podrá entrar en la app.
 
-1. En **Segundo factor**, pulsa **Activar**.
-2. En tu app de códigos, añade una cuenta nueva y escanea el código QR. Si no puedes escanearlo, escribe la clave de
-   configuración que sale al lado.
-3. Escribe el código de seis cifras que te enseña la app y pulsa **Activar**.
+En **Segundo factor**, pulsa **Activar**. Se abre una ventana (en el móvil, desde abajo) con tres pasos:
 
-**Guarda la clave de configuración** en un sitio seguro (tu gestor de contraseñas, por ejemplo). Si pierdes el móvil,
-con ella añades Muninn a la app de otro móvil. Muninn aún no tiene códigos de recuperación.
+1. **Escanea:** en tu app de códigos, añade una cuenta nueva y escanea el código QR con la cámara. Si no puedes
+   escanearlo, pulsa **Escribe la clave a mano**.
+2. **Guarda la clave:** es la misma información que el QR, en letras y números. Pulsa **Copiar clave** y guárdala en un
+   sitio seguro (tu gestor de contraseñas, por ejemplo). Si no escaneaste el QR, escríbela en tu app.
+3. **Confirma:** escribe el código de seis cifras que te enseña la app. Puedes pegarlo; en el móvil, el teclado te lo
+   puede sugerir. En cuanto está completo, Muninn lo comprueba: si no es correcto, se borra para que escribas el que
+   sale ahora (cambia cada 30 segundos).
+
+Al acabar verás un check verde: ya está activado. Si cierras la ventana antes de confirmar, no se activa nada; puedes
+volver a empezar cuando quieras (con un QR nuevo).
+
+**Guarda la clave de configuración.** Si pierdes el móvil, con ella añades Muninn a la app de otro móvil. Muninn aún no
+tiene códigos de recuperación.
 
 ## Entrar con el segundo factor
 
@@ -34,7 +42,8 @@ Cada vez que entras en un dispositivo nuevo te lo pide; mientras la sesión siga
 
 ## Desactivar el segundo factor
 
-Pulsa **Desactivar** y escribe el código que sale en ese momento en tu app. Desde entonces, para entrar basta con el
+Pulsa **Desactivar**: se abre una ventana que te pide el código que sale en ese momento en tu app. Escríbelo y pulsa
+**Desactivar**. Desde entonces, para entrar basta con el
 código del correo o con GitHub. No se puede deshacer: para volver a activarlo, tendrás que añadir Muninn otra vez a tu
 app (con una clave nueva). Puedes borrar la cuenta vieja de Muninn de tu app.
 
@@ -50,6 +59,12 @@ no lo pide. Las integraciones de finanzas lo pedirán también cuando lleguen.
 En **Sesiones y dispositivos** sale cada sitio donde has entrado con tu cuenta: el navegador o la app y el sistema
 («Mac · Chrome», «iPhone · Safari», «Muninn para Windows»), cuándo se usó por última vez y cuándo entraste. La que
 lleva la marca **Este** es el dispositivo que tienes delante.
+
+- La app de escritorio sale como «Muninn para Windows» o «Muninn para Mac». Si entraste con una versión anterior, sale como
+  el navegador («Windows · Edge», «Mac · Safari») hasta que vuelvas a entrar.
+- Las apps que conectaste a tu cuenta salen con su nombre, como «Claude · app conectada» para claude.ai. Para quitarles el
+  acceso, usa **Apps con acceso** (más abajo).
+- «Programa o servidor» es algo que entra sin navegador, como un script tuyo o el MCP de Muninn en tu ordenador.
 
 Si ves una que no reconoces, ciérrala.
 
