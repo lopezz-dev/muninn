@@ -155,3 +155,18 @@ export function Separator({ className, vertical }: { className?: string; vertica
     />
   )
 }
+
+/**
+ * Check grande y animado para el final de un recorrido que ha salido bien (activar el segundo factor). La coreografía
+ * es la de la insignia de las notificaciones, más pausada (`.mn-success` en theme.css). Decorativo: el texto de al lado
+ * dice lo que ha pasado.
+ */
+export function SuccessMark({ className }: { className?: string }) {
+  return (
+    <span aria-hidden="true" className={cn('mn-success bg-success-soft text-success', className)}>
+      <svg className="mn-success-check" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 12.5 9.5 17 19 7.5" pathLength={1} />
+      </svg>
+    </span>
+  )
+}
