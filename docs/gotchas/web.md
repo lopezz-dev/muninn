@@ -639,3 +639,12 @@
 - `verifyOtp` y GitHub no llevan token: Supabase solo lo comprueba al pedir el código. Si algún día se añade otra
   llamada protegida (contraseñas, `resend`, registro anónimo), tiene que pedir su propio token.
 - Si cambias el dominio, añádelo también a los *hostnames* del widget (lista de «Cambiar el dominio de la web»).
+
+### Ajustes › Cuenta no sale en la demo: cómo ver el segundo factor sin cuenta
+
+- **Síntoma:** en el modo demo, Ajustes › Cuenta solo enseña «Estás en modo demo», aunque el core de la demo tiene la
+  seguridad simulada (`memory-account.ts`: vale cualquier código menos `000000`).
+- **Causa:** `Seccion.tsx` corta en `auth.kind === 'demo'` antes de pintar Sesiones, Segundo factor y Apps.
+- **Solución:** para revisar los diálogos en la demo, en local y sin commitear, haz que esa rama devuelva `<SegundoFactor />`
+  y navega con el router (recargar borra la demo). La demo no genera QR (`qrCode: ''`): el diálogo enseña un hueco que
+  manda a la clave. Para ver el QR, envuelve `m.account.mfa.enroll` desde la consola y devuelve un `data:image/svg+xml`.

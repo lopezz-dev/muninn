@@ -4,11 +4,13 @@ import {
   ArrowCounterClockwise,
   CircleHalf,
   Compass,
+  Copy,
   Devices,
   Key,
   ListBullets,
   ListChecks,
   Plug,
+  QrCode,
   ShieldCheck,
   SignOut,
   Sun,
@@ -34,6 +36,8 @@ export const screenIcons = {
   devices: Devices,
   key: Key,
   signOut: SignOut,
+  copy: Copy,
+  qr: QrCode,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type ScreenIconName = keyof typeof screenIcons
