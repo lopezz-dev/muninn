@@ -26,6 +26,13 @@
     }
   },
   "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "muninn"
+        ]
+      }
+    },
     "updater": {
       "endpoints": [
         "https://github.com/lopezz-dev/muninn/releases/latest/download/latest.json"
