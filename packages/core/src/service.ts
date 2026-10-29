@@ -727,6 +727,34 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return restored
   }
 
+  /**
+   * Archiva un proyecto y suelta su repo de GitHub (ADR-0065): un archivado no se sincroniza ni sale en Integraciones, y
+   * si lo retuviera, el repo no se podría vincular a otro proyecto. La UI lee el repo antes para decirlo.
+   */
+  async function archiveProject(id: string) {
+    const before = await getProject(id)
+    const patch = {
+      status: 'archived' as const,
+      ...(before.githubRepo ? { githubRepo: null } : {}),
+    }
+    const project = await store.projects.update(id, patch)
+    await log('project', id, 'archived', id, patch)
+    return project
+  }
+
+  /**
+   * Borra para siempre un proyecto archivado, con sus columnas, tareas y actividad; sus notas se quedan sin proyecto
+   * (ADR-0065). Solo los archivados: archivar es el paso que se puede deshacer.
+   */
+  async function deleteProject(id: string) {
+    const project = await getProject(id)
+    if (project.status !== 'archived') {
+      throw new ValidationError('Solo se puede eliminar un proyecto archivado')
+    }
+    await store.projects.remove(id)
+    await log('project', id, 'deleted', null, { name: project.name })
+  }
+
   async function deleteTask(id: string) {
     const task = await getTask(id)
     await store.tasks.remove(id)
@@ -1286,7 +1314,9 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       create: createProject,
       update: updateProject,
       move: moveProject,
-      archive: (id: string) => updateProject(id, { status: 'archived' }),
+      archive: archiveProject,
+      /** Borrado definitivo, solo de archivados (ADR-0065). El MCP no lo expone. */
+      delete: deleteProject,
       /** Si este almacenamiento guarda imágenes de proyecto (la UI esconde el selector si no). */
       imagesEnabled: Boolean(store.projectImages),
       setImage: setProjectImage,

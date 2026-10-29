@@ -7,6 +7,7 @@ import type {
   NewsDigest,
   NewsItem,
   NewsSource,
+  Project,
   PushDevice,
   UserSettings,
 } from './schemas'
@@ -632,11 +633,31 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       },
       true,
     ),
-    projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
-      if (q.statuses) qb = qb.in('status', q.statuses)
-      if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))
-      return qb.order('position')
-    }),
+    projects: Object.assign(
+      col<Project, ProjectStoreQuery>('projects', 'Proyecto', (qb, q) => {
+        if (q.statuses) qb = qb.in('status', q.statuses)
+        if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))
+        return qb.order('position')
+      }),
+      {
+        // Primero las tareas: `tasks.column_id` es `on delete restrict` y, si la cascada del proyecto borrara antes las
+        // columnas, fallaría. El resto (columnas, subtareas, actividad, cola de GitHub) se va en cascada (ADR-0065).
+        async remove(id: string) {
+          const tasks = await client
+            .from('tasks')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('project_id', id)
+          if (tasks.error) throw tasks.error
+          const { error } = await client
+            .from('projects')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('id', id)
+          if (error) throw error
+        },
+      },
+    ),
     columns: col('board_columns', 'Columna', (qb, q: { projectId: string }) =>
       qb.eq('project_id', q.projectId).order('position'),
     ),

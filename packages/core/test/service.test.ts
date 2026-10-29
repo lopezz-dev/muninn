@@ -44,6 +44,31 @@ describe('proyectos', () => {
     expect((await app.projects.list()).map((p) => p.name)).toEqual(['B'])
     expect(await app.projects.list({ includeArchived: true })).toHaveLength(2)
   })
+
+  it('archivar suelta el repo de GitHub, que se puede vincular a otro proyecto', async () => {
+    const { app } = setup()
+    const a = await app.projects.create({ name: 'A', githubRepo: 'lopezz-dev/huginnDB' })
+    const b = await app.projects.create({ name: 'B' })
+    const archived = await app.projects.archive(a.id)
+    expect(archived).toMatchObject({ status: 'archived', githubRepo: null })
+    expect(
+      (await app.projects.update(b.id, { githubRepo: 'lopezz-dev/huginnDB' })).githubRepo,
+    ).toBe('lopezz-dev/huginnDB')
+  })
+
+  it('solo se elimina un proyecto archivado, con sus tareas; las notas se quedan sin proyecto', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't' })
+    await app.checklist.add(t.id, 'sub')
+    const note = await app.notes.create({ title: 'n', projectId: p.id })
+    await expect(app.projects.delete(p.id)).rejects.toThrow(ValidationError)
+    await app.projects.archive(p.id)
+    await app.projects.delete(p.id)
+    expect(await app.projects.list({ includeArchived: true })).toHaveLength(0)
+    await expect(app.tasks.get(t.id)).rejects.toThrow()
+    expect((await app.notes.get(note.id)).projectId).toBeNull()
+  })
 })
 
 describe('tareas', () => {

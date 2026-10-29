@@ -241,8 +241,7 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
   const archive = async () => {
     if (!project) return
     onDone()
-    if (await archiveProjectWithUndo(m, qc, project.id, project.name))
-      navigate({ to: '/proyectos' })
+    if (await archiveProjectWithUndo(m, qc, project)) navigate({ to: '/proyectos' })
   }
 
   return (

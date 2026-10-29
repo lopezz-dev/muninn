@@ -142,19 +142,36 @@ export async function createProjectWithUndo(m: Muninn, qc: QueryClient, input: C
   }
 }
 
-/** Archiva con «Deshacer» (vuelve a activo). Archivar nunca borra: ver ADR-0019. */
-export async function archiveProjectWithUndo(m: Muninn, qc: QueryClient, id: string, name: string) {
+/**
+ * Archiva con «Deshacer» (vuelve a activo). Archivar nunca borra: ver ADR-0019. Si tenía repo de GitHub, el core lo
+ * suelta (ADR-0065) y el aviso lo dice; «Deshacer» intenta volver a vincularlo.
+ */
+export async function archiveProjectWithUndo(
+  m: Muninn,
+  qc: QueryClient,
+  project: Pick<Project, 'id' | 'name' | 'githubRepo'>,
+) {
+  const { id, name } = project
+  const repo = project.githubRepo ?? null
   try {
     await m.projects.archive(id)
     await invalidateProjects(qc)
     notify.success(`«${name}» archivado`, {
       icon: 'archive',
+      description: repo ? `Ya no está vinculado a ${repo}.` : undefined,
       action: {
         label: 'Deshacer',
         onClick: async () => {
           await m.projects.update(id, { status: 'active' })
+          let relinked = true
+          if (repo)
+            await m.projects.update(id, { githubRepo: repo }).catch(() => (relinked = false))
           await invalidateProjects(qc)
-          notify.info(`«${name}» recuperado`)
+          if (relinked) notify.info(`«${name}» recuperado`)
+          else
+            notify.info(`«${name}» recuperado, sin ${repo}`, {
+              description: 'Vuelve a vincularlo en GitHub: puede pedir el segundo factor.',
+            })
         },
       },
     })
@@ -165,6 +182,52 @@ export async function archiveProjectWithUndo(m: Muninn, qc: QueryClient, id: str
     })
     return false
   }
+}
+
+/**
+ * Elimina para siempre proyectos archivados (ADR-0065). No pregunta: los quita de la vista y espera lo que dura el
+ * aviso; «Deshacer» los devuelve sin haber borrado nada. Si se cierra la app antes, no se borran.
+ */
+export function deleteArchivedWithUndo(
+  m: Muninn,
+  qc: QueryClient,
+  projects: Pick<Project, 'id' | 'name'>[],
+  view: { hide: (ids: string[]) => void; show: (ids: string[]) => void },
+) {
+  const ids = projects.map((p) => p.id)
+  const title =
+    projects.length === 1
+      ? `«${projects[0]?.name}» eliminado`
+      : `${projects.length} proyectos eliminados`
+  const wait = 6000
+  view.hide(ids)
+  const timer = setTimeout(async () => {
+    const failed: string[] = []
+    for (const id of ids) await m.projects.delete(id).catch(() => failed.push(id))
+    await invalidateProjects(qc)
+    view.show(failed)
+    if (failed.length)
+      notify.error('No se pudo eliminar todo', {
+        description: `Quedan ${failed.length} en Archivados.`,
+      })
+  }, wait)
+  notify.success(title, {
+    icon: 'trash',
+    description: 'Con sus tareas. Las notas se quedan sin proyecto.',
+    duration: wait,
+    action: {
+      label: 'Deshacer',
+      onClick: () => {
+        clearTimeout(timer)
+        view.show(ids)
+        notify.info(
+          projects.length === 1
+            ? 'Proyecto devuelto a Archivados'
+            : 'Proyectos devueltos a Archivados',
+        )
+      },
+    },
+  })
 }
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : undefined)
