@@ -41,6 +41,12 @@
 
 - No importes de `@phosphor-icons/react` en la app: usa `icons.x` o `<Icon name="x" />`. Así el catálogo
   queda centralizado y la librería se puede cambiar.
+- Los trazos vienen de `src/icons.generated.ts` y `src/screen-icons.generated.ts` (ADR-0058), con solo `regular` y
+  `bold`. **Al añadir un icono**, impórtalo en el catálogo desde el fichero generado y ejecuta
+  `pnpm --filter @muninn/ui icons`; si no, falla el test de sincronización. **Si usas otro grosor** (`fill`, `light`…)
+  en un icono, añádelo en `EXTRA_WEIGHTS` de `scripts/icons.ts`: sin eso se pinta el regular sin avisar.
+- `@phosphor-icons/react/lib` no existe en tiempo de ejecución (solo tiene tipos); importa de `…/dist/lib/IconBase`,
+  `…/dist/lib/context` y `…/dist/lib/types`. Biome no formatea los `*.generated.ts` (excluidos en `biome.json`).
 - Un botón con solo un icono necesita `aria-label`. `<Icon>` pone `aria-hidden` salvo que le pases `aria-label`.
 
 ### El acento se aplica en ejecución
@@ -214,3 +220,12 @@
   `node <skill dataviz>/scripts/validate_palette.js "#5B8DEF,#CF7A2E" --mode dark --surface "#15181C"`. Si añades una serie o cambias un
   color, vuelve a pasar el validador. Las categorías usan el color que eligió el usuario (identidad), no estos.
 - **Ref:** [ADR-0039](../adr/0039-panel-mensual-y-tasa-de-ahorro.md)
+
+### `CodeField`: un solo `input` debajo de las casillas
+
+- **Síntoma:** quieres cambiar algo de las casillas del código (enfocar una, poner el cursor en medio) y no hay seis campos.
+- **Causa:** es un único `<input>` transparente encima de las casillas, a propósito: así pegar, el autocompletado del móvil
+  (`one-time-code`) y los gestores de contraseñas funcionan sin código propio ([ADR-0063](../adr/0063-codigos-con-casillas-sobre-un-solo-campo.md)).
+- **Solución:** no lo partas en seis. El cursor se fuerza al final (`onSelect`); el `input` mantiene 16 px de letra aunque sea
+  invisible (si no, el iPhone hace zoom). El temblor del error vuelve a montar **solo la fila de casillas**: si montara el
+  `input`, perdería el foco. Tras un error con el campo desactivado, devuélvele el foco tú (`SegundoFactorDialogos.tsx`).

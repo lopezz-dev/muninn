@@ -32,6 +32,35 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     keywords: 'salir logout',
   },
   {
+    id: 'segundo-factor',
+    section: 'cuenta',
+    label: 'Segundo factor',
+    description: 'Un código de una app de tu móvil al entrar, además del correo o GitHub.',
+    keywords: 'mfa 2fa totp autenticador authenticator verificación dos pasos seguridad',
+  },
+  {
+    id: 'sesiones',
+    section: 'cuenta',
+    label: 'Sesiones y dispositivos',
+    description: 'Dónde tienes la sesión abierta, con su última actividad.',
+    keywords: 'dispositivos navegadores seguridad',
+  },
+  {
+    id: 'cerrar-sesiones',
+    section: 'cuenta',
+    label: 'Cerrar sesión en otros dispositivos',
+    description: 'En los demás o en todos, también en este.',
+    keywords: 'salir logout todos seguridad',
+  },
+  {
+    id: 'apps',
+    section: 'cuenta',
+    label: 'Apps con acceso',
+    description:
+      'Las apps que usan tu cuenta por el MCP remoto, como claude.ai. Quita las que no uses.',
+    keywords: 'oauth permisos claude conectores mcp revocar',
+  },
+  {
     id: 'tema',
     section: 'apariencia',
     label: 'Tema',
@@ -104,10 +133,23 @@ export const SETTINGS_INDEX: SettingEntry[] = [
   {
     id: 'avisos',
     section: 'notificaciones',
+    label: 'Avisos en este dispositivo',
+    description: 'Actívalos para recibir avisos aunque Muninn esté cerrada.',
+    keywords: 'notificaciones push permiso iphone movil',
+  },
+  {
+    id: 'avisos-cobros',
+    section: 'notificaciones',
     label: 'Avisos antes de cada cobro',
     description: 'En el móvil, antes de que te cobren una suscripción.',
     keywords: 'notificaciones push suscripciones',
-    soon: true,
+  },
+  {
+    id: 'avisos-dispositivos',
+    section: 'notificaciones',
+    label: 'Dispositivos con avisos',
+    description: 'Los que reciben tus avisos. Quita los que ya no uses.',
+    keywords: 'notificaciones push quitar movil',
   },
   {
     id: 'ollama',

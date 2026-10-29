@@ -1,19 +1,24 @@
+import type { IconProps } from '@phosphor-icons/react/dist/lib/types'
+import type { ComponentType } from 'react'
 import {
   ArrowCounterClockwise,
   CircleHalf,
   Compass,
-  type IconProps,
+  Copy,
+  Devices,
+  Key,
   ListBullets,
   ListChecks,
   Plug,
+  QrCode,
   ShieldCheck,
+  SignOut,
   Sun,
-} from '@phosphor-icons/react'
-import type { ComponentType } from 'react'
+} from './screen-icons.generated'
 
 /**
- * Iconos que solo usa alguna pantalla diferida. Van aparte de `icons` a propósito: cada icono de Phosphor trae
- * sus seis grosores (~3 kB) y todo lo de `icons` viaja en el arranque; esto solo viaja con su pantalla.
+ * Iconos que solo usa alguna pantalla diferida. Van aparte de `icons` a propósito (con su propio fichero
+ * generado, ADR-0058): todo lo de `icons` viaja en el arranque; esto solo viaja con su pantalla.
  * Si pasa a usarlo el shell, muévelo a `icons`.
  */
 export const screenIcons = {
@@ -27,6 +32,12 @@ export const screenIcons = {
   // Ajustes: informe de la mañana y «Restablecer».
   sun: Sun,
   reset: ArrowCounterClockwise,
+  // Ajustes › Cuenta: sesiones y segundo factor (ADR-0061).
+  devices: Devices,
+  key: Key,
+  signOut: SignOut,
+  copy: Copy,
+  qr: QrCode,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type ScreenIconName = keyof typeof screenIcons

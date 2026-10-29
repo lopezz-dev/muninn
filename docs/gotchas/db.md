@@ -24,6 +24,9 @@
 4. Índices que empiecen por `owner_id` o por la FK por la que se filtra.
 5. Si debe sincronizarse entre dispositivos: `alter publication supabase_realtime add table …`.
 6. Mapearla en `supabase-store.ts`, usando columnas `snake_case` que se convierten a `camelCase` automáticamente.
+7. La política restrictiva del segundo factor (ADR-0062): `create policy require_mfa on <tabla> as restrictive for all to authenticated
+   using ((select public.mfa_satisfied())) with check ((select public.mfa_satisfied()));`. La migración de ADR-0062 solo la puso en las
+   tablas que existían. Una función `security definer` que lea datos del usuario se salta el RLS: que llame a `public.mfa_satisfied()`.
 
 ### No editar migraciones ya aplicadas
 
@@ -121,7 +124,8 @@
 - **Síntoma:** al volver de GitHub se acaba en `http://localhost:3000` o en la URL equivocada.
 - **Causa:** Supabase solo redirige a direcciones de la lista permitida; si no está, usa la *Site URL*.
 - **Solución:** en **Authentication › URL Configuration**, *Site URL* con la dirección principal y en
-  *Redirect URLs* `http://localhost:5173/**`, `http://localhost:5174/**` y la del despliegue de la PWA.
+  *Redirect URLs* `http://localhost:5173/**`, `http://localhost:5174/**`, la del despliegue de la PWA y
+  `muninn://auth/callback` (GitHub en la app de escritorio, [ADR-0059](../adr/0059-deep-links-para-oauth-en-escritorio.md)).
 
 ### Probar RLS sin crear usuarios
 
@@ -129,6 +133,19 @@
   `begin; set local role authenticated; set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}'; select … ; rollback;`
   Con un `sub` que no es el dueño, las consultas devuelven 0 filas y los `insert` con su `owner_id` fallan
   con *new row violates row-level security policy*. Con `set local role anon`, todo devuelve 0 filas.
+
+### Probar el segundo factor en el servidor
+
+- **Síntoma:** con el segundo factor activado, la app (o claude.ai) ve listas vacías, o al vincular un repo sale *Conectar GitHub
+  requiere el segundo factor*.
+- **Causa:** es lo esperado con un token `aal1` (ADR-0062): la política `require_mfa` filtra todas las filas y no da error en los
+  `select`. Solo pasa si la cuenta tiene un factor `verified` en `auth.mfa_factors`; vincular GitHub exige `aal2` siempre.
+- **Solución:** completar el segundo factor (la app lo pide al entrar). Para comprobar la migración sin tocar datos, en el editor SQL:
+  `begin;`, crea en `auth.users` dos usuarios de prueba, a uno dale un factor `totp` `verified` en `auth.mfa_factors`, un proyecto a
+  cada uno, y con `set local role authenticated; set local request.jwt.claims = '{"sub":"<id>","role":"authenticated","aal":"aal1"}';`
+  comprueba: con factor y `aal1`, `select count(*) from projects` da 0 y `list_my_sessions()` falla con 42501; con `aal2`, da 1 y
+  vincular un repo funciona; sin factor y `aal1`, ve su proyecto y lo renombra, pero vincular un repo falla y desvincularlo no. Termina
+  con `rollback;`.
 
 ### `github_outbox` antes que cualquier tarea de GitHub
 
@@ -277,3 +294,38 @@
   (`projectImages.upload` en `supabase-store.ts` ya la construye). Un bucket nuevo necesita sus propias políticas en
   una migración: Storage no hereda las de las tablas.
 - **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)
+
+### Sesiones de la cuenta: `auth.sessions` solo con las funciones
+
+- **Síntoma:** Ajustes › Cuenta dice «No se pudo cargar la lista de sesiones», o la consola muestra
+  `Could not find the function public.list_my_sessions`.
+- **Causa:** el cliente no puede leer `auth.sessions` (el esquema `auth` no está expuesto). La lista y el cierre van por
+  `list_my_sessions()` y `revoke_my_session(uuid)`, `security definer` y limitadas a `auth.uid()`
+  (migración `20261029120000_account_sessions`). Sin la migración aplicada no existen.
+- **Solución:** aplica la migración. Si cambias las funciones, que sigan sin devolver tokens y filtrando por `auth.uid()`, con
+  `execute` solo para `authenticated`.
+- **Ojo:** cerrar una sesión borra su fila y sus *refresh tokens*, pero su token de acceso sigue valiendo hasta que caduca (una hora
+  como mucho, el *JWT expiry* del proyecto). Por eso la app dice «saldrá en menos de una hora». `is_current` compara con el claim
+  `session_id` del JWT de quien pregunta.
+- **Ojo:** las sesiones que abre el servidor OAuth (claude.ai) llevan el user agent de su backend (`python-httpx/…`), no el del
+  navegador. Por eso `list_my_sessions()` devuelve también `app_name` (`auth.oauth_clients.client_name` por
+  `auth.sessions.oauth_client_id`, migración `20261029170000_sesiones_con_app`); para cambiar sus columnas hay que hacer
+  `drop function` + `create` y volver a dar los permisos. La app de escritorio se reconoce por `Muninn/<versión>` en el user agent,
+  que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual).
+- **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
+
+### Con el segundo factor activado, el MCP remoto no ve nada
+
+- **Síntoma:** al activar el segundo factor, claude.ai (o cualquier cliente del MCP remoto por OAuth) responde vacío o «Proyecto … no
+  existe». Reconectar el conector no lo arregla.
+- **Causa:** el servidor exige `aal2` en RLS desde el 29 de octubre ([ADR-0062](../adr/0062-aal2-para-integraciones-sensibles.md)), y los
+  tokens del servidor OAuth de Supabase son `aal1`, también al reconectar después de activarlo (`auth.sessions.aal` de la sesión con
+  `oauth_client_id`). Comprobado en la fase final, paso 4d, con el consentimiento servido por `main`, que aún no pide el código: falta
+  ver si con el de `develop` cambia.
+- **Solución:** [ADR-0064](../adr/0064-apps-oauth-aprobadas-con-segundo-factor.md) (aceptado, sin implementar): la app aprobada en
+  `/oauth/consent` con una sesión `aal2` contará como `aal2`. Mientras, no actives el segundo factor en una cuenta que use el MCP remoto. Al desactivarlo vuelve a funcionar, pero hay que reconectar el conector.
+- **Ojo:** cerrar la sesión de claude.ai en **Sesiones y dispositivos**, «En los demás» o «En todos», y desactivar el segundo factor
+  invalidan el conector: hay que reconectarlo en claude.ai. Al reconectar, cierra antes la sesión de Muninn en el navegador (o usa una
+  ventana privada): si no, el consentimiento se aprueba (200 en los logs de Auth) pero claude.ai nunca canjea el código y dice «Error
+  Starting Authentication». MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por
+  defecto); quitar un factor confirmado exige una sesión `aal2`, por eso «Desactivar» pide un código antes.

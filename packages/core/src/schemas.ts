@@ -254,7 +254,15 @@ export const createTaskInput = z.object({
   source: taskSource.optional(),
   externalId: z.string().max(200).nullable().optional(),
   externalUrl: z.url().nullable().optional(),
+  /** Subtareas que se crean con ella, en orden. */
+  checklist: z.array(z.string().trim().min(1).max(300)).max(100).optional(),
 })
+
+/** Tope de `tasks.createMany`: una llamada del MCP no debería crear un proyecto entero de golpe. */
+export const MAX_BATCH_TASKS = 50
+
+/** Solo la forma del lote: cada tarea se valida por separado para que una mala no tumbe a las demás. */
+export const createTasksInput = z.array(z.unknown()).min(1).max(MAX_BATCH_TASKS)
 
 export const updateTaskInput = z.object({
   title: z.string().trim().min(1).max(300).optional(),
@@ -617,3 +625,128 @@ export type CreateNewsSourceInput = z.input<typeof createNewsSourceInput>
 export type UpdateNewsSourceInput = z.input<typeof updateNewsSourceInput>
 export type NewsQuery = z.input<typeof newsQuery>
 export type SaveDigestInput = z.input<typeof saveDigestInput>
+
+// ─── Avisos push (ADR-0040) ─────────────────────────────────────────────────
+
+/** Un dispositivo que aceptó los avisos: la suscripción Web Push de su navegador. */
+export interface PushDevice {
+  id: string
+  /** Dirección del servicio de push. Secreta: quien la tiene puede enviar avisos a ese dispositivo. */
+  endpoint: string
+  p256dh: string
+  auth: string
+  userAgent: string | null
+  /** Nombre que enseña Ajustes («iPhone · Safari»). */
+  label: string | null
+  lastSeenAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Servicios de push de los navegadores (Chrome/Edge/Android, Firefox, Safari/iOS y Windows). La Edge Function `push`
+ * hace un POST a la dirección de la suscripción desde la red de Supabase: si se admitiera cualquier `https://`, una
+ * suscripción falsa la convertiría en un proxy hacia dentro (SSRF). Solo se aceptan estos dominios.
+ */
+const PUSH_SERVICE_HOSTS = [
+  /^fcm\.googleapis\.com$/,
+  /^updates\.push\.services\.mozilla\.com$/,
+  /^([a-z0-9-]+\.)*push\.apple\.com$/,
+  /^([a-z0-9-]+\.)*notify\.windows\.com$/,
+]
+
+/** Si `url` es una dirección https de un servicio de push conocido (sin usuario, contraseña ni puerto raro). */
+export function isPushServiceUrl(url: string) {
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443'))
+      return false
+    const host = u.hostname.toLowerCase().replace(/\.$/, '')
+    return PUSH_SERVICE_HOSTS.some((r) => r.test(host))
+  } catch {
+    return false
+  }
+}
+
+/** Lo que da `PushSubscription.toJSON()` en el navegador, más el nombre del dispositivo. */
+export const pushSubscribeInput = z.object({
+  endpoint: z
+    .string()
+    .trim()
+    .min(12)
+    .max(2000)
+    .refine(isPushServiceUrl, 'No es la dirección de un servicio de push conocido'),
+  keys: z.object({
+    p256dh: z.string().trim().min(1).max(200),
+    auth: z.string().trim().min(1).max(100),
+  }),
+  userAgent: z.string().max(400).nullable().optional(),
+  label: z.string().trim().min(1).max(60).nullable().optional(),
+})
+
+export type PushSubscribeInput = z.input<typeof pushSubscribeInput>
+
+// ─── Cuenta: sesiones y seguridad (ADR-0061) ────────────────────────────────
+
+/** Una sesión abierta de la cuenta: un navegador o una app con la sesión iniciada. Nunca lleva tokens. */
+export interface AccountSession {
+  id: string
+  createdAt: string
+  /** Última vez que renovó la sesión (cada hora mientras está abierta). */
+  lastActiveAt: string
+  userAgent: string | null
+  ip: string | null
+  /** `aal1` (solo código o GitHub) o `aal2` (con el segundo factor). */
+  aal: string | null
+  /** La sesión de este dispositivo. */
+  current: boolean
+  /** La app que la abrió por OAuth (p. ej. «Claude»); `null` si se entró desde Muninn. */
+  appName: string | null
+}
+
+/** Cerrar en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
+export const signOutScope = z.enum(['others', 'global'])
+export type SignOutScope = z.infer<typeof signOutScope>
+
+/** Segundo factor con una app de códigos (TOTP). `unverified`: dado de alta pero sin confirmar con un primer código. */
+export interface MfaFactor {
+  id: string
+  name: string | null
+  status: 'verified' | 'unverified'
+  createdAt: string
+}
+
+/** Lo que enseña el alta: el QR (imagen SVG en `data:`) y el secreto para teclearlo a mano. */
+export interface MfaEnrollment {
+  factorId: string
+  qrCode: string
+  secret: string
+  /** `otpauth://…`, lo que lleva el QR. */
+  uri: string
+}
+
+/** Nivel de seguridad de la sesión: `aal1` (código o GitHub) o `aal2` (con el segundo factor). */
+export interface AssuranceLevel {
+  current: 'aal1' | 'aal2' | null
+  /** El que podría tener: `aal2` si la cuenta tiene un segundo factor confirmado. */
+  next: 'aal1' | 'aal2' | null
+}
+
+/** Un código de la app de códigos: seis cifras (se ignoran los espacios). */
+export const mfaCode = z
+  .string()
+  .transform((s) => s.replace(/\s/g, ''))
+  .pipe(z.string().regex(/^\d{6}$/, 'El código tiene 6 cifras'))
+
+export const mfaFactorName = z.string().trim().min(1).max(60)
+
+/** Una app a la que diste acceso a tu cuenta por OAuth (claude.ai y otros clientes del MCP remoto, ADR-0036). */
+export interface OAuthAppGrant {
+  clientId: string
+  name: string
+  /** Su web, si la dio al registrarse. */
+  uri: string | null
+  logoUri: string | null
+  scopes: string[]
+  grantedAt: string
+}

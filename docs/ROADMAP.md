@@ -146,7 +146,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [ ] OAuth sin claude.ai, con Claude Code: `claude mcp add --transport http muninn-remoto <URL>` sin cabecera y, en una sesión interactiva,
   `/mcp` › muninn-remoto › *Authenticate*: abre el navegador en `/oauth/consent` y, tras «Permitir acceso», lista tus proyectos
 - [x] Añadir el conector en claude.ai: te lleva a `/oauth/consent`, «Permitir acceso» vuelve a claude.ai y salen las herramientas (28 de
-  octubre: 15 de lectura y 21 de escritura, el catálogo actual). Sale con el icono de Supabase (Backlog)
+  octubre: 15 de lectura y 21 de escritura, el catálogo actual). Salía con el icono de Supabase: el servidor ya declara el logo de Muninn (falta redesplegar `mcp`, fase final)
 - [ ] Lo mismo desde la app de Claude en el iPhone (necesita la PWA publicada)
 
 ### F3 · Finanzas
@@ -165,6 +165,15 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   (`rollback`)
 - [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
   gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
+
+### F3 · Avisos push (fase final)
+> Montado el 28 de octubre sin desplegar: falta todo lo de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales)
+> (claves, migración, función, cron, variable en Vercel). Pasos en [fase-final.md](fase-final.md), 4b y 5.
+- [ ] `curl` a `/push/send` sin secreto da 401; con secreto, `{ users, results, pruned }`
+- [ ] En el iPhone instalado: Ajustes › Notificaciones › activar, **Permitir**, «Enviar prueba» llega y al tocarlo abre Notificaciones
+- [ ] Una suscripción «Prueba final» que cobra mañana: tras lanzar el cron a mano, llega «Mañana te cobran…» y abre Finanzas › Suscripciones
+- [ ] Lanzar el cron otra vez no repite el aviso; quitar el dispositivo con «Deshacer» lo recupera; cerrar sesión lo quita de la lista
+- [ ] Safari sin instalar enseña «Añade Muninn a tu pantalla de inicio»; tras «No permitir», «Avisos bloqueados»
 
 ### F4 · Asistente (fase final)
 > El MCP de stdio y el paquete de la Edge están recompilados con el catálogo único; la función `mcp` se redesplegó el 26 de octubre. La
@@ -211,6 +220,18 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
 - [ ] Sin conexión, al abrir no sale ningún aviso
 
+### Enlaces externos (`tauri-plugin-opener`)
+> Antes, en escritorio ningún enlace externo abría nada (`target="_blank"` no hace nada en Tauri). Ahora todos pasan por `openExternal`.
+> Probado con tests (escritorio o web, y el aviso si falla) y `cargo check`; nada a mano todavía.
+- [ ] Escritorio (`pnpm dev:desktop` y la app instalada tras la siguiente versión): en Noticias, el título y «Abrir» abren el artículo en el
+  navegador del sistema y la noticia queda leída; también la issue y «Ver el PR» del detalle de una tarea, «PR #n» de la pantalla GitHub,
+  un enlace dentro de una nota y «GitHub» de Ajustes › Acerca de
+- [ ] Escritorio: las imágenes adjuntas en el Asistente se ven en la burbuja y no llevan enlace
+- [ ] Navegador: los mismos enlaces abren otra pestaña y la noticia queda leída; Ctrl/⌘-clic sigue abriendo en segundo plano; una imagen
+  adjunta del Asistente se abre a tamaño real en otra pestaña
+- [ ] iPhone (PWA instalada): «Abrir» y el título de una noticia abren el artículo en Safari (o en la hoja de Safari) sin cerrar Muninn, y al
+  volver la noticia sale leída; lo mismo con un enlace de una nota; una imagen adjunta del Asistente se abre
+
 ## F3 · Móvil y finanzas
 > **Estado:** cerrada en código el 22 de octubre (decisión de Alex). Finanzas (modelo, pantalla, suscripciones y panel) en
 > [#30](https://github.com/lopezz-dev/muninn/pull/30) → [#31](https://github.com/lopezz-dev/muninn/pull/31) →
@@ -222,8 +243,11 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     `push` con cron y VAPID, **propuesto**); preparado `apps/web/vercel.json` y el manejador de `push` en el service worker
   - [x] Publicar la web: **https://muninn-sepia.vercel.app** desde el 26 de octubre (equipo Kodemaru, rama `develop` mientras dura la fase
     final). Falta la *Site URL* de Supabase y probarla en el iPhone: [fase final](fase-final.md), pasos 4 y 5
-  - [ ] Implementar la suscripción (Ajustes › Notificaciones), la tabla `push_subscriptions` y la función `push`: **fase final** (necesita la
-    web publicada y claves VAPID para probarse de verdad)
+  - [x] Implementar la suscripción (Ajustes › Notificaciones, con dispositivos y «Deshacer»), las tablas `push_subscriptions` y `push_log`
+    (migración `20261028180000_push_subscriptions`, **sin aplicar**), `m.push` en el core con tests y la Edge Function `push` con cron
+    diario (28 de octubre); guía [Notificaciones](user/13-notificaciones.md)
+  - [ ] Claves VAPID, migración, despliegue de `push`, cron y `VITE_VAPID_PUBLIC_KEY` en Vercel, y probarlo en el iPhone:
+    [fase final](fase-final.md), paso 4b
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
   - [x] Modelo de datos (ADR-0037): cuentas con saldo derivado, categorías de serie y propias, movimientos (gasto, ingreso, traspaso)
     en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
@@ -234,7 +258,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [x] Suscripciones semanales, mensuales y anuales (ADR-0038): al llegar la fecha la app **avisa** (Inicio y Finanzas) y el cobro se
     apunta o se salta con un toque, con «Deshacer»; nunca se apunta solo. Migración `20261021140000_finance_subscriptions` aplicada el
     21 de octubre. MCP: listar, crear, apuntar, saltar y archivar
-  - [ ] Aviso push antes del cobro: bloque E (PWA instalable y Web Push)
+  - [x] Aviso push antes del cobro: la función `push` avisa cada mañana de los cobros dentro de sus días de aviso, una vez por cobro
+    (28 de octubre; se prueba en la fase final con el resto de Web Push)
 - [x] Panel mensual (entradas, salidas, tasa de ahorro): calculado en el core (ADR-0039), con el mes anterior, gasto por categoría y
   los últimos 6 meses; en Finanzas › Resumen y en el MCP (`finance_month_report`)
 - [ ] (v2) Importar CSV de Imagin / conexión bancaria. Fuera de la sesión del 21–22 de octubre por alcance; el modelo ya lo admite
@@ -295,26 +320,32 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ## Acceso y seguridad
 Hoy se entra con un código por correo o con GitHub ([ADR-0022](adr/0022-auth-y-sesion.md)). Siguientes pasos,
 más o menos en este orden:
+- [x] **CAPTCHA en la entrada** con Cloudflare Turnstile antes de abrir el registro
+  ([ADR-0060](adr/0060-captcha-con-turnstile-en-la-entrada.md)). Montado; falta activarlo (fase final, paso 4c)
 - [ ] Dominio propio de Muninn como remitente (hoy, provisional: `no-reply@shion.es`)
 - [ ] **Claves de acceso (passkeys, WebAuthn):** entrar con Face ID, Touch ID, Windows Hello o una llave
   física, sin correo ni contraseña. Funciona en la PWA del iPhone y en el navegador; en Tauri, según el
   soporte de WebAuthn de cada sistema
-- [ ] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional, y obligatorio para conectar integraciones
-  sensibles (finanzas, GitHub con permisos de escritura)
-- [ ] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
-  o en todos (`signOut({ scope: 'global' })`)
+- [x] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional: alta con QR y clave, código al entrar y desactivar con un
+  código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4d)
+  - [x] Exigirlo en el servidor (RLS, también en las funciones de sesiones) y para conectar GitHub
+    ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)). Finanzas, cuando conecte algo externo. La prueba real, en la fase final (4d)
+  - [ ] Códigos de recuperación (en supabase-js aún experimentales)
+- [x] **Apps con acceso** en Ajustes › Cuenta: ver y quitar los permisos OAuth dados a otras apps, como claude.ai
+  ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4d)
+- [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
+  o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
+  prueba real, en la fase final (4d)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
 - [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
-- [ ] Deep links en Tauri para GitHub OAuth en escritorio (hoy el botón se oculta)
+- [x] Deep links en Tauri para GitHub OAuth en escritorio (`muninn://auth/callback`, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)). Falta probarlo instalado: [fase final](fase-final.md), paso 3
 - [ ] Más proveedores: Apple (útil en iPhone) y Google
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
 
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
-- Icono de Muninn en el conector de claude.ai (hoy sale el de Supabase): [gotchas/mcp](gotchas/mcp.md#el-conector-sale-con-el-icono-de-supabase)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
-- Ver y quitar los permisos OAuth dados a otras apps (claude.ai…) en Ajustes › Cuenta (ADR-0036; la API `oauth` de supabase-js ya lo permite)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Borrado definitivo de tareas desde la app (hoy solo se archivan)
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
@@ -322,10 +353,9 @@ más o menos en este orden:
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice
 - Centro de notificaciones persistente (campana con historial: agentes, GitHub, cobros) además de las píldoras efímeras
 - Widgets personalizables por pestaña (qué se ve y en qué orden), ocupando todo el espacio disponible
-- Buscador ⌘K sobre tareas y notas, y acción «Nueva nota» (hoy: secciones, proyectos, acciones y «Buscar en Noticias»)
-- Iconos más ligeros: Phosphor incluye los seis grosores de cada icono en el bundle inicial
 - Logo definitivo (lo diseña Alex; el actual es provisional). Al cambiarlo, regenerar el favicon y los iconos de la web
-  (`pnpm --filter @muninn/web icons` y la imagen social) y los de escritorio (`pnpm --filter @muninn/desktop icons`)
+  (`pnpm --filter @muninn/web icons` y la imagen social), los de escritorio (`pnpm --filter @muninn/desktop icons`) y el del
+  conector MCP (`packages/mcp/src/icon.ts`)
 - Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*). Se hará
   junto con la landing page; entonces, añadirlas a `sitemap.xml` y dar de alta Search Console
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS

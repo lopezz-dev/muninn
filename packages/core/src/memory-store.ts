@@ -1,3 +1,4 @@
+import { createMemoryAccount, type MemoryAccountSeed } from './memory-account'
 import type {
   Activity,
   BoardColumn,
@@ -9,6 +10,7 @@ import type {
   NewsSource,
   Note,
   Project,
+  PushDevice,
   Subscription,
   Task,
   Transaction,
@@ -48,6 +50,9 @@ export interface MemorySnapshot {
   newsSources: NewsSource[]
   newsItems: NewsItem[]
   newsDigests: NewsDigest[]
+  pushDevices?: PushDevice[]
+  /** Claves de los avisos ya enviados. */
+  pushLog?: string[]
 }
 
 export const emptySnapshot = (): MemorySnapshot => ({
@@ -107,6 +112,16 @@ class MemoryCollection<T extends { id: string; createdAt: string; updatedAt: str
     return structuredClone(full)
   }
 
+  async insertMany(rows: NewRow<T>[]) {
+    const ts = this.now()
+    const full = rows.map(
+      (row) => ({ ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }) as unknown as T,
+    )
+    for (const r of full) this.rows.set(r.id, r)
+    if (full.length > 0) this.onChange()
+    return structuredClone(full)
+  }
+
   async update(id: string, patch: Partial<NewRow<T>>) {
     const current = this.rows.get(id)
     if (!current) throw new NotFoundError(this.name, id)
@@ -132,7 +147,12 @@ function stripUndefined<T extends object>(obj: T): Partial<T> {
  */
 export function createMemoryStore(
   initial: MemorySnapshot = emptySnapshot(),
-  options: { onChange?: (snapshot: MemorySnapshot) => void; now?: () => string } = {},
+  options: {
+    onChange?: (snapshot: MemorySnapshot) => void
+    now?: () => string
+    /** Sesiones de partida de la seguridad simulada (tests y demo). */
+    account?: MemoryAccountSeed
+  } = {},
 ): Store & { snapshot(): MemorySnapshot } {
   const now = options.now ?? (() => new Date().toISOString())
   const toMap = <T extends { id: string }>(rows: T[]) => new Map(rows.map((r) => [r.id, r]))
@@ -157,6 +177,9 @@ export function createMemoryStore(
   const newsSources = toMap(initial.newsSources ?? [])
   const newsItems = toMap(initial.newsItems ?? [])
   const newsDigests = toMap(initial.newsDigests ?? [])
+  // Ni los de antes de los avisos push.
+  const pushDevices = toMap(initial.pushDevices ?? [])
+  const pushLog = new Set(initial.pushLog ?? [])
 
   const snapshot = (): MemorySnapshot =>
     structuredClone({
@@ -175,6 +198,8 @@ export function createMemoryStore(
       newsSources: [...newsSources.values()],
       newsItems: [...newsItems.values()],
       newsDigests: [...newsDigests.values()],
+      pushDevices: [...pushDevices.values()],
+      pushLog: [...pushLog],
     })
   const changed = () => options.onChange?.(snapshot())
 
@@ -184,6 +209,11 @@ export function createMemoryStore(
       activity.push(full)
       changed()
       return structuredClone(full)
+    },
+    async insertMany(rows) {
+      const ts = now()
+      for (const row of rows) activity.push({ ...row, id: nextActivityId++, createdAt: ts })
+      if (rows.length > 0) changed()
     },
     async list({ projectId, entityId, actions, since, limit = 50 }) {
       return activity
@@ -235,9 +265,14 @@ export function createMemoryStore(
     },
   }
 
+  // Seguridad de la cuenta (ADR-0061), simulada: no es parte de la instantánea (es Auth, no datos). Sin sesiones de
+  // partida, solo está la de este dispositivo.
+  const accountState = createMemoryAccount(options.account, now)
+
   return {
     snapshot,
     projectImages,
+    account: accountState,
     activity: activityLog,
     newsSources: new MemoryCollection<NewsSource, { includeArchived?: boolean }>(
       'Fuente',
@@ -284,6 +319,40 @@ export function createMemoryStore(
         newsDigests.set(full.id, full)
         changed()
         return structuredClone(full)
+      },
+    },
+    pushDevices: {
+      async list() {
+        return [...pushDevices.values()]
+          .sort((a, b) => (a.lastSeenAt < b.lastSeenAt ? 1 : a.lastSeenAt > b.lastSeenAt ? -1 : 0))
+          .map((d) => structuredClone(d))
+      },
+      async upsert(row) {
+        const current = [...pushDevices.values()].find((d) => d.endpoint === row.endpoint)
+        const ts = now()
+        const full: PushDevice = current
+          ? { ...current, ...row, updatedAt: ts }
+          : { ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }
+        pushDevices.set(full.id, full)
+        changed()
+        return structuredClone(full)
+      },
+      async remove(id) {
+        pushDevices.delete(id)
+        changed()
+      },
+      async removeEndpoint(endpoint) {
+        for (const d of pushDevices.values()) if (d.endpoint === endpoint) pushDevices.delete(d.id)
+        changed()
+      },
+    },
+    pushLog: {
+      async sent(keys) {
+        return keys.filter((k) => pushLog.has(k))
+      },
+      async record(keys) {
+        for (const k of keys) pushLog.add(k)
+        changed()
       },
     },
     async accountTotals() {
@@ -407,18 +476,39 @@ export function createMemoryStore(
         return structuredClone(settings)
       },
     },
-    projects: new MemoryCollection<Project, ProjectStoreQuery>(
-      'Proyecto',
-      projects,
-      (rows, q) =>
-        rows
-          .filter((p) => !q.statuses || q.statuses.includes(p.status))
-          .filter(
-            (p) => !q.githubRepo || p.githubRepo?.toLowerCase() === q.githubRepo.toLowerCase(),
-          )
-          .sort(byPosition),
-      changed,
-      now,
+    projects: Object.assign(
+      new MemoryCollection<Project, ProjectStoreQuery>(
+        'Proyecto',
+        projects,
+        (rows, q) =>
+          rows
+            .filter((p) => !q.statuses || q.statuses.includes(p.status))
+            .filter(
+              (p) => !q.githubRepo || p.githubRepo?.toLowerCase() === q.githubRepo.toLowerCase(),
+            )
+            .sort(byPosition),
+        changed,
+        now,
+      ),
+      {
+        // Lo que en Supabase hacen las claves ajenas: columnas, tareas (con sus subtareas) y actividad se van con el
+        // proyecto; las notas se quedan sin él.
+        async remove(id: string) {
+          for (const t of [...tasks.values()].filter((t) => t.projectId === id)) {
+            for (const c of [...checklist.values()].filter((c) => c.taskId === t.id))
+              checklist.delete(c.id)
+            tasks.delete(t.id)
+          }
+          for (const c of [...columns.values()].filter((c) => c.projectId === id))
+            columns.delete(c.id)
+          for (const n of notes.values())
+            if (n.projectId === id) notes.set(n.id, { ...n, projectId: null, taskId: null })
+          for (let i = activity.length - 1; i >= 0; i--)
+            if (activity[i]?.projectId === id) activity.splice(i, 1)
+          projects.delete(id)
+          changed()
+        },
+      },
     ),
     columns: new MemoryCollection<BoardColumn, { projectId: string }>(
       'Columna',

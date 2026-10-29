@@ -1,15 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
+  AccountSession,
   Activity,
   GithubRepoSummary,
   GithubSyncScope,
   NewsDigest,
   NewsItem,
   NewsSource,
+  Project,
+  PushDevice,
   UserSettings,
 } from './schemas'
 import { imageExt } from './schemas'
 import {
+  type AccountStore,
   type AccountStoreQuery,
   type ActivityLog,
   type CategoryStoreQuery,
@@ -24,6 +28,9 @@ import {
   NotFoundError,
   type OutboxEntry,
   type ProjectStoreQuery,
+  type PushDeviceStore,
+  type PushLogStore,
+  type PushSendSummary,
   type SettingsStore,
   type Store,
   type TaskStoreQuery,
@@ -62,6 +69,25 @@ const PROJECT_IMAGES_BUCKET = 'project-images'
 
 /** Filas por petición: el `max-rows` por defecto de PostgREST en Supabase. */
 const PAGE = 1000
+
+/** Los errores de Supabase Auth MFA que puede ver el usuario, en español (el resto, tal cual). */
+function mfaError(error: { code?: string; message: string }) {
+  switch (error.code) {
+    case 'mfa_verification_failed':
+    case 'mfa_challenge_expired':
+      return new Error(
+        'El código no es correcto o ha caducado. Escribe el que sale ahora en tu app.',
+      )
+    case 'mfa_verification_rejected':
+      return new Error('Demasiados intentos. Espera un minuto y vuelve a probar.')
+    case 'insufficient_aal':
+      return new Error('Antes, entra con el código de tu app (cierra sesión y vuelve a entrar).')
+    case 'mfa_totp_enroll_not_enabled':
+    case 'mfa_totp_verify_not_enabled':
+      return new Error('El segundo factor no está activado en este servidor.')
+  }
+  return error
+}
 
 class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q> {
   constructor(
@@ -115,6 +141,16 @@ class SupabaseCollection<T extends { id: string }, Q> implements Collection<T, Q
     return fromRow<T>(data)
   }
 
+  async insertMany(rows: NewRow<T>[]) {
+    if (rows.length === 0) return []
+    // Un solo `insert … returning`: Postgres devuelve las filas en el orden de los valores.
+    const { data, error } = await this.from()
+      .insert(rows.map((row) => ({ ...toRow(row), owner_id: this.ownerId })))
+      .select('*')
+    if (error) throw error
+    return (data as Row[]).map((r) => fromRow<T>(r))
+  }
+
   async update(id: string, patch: Partial<NewRow<T>>) {
     const { data, error } = await this.from()
       .update(toRow(patch))
@@ -154,6 +190,13 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         .single()
       if (error) throw error
       return fromRow<Activity>(data)
+    },
+    async insertMany(rows) {
+      if (rows.length === 0) return
+      const { error } = await client
+        .from('activity')
+        .insert(rows.map((row) => ({ ...toRow(row), owner_id: ownerId })))
+      if (error) throw error
     },
     async list({ projectId, entityId, actions, since, limit = 50 }) {
       let qb = client.from('activity').select('*').eq('owner_id', ownerId)
@@ -343,6 +386,76 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Avisos push (ADR-0040, migración 20261028180000_push_subscriptions). Sin borrado lógico: un dispositivo que se quita
+  // ya no recibe nada, y «Deshacer» lo vuelve a guardar con las mismas claves.
+  const pushDevices: PushDeviceStore = {
+    async list() {
+      const { data, error } = await client
+        .from('push_subscriptions')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .order('last_seen_at', { ascending: false })
+      if (error) throw error
+      return (data as Row[]).map((r) => fromRow<PushDevice>(r))
+    },
+    async upsert(row) {
+      const { data, error } = await client
+        .from('push_subscriptions')
+        .upsert({ ...toRow(row), owner_id: ownerId }, { onConflict: 'owner_id,endpoint' })
+        .select('*')
+        .single()
+      if (error) throw error
+      return fromRow<PushDevice>(data)
+    },
+    async remove(id) {
+      const { error } = await client
+        .from('push_subscriptions')
+        .delete()
+        .eq('owner_id', ownerId)
+        .eq('id', id)
+      if (error) throw error
+    },
+    async removeEndpoint(endpoint) {
+      const { error } = await client
+        .from('push_subscriptions')
+        .delete()
+        .eq('owner_id', ownerId)
+        .eq('endpoint', endpoint)
+      if (error) throw error
+    },
+  }
+  const pushLog: PushLogStore = {
+    async sent(keys) {
+      if (!keys.length) return []
+      const { data, error } = await client
+        .from('push_log')
+        .select('key')
+        .eq('owner_id', ownerId)
+        .in('key', keys)
+      if (error) throw error
+      return (data as Row[]).map((r) => r.key as string)
+    },
+    async record(keys) {
+      if (!keys.length) return
+      const { error } = await client.from('push_log').upsert(
+        keys.map((key) => ({ key, owner_id: ownerId })),
+        { onConflict: 'owner_id,key', ignoreDuplicates: true },
+      )
+      if (error) throw error
+    },
+  }
+  // El aviso de prueba lo envía la Edge Function `push` (POST /push/test con la sesión: solo a tus dispositivos).
+  const pushDelivery = {
+    async test() {
+      const { data, error } = await client.functions.invoke('push/test', {
+        method: 'POST',
+        body: {},
+      })
+      if (error) throw error
+      return data as PushSendSummary
+    },
+  }
+
   // Imágenes de proyecto (ADR-0055): bucket privado `project-images`; la primera carpeta es el dueño (la política RLS
   // de Storage lo exige). Se leen con URL firmadas de un día: la app las pide cuando las pinta, nunca las guarda.
   const projectImages = {
@@ -363,12 +476,101 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     },
   }
 
+  // Seguridad de la cuenta (ADR-0061). `auth.sessions` no se puede leer desde el cliente: las funciones
+  // `list_my_sessions` y `revoke_my_session` (migración 20261029120000_account_sessions) solo ven las del usuario.
+  // `app_name` llega con la migración 20261029170000_sesiones_con_app; sin ella, no viene.
+  const account: AccountStore = {
+    async sessions() {
+      const { data, error } = await client.rpc('list_my_sessions')
+      if (error) throw error
+      return (data as Row[]).map((r) => {
+        const { isCurrent, ...rest } = fromRow<AccountSession & { isCurrent: boolean }>(r)
+        return { ...rest, current: Boolean(isCurrent), appName: rest.appName ?? null }
+      })
+    },
+    async revokeSession(id) {
+      const { data, error } = await client.rpc('revoke_my_session', { session_id: id })
+      if (error) throw error
+      return Boolean(data)
+    },
+    async signOut(scope) {
+      const { error } = await client.auth.signOut({ scope })
+      if (error) throw error
+    },
+    // Permisos OAuth (ADR-0036). Sin el servidor OAuth activado en el proyecto, Auth contesta 404: no hay ninguna app.
+    oauthGrants: {
+      async list() {
+        const { data, error } = await client.auth.oauth.listGrants()
+        if (error) {
+          if (error.status === 404) return []
+          throw error
+        }
+        return (data ?? []).map((g) => ({
+          clientId: g.client.id,
+          name: g.client.name || 'App sin nombre',
+          uri: g.client.uri || null,
+          logoUri: g.client.logo_uri || null,
+          scopes: g.scopes,
+          grantedAt: g.granted_at,
+        }))
+      },
+      async revoke(clientId) {
+        const { error } = await client.auth.oauth.revokeGrant({ clientId })
+        if (error) throw error
+      },
+    },
+    mfa: {
+      async factors() {
+        const { data, error } = await client.auth.mfa.listFactors()
+        if (error) throw error
+        // `all` trae también los que están a medias (`totp`, solo los confirmados).
+        return data.all
+          .filter((f) => f.factor_type === 'totp')
+          .map((f) => ({
+            id: f.id,
+            name: f.friendly_name ?? null,
+            status: f.status === 'verified' ? 'verified' : 'unverified',
+            createdAt: f.created_at,
+          }))
+      },
+      async enroll(name) {
+        const { data, error } = await client.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: name,
+          issuer: 'Muninn',
+        })
+        if (error) throw mfaError(error)
+        return {
+          factorId: data.id,
+          qrCode: data.totp.qr_code,
+          secret: data.totp.secret,
+          uri: data.totp.uri,
+        }
+      },
+      async verify(factorId, code) {
+        const { error } = await client.auth.mfa.challengeAndVerify({ factorId, code })
+        if (error) throw mfaError(error)
+      },
+      async unenroll(factorId) {
+        const { error } = await client.auth.mfa.unenroll({ factorId })
+        if (error) throw mfaError(error)
+      },
+      async assurance() {
+        const { data, error } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (error) throw error
+        const level = (l: string | null) => (l === 'aal1' || l === 'aal2' ? l : null)
+        return { current: level(data.currentLevel), next: level(data.nextLevel) }
+      },
+    },
+  }
+
   return {
     activity,
     settings,
     githubOutbox,
     githubRepos,
     projectImages,
+    account,
     newsSources: col<NewsSource, { includeArchived?: boolean }>(
       'news_sources',
       'Fuente',
@@ -380,6 +582,9 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     newsItems,
     newsDigests,
     newsFeeds,
+    pushDevices,
+    pushLog,
+    pushDelivery,
     // Finanzas (ADR-0037, migración 20261021120000_finance).
     async accountTotals() {
       const { data, error } = await client
@@ -429,11 +634,31 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       },
       true,
     ),
-    projects: col('projects', 'Proyecto', (qb, q: ProjectStoreQuery) => {
-      if (q.statuses) qb = qb.in('status', q.statuses)
-      if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))
-      return qb.order('position')
-    }),
+    projects: Object.assign(
+      col<Project, ProjectStoreQuery>('projects', 'Proyecto', (qb, q) => {
+        if (q.statuses) qb = qb.in('status', q.statuses)
+        if (q.githubRepo) qb = qb.ilike('github_repo', ilikeExact(q.githubRepo))
+        return qb.order('position')
+      }),
+      {
+        // Primero las tareas: `tasks.column_id` es `on delete restrict` y, si la cascada del proyecto borrara antes las
+        // columnas, fallaría. El resto (columnas, subtareas, actividad, cola de GitHub) se va en cascada (ADR-0065).
+        async remove(id: string) {
+          const tasks = await client
+            .from('tasks')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('project_id', id)
+          if (tasks.error) throw tasks.error
+          const { error } = await client
+            .from('projects')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('id', id)
+          if (error) throw error
+        },
+      },
+    ),
     columns: col('board_columns', 'Columna', (qb, q: { projectId: string }) =>
       qb.eq('project_id', q.projectId).order('position'),
     ),
@@ -503,4 +728,21 @@ export async function pruneNews(client: Client, { itemDays = 30, digestDays = 12
     .lt('date', ago(digestDays).slice(0, 10))
   if (digests.error) throw digests.error
   return { items: items.count ?? 0, digests: digests.count ?? 0 }
+}
+
+/** Dueños con algún dispositivo suscrito, para el cron de la Edge Function `push` (con la service role, ADR-0040). */
+export async function listPushOwners(client: Client): Promise<string[]> {
+  const { data, error } = await client.from('push_subscriptions').select('owner_id')
+  if (error) throw error
+  return [...new Set((data as Row[]).map((r) => r.owner_id as string))]
+}
+
+/** Limpieza del cron: el registro de avisos solo hace falta mientras el cobro está cerca. */
+export async function prunePushLog(client: Client, { days = 90 } = {}) {
+  const { error, count } = await client
+    .from('push_log')
+    .delete({ count: 'exact' })
+    .lt('sent_at', new Date(Date.now() - days * 86_400_000).toISOString())
+  if (error) throw error
+  return count ?? 0
 }

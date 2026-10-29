@@ -1,10 +1,12 @@
+import type { PushDevice } from '@muninn/core'
 import { cn } from '@muninn/ui'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet } from '@tanstack/react-router'
 import { AppIcon } from '../../components/AppIcon'
 import { MODULE_ORDER, useEnabledModules } from '../../lib/modules'
 import { reportPrefs } from '../../lib/morning-report-prefs'
 import { useAuth, useMuninn } from '../../lib/muninn'
+import { keys as pushKeys } from '../../lib/push'
 import { settingsQuery } from '../../lib/queries'
 import { bySection, useChangedPrefs } from '../../lib/settings-changes'
 import { SettingsResults, SettingsSearchField, useSettingsSearch } from './search'
@@ -23,6 +25,7 @@ export function useSectionHints(): Partial<Record<string, string>> {
   const auth = useAuth()
   const modules = useEnabledModules()
   const report = reportPrefs(useQuery(settingsQuery(m)).data)
+  const devices = useQueryClient().getQueryData<PushDevice[]>(pushKeys.devices)
   const on = modules ? ACTIVABLE.filter((x) => modules.has(x)).length : null
   return {
     cuenta:
@@ -32,7 +35,14 @@ export function useSectionHints(): Partial<Record<string, string>> {
           ? 'GitHub'
           : 'Código por correo',
     modulos: on === null ? undefined : `${on} de ${ACTIVABLE.length}`,
-    notificaciones: 'Próximamente',
+    notificaciones:
+      auth.kind === 'demo' || devices === undefined
+        ? undefined
+        : devices.length === 0
+          ? 'Sin activar'
+          : devices.length === 1
+            ? '1 dispositivo'
+            : `${devices.length} dispositivos`,
     informe: report.enabled ? report.time : 'Apagado',
     acerca: `v${__APP_VERSION__}`,
   }

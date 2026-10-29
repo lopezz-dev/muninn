@@ -56,6 +56,14 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   adjuntar la foto de un ticket con «apunta este gasto» y comprobar que lo apunta bien. Con `qwen3:8b`, el aviso «no ve imágenes».
 - [ ] **Redesplegar `mcp`** (27-10): `categories.move` cuenta ahora dentro de su tipo (gastos o ingresos). Ninguna herramienta lo usa
   aún, pero el paquete del MCP lleva el core.
+- [ ] **Redesplegar `mcp`** (28-10): el servidor se presenta con `title` «Muninn» y el logo (`icons`, *data URI*) para que el conector de
+  claude.ai no salga con el icono de Supabase. Ya empaquetado con `pnpm --filter @muninn/mcp build:edge`; desplegar como arriba.
+  Se comprueba en el paso 7.
+- [ ] **Redesplegar `mcp`** (28-10): herramienta `create_tasks` (hasta 50 tareas con su checklist), `checklist` en `create_task` y el
+  proyecto por nombre ya no cae en el archivado. `pnpm --filter @muninn/mcp build:edge` y desplegar como arriba. Después, en claude.ai:
+  - [ ] «En el proyecto Prueba final, crea 5 tareas, cada una con 2 subtareas, y una más en la columna "No existe"». Una sola llamada a
+    `create_tasks`: 5 creadas con sus subtareas en orden, 1 con el error de la columna, y no repite las buenas. Archívalas al acabar.
+  - [ ] «¿Qué tareas tiene Muninn?» lista las del proyecto activo, no las del archivado con el mismo nombre.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
@@ -106,6 +114,24 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 - [ ] La nota está fijada y lleva la entradilla del modelo y el resumen de noticias. *(Fijada, con actor `assistant`, «Hecho a las
   20:27…», vencidas y cobros; falta la entradilla y las noticias, que necesitan Ollama y la función.)*
 - [x] Antes de terminar el día, déjalo a tu hora de verdad (p. ej. 08:30). Lo necesitas para el paso 8. *(Activado a las 08:30.)*
+- [ ] **Buscador ⌘K** (28-10): «fact» (o parte de una tarea tuya) lista tareas con su proyecto y notas, y al elegir una se abre su
+  detalle; «nueva nota» crea una y la abre, con «Deshacer». Con muchas tareas, escribir rápido no se nota lento.
+
+**Enlaces externos** (escritorio con `pnpm dev:desktop` y navegador en el 5174).
+- [ ] Escritorio: en Noticias, el título y «Abrir» abren el artículo en tu navegador y la noticia queda leída. También la issue y «Ver el
+  PR» de una tarea, «PR #n» en GitHub, un enlace de una nota y «GitHub» en Ajustes › Acerca de. Las imágenes del Asistente no llevan enlace.
+- [ ] Navegador: los mismos enlaces abren otra pestaña (Ctrl-clic, en segundo plano) y una imagen adjunta del Asistente se abre a tamaño real.
+
+**GitHub en escritorio** (28-10, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)).
+- [ ] Supabase › **Authentication › URL Configuration › Redirect URLs**: añade `muninn://auth/callback` (exacta, sin `/**`). Sin ella,
+  Supabase vuelve a la *Site URL* en el navegador y la app se queda «Esperando a GitHub…».
+- [ ] Con `pnpm dev:desktop` (Windows registra `muninn://` al arrancar), cierra sesión y pulsa **Continuar con GitHub**: se abre tu navegador
+  y sale «Sigue en el navegador». Autoriza; el navegador pregunta si abrir Muninn: acepta. La app pasa al frente, «Sesión iniciada» y entras.
+  No se abre una segunda ventana de Muninn.
+- [ ] En GitHub pulsa **Cancel**: «Acceso con GitHub cancelado». Pulsa **Cancelar** en la app mientras espera: el mismo aviso y el botón
+  vuelve a estar activo.
+- [ ] Con la app **instalada** (paso 10): lo mismo. Y con Muninn cerrado, abre en el navegador una vuelta pendiente (empieza el login, cierra la
+  app antes de autorizar y autoriza después): Muninn se abre y entra.
 
 ## 4. Publicar la web (≈ 30 min)
 
@@ -133,6 +159,86 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
   local», acéptalo.
 
+## 4b. Avisos push (≈ 20 min)
+
+Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales). El código está montado desde el
+28 de octubre; nada de esto se ha hecho todavía.
+- [ ] Generar las claves VAPID en tu equipo (`npx web-push generate-vapid-keys`) y guardarlas en tu gestor de contraseñas.
+- [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
+- [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
+- [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
+- [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
+- [ ] Programar el cron `muninn-push-charges` (`0 7 * * *`).
+- [ ] Comprobar: `curl -X POST` a `/push/send` sin secreto da 401 y con el secreto responde `{ users, results, pruned }`.
+
+## 4c. CAPTCHA de la entrada (≈ 20 min)
+
+El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha hecho todavía. Pasos de
+[gotchas/web › CAPTCHA](gotchas/web.md#captcha-de-la-entrada-turnstile-pasos-manuales). **Hazlo antes de abrir el registro.**
+- [ ] Cloudflare › Turnstile › *Add widget*: modo **Managed** (o *Invisible*), con los *hostnames* `muninn-sepia.vercel.app` (y el
+  dominio propio si lo hay), `localhost` y `tauri.localhost`. Guarda la clave del sitio y la secreta en tu gestor de contraseñas.
+- [ ] `VITE_TURNSTILE_SITE_KEY` (la del sitio) en Vercel, Production y Preview, y en `apps/web/.env.local`. Vuelve a desplegar.
+- [ ] Comprobar en la web publicada que el widget carga (el botón pasa de «Comprobando…» a «Enviar código») **antes** del paso siguiente.
+- [ ] Supabase › Authentication › Attack Protection › *Enable Captcha protection*: proveedor **Turnstile** y la clave **secreta**.
+- [ ] Comprobar:
+  - entrar con el código del correo en la web publicada funciona, y **Reenviar código** también;
+  - en la app de escritorio (Windows: `http://tauri.localhost`; macOS: `tauri://localhost`) el widget carga y se entra;
+  - en la PWA del iPhone se entra;
+  - con `curl` a `/auth/v1/otp` sin `gotrue_meta_security.captcha_token`, Supabase responde `captcha_failed`.
+- [ ] Si en macOS el widget falla por el origen `tauri://`, apúntalo como tarea (ver gotchas/desktop).
+
+## 4d. Seguridad de la cuenta (≈ 20 min)
+
+Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
+y el iPhone con la sesión abierta. **29 de octubre:** probado en la vista previa de `develop` (`https://muninn-git-develop-kodemaru.vercel.app`,
+pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de producción.
+- [x] Aplicar **juntas** las migraciones `20261029120000_account_sessions` y `20261029150000_aal2_en_el_servidor` ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)),
+  en ese orden (y alinear las versiones si usas `apply_migration`). La segunda no se ha probado contra la base: antes, en el editor SQL,
+  la prueba de [gotchas/db › Probar el segundo factor en el servidor](gotchas/db.md#probar-el-segundo-factor-en-el-servidor).
+  *(29 de octubre. La prueba, en un bloque `DO` que acaba con `raise exception`, pasa entera: con factor y `aal1`, 0 proyectos y
+  `list_my_sessions`/`revoke_my_session`/`insert` fallan con 42501; con `aal2`, ve lo suyo y vincula; sin factor y `aal1`, ve, renombra
+  y desvincula pero no vincula; 16 políticas `require_mfa` = 15 tablas + `storage.objects`. Aplicadas desde el editor SQL, con la versión
+  registrada a mano en `schema_migrations` (el MCP de Supabase rechazaba escribir). `get_advisors`: solo tres avisos nuevos,
+  intencionados, de funciones `security definer` ejecutables por `authenticated` (`list_my_sessions`, `revoke_my_session`, `mfa_satisfied`).)*
+- [ ] Aplicar después `20261029170000_sesiones_con_app` (nombre de la app OAuth en la lista). Comprobar en el editor SQL, con el
+  `sub` y `session_id` de tu usuario, que `select * from list_my_sessions()` trae `app_name` = «Claude» en las de claude.ai y que
+  `list_my_sessions` sigue con `execute` solo para `authenticated`. En la app, esas sesiones salen como **Claude · app conectada**.
+- [ ] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
+  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge».
+- [x] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
+  última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
+  `select * from list_my_sessions()` con otro `sub` devuelve 0 filas). *(Sí; lo de otro usuario lo cubre la prueba SQL. Fallo: la app de
+  escritorio sale como «Windows · Edge» y claude.ai como «Dispositivo desconocido» → PR #74.)*
+- [x] **Cerrar** en la fila del iPhone: sale el aviso y desaparece de la lista; en menos de una hora el iPhone vuelve a la pantalla de
+  entrada. *(Probado cerrando varias sesiones una a una. Ojo: cerrar la de claude.ai invalida el conector, hay que reconectarlo.)*
+- [ ] Vuelve a entrar en el iPhone y pulsa **En los demás** en el ordenador: el ordenador sigue dentro y el iPhone sale. *(Sin probar a
+  propósito: también cierra el conector de claude.ai.)*
+- [ ] **En todos**: el ordenador vuelve a la pantalla de entrada con el aviso; el iPhone sale en menos de una hora. *(Igual.)*
+- [x] **Segundo factor:** en Supabase, **Authentication › Multi-Factor**, comprueba que *TOTP (App Authenticator)* está activado (lo
+  está por defecto). Si no, «Activar» dice «El segundo factor no está activado en este servidor».
+- [x] En Ajustes › Cuenta › **Segundo factor**, «Activar»: sale el QR; escanéalo con tu app de códigos (o teclea la clave) y guarda la clave
+  en tu gestor de contraseñas. Un código equivocado da «El código no es correcto…»; el bueno, «Segundo factor activado».
+- [x] Cierra sesión y entra con el código del correo: sale **Falta un paso** y no deja ir a ninguna pantalla sin el código de la app. Con
+  el código, entras donde ibas. Lo mismo entrando con GitHub. *(Con el correo; GitHub no se probó.)*
+- [ ] En el iPhone (sesión abierta de antes de activarlo): al volver a abrir la app (como mucho, una hora después) pide el código.
+- [x] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
+- [x] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código. *(Al desactivarlo,
+  el conector de claude.ai también quedó invalidado y hubo que reconectarlo.)*
+- [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código. *(Pendiente: la
+  *Site URL* sirve `main`, que aún no lo tiene. Repetir cuando `develop` pase a `main`.)*
+- [x] **Servidor (ADR-0062), con el segundo factor activado:** en claude.ai, «¿Qué tareas tiene Muninn?» sigue respondiendo. Si
+  responde vacío o con error de permisos, sus tokens son `aal1`: quita el acceso en **Apps con acceso**, vuelve a conectar el conector
+  (el consentimiento pide el código) y repite. Si aun así falla, apúntalo como tarea: el MCP remoto necesita otra salida.
+  *(**Falla.** Con el factor activado, el MCP responde «Proyecto … no existe». Reconectado después de activarlo, la sesión OAuth nueva
+  sigue siendo `aal1`: el servidor OAuth no hereda el `aal2`. Al desactivarlo, vuelve. Tarea «El MCP remoto no ve datos con el
+  segundo factor activado»: necesita un ADR que complemente a ADR-0062. Mientras, no activar el segundo factor si se usa el MCP.)*
+- [ ] Vincular un repo en Ajustes › Integraciones funciona con el segundo factor. Desactívalo, vuelve a entrar e intenta vincular otro:
+  sale «Para conectar GitHub necesitas el segundo factor» y no se guarda. Quitar un repo sí deja. La sincronización (`github`) sigue igual.
+  *(Sin probar: huginnDB no se deja vincular porque lo retiene el proyecto archivado «Muninn» → tarea «Un proyecto archivado sigue
+  reteniendo su repo de GitHub». La regla del servidor sí la cubre la prueba SQL.)*
+- [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
+  **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
+
 ## 5. iPhone (≈ 45 min)
 
 Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra con tu cuenta.
@@ -146,7 +252,17 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - lo apuntado en el iPhone aparece en el ordenador sin recargar.
 - [ ] El Asistente dice que usa el modelo del ordenador y no intenta conectar.
 - [ ] Noticias muestra el mismo resumen de hoy que el ordenador.
+- [ ] En Noticias, «Abrir» y el título abren el artículo en Safari sin cerrar Muninn, y al volver sale leída. Igual con un enlace de una
+  nota y con una imagen adjunta del Asistente.
 - [ ] El informe de la mañana se lee en Notas y en el Asistente, y el iPhone no genera ninguno.
+- [ ] **Avisos push** (necesita el paso 4b):
+  - antes de instalar, en Safari, Ajustes › Notificaciones dice «Añade Muninn a tu pantalla de inicio»;
+  - con la app instalada y abierta desde el icono, activa **Avisos en este dispositivo** y pulsa **Permitir**: sale en Dispositivos como
+    «iPhone · App» con la marca **Este**;
+  - **Enviar prueba**: llega «Los avisos funcionan en este dispositivo» con la app cerrada, y al tocarlo abre Ajustes › Notificaciones;
+  - crea una suscripción «Prueba final» que se cobre **mañana** y lanza el cron a mano (el `curl` del paso 4b): llega «Mañana te cobran
+    Prueba final · …» y al tocarlo abre Finanzas › Suscripciones. Lanzarlo otra vez no lo repite. Archiva la suscripción al acabar;
+  - en el ordenador, quita el iPhone de la lista y pulsa **Deshacer**: vuelve, y «Enviar prueba» sigue llegando.
 
 ## 6. OAuth del MCP remoto con Claude Code (≈ 10 min)
 
@@ -165,7 +281,10 @@ Ya con la *Site URL* publicada:
 - [ ] Ajustes › Conectores › Añadir conector personalizado con la URL de `mcp`:
   - te lleva a `/oauth/consent`;
   - «Permitir acceso» vuelve a claude.ai;
-  - el conector lista tus proyectos.
+  - el conector lista tus proyectos;
+  - el conector sale con el logo de Muninn, no con el de Supabase (con el `mcp` redesplegado del paso 2; si ya estaba conectado,
+    quítalo y vuelve a añadirlo). Si sigue el de Supabase, apúntalo en [gotchas/mcp](gotchas/mcp.md#el-conector-sale-con-el-icono-de-supabase):
+    queda servir el MCP desde un dominio de Muninn, que necesita ADR.
 
   Si no consigue registrarse, el plan B son tokens personales de Muninn (Backlog).
 - [ ] Lo mismo desde la app de Claude en el iPhone.
@@ -229,8 +348,5 @@ actualizaciones.
 ## Después (trabajo de código que necesita lo anterior)
 
 No son pasos manuales; pídeselos a Claude cuando lo de arriba esté hecho.
-- **Avisos push (Web Push, F3):** necesitan la web publicada y unas claves VAPID que generas tú
-  ([gotchas/web](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales), pasos 1–3). Luego se implementa la suscripción,
-  `push_subscriptions` y la función `push`, y se prueba en el iPhone instalado.
 - **Voz (F4):** implementar [ADR-0044](adr/0044-voz-local-whisper-y-piper.md) si lo aceptas. Para probarla, instala whisper.cpp, Python y Piper
   ([gotchas/desktop](gotchas/desktop.md#instalar-la-voz-whispercpp-y-piper-pasos-manuales-cuando-se-implemente)).

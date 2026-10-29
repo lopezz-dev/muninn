@@ -46,7 +46,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0006](0006-orden-con-fractional-indexing.md) — Orden con fractional indexing
 - [ADR-0007](0007-registro-de-actividad.md) — Registro de actividad inmutable con actor
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
-- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
+- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth *(GitHub en escritorio: ADR-0059)*
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
 - [ADR-0026](0026-markdown-marked-a-react-y-textarea.md) — Markdown con marked a elementos de React y un editor sobre `textarea`
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
@@ -62,6 +62,10 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
+- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
+- [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
+- [ADR-0065](0065-eliminar-proyectos-archivados.md) — Los proyectos archivados se pueden eliminar para siempre, con «Deshacer» diferido, y archivar suelta el repo de GitHub
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -70,7 +74,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0006](0006-orden-con-fractional-indexing.md) — Orden con fractional indexing
 - [ADR-0007](0007-registro-de-actividad.md) — Registro de actividad inmutable con actor
 - [ADR-0018](0018-dinero-en-centimos.md) — El dinero se maneja en céntimos enteros
-- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
+- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth *(GitHub en escritorio: ADR-0059)*
 - [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) — Tiempo real por invalidación de caché y caché de solo lectura sin conexión
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
@@ -80,6 +84,9 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0042](0042-noticias-rss-con-descarga-en-servidor.md) — Noticias: fuentes RSS por usuario, descarga en una Edge Function con cron y resumen diario en local
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
+- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
+- [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -87,6 +94,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0033](0033-mcp-remoto-http.md) — MCP remoto por Streamable HTTP, sin estado, con el token de Supabase del usuario y alojado en una Edge Function
 - [ADR-0036](0036-pantalla-de-autorizacion-oauth.md) — La autorización OAuth del MCP remoto la aprueba una pantalla propia de la web, `/oauth/consent`
 - [ADR-0041](0041-asistente-local-con-catalogo-unico.md) — Asistente con modelo local (Ollama) en la app, con un catálogo único de herramientas compartido con el MCP
+- [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
 
 ### ui
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
@@ -98,17 +107,19 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0021](0021-shell-de-la-app.md) — Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K *(reemplazado en parte por ADR-0054)*
 - [ADR-0039](0039-panel-mensual-y-tasa-de-ahorro.md) — Panel mensual calculado en el core, con la tasa de ahorro como lo que no gastas
 - [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
+- [ADR-0058](0058-iconos-generados-con-los-grosores-que-se-usan.md) — Iconos de Phosphor generados con solo los grosores que se usan
 - [ADR-0049](0049-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
 - [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
 - [ADR-0053](0053-ajustes-por-grupos-buscador-y-restablecer.md) — Ajustes por grupos, con buscador, marca de «cambiado» y «Restablecer» con Deshacer
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador
+- [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
 - [ADR-0020](0020-tanstack-router-carga-diferida.md) — TanStack Router con rutas en código y una pantalla por chunk
 - [ADR-0021](0021-shell-de-la-app.md) — Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K *(reemplazado en parte por ADR-0054)*
-- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth
+- [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth *(GitHub en escritorio: ADR-0059)*
 - [ADR-0023](0023-drag-and-drop-con-dnd-kit.md) — Drag & drop del tablero con dnd-kit
 - [ADR-0024](0024-detalle-de-tarea-como-ruta.md) — Detalle de tarea como ruta, con panel en escritorio y pantalla en móvil
 - [ADR-0025](0025-escrituras-optimistas-y-deshacer.md) — Escrituras optimistas, serializadas por proyecto y con «Deshacer»
@@ -136,12 +147,23 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
+- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
+- [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
+- [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
+- [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba
+- [ADR-0057](0057-lector-de-noticias-integrado.md) — Lector de noticias integrado: modo lectura con el contenido del feed, sin iframe *(propuesto)*
+- [ADR-0059](0059-deep-links-para-oauth-en-escritorio.md) — GitHub OAuth en escritorio con el deep link `muninn://auth/callback`
+- [ADR-0060](0060-captcha-con-turnstile-en-la-entrada.md) — CAPTCHA de la entrada con Cloudflare Turnstile, invisible y opcional por variable
+- [ADR-0065](0065-eliminar-proyectos-archivados.md) — Los proyectos archivados se pueden eliminar para siempre, con «Deshacer» diferido, y archivar suelta el repo de GitHub
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
 - [ADR-0041](0041-asistente-local-con-catalogo-unico.md) — Asistente con modelo local (Ollama) en la app, con un catálogo único de herramientas compartido con el MCP
 - [ADR-0044](0044-voz-local-whisper-y-piper.md) — Voz en local: whisper.cpp para dictar y Piper para hablar, como procesos aparte en el escritorio *(propuesto)*
 - [ADR-0047](0047-actualizaciones-de-escritorio-firmadas.md) — Actualizaciones de escritorio firmadas, publicadas en la GitHub Release y aplicadas con «Reiniciar»
+- [ADR-0057](0057-lector-de-noticias-integrado.md) — Lector de noticias integrado: modo lectura con el contenido del feed, sin iframe *(propuesto)*
+- [ADR-0059](0059-deep-links-para-oauth-en-escritorio.md) — GitHub OAuth en escritorio con el deep link `muninn://auth/callback`
+- [ADR-0060](0060-captcha-con-turnstile-en-la-entrada.md) — CAPTCHA de la entrada con Cloudflare Turnstile, invisible y opcional por variable
 
 ### ci
 - [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please *(el repo privado y el updater pendiente, reemplazados por ADR-0046 y ADR-0047)*

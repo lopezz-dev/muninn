@@ -22,10 +22,17 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:* ws://localhost:*; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:* ws://localhost:*; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'"
     }
   },
   "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "muninn"
+        ]
+      }
+    },
     "updater": {
       "endpoints": [
         "https://github.com/lopezz-dev/muninn/releases/latest/download/latest.json"

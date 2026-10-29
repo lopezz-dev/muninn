@@ -44,6 +44,31 @@ describe('proyectos', () => {
     expect((await app.projects.list()).map((p) => p.name)).toEqual(['B'])
     expect(await app.projects.list({ includeArchived: true })).toHaveLength(2)
   })
+
+  it('archivar suelta el repo de GitHub, que se puede vincular a otro proyecto', async () => {
+    const { app } = setup()
+    const a = await app.projects.create({ name: 'A', githubRepo: 'lopezz-dev/huginnDB' })
+    const b = await app.projects.create({ name: 'B' })
+    const archived = await app.projects.archive(a.id)
+    expect(archived).toMatchObject({ status: 'archived', githubRepo: null })
+    expect(
+      (await app.projects.update(b.id, { githubRepo: 'lopezz-dev/huginnDB' })).githubRepo,
+    ).toBe('lopezz-dev/huginnDB')
+  })
+
+  it('solo se elimina un proyecto archivado, con sus tareas; las notas se quedan sin proyecto', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't' })
+    await app.checklist.add(t.id, 'sub')
+    const note = await app.notes.create({ title: 'n', projectId: p.id })
+    await expect(app.projects.delete(p.id)).rejects.toThrow(ValidationError)
+    await app.projects.archive(p.id)
+    await app.projects.delete(p.id)
+    expect(await app.projects.list({ includeArchived: true })).toHaveLength(0)
+    await expect(app.tasks.get(t.id)).rejects.toThrow()
+    expect((await app.notes.get(note.id)).projectId).toBeNull()
+  })
 })
 
 describe('tareas', () => {
@@ -132,6 +157,123 @@ describe('tareas', () => {
     const t = await app.tasks.create({ projectId: p.id, title: 't' })
     await app.columns.update(t.columnId, { kind: 'done' })
     expect((await app.tasks.get(t.id)).completedAt).not.toBeNull()
+  })
+
+  it('create acepta un checklist', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't', checklist: ['uno', ' dos '] })
+    expect((await app.checklist.list(t.id)).map((i) => [i.title, i.done])).toEqual([
+      ['uno', false],
+      ['dos', false],
+    ])
+  })
+})
+
+describe('tareas en lote', () => {
+  it('crea en orden, detrás de las que ya había, con su checklist y su actividad', async () => {
+    const { app } = setup('mcp')
+    const p = await app.projects.create({ name: 'P' })
+    const before = await app.tasks.create({ projectId: p.id, title: 'antes' })
+    const done = (await app.columns.list(p.id)).find((c) => c.kind === 'done')
+    const results = await app.tasks.createMany([
+      { projectId: p.id, title: 'a', checklist: ['a1', 'a2', 'a3'] },
+      { projectId: p.id, title: 'b', priority: 'high' },
+      { projectId: p.id, title: 'c', columnId: done?.id },
+      { projectId: p.id, title: 'd', checklist: ['d1'] },
+    ])
+    expect(results.every((r) => r.ok)).toBe(true)
+    const titles = (await app.tasks.list({ columnId: before.columnId })).map((t) => t.title)
+    expect(titles).toEqual(['antes', 'a', 'b', 'd'])
+    const [a, , c] = results.map((r) => (r.ok ? r : undefined))
+    expect(a?.checklist.map((i) => i.title)).toEqual(['a1', 'a2', 'a3'])
+    expect((await app.checklist.list(a?.task.id ?? '')).map((i) => i.title)).toEqual([
+      'a1',
+      'a2',
+      'a3',
+    ])
+    expect(c?.task.completedAt).toBe(clock.toISOString())
+    expect(c?.task.source).toBe('mcp')
+    const created = (await app.recentActivity({ projectId: p.id }))
+      .filter((e) => e.action === 'created' && e.entityType === 'task')
+      .map((e) => e.payload.title)
+    expect(created).toEqual(expect.arrayContaining(['antes', 'a', 'b', 'c', 'd']))
+  })
+
+  it('un elemento que falla no corta el resto', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const other = await app.projects.create({ name: 'Otro' })
+    const foreign = (await app.columns.list(other.id))[0]
+    const results = await app.tasks.createMany([
+      { projectId: p.id, title: 'buena' },
+      { projectId: p.id, title: '   ' },
+      { projectId: crypto.randomUUID(), title: 'sin proyecto' },
+      { projectId: p.id, title: 'columna ajena', columnId: foreign?.id },
+      { projectId: p.id, title: 'otra buena' },
+    ])
+    expect(results.map((r) => r.ok)).toEqual([true, false, false, false, true])
+    expect(results[2]).toMatchObject({ ok: false, error: expect.stringContaining('no existe') })
+    expect(results[3]).toMatchObject({ ok: false, error: expect.stringContaining('no pertenece') })
+    expect((await app.tasks.list({ projectId: p.id })).map((t) => t.title)).toEqual([
+      'buena',
+      'otra buena',
+    ])
+  })
+
+  it('reparte entre proyectos y columnas', async () => {
+    const { app } = setup()
+    const p1 = await app.projects.create({ name: 'P1' })
+    const p2 = await app.projects.create({ name: 'P2' })
+    const backlog = (await app.columns.list(p1.id)).find((c) => c.kind === 'backlog')
+    const results = await app.tasks.createMany([
+      { projectId: p1.id, title: 'p1-todo' },
+      { projectId: p2.id, title: 'p2-todo' },
+      { projectId: p1.id, title: 'p1-backlog', columnId: backlog?.id },
+      { projectId: p1.id, title: 'p1-todo-2' },
+    ])
+    expect(results.every((r) => r.ok)).toBe(true)
+    expect(
+      (await app.tasks.list({ projectId: p1.id, kinds: ['todo'] })).map((t) => t.title),
+    ).toEqual(['p1-todo', 'p1-todo-2'])
+    expect((await app.tasks.list({ columnId: backlog?.id })).map((t) => t.title)).toEqual([
+      'p1-backlog',
+    ])
+    expect((await app.tasks.list({ projectId: p2.id })).map((t) => t.title)).toEqual(['p2-todo'])
+  })
+
+  it('exige entre 1 y 50 tareas', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    await expect(app.tasks.createMany([])).rejects.toThrow(ValidationError)
+    const many = Array.from({ length: 51 }, (_, i) => ({ projectId: p.id, title: `t${i}` }))
+    await expect(app.tasks.createMany(many)).rejects.toThrow(ValidationError)
+    expect(await app.tasks.list({ projectId: p.id })).toEqual([])
+  })
+
+  it('usa pocas consultas al store', async () => {
+    const { store, app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const calls: string[] = []
+    for (const name of ['tasks', 'checklist', 'columns', 'projects'] as const) {
+      const col = store[name] as unknown as Record<string, (...a: unknown[]) => unknown>
+      for (const method of ['get', 'list', 'insert', 'insertMany'] as const) {
+        const fn = col[method]?.bind(col)
+        if (!fn) continue
+        col[method] = (...a: unknown[]) => {
+          calls.push(`${name}.${method}`)
+          return fn(...a)
+        }
+      }
+    }
+    const tasks = Array.from({ length: 30 }, (_, i) => ({
+      projectId: p.id,
+      title: `t${i}`,
+      checklist: ['x', 'y'],
+    }))
+    await app.tasks.createMany(tasks)
+    expect(calls.filter((c) => c.endsWith('.insert'))).toEqual([])
+    expect(calls.length).toBeLessThanOrEqual(6)
   })
 })
 

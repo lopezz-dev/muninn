@@ -82,14 +82,14 @@ Pulsa **⌘K** en Mac o **Ctrl K** en Windows y Linux (o el botón **Buscar o pr
 lateral) y escribe:
 
 - El nombre de una sección o de un proyecto, para ir directamente. Da igual que pongas tildes o mayúsculas.
-- Una acción, como «nuevo proyecto», «cristal» o «cerrar sesión».
+- Parte del título o del texto de una **tarea** (sale con su proyecto) o de una **nota**, para abrirla. Busca a partir
+  de dos letras.
+- Una acción, como «nuevo proyecto», «nueva nota», «cristal» o «cerrar sesión».
 - Cualquier otra cosa, para preguntársela a Muninn: se abre el [Asistente](11-asistente.md) con tu pregunta ya enviada
   (si el modelo de tu ordenador está listo; si no, la deja escrita).
 - Con Noticias activado, también **Buscar en Noticias** lo que hayas escrito.
 
 Muévete con las flechas, abre con **Intro** y cierra con **Esc**.
-
-> **Próximamente:** buscar también en tareas y notas.
 
 ## Crear un proyecto
 
@@ -134,7 +134,7 @@ lo más útil sin abrirla: con qué entras, cuántos módulos tienes activos o a
 | Tú | **Apariencia** | Cristal y color de acento (ver arriba) |
 | Tú | **Atajos de teclado** | Los atajos del buscador, del tablero y de toda la app |
 | Espacio de trabajo | **Módulos** | Activar y desactivar módulos (ver arriba) |
-| Espacio de trabajo | **Notificaciones** | *Próximamente:* avisos en el móvil antes de cada cobro y cuando un agente termine |
+| Espacio de trabajo | **Notificaciones** | Activar los avisos en este dispositivo, **Enviar prueba** y los dispositivos que los reciben (ver [Notificaciones](13-notificaciones.md)) |
 | Asistente | **Modelo local** | Dónde está Ollama, qué modelo usa el [Asistente](11-asistente.md) y **Probar conexión** |
 | Asistente | **Informe de la mañana** | Activarlo, la hora y **Hacer ahora** (ver [Asistente](11-asistente.md#informe-de-la-mañana)) |
 | Integraciones | **GitHub** | El repositorio de cada proyecto y el estado de la sincronización (ver [GitHub](09-github.md)) |

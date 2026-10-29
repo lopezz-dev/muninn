@@ -27,6 +27,14 @@ describe('servidor MCP', () => {
     expect(names).not.toContain('delete_task')
   })
 
+  it('se presenta con el nombre y el logo de Muninn', async () => {
+    const { client } = await connect()
+    const info = client.getServerVersion()
+    expect(info?.title).toBe('Muninn')
+    expect(info?.icons?.[0]).toMatchObject({ mimeType: 'image/png', sizes: ['96x96'] })
+    expect(info?.icons?.[0]?.src).toMatch(/^data:image\/png;base64,iVBORw0KGgo/)
+  })
+
   it('flujo completo resolviendo proyecto y columna por nombre', async () => {
     const { call } = await connect()
     await call('create_project', { name: 'Muninn' })

@@ -11,27 +11,39 @@ const MAX_GAP = 80
 /**
  * App instalada en iOS (`navigator.standalone`): a veces, al abrirla, el visor mide la pantalla menos la
  * barra de estado y `position: fixed; bottom: 0` queda ese tanto por encima del borde. Devuelve cuánto falta para bajar la
- * barra (0 si el visor mide lo mismo que la pantalla, que es lo normal). Ver docs/gotchas/web.md.
+ * barra (0 si el visor mide lo mismo que la pantalla, que es lo normal). iOS corrige luego el visor sin avisar siempre con
+ * `resize`: por eso se vuelve a medir al cambiar de pantalla, al volver a la app y un poco después de cada medida; una
+ * corrección que se quedara puesta empujaría la barra fuera de la pantalla. Ver docs/gotchas/web.md.
  */
-function useStandaloneGap() {
+function useStandaloneGap(resetKey: string) {
   const [gap, setGap] = useState(0)
   useEffect(() => {
+    void resetKey
     if ((navigator as { standalone?: boolean }).standalone !== true) return
     const measure = () => {
       const portrait = window.innerHeight >= window.innerWidth
       const { width: w, height: h } = window.screen
       const full = portrait ? Math.max(w, h) : Math.min(w, h)
-      const diff = Math.round(full - window.innerHeight)
+      const visible = Math.max(window.innerHeight, window.visualViewport?.height ?? 0)
+      const diff = Math.round(full - visible)
       setGap(diff > 0 && diff <= MAX_GAP ? diff : 0)
     }
-    measure()
+    const timers = [0, 250, 1000].map((ms) => setTimeout(measure, ms))
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') measure()
+    }
     window.addEventListener('resize', measure)
     window.addEventListener('pageshow', measure)
+    window.visualViewport?.addEventListener('resize', measure)
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
+      for (const t of timers) clearTimeout(t)
       window.removeEventListener('resize', measure)
       window.removeEventListener('pageshow', measure)
+      window.visualViewport?.removeEventListener('resize', measure)
+      document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [])
+  }, [resetKey])
   return gap
 }
 
@@ -75,7 +87,7 @@ export function TabBar({ className }: { className?: string }) {
   const section = sectionOf(pathname)
   const active = tabIndexOf(section, tabs)
   const onAssistant = section === 'assistant'
-  const gap = useStandaloneGap()
+  const gap = useStandaloneGap(pathname)
   const [compact, setCompact] = useCompactOnScroll(pathname)
   // Encogida, solo queda la pestaña activa; en el Asistente no hay ninguna activa, así que no se encoge.
   const shrunk = compact && active >= 0

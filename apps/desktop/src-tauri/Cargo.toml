@@ -18,10 +18,25 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-process = "2"
+# Enlaces externos en el navegador del sistema: `target="_blank"` no abre nada en el webview.
+tauri-plugin-opener = "2"
+# Vuelta del OAuth de GitHub por `muninn://auth/callback` (ADR-0059).
+tauri-plugin-deep-link = "2"
 
 # Actualizaciones firmadas (ADR-0047): solo en escritorio.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
+# Con `deep-link`, pasa el enlace `muninn://` a la ventana abierta en vez de abrir otra (Windows y Linux).
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+
+# Marca `Muninn/<versión>` en el user agent del webview, para reconocer la app en «Sesiones» (ADR-0061).
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows = "0.62"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSString"] }
 
 [profile.release]
 codegen-units = 1

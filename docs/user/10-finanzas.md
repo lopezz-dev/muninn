@@ -80,7 +80,8 @@ al apuntar un movimiento y en los filtros. Sale un aviso con **Deshacer**.
 En la pestaña **Suscripciones** apuntas lo que pagas cada semana, mes o año (Spotify, el gimnasio, un dominio): nombre, importe,
 cuenta, categoría, próximo cobro y cuántos días antes quieres el aviso (3 por defecto). Verás cuánto suman al mes y al año.
 
-Cuando se acerca un cobro, sale en **Próximos cobros**, en Inicio y en Finanzas:
+Cuando se acerca un cobro, sale en **Próximos cobros**, en Inicio y en Finanzas, y si activaste los avisos te llega uno al móvil
+([Notificaciones](13-notificaciones.md)):
 
 - **Apuntar** lo guarda como gasto (con un icono de repetición en la lista) y pasa la suscripción al siguiente periodo.
 - **Saltar** pasa al siguiente periodo sin apuntar nada (ese mes no te cobraron).
@@ -101,6 +102,5 @@ puede borrar nada: como mucho, archivar.
 ## Lo que aún no hay
 
 - Importar los movimientos del banco (CSV de Imagin) o conectarlo directamente.
-- Avisos en el móvil (notificaciones push) antes de un cobro: de momento, solo dentro de la app.
 - Más de una moneda: todo va en euros.
 - Apuntar que una inversión ha subido o bajado de valor: de momento, apúntalo como un ingreso o un gasto en esa cuenta.

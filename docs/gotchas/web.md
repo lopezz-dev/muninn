@@ -181,6 +181,10 @@
 - **Solución:** `useStandaloneGap` en `shell/TabBar.tsx` compara `screen` con `innerHeight` solo si `navigator.standalone`,
   y baja la barra la diferencia (como mucho 80 px; si no hay diferencia, no hace nada). Solo se puede comprobar en un iPhone real: va en
   [pruebas-iphone](../pruebas-iphone.md).
+- **Ojo:** iOS corrige después el visor sin lanzar siempre `resize`. Si la corrección se queda puesta, la barra baja de más y se
+  corta por debajo del borde (visto el 28 de octubre en el iPhone). Por eso se vuelve a medir al cambiar de pantalla, al volver a la
+  app (`visibilitychange`), con `visualViewport` y a los 250 ms y 1 s. Para simularlo en el navegador: `navigator.standalone = true` y
+  `screen.height` = `innerHeight + 47` con `Object.defineProperty`, navega, y después iguala `screen.height` y navega otra vez.
 
 ### En escritorio la ventana no hace scroll: lo hace `<main>`
 
@@ -216,6 +220,16 @@
 - **Solución:** `auth.ts` solo reacciona si cambia el **id** del usuario. Al cambiar, `forgetUserData()`
   descarta la instancia del core y vacía react-query: los datos de un usuario no pueden verse en la
   sesión de otro.
+
+### Estado `mfa`: sesión abierta, pero falta el código de la app
+
+- **Síntoma:** tras entrar con el código del correo, la app vuelve a /login y enseña «Falta un paso» en lugar de entrar.
+- **Causa:** la cuenta tiene segundo factor y la sesión aún es `aal1`. `getAuth()` devuelve `{ kind: 'mfa', account }` (lo mira con
+  `getAuthenticatorAssuranceLevel`, sin red), `/_app` manda a /login y `screens/login/Entrada.tsx` enseña el paso del código.
+- **Solución:** es lo esperado ([ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)). Dentro de la app, `useAuth()` nunca ve `mfa`
+  (`AppAuthState`). Una ruta nueva que necesite una cuenta completa compara con `kind === 'user'`, no con `!== 'anonymous'`.
+- **Ojo:** el estado se calcula al resolver `getAuth()`. Un dispositivo con la sesión abierta antes de activar el segundo factor lo
+  pide al volver a abrir la app, cuando la sesión guardada ya trae el factor (al renovarse el token, como mucho en una hora).
 
 ### `/login` no tiene shell ni datos
 
@@ -284,7 +298,8 @@
   `ui-vendor` de `vite.config.ts` carga en el arranque todo módulo de `@phosphor-icons` que alguien use.
 - **Solución:** iconos de una sola pantalla en `screenIcons` (`packages/ui/src/screen-icons.tsx`, fichero aparte para que
   no compartan chunk con `icons`) y su nombre en `SCREEN_ICONS` de `vite.config.ts`, que los saca del grupo. Hoy:
-  `list` y `checklist` (barra de formato de Notas) `compass`, `plug`, `shield` y `partial` (Documentación) y `sun` y `reset` (Ajustes). Las pantallas que los leen de
+  `list` y `checklist` (barra de formato de Notas) `compass`, `plug`, `shield` y `partial` (Documentación), `sun` y `reset` (Ajustes) y
+  `devices`, `key` y `signOut` (Ajustes › Cuenta). `notify` solo acepta los de `icons`. Las pantallas que los leen de
   datos usan `AppIcon` (`components/AppIcon.tsx`), que junta `icons` y `screenIcons`. Si el shell pasa a usarlos, vuelven a `icons`.
 - **Ref:** [ADR-0020](../adr/0020-tanstack-router-carga-diferida.md)
 
@@ -391,14 +406,53 @@
      *Homepage URL* puede pasar a la publicada (el *callback* no cambia).
   5. Comprueba: abrir `https://<tu-url>/finanzas` y recargar no da 404; en el iPhone, Safari › Compartir › **Añadir a pantalla de inicio**
      y abrirla desde el icono (pantalla completa, sin barra de Safari). La lista de [pruebas-iphone](../pruebas-iphone.md) ya se puede pasar.
-- **Solución (Web Push, cuando se implemente la suscripción):**
-  1. Claves VAPID (una vez, en tu equipo; no las pegues en el chat ni en el repo): `npx web-push generate-vapid-keys`.
-  2. Supabase › **Edge Functions › Secrets**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:<tu correo>`).
-  3. Vercel › Environment Variables: `VITE_VAPID_PUBLIC_KEY` = la **pública** (es pública por diseño) y vuelve a desplegar.
-  4. Migración de `push_subscriptions`, despliegue de la función `push` y su `cron.schedule` diario: llegarán con la implementación
-     (mismo patrón que «Sincronización con GitHub (pasos manuales)» en [gotchas/db](db.md)).
-- **Ojo:** en iOS el permiso solo se puede pedir desde la PWA **instalada** y tras un toque; si la desinstalas, la suscripción muere y
-  la función la borrará al recibir `410`. `public/push-sw.js` ya está en el service worker: hoy no hace nada porque nadie envía avisos.
+- **Solución (Web Push):** el código está hecho (tablas `push_subscriptions` y `push_log`, `m.push` en el core, Ajustes › Notificaciones,
+  `public/push-sw.js` y la Edge Function `push`). Falta, en este orden:
+  1. **Claves VAPID** (una vez, en tu equipo; no las pegues en el chat ni en el repo): `npx web-push generate-vapid-keys`. Guarda las dos
+     en tu gestor de contraseñas: si cambias la pública, todas las suscripciones dejan de valer y hay que volver a activar cada dispositivo.
+  2. **Migración:** aplica `supabase/migrations/20261028180000_push_subscriptions.sql` (SQL Editor o `npx supabase@2 db push`). Si usas
+     `apply_migration` del MCP de Supabase, alinea la versión (ver [gotchas/db](db.md)).
+  3. **Secretos de la función** (Supabase › **Edge Functions › Secrets**, o `npx supabase@2 secrets set NOMBRE=valor`):
+     `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:<tu correo>`: los servicios de push escriben ahí si algo va mal).
+     Reutiliza `MUNINN_SYNC_SECRET` (el del cron de GitHub) y, opcional, `MUNINN_TIME_ZONE` (`Europe/Madrid` por defecto).
+  4. **Desplegar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/push/_core/muninn.js`, fuera de git) y
+     `npx supabase@2 functions deploy push --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. `--no-verify-jwt` porque el cron no
+     manda JWT; la función comprueba su secreto (`/push/send`) o la sesión (`/push/test`).
+  5. **Web:** Vercel › Environment Variables (Production y Preview): `VITE_VAPID_PUBLIC_KEY` = la **pública** (lo es por diseño; nunca la
+     privada) y vuelve a desplegar. En local, en `apps/web/.env.local`. Sin ella, Ajustes › Notificaciones dice «Avisos sin configurar».
+  6. **Cron diario** (SQL Editor; `pg_cron`, `pg_net` y el secreto `muninn_sync_secret` del Vault ya existen por GitHub). `0 7 * * *` es
+     UTC: las 8 en invierno y las 9 en verano en Madrid.
+     ```sql
+     select cron.schedule('muninn-push-charges', '0 7 * * *', $
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/push/send',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 30000
+       );
+     $);
+     ```
+  7. **Site URL:** la de Supabase (paso 4 de arriba) debe ser la URL publicada. El permiso de avisos va por origen: lo concedido en una
+     vista previa de Vercel no vale en producción, y el enlace del aviso abre la app en el origen donde se activó.
+  8. **Probar a mano:** `curl -X POST -H "x-muninn-sync-secret: <MUNINN_SYNC_SECRET>" https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/push/send`
+     responde `{ users, results: [{ alerts, sent, removed, failed }], pruned }`; sin secreto, 401. Desde la app, **Enviar prueba**.
+- **Ojo:** en iOS el permiso solo se puede pedir desde la PWA **instalada** y tras un toque (`enablePush` llama a `requestPermission` lo
+  primero, antes de cualquier otra espera). Si la desinstalas, la suscripción muere y la función la borra al recibir `404`/`410`.
+- **Ojo:** un aviso de cobro se apunta en `push_log` (`charge:<suscripción>:<fecha>`) cuando llega al menos a un dispositivo: si el cron
+  corre dos veces no repite, y si un día no corre (proyecto pausado), el siguiente avisa de lo que siga dentro de la ventana. Si todos los
+  dispositivos fallan, se reintenta al día siguiente. El cron borra el registro de más de 90 días.
+- **Ojo:** `push_subscriptions` es única por `(owner_id, endpoint)`, no por `endpoint`: con RLS, un `upsert` no ve la fila de otro usuario.
+  Por eso al **cerrar sesión** la app borra la fila de este dispositivo y cancela la suscripción del navegador (`leaveThisDevice`).
+- **Ojo:** solo se admiten direcciones de servicios de push conocidos (`isPushServiceUrl` en `schemas.ts`: FCM, Mozilla, Apple y
+  Windows), en el core, en un `check` de la tabla y otra vez antes de enviar. La función hace un POST a esa dirección desde la red de
+  Supabase: aceptar cualquier `https://` sería un SSRF. Si un navegador nuevo usa otro servicio, añádelo en los tres sitios.
+- **Ojo:** la función usa `npm:web-push`, que tira de `crypto` y `https` de Node. Si el runtime de Supabase lo rompe (errores de
+  `createECDH` en los logs), cámbialo por una librería nativa de Deno con la misma forma (`sendNotification` → código HTTP): lo demás
+  (qué avisar, a quién, borrar con 410) está en el core y no cambia.
 
 ### Asistente: todo en su chunk, y el historial en el dispositivo
 
@@ -520,6 +574,7 @@
     - `OLLAMA_ORIGINS` en cada ordenador que use el Asistente desde la web, y reiniciar Ollama;
     - el secreto `MUNINN_MCP_ALLOWED_ORIGINS` de la función `mcp`, si incluye la URL de la web;
     - Search Console (cuando esté dado de alta): añadir la propiedad nueva y volver a enviar `sitemap.xml`.
+    - Cloudflare › Turnstile: añadir el dominio a los *hostnames* del widget del CAPTCHA (ADR-0060), o el login fallará.
   - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
     Las apps instaladas (PWA) de la URL vieja no se mudan solas: hay que instalarlas otra vez desde la nueva.
 - **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)
@@ -563,3 +618,37 @@
   falla (`onError`). No guardes la URL en ningún sitio (ni en la base de datos ni en estado propio): pide siempre
   `projects.imageUrl(path)` a través de la consulta.
 - **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)
+
+### El test del informe de la mañana caduca con Ollama encendido
+
+- **Síntoma:** `test/morning-report.test.ts` › «se guarda como nota…» falla en local con *Test timed out in 5000ms*; en el CI pasa.
+- **Causa:** `generateMorningReport` comprueba Ollama en `localhost:11434` y, si responde con el modelo, pide la entradilla de
+  verdad. Con `qwen3:8b` cargado eso tarda más de 5 s. En el CI no hay Ollama y el informe sale sin entradilla.
+- **Solución:** para `pnpm test`, apaga Ollama (o descarga el modelo de memoria). Pendiente: que el test inyecte un proveedor
+  falso en lugar de depender de lo que haya en el equipo.
+
+### CAPTCHA de la entrada: Turnstile (pasos manuales)
+
+- **Síntoma:** con el CAPTCHA activo en Supabase, «Enviar código» falla con «No hemos podido comprobar que no eres un
+  robot» (`captcha_failed`), o el botón se queda en «Comprobando…».
+- **Causa:** Supabase exige `captchaToken` en `signInWithOtp` y el build no lleva `VITE_TURNSTILE_SITE_KEY`, el
+  *hostname* no está en el widget de Cloudflare (Turnstile da error 110200) o se reutilizó un token (son de un solo uso).
+- **Solución / orden para activarlo** (ADR-0060; la lista viva está en `docs/fase-final.md`, paso 4c):
+  1. Cloudflare › Turnstile › *Add widget* con los *hostnames* de la web publicada, `localhost` y `tauri.localhost`.
+  2. `VITE_TURNSTILE_SITE_KEY` en Vercel (Production y Preview) y en `.env.local`; redesplegar y ver que el widget carga.
+  3. **Después**, Supabase › Authentication › Attack Protection: Turnstile con la clave **secreta**. Al revés, el login
+     publicado deja de funcionar hasta que llegue el despliegue con la variable.
+- Sin la variable no se descarga nada de Cloudflare: los entornos locales y la demo no necesitan clave. Para probar el
+  widget en local sin cuenta, Cloudflare publica claves de prueba (`1x00000000000000000000AA` siempre pasa).
+- `verifyOtp` y GitHub no llevan token: Supabase solo lo comprueba al pedir el código. Si algún día se añade otra
+  llamada protegida (contraseñas, `resend`, registro anónimo), tiene que pedir su propio token.
+- Si cambias el dominio, añádelo también a los *hostnames* del widget (lista de «Cambiar el dominio de la web»).
+
+### Ajustes › Cuenta no sale en la demo: cómo ver el segundo factor sin cuenta
+
+- **Síntoma:** en el modo demo, Ajustes › Cuenta solo enseña «Estás en modo demo», aunque el core de la demo tiene la
+  seguridad simulada (`memory-account.ts`: vale cualquier código menos `000000`).
+- **Causa:** `Seccion.tsx` corta en `auth.kind === 'demo'` antes de pintar Sesiones, Segundo factor y Apps.
+- **Solución:** para revisar los diálogos en la demo, en local y sin commitear, haz que esa rama devuelva `<SegundoFactor />`
+  y navega con el router (recargar borra la demo). La demo no genera QR (`qrCode: ''`): el diálogo enseña un hueco que
+  manda a la clave. Para ver el QR, envuelve `m.account.mfa.enroll` desde la consola y devuelve un `data:image/svg+xml`.

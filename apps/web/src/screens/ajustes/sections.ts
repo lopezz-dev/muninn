@@ -31,14 +31,13 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: 'cuenta',
     label: 'Cuenta',
     icon: 'user',
-    subtitle: 'Con qué entras y dónde está abierta tu sesión.',
+    subtitle: 'Con qué entras, dónde está abierta tu sesión y qué apps usan tu cuenta.',
     group: 'tu',
     tile: 'bg-project-blue/15 text-project-blue',
     doc: {
-      pagina: 'instalacion',
-      hash: 'iniciar-sesion',
-      title: 'Instalación › Iniciar sesión',
-      text: 'Entrar con un código o con GitHub, probar sin cuenta y cerrar sesión.',
+      pagina: 'cuenta-y-seguridad',
+      title: 'Cuenta y seguridad',
+      text: 'El segundo factor, las sesiones abiertas y las apps con acceso a tu cuenta.',
     },
   },
   {
@@ -87,12 +86,13 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: 'notificaciones',
     label: 'Notificaciones',
     icon: 'bell',
-    subtitle: 'Avisos en el móvil y en el ordenador.',
+    subtitle: 'Avisos en el móvil y en el ordenador, aunque Muninn esté cerrada.',
     group: 'espacio',
-    tile: 'bg-surface-raised text-fg-faint',
-    soon: {
-      phase: 'Próximamente',
-      text: 'Avisos en el móvil antes de cada cobro y cuando un agente termine su trabajo.',
+    tile: 'bg-project-amber/15 text-project-amber',
+    doc: {
+      pagina: 'notificaciones',
+      title: 'Notificaciones',
+      text: 'Cómo activar los avisos en el iPhone y qué te avisa Muninn.',
     },
   },
   {

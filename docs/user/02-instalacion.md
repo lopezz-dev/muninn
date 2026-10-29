@@ -59,8 +59,8 @@ Muninn se instala desde Safari como una app más, sin pasar por la App Store:
 3. Elige **Añadir a pantalla de inicio**.
 4. Abre Muninn desde el icono nuevo, el del cuervo sobre fondo ámbar.
 
-> **Próximamente:** **notificaciones** en el móvil (por ejemplo, antes de cada cobro). Aún no hay avisos: **Ajustes ›
-> Notificaciones** está marcado como próximamente. En iPhone solo funcionarán con Muninn instalada así (iOS 16.4 o superior).
+> **Avisos en el móvil:** con Muninn instalada así (iOS 16.4 o superior), activa los avisos en **Ajustes › Notificaciones** para
+> enterarte antes de cada cobro. Paso a paso en [Notificaciones](13-notificaciones.md).
 
 ## Android
 
@@ -81,13 +81,26 @@ dirección, pulsa **Usar otro correo**.
 
 Usa el mismo correo en el ordenador y en el móvil para ver lo mismo en los dos.
 
+### La comprobación anti-robots
+
+Para que nadie cree cuentas en masa, Muninn comprueba que eres una persona antes de enviarte el código.
+Casi siempre no ves nada: pasa sola en un segundo. Mientras tanto el botón dice **Comprobando…**. A veces
+te pedirá marcar una casilla debajo del formulario.
+
+Si dice **No se pudo completar la comprobación anti-robots**, revisa tu conexión y pulsa **Reintentar**.
+Algunos bloqueadores de anuncios muy estrictos la impiden: permite `challenges.cloudflare.com` en ellos.
+
 ### Con GitHub
 
-En el navegador y en el móvil puedes pulsar **Continuar con GitHub**: te lleva a GitHub para dar permiso y
-vuelve a Muninn con la sesión iniciada. Si el botón no aparece, es que aún no está activado.
+Pulsa **Continuar con GitHub**: te lleva a GitHub para dar permiso y vuelve a Muninn con la sesión iniciada. Si el
+botón no aparece, es que aún no está activado.
 
-> **Próximamente:** GitHub en la app de escritorio, y entrar con una **clave de acceso** (Face ID, Touch ID o
-> Windows Hello). Mientras tanto, entra con el código por correo.
+En la app de escritorio, GitHub se abre en tu navegador. Da permiso allí; el navegador te preguntará si quieres
+abrir Muninn: acepta y vuelves a la app ya dentro. Mientras esperas, el botón dice **Esperando a GitHub…** y puedes
+pulsar **Cancelar**. Si no vuelves en cinco minutos, Muninn deja de esperar y te avisa.
+
+> **Próximamente:** entrar con una **clave de acceso** (Face ID, Touch ID o Windows Hello). Mientras tanto, entra
+> con el código por correo o con GitHub.
 
 ### Probar sin cuenta
 
@@ -99,6 +112,6 @@ la memoria del navegador y **se pierde al recargar**. Para salir, ve a **Ajustes
 
 Ve a **Ajustes › Cuenta** y pulsa **Cerrar sesión**, o busca «cerrar sesión» con **⌘K** / **Ctrl K**. La
 sesión se cierra solo en ese dispositivo: tus datos siguen en tu cuenta y en los demás dispositivos sigues
-dentro.
+dentro. Para cerrarla en otros dispositivos, mira [Cuenta y seguridad](14-cuenta-y-seguridad.md).
 
 Al recargar la página o volver a abrir la app, la sesión se mantiene: no tienes que entrar cada vez.

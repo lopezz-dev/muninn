@@ -120,6 +120,32 @@
   }
 }
 
+/* Campo de código (CodeField) y pasos de un diálogo. `mn-shake-x` está con la insignia (abajo). */
+@theme {
+  --animate-digit-in: mn-digit-in 160ms var(--mn-motion-ease-out);
+  --animate-caret: mn-caret 1s step-end infinite;
+  --animate-shake: mn-shake-x 360ms ease-in-out;
+  --animate-step-in: mn-step-in 220ms var(--mn-motion-ease-out);
+
+  @keyframes mn-digit-in {
+    from {
+      opacity: 0;
+      scale: 0.8;
+    }
+  }
+  @keyframes mn-caret {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes mn-step-in {
+    from {
+      opacity: 0;
+      translate: 12px 0;
+    }
+  }
+}
+
 /* Superficies que se vuelven cristal cuando data-glass="on". */
 @utility glass {
   background-color: var(--mn-color-surface);
@@ -281,6 +307,48 @@
   }
   .mn-badge[data-tone="info"] > svg {
     animation: mn-info-in 260ms var(--mn-motion-ease-strong) 80ms both;
+  }
+
+  /*
+   * Éxito al final de un recorrido (SuccessMark): la insignia en grande y más pausada. Entra el círculo, se dibuja
+   * el check y salen dos anillos, uno tras otro. `forwards` en los anillos por lo mismo que en la insignia.
+   */
+  .mn-success {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 9999px;
+    animation: mn-badge-in 320ms var(--mn-motion-ease-strong) both;
+  }
+  .mn-success::before,
+  .mn-success::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px currentColor;
+    opacity: 0;
+    pointer-events: none;
+    animation: mn-badge-ring 720ms var(--mn-motion-ease-strong) 440ms forwards;
+  }
+  .mn-success::after {
+    animation-delay: 600ms;
+  }
+  .mn-success-check {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mn-success-check path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: mn-draw 360ms var(--mn-motion-ease-strong) 200ms both;
   }
 
   /* Un spinner rápido hace que la espera se perciba más corta. */

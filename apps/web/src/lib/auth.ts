@@ -6,7 +6,7 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 /** Hay credenciales de Supabase en el entorno. Sin ellas la app arranca en modo demo. */
 export const hasSupabase = Boolean(url && key)
 
-/** En escritorio no hay deep links todavía: el OAuth de GitHub volvería al navegador, no a la app. */
+/** Dentro de la app de escritorio (Tauri). El OAuth de GitHub vuelve por deep link (ADR-0059). */
 export const isTauri = Boolean(import.meta.env.TAURI_ENV_PLATFORM)
 
 /** Clave fija de la sesión en localStorage (por defecto supabase-js usa `sb-<ref>-auth-token`). */
@@ -24,11 +24,18 @@ export interface Account {
   provider: string
 }
 
-/** `anonymous`: sin sesión ni demo; las rutas de la app mandan a /login. */
+/**
+ * `anonymous`: sin sesión ni demo; las rutas de la app mandan a /login. `mfa`: ha entrado con el código o con GitHub,
+ * pero la cuenta tiene segundo factor y falta escribirlo (ADR-0061); también se queda en /login, en ese paso.
+ */
 export type AuthState =
   | { kind: 'user'; account: Account }
+  | { kind: 'mfa'; account: Account }
   | { kind: 'demo' }
   | { kind: 'anonymous' }
+
+/** Lo que ve la app dentro: con cuenta completa o en la demo. */
+export type AppAuthState = Extract<AuthState, { kind: 'user' | 'demo' }>
 
 function storage(): Storage | null {
   try {
@@ -122,7 +129,11 @@ async function resolve(): Promise<AuthState> {
   const { data } = await c.auth.getSession()
   if (data.session) {
     writeFlag(DEMO_KEY, null)
-    return { kind: 'user', account: toAccount(data.session) }
+    const account = toAccount(data.session)
+    // Sin red: lo lee del token y de los factores de la sesión guardada.
+    const { data: aal } = await c.auth.mfa.getAuthenticatorAssuranceLevel()
+    const pending = aal?.currentLevel === 'aal1' && aal.nextLevel === 'aal2'
+    return pending ? { kind: 'mfa', account } : { kind: 'user', account }
   }
   return demo ? { kind: 'demo' } : { kind: 'anonymous' }
 }
@@ -131,7 +142,7 @@ async function resolve(): Promise<AuthState> {
 export function getAuth(): Promise<AuthState> {
   current ??= resolve().then(
     (state) => {
-      resolvedUserId = state.kind === 'user' ? state.account.id : null
+      resolvedUserId = 'account' in state ? state.account.id : null
       return state
     },
     (err) => {

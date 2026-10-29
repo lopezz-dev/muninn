@@ -1,6 +1,16 @@
-import { columnKind, type Muninn, type Task, taskPriority, ValidationError } from '@muninn/core'
+import {
+  type BoardColumn,
+  type CreateTaskInput,
+  columnKind,
+  MAX_BATCH_TASKS,
+  type Muninn,
+  type Project,
+  type Task,
+  taskPriority,
+  ValidationError,
+} from '@muninn/core'
 import { z } from 'zod'
-import { type AnyTool, byName, defineTool, UUID } from './define'
+import { type AnyTool, defineTool, isExpectedError, UUID } from './define'
 
 const projectRef = z
   .string()
@@ -8,10 +18,25 @@ const projectRef = z
   .describe('Id del proyecto o su nombre (no distingue mayúsculas)')
 const isoDate = z.iso.date().describe('Fecha AAAA-MM-DD')
 
+/**
+ * Por id o por nombre (ADR-0009): primero el nombre exacto y, si no hay, los que lo contienen. Entre varios
+ * candidatos gana el activo o pausado sobre el archivado (al archivar un proyecto, su nombre se reutiliza); si
+ * quedan varios sin archivar, error con sus ids en vez de elegir uno al azar.
+ */
 export async function resolveProject(app: Muninn, ref: string) {
   if (UUID.test(ref)) return app.projects.get(ref)
   const all = await app.projects.list({ includeArchived: true })
-  const match = byName(all, ref)
+  const needle = ref.trim().toLowerCase()
+  const exact = all.filter((p) => p.name.toLowerCase() === needle)
+  const candidates =
+    exact.length > 0 ? exact : all.filter((p) => p.name.toLowerCase().includes(needle))
+  const live = candidates.filter((p) => p.status !== 'archived')
+  if (live.length > 1) {
+    throw new ValidationError(
+      `Hay ${live.length} proyectos que encajan con "${ref}": ${live.map((p) => `${p.name} (${p.id})`).join(', ')}. Usa el id.`,
+    )
+  }
+  const match = live[0] ?? candidates[0]
   if (!match) {
     throw new ValidationError(
       `No hay ningún proyecto llamado "${ref}". Proyectos: ${all.map((p) => p.name).join(', ') || '(ninguno)'}`,
@@ -51,6 +76,32 @@ async function placeOf(app: Muninn, task: Task) {
 const taskTarget = (t: Task) => ({ kind: 'task' as const, id: t.id, projectId: t.projectId })
 
 const taskFields = ['title', 'description', 'priority', 'labels', 'dueDate'] as const
+
+/** Campos de una tarea nueva, comunes a `create_task` y a cada elemento de `create_tasks`. */
+const newTask = {
+  title: z.string().min(1),
+  description: z.string().optional(),
+  column: z.string().optional().describe('Id, nombre o tipo de columna'),
+  priority: taskPriority.optional(),
+  labels: z.array(z.string()).optional(),
+  dueDate: isoDate.optional(),
+  checklist: z
+    .array(z.string().min(1))
+    .max(100)
+    .optional()
+    .describe('Subtareas, en orden (se crean sin marcar)'),
+}
+
+type BatchResult =
+  | {
+      index: number
+      ok: true
+      id: string
+      title: string
+      checklist: number
+      checklistError?: string
+    }
+  | { index: number; ok: false; error: string }
 
 export const taskTools: AnyTool[] = [
   // ─── Lectura ────────────────────────────────────────────────────────────────
@@ -182,16 +233,9 @@ export const taskTools: AnyTool[] = [
   defineTool({
     name: 'create_task',
     title: 'Crear tarea',
-    description: 'Crea una tarea en un proyecto. Por defecto va a la columna "Pendiente".',
-    input: {
-      project: projectRef,
-      title: z.string().min(1),
-      description: z.string().optional(),
-      column: z.string().optional().describe('Id, nombre o tipo de columna'),
-      priority: taskPriority.optional(),
-      labels: z.array(z.string()).optional(),
-      dueDate: isoDate.optional(),
-    },
+    description:
+      'Crea una tarea en un proyecto, con su checklist si se indica. Por defecto va a la columna "Pendiente". Para varias tareas, usa create_tasks.',
+    input: { project: projectRef, ...newTask },
     access: 'write',
     module: 'tasks',
     detail: (a) => a.title,
@@ -204,7 +248,88 @@ export const taskTools: AnyTool[] = [
         undo: (m) => m.tasks.archive(task.id),
         target: taskTarget(task),
       })
-      return task
+      return rest.checklist?.length
+        ? { ...task, checklist: await app.checklist.list(task.id) }
+        : task
+    },
+  }),
+  defineTool({
+    name: 'create_tasks',
+    title: 'Crear tareas en lote',
+    description: `Crea varias tareas de una vez (máximo ${MAX_BATCH_TASKS}), cada una con su checklist opcional, en el orden dado y al final de su columna. \`project\` vale para todas salvo las que lleven el suyo. Devuelve el id de cada tarea creada y el error de cada una que falle, sin cortar las demás: no repitas las que ya salieron bien.`,
+    input: {
+      project: projectRef.optional().describe('Proyecto de todas las tareas que no lleven el suyo'),
+      tasks: z
+        .array(z.object({ project: projectRef.optional(), ...newTask }))
+        .min(1)
+        .max(MAX_BATCH_TASKS),
+    },
+    access: 'write',
+    module: 'tasks',
+    detail: (a) => `${a.tasks.length} tareas`,
+    run: async ({ app, changed }, { project, tasks }) => {
+      // Proyecto y columna se resuelven una vez por nombre: 50 tareas del mismo proyecto no son 50 búsquedas.
+      const projects = new Map<string, Promise<Project>>()
+      const columns = new Map<string, Promise<BoardColumn>>()
+      const cached = <T>(map: Map<string, Promise<T>>, key: string, load: () => Promise<T>) => {
+        const hit = map.get(key) ?? load()
+        map.set(key, hit)
+        return hit
+      }
+      const results: BatchResult[] = []
+      const pending: { index: number; input: CreateTaskInput }[] = []
+      for (const [index, t] of tasks.entries()) {
+        const { project: own, column, ...rest } = t
+        try {
+          const ref = own ?? project
+          if (!ref)
+            throw new ValidationError(
+              'Falta el proyecto: indica `project` en la llamada o en la tarea',
+            )
+          const p = await cached(projects, ref, () => resolveProject(app, ref))
+          const columnId = column
+            ? (await cached(columns, `${p.id}:${column}`, () => resolveColumn(app, p.id, column)))
+                .id
+            : undefined
+          pending.push({ index, input: { ...rest, projectId: p.id, columnId } })
+        } catch (err) {
+          if (!isExpectedError(err)) throw err
+          results[index] = { index, ok: false, error: err.message }
+        }
+      }
+      const done = pending.length > 0 ? await app.tasks.createMany(pending.map((x) => x.input)) : []
+      const created: Task[] = []
+      for (const [i, r] of done.entries()) {
+        const index = (pending[i] as (typeof pending)[number]).index
+        if (!r.ok) {
+          results[index] = { index, ok: false, error: r.error }
+          continue
+        }
+        created.push(r.task)
+        results[index] = {
+          index,
+          ok: true,
+          id: r.task.id,
+          title: r.task.title,
+          checklist: r.checklist.length,
+          ...(r.checklistError ? { checklistError: r.checklistError } : {}),
+        }
+      }
+      const first = created[0]
+      if (first) {
+        changed({
+          summary:
+            created.length === 1
+              ? `Tarea «${first.title}» creada`
+              : `${created.length} tareas creadas`,
+          undo: async (m) => {
+            for (const t of created) await m.tasks.archive(t.id)
+          },
+          target:
+            created.length === 1 ? taskTarget(first) : { kind: 'project', id: first.projectId },
+        })
+      }
+      return { created: created.length, failed: tasks.length - created.length, results }
     },
   }),
   defineTool({

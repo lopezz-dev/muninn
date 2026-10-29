@@ -1,7 +1,7 @@
 import type { Muninn } from '@muninn/core'
 import { useLoaderData, useRouteContext } from '@tanstack/react-router'
 import { connectAppearance } from './appearance'
-import type { AuthState } from './auth'
+import type { AppAuthState } from './auth'
 import { loadSupabase } from './auth'
 import { keys } from './queries'
 import { queryClient } from './query-client'
@@ -16,7 +16,7 @@ function stopBackground() {
   teardown = []
 }
 
-async function create(auth: Exclude<AuthState, { kind: 'anonymous' }>): Promise<Muninn> {
+async function create(auth: AppAuthState): Promise<Muninn> {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
   if (auth.kind === 'demo') {
     const { createMemoryStore, createMuninn } = await import('@muninn/core')
@@ -54,7 +54,7 @@ async function create(auth: Exclude<AuthState, { kind: 'anonymous' }>): Promise<
  * Con sesión, sobre Supabase con RLS (`createSupabaseStore(supabase, user.id)`); en modo demo, en
  * memoria (se pierde al recargar). Cambiar de usuario crea una instancia nueva.
  */
-export function loadMuninn(auth: Exclude<AuthState, { kind: 'anonymous' }>): Promise<Muninn> {
+export function loadMuninn(auth: AppAuthState): Promise<Muninn> {
   const key = auth.kind === 'user' ? auth.account.id : 'demo'
   if (instance?.key !== key) {
     stopBackground()
@@ -68,6 +68,9 @@ export function loadMuninn(auth: Exclude<AuthState, { kind: 'anonymous' }>): Pro
   return instance.muninn
 }
 
+/** La instancia ya creada, sin crear otra (para limpiar al cerrar sesión). */
+export const currentMuninn = () => instance?.muninn
+
 /** Olvida la instancia actual (al cerrar sesión o salir de la demo). */
 export function resetMuninn() {
   instance = undefined
@@ -79,7 +82,4 @@ export const useMuninn = (): Muninn => useLoaderData({ from: '/_app' })
 
 /** Quién está usando la app (o el modo demo), desde el contexto de la ruta raíz. */
 export const useAuth = () =>
-  useRouteContext({ from: '__root__', select: (c) => c.auth }) as Exclude<
-    AuthState,
-    { kind: 'anonymous' }
-  >
+  useRouteContext({ from: '__root__', select: (c) => c.auth }) as AppAuthState

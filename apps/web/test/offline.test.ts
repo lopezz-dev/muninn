@@ -9,6 +9,13 @@ describe('qué se guarda', () => {
     expect(shouldPersist({ state: { status: 'pending' } })).toBe(false)
     expect(shouldPersist({ state: { status: 'error' } })).toBe(false)
   })
+
+  it('nunca la seguridad de la cuenta', () => {
+    expect(shouldPersist({ queryKey: ['account', 'sessions'], state: { status: 'success' } })).toBe(
+      false,
+    )
+    expect(shouldPersist({ queryKey: ['projects'], state: { status: 'success' } })).toBe(true)
+  })
 })
 
 describe('caché sin conexión (IndexedDB)', () => {

@@ -88,4 +88,7 @@ tareas, los cobros próximos y el resumen de noticias.
 
 Con cuenta, lo que escribes o cambias en un dispositivo aparece en los demás al momento, sin recargar.
 
-> **Próximamente:** enlaces entre notas y buscar notas desde el buscador **⌘K**.
+También puedes encontrar una nota desde el buscador (**⌘K** / **Ctrl K**): escribe parte del título o del texto. Y para
+empezar una sin ir a Notas, busca «nueva nota».
+
+> **Próximamente:** enlaces entre notas.

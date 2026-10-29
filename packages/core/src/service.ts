@@ -1,9 +1,11 @@
 import type { z } from 'zod'
+import { createAccount } from './account'
 import { ValidationError } from './errors'
 import { createFinance } from './finance'
 import { DEFAULT_SETTINGS } from './memory-store'
 import { createNews } from './news'
-import { positionAt, positionsFor } from './ordering'
+import { positionAt, positionsAfter, positionsFor } from './ordering'
+import { createPush } from './push'
 import {
   type Activity,
   type ActorKind,
@@ -18,6 +20,7 @@ import {
   createNoteInput,
   createProjectInput,
   createTaskInput,
+  createTasksInput,
   type GithubIssue,
   type GithubIssueState,
   type GithubPullRequest,
@@ -53,7 +56,7 @@ import {
   updateSettingsInput,
   updateTaskInput,
 } from './schemas'
-import { NotFoundError, type OutboxEntry, type Store } from './store'
+import { byPosition, NotFoundError, type OutboxEntry, type Store } from './store'
 
 export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = [
   { name: 'Backlog', kind: 'backlog' },
@@ -128,6 +131,11 @@ export interface MuninnOptions {
 export { ValidationError }
 
 export type TaskWithColumn = Task & { column: Pick<BoardColumn, 'id' | 'name' | 'kind'> }
+
+/** Resultado de cada tarea de `tasks.createMany`, en el orden de la entrada. */
+export type CreateManyResult =
+  | { ok: true; task: Task; checklist: ChecklistItem[]; checklistError?: string }
+  | { ok: false; error: string }
 
 export interface ProjectStatusReport {
   project: Project
@@ -213,7 +221,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
           ? 'github'
           : 'manual'
 
-  const log = (
+  const activityRow = (
     entityType: Activity['entityType'],
     entityId: string,
     action: string,
@@ -221,15 +229,17 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     payload: Record<string, unknown> = {},
   ) => {
     const context = options.activityContext?.()
-    return store.activity.insert({
+    return {
       entityType,
       entityId,
       action,
       projectId,
       actor,
       payload: context ? { ...payload, context } : payload,
-    })
+    }
   }
+  const log = (...args: Parameters<typeof activityRow>) =>
+    store.activity.insert(activityRow(...args))
 
   const parse = <S extends z.ZodType>(schema: S, value: unknown): z.output<S> => {
     const r = schema.safeParse(value)
@@ -244,6 +254,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   const finance = createFinance({ store, nowIso, today, parse, log })
   const news = createNews({ store, nowIso, today, parse, log })
+  const push = createPush({ store, nowIso, today, parse })
+  const account = createAccount({ store, parse })
 
   const must = async <T>(p: Promise<T | null>, entity: string, id: string) => {
     const v = await p
@@ -491,6 +503,10 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   /** La primera «Por hacer» que no sea la del agente (a esa solo se llega a propósito). */
   async function defaultColumn(projectId: string) {
     const [all, agent] = await Promise.all([listColumns(projectId), agentColumnOf(projectId)])
+    return pickDefaultColumn(all, agent)
+  }
+
+  function pickDefaultColumn(all: BoardColumn[], agent: string | null) {
     const cols = all.filter((c) => c.id !== agent)
     const col =
       cols.find((c) => c.kind === 'todo') ??
@@ -501,40 +517,141 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return col
   }
 
-  async function createTask(input: CreateTaskInput) {
-    const data = parse(createTaskInput, input)
-    await getProject(data.projectId)
-    const column = data.columnId
-      ? await must(store.columns.get(data.columnId), 'Columna', data.columnId)
-      : await defaultColumn(data.projectId)
+  type NewTask = z.output<typeof createTaskInput>
+  type Board = { project: Project; columns: BoardColumn[] }
+
+  /**
+   * Columna de una tarea nueva: la pedida o la de por defecto. `boards` guarda proyecto y columnas por proyecto
+   * para que un lote no los pida una vez por tarea.
+   */
+  async function columnForNewTask(data: NewTask, boards = new Map<string, Promise<Board>>()) {
+    let board = boards.get(data.projectId)
+    if (!board) {
+      board = getProject(data.projectId).then(async (project) => ({
+        project,
+        columns: await listColumns(project.id),
+      }))
+      boards.set(data.projectId, board)
+    }
+    const { project, columns } = await board
+    if (!data.columnId) return pickDefaultColumn(columns, project.agentColumnId ?? null)
+    const column =
+      columns.find((c) => c.id === data.columnId) ??
+      (await must(store.columns.get(data.columnId), 'Columna', data.columnId))
     if (column.projectId !== data.projectId) {
       throw new ValidationError('La columna no pertenece a ese proyecto')
     }
     // Al agente va una issue que ya existe: una tarea nueva no tiene ninguna que etiquetar.
-    if (data.columnId && (await agentColumnOf(data.projectId)) === column.id) {
-      throw new ValidationError(AGENT_ONLY_GITHUB)
-    }
+    if (project.agentColumnId === column.id) throw new ValidationError(AGENT_ONLY_GITHUB)
+    return column
+  }
+
+  const newTaskRow = (data: NewTask, column: BoardColumn, position: string) => ({
+    projectId: data.projectId,
+    columnId: column.id,
+    title: data.title,
+    description: data.description ?? '',
+    priority: data.priority ?? 'none',
+    labels: data.labels ?? [],
+    dueDate: data.dueDate ?? null,
+    source: data.source ?? defaultSource,
+    externalId: data.externalId ?? null,
+    externalUrl: data.externalUrl ?? null,
+    completedAt: column.kind === 'done' ? nowIso() : null,
+    archivedAt: null,
+    position,
+  })
+
+  const checklistRows = (taskId: string, titles: string[]) => {
+    const keys = positionsFor(titles.length)
+    return titles.map((title, i) => ({ taskId, title, done: false, position: keys[i] as string }))
+  }
+
+  async function createTask(input: CreateTaskInput) {
+    const data = parse(createTaskInput, input)
+    const column = await columnForNewTask(data)
     const siblings = await store.tasks.list({ columnIds: [column.id] })
-    const task = await store.tasks.insert({
-      projectId: data.projectId,
-      columnId: column.id,
-      title: data.title,
-      description: data.description ?? '',
-      priority: data.priority ?? 'none',
-      labels: data.labels ?? [],
-      dueDate: data.dueDate ?? null,
-      source: data.source ?? defaultSource,
-      externalId: data.externalId ?? null,
-      externalUrl: data.externalUrl ?? null,
-      completedAt: column.kind === 'done' ? nowIso() : null,
-      archivedAt: null,
-      position: await place('tasks', siblings),
-    })
+    const task = await store.tasks.insert(newTaskRow(data, column, await place('tasks', siblings)))
+    if (data.checklist?.length) {
+      await store.checklist.insertMany(checklistRows(task.id, data.checklist))
+    }
     await log('task', task.id, 'created', task.projectId, {
       title: task.title,
       column: column.name,
     })
     return task
+  }
+
+  /**
+   * Crea hasta `MAX_BATCH_TASKS` tareas, cada una con su checklist, en el orden dado y al final de su columna.
+   * Una tarea que no valida no frena a las demás: su resultado lleva el error. Pocas consultas: proyecto y columnas
+   * una vez por proyecto, los hermanos una vez por columna, y un `insert` para tareas, otro para subtareas y otro
+   * para la actividad.
+   */
+  async function createTasks(inputs: CreateTaskInput[]): Promise<CreateManyResult[]> {
+    const list = parse(createTasksInput, inputs)
+    const results: CreateManyResult[] = []
+    type Ready = { index: number; data: NewTask; column: BoardColumn; position: string }
+    const ready: Ready[] = []
+    const boards = new Map<string, Promise<Board>>()
+    for (const [index, input] of list.entries()) {
+      try {
+        const data = parse(createTaskInput, input)
+        ready.push({ index, data, column: await columnForNewTask(data, boards), position: '' })
+      } catch (err) {
+        if (!(err instanceof ValidationError || err instanceof NotFoundError)) throw err
+        results[index] = { ok: false, error: err.message }
+      }
+    }
+    if (ready.length === 0) return results
+
+    // Al final de cada columna, en el orden de la entrada (añadir al final nunca rebalancea).
+    const byColumn = new Map<string, Ready[]>()
+    for (const r of ready) byColumn.set(r.column.id, [...(byColumn.get(r.column.id) ?? []), r])
+    for (const [columnId, rows] of byColumn) {
+      const keys = positionsAfter(await store.tasks.list({ columnIds: [columnId] }), rows.length)
+      rows.forEach((r, i) => {
+        r.position = keys[i] as string
+      })
+    }
+    const inserted = await store.tasks.insertMany(
+      ready.map((r) => newTaskRow(r.data, r.column, r.position)),
+    )
+    // Columna y posición identifican cada tarea del lote, sin fiarse del orden que devuelva el store.
+    const byKey = new Map(inserted.map((t) => [`${t.columnId}:${t.position}`, t]))
+    const created = ready.map((r) => ({
+      ...r,
+      task: byKey.get(`${r.column.id}:${r.position}`) as Task,
+    }))
+
+    let items: ChecklistItem[] = []
+    let checklistError: string | undefined
+    const wanted = created.flatMap((c) => checklistRows(c.task.id, c.data.checklist ?? []))
+    if (wanted.length > 0) {
+      // Las tareas ya existen: si fallan las subtareas se dice en cada una, para no perder sus ids.
+      try {
+        items = await store.checklist.insertMany(wanted)
+      } catch (err) {
+        checklistError = `No se crearon las subtareas: ${err instanceof Error ? err.message : String(err)}`
+      }
+    }
+    await store.activity.insertMany(
+      created.map((c) =>
+        activityRow('task', c.task.id, 'created', c.task.projectId, {
+          title: c.task.title,
+          column: c.column.name,
+        }),
+      ),
+    )
+    for (const c of created) {
+      results[c.index] = {
+        ok: true,
+        task: c.task,
+        checklist: items.filter((i) => i.taskId === c.task.id).sort(byPosition),
+        ...(checklistError && c.data.checklist?.length ? { checklistError } : {}),
+      }
+    }
+    return results
   }
 
   async function updateTask(id: string, input: UpdateTaskInput) {
@@ -608,6 +725,34 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     const restored = await store.tasks.update(id, { archivedAt: null })
     await log('task', id, 'restored', task.projectId, { title: task.title })
     return restored
+  }
+
+  /**
+   * Archiva un proyecto y suelta su repo de GitHub (ADR-0065): un archivado no se sincroniza ni sale en Integraciones, y
+   * si lo retuviera, el repo no se podría vincular a otro proyecto. La UI lee el repo antes para decirlo.
+   */
+  async function archiveProject(id: string) {
+    const before = await getProject(id)
+    const patch = {
+      status: 'archived' as const,
+      ...(before.githubRepo ? { githubRepo: null } : {}),
+    }
+    const project = await store.projects.update(id, patch)
+    await log('project', id, 'archived', id, patch)
+    return project
+  }
+
+  /**
+   * Borra para siempre un proyecto archivado, con sus columnas, tareas y actividad; sus notas se quedan sin proyecto
+   * (ADR-0065). Solo los archivados: archivar es el paso que se puede deshacer.
+   */
+  async function deleteProject(id: string) {
+    const project = await getProject(id)
+    if (project.status !== 'archived') {
+      throw new ValidationError('Solo se puede eliminar un proyecto archivado')
+    }
+    await store.projects.remove(id)
+    await log('project', id, 'deleted', null, { name: project.name })
   }
 
   async function deleteTask(id: string) {
@@ -1169,7 +1314,9 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       create: createProject,
       update: updateProject,
       move: moveProject,
-      archive: (id: string) => updateProject(id, { status: 'archived' }),
+      archive: archiveProject,
+      /** Borrado definitivo, solo de archivados (ADR-0065). El MCP no lo expone. */
+      delete: deleteProject,
       /** Si este almacenamiento guarda imágenes de proyecto (la UI esconde el selector si no). */
       imagesEnabled: Boolean(store.projectImages),
       setImage: setProjectImage,
@@ -1188,6 +1335,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       list: listTasks,
       get: getTask,
       create: createTask,
+      createMany: createTasks,
       update: updateTask,
       move: moveTask,
       complete: completeTask,
@@ -1236,6 +1384,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     },
     finance,
     news,
+    push,
+    account,
     overview,
     recentActivity,
   }

@@ -28,10 +28,39 @@
 - **Ojo:** Windows guarda los iconos en caché. Si tras recompilar la barra de tareas o un acceso directo siguen con el viejo, cierra la app
   y ejecuta `ie4uinit.exe -show`, o reinicia el Explorador.
 
+### Los enlaces externos no abren nada en escritorio
+
+- **Síntoma:** en la app de escritorio, el título de una noticia, «Abrir», la issue de una tarea, «Ver el PR» o un enlace del Markdown no
+  hacen nada al pulsarlos. En el navegador funcionan.
+- **Causa:** en Tauri 2, `<a target="_blank">` y `window.open` no abren el navegador del sistema: el webview no tiene pestañas y Tauri
+  no lo hace por su cuenta. Hace falta `tauri-plugin-opener` con su permiso.
+- **Solución:** todo enlace externo pasa por `externalLink(url, onOpen?)` o `openExternal(url)` de `apps/web/src/lib/external-link.ts`:
+  en escritorio llama a `openUrl` del plugin; en el navegador y la PWA, a `window.open(url, '_blank', 'noopener')`. Si falla, avisa con
+  `notify`. El plugin va en `Cargo.toml` y `lib.rs`, y el permiso en `capabilities/default.json`
+  (`opener:allow-open-url` + `opener:allow-default-urls`: solo `http(s)`, `mailto` y `tel`).
+- **Ojo:** `opener:allow-open-url` a solas no basta: sin `allow-default-urls` (o un `scope` propio) el plugin rechaza toda URL con
+  «Not allowed to open url». Las imágenes adjuntas al Asistente son `data:`: en la web se abren como `blob:` (`openImage`) y en
+  escritorio no llevan enlace. No pongas un `<a target="_blank">` a pelo en la web: en escritorio no hará nada.
+
+### El user agent de la app es el de Edge (o Safari) más `Muninn/<versión>`
+
+- **Síntoma:** la lista de sesiones (ADR-0061) enseña la app de escritorio como «Windows · Edge».
+- **Causa:** WebView2 manda el user agent de Edge tal cual, sin «Tauri»; WKWebView, el de Safari sin versión.
+- **Solución:** `mark_user_agent` en `src/lib.rs` añade `Muninn/<versión>` al arrancar: en Windows lee el de WebView2 y le pone la
+  marca al final; en macOS fija el de WKWebView (congelado por Apple) con la marca. `sessionDeviceLabel` (core) la reconoce.
+  En Linux no se marca. No uses `userAgent` en `tauri.conf.json`: sustituye el user agent entero.
+- **Ojo:** la sesión guarda el user agent del momento de entrar: las abiertas antes siguen como «Windows · Edge» hasta volver a
+  entrar. La parte de macOS no se ha compilado en un Mac (desde Windows no se puede: `objc2` necesita el compilador de Apple).
+
 ### CSP
 
 - `tauri.conf.json` restringe `connect-src` a `self`, `*.supabase.co` y `localhost`. Si añades otro
   backend (servidor propio, Ollama en `localhost:11434`…), actualiza la CSP o las peticiones se bloquearán sin un error claro.
+- `script-src` y `frame-src` permiten `https://challenges.cloudflare.com` para el CAPTCHA de la entrada (Turnstile, ADR-0060).
+  Sin ellos el widget no carga y el login se queda en «Comprobando…». En Cloudflare, el widget debe tener el *hostname*
+  `tauri.localhost` (Windows sirve la app en `http://tauri.localhost`). En macOS el origen es `tauri://localhost`, que no es
+  `http(s)`: está sin comprobar si Turnstile lo acepta (fase final, paso 4c). Si no, la salida es activar
+  `app.windows[].useHttpsScheme` o el protocolo `http` de Tauri, que cambia el origen y con él el localStorage de la sesión.
 
 ### Versión
 
@@ -105,3 +134,24 @@
   5. **Que arranquen solos:** un acceso directo a cada comando en `shell:startup` (Win + R) o una tarea programada «Al iniciar sesión».
 - **Ojo:** la GPU la comparten Ollama y Whisper. Con `qwen3:8b` y large-v3-turbo-q5_0 cabe en 12 GB; con `qwen3:14b`, pasa Whisper a CPU.
   Piper va en CPU y es GPL-3.0: úsalo como programa aparte, no lo metas en el instalador sin revisar la licencia.
+
+### GitHub en escritorio: la vuelta llega por `muninn://auth/callback`
+
+- **Síntoma:** tras autorizar en GitHub, el navegador acaba en la *Site URL* (o en «no se puede abrir esta página») y la app se queda
+  «Esperando a GitHub…»; o se abre una segunda ventana de Muninn sin sesión.
+- **Causa:** el navegador del sistema no puede volver a `tauri.localhost`: la vuelta es el deep link `muninn://auth/callback`
+  ([ADR-0059](../adr/0059-deep-links-para-oauth-en-escritorio.md)). Hace falta que (1) Supabase lo tenga en *Redirect URLs*, (2) el
+  sistema tenga registrado `muninn://` y (3) single-instance le pase el enlace a la ventana abierta.
+- **Solución:**
+  - *Redirect URLs* de Supabase con `muninn://auth/callback` ([gotchas/db](db.md#site-url-y-redirect-urls)).
+  - El instalador registra el esquema. En `tauri dev`, `lib.rs` lo registra al arrancar en Windows y Linux (solo en debug, para no
+    pisar el del instalador). **En macOS no hay deep links en `tauri dev`**: prueba con el `.app` en `/Applications`.
+  - `tauri_plugin_single_instance` va el **primero** en el `Builder` y con la *feature* `deep-link`; si no, Windows abre otro proceso.
+  - El permiso `deep-link:default` en `capabilities/default.json` (si falta, `onOpenUrl` falla con «not allowed»).
+- **Ojo:**
+  - Se escucha `onOpenUrl` **antes** de abrir el navegador: si la sesión de GitHub ya estaba autorizada, la vuelta llega en un segundo.
+  - Si al probar en dev quedó registrado el `muninn://` del ejecutable de `target/debug`, el instalado lo vuelve a apuntar a sí mismo al
+    instalarse. En Windows está en `HKCU\Software\Classes\muninn`.
+  - `getCurrent()` devuelve el enlace con el que arrancó la app durante toda la sesión: se mira una sola vez (un código PKCE no se puede
+    canjear dos veces), y solo con la marca `muninn.oauth.desktop` de un login empezado aquí.
+  - No aceptes `#access_token=…` en la vuelta (`setSession`): cualquier web podría abrir el enlace y meterte en otra cuenta. Solo PKCE.

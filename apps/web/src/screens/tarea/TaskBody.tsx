@@ -19,6 +19,7 @@ import { PRIORITY_TEXT, SourceBadge } from '../../components/task-meta'
 import { activityLink, actorName, describeActivity } from '../../lib/activity'
 import { type BoardData, PRIORITIES } from '../../lib/board'
 import { dueLabel, timeAgo } from '../../lib/dates'
+import { externalLink } from '../../lib/external-link'
 import { useMuninn } from '../../lib/muninn'
 import { createNote } from '../../lib/note-actions'
 import { taskActivityQuery, taskNotesQuery } from '../../lib/queries'
@@ -530,9 +531,7 @@ function ActivityLog({ task }: Pick<BodyProps, 'task'>) {
                   <>
                     {' · '}
                     <a
-                      href={activityLink(a) as string}
-                      target="_blank"
-                      rel="noreferrer"
+                      {...externalLink(activityLink(a) as string)}
                       className="text-accent hover:underline"
                     >
                       Ver el PR

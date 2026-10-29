@@ -6,13 +6,18 @@ import { EmptyState } from '../../components/Page'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
 import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appearance'
 import { isTauri } from '../../lib/auth'
+import { externalLink } from '../../lib/external-link'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { bySection, type PrefKey, resetPrefs, useChangedPrefs } from '../../lib/settings-changes'
 import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { AppsConAcceso } from './AppsConAcceso'
 import { AsistenteAjustes, InformeAjustes } from './AsistenteAjustes'
 import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
+import { Notificaciones } from './Notificaciones'
+import { SegundoFactor } from './SegundoFactor'
+import { Sesiones } from './Seguridad'
 import { type SettingsSection, settingsSection } from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
@@ -106,6 +111,9 @@ function Cuenta() {
           </Button>
         </PrefRow>
       </PrefGroup>
+      <SegundoFactor />
+      <Sesiones />
+      <AppsConAcceso />
     </>
   )
 }
@@ -314,7 +322,7 @@ function Acerca() {
         description="Muninn es de código abierto, con licencia MIT."
       >
         <Button asChild size="sm">
-          <a href="https://github.com/lopezz-dev/muninn" target="_blank" rel="noreferrer">
+          <a {...externalLink('https://github.com/lopezz-dev/muninn')}>
             GitHub
             <icons.external size={13} aria-hidden="true" />
           </a>
@@ -329,6 +337,7 @@ const BODY: Record<string, () => ReactNode> = {
   apariencia: () => <Apariencia />,
   atajos: () => <Atajos />,
   modulos: () => <Modulos />,
+  notificaciones: () => <Notificaciones />,
   asistente: () => <AsistenteAjustes />,
   informe: () => <InformeAjustes />,
   integraciones: () => <Integraciones />,
