@@ -320,5 +320,7 @@
 - **Solución:** pendiente de decidir en un ADR (tarea «El MCP remoto no ve datos con el segundo factor activado»). Mientras, no actives
   el segundo factor en una cuenta que use el MCP remoto. Al desactivarlo vuelve a funcionar, pero hay que reconectar el conector.
 - **Ojo:** cerrar la sesión de claude.ai en **Sesiones y dispositivos**, «En los demás» o «En todos», y desactivar el segundo factor
-  invalidan el conector: hay que reconectarlo en claude.ai. MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por
+  invalidan el conector: hay que reconectarlo en claude.ai. Al reconectar, cierra antes la sesión de Muninn en el navegador (o usa una
+  ventana privada): si no, el consentimiento se aprueba (200 en los logs de Auth) pero claude.ai nunca canjea el código y dice «Error
+  Starting Authentication». MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por
   defecto); quitar un factor confirmado exige una sesión `aal2`, por eso «Desactivar» pide un código antes.
