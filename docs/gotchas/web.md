@@ -181,6 +181,10 @@
 - **Solución:** `useStandaloneGap` en `shell/TabBar.tsx` compara `screen` con `innerHeight` solo si `navigator.standalone`,
   y baja la barra la diferencia (como mucho 80 px; si no hay diferencia, no hace nada). Solo se puede comprobar en un iPhone real: va en
   [pruebas-iphone](../pruebas-iphone.md).
+- **Ojo:** iOS corrige después el visor sin lanzar siempre `resize`. Si la corrección se queda puesta, la barra baja de más y se
+  corta por debajo del borde (visto el 28 de octubre en el iPhone). Por eso se vuelve a medir al cambiar de pantalla, al volver a la
+  app (`visibilitychange`), con `visualViewport` y a los 250 ms y 1 s. Para simularlo en el navegador: `navigator.standalone = true` y
+  `screen.height` = `innerHeight + 47` con `Object.defineProperty`, navega, y después iguala `screen.height` y navega otra vez.
 
 ### En escritorio la ventana no hace scroll: lo hace `<main>`
 
