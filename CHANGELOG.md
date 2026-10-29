@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.5.0](https://github.com/lopezz-dev/muninn/compare/v0.4.0...v0.5.0) (2026-10-29)
+
+
+### Features
+
+* Ajustes › Cuenta: sesiones, segundo factor (TOTP) y apps con acceso ([57d9b35](https://github.com/lopezz-dev/muninn/commit/57d9b35d9c2ebeeb0ca839954bb9c9ecefa896da))
+* **core:** eliminar proyectos archivados y soltar el repo al archivar (ADR-0065) ([75b0a68](https://github.com/lopezz-dev/muninn/commit/75b0a68ff7fd022f01c5329ce583c727e8de72c0))
+* **core:** eliminar proyectos archivados y soltar el repo al archivar (ADR-0065) ([c626bc6](https://github.com/lopezz-dev/muninn/commit/c626bc688a7dcfef76af3b0fdbaaacf63c6c7de7))
+* **core:** m.push para suscribir, listar y quitar dispositivos y avisos de cobro ([c4f049b](https://github.com/lopezz-dev/muninn/commit/c4f049b16fa2c6c1105ccd14f338d76256ef1af7))
+* **core:** ver y cerrar sesiones y dispositivos en Ajustes › Cuenta ([abde8e0](https://github.com/lopezz-dev/muninn/commit/abde8e07e0281fecad509d18410a5d93552f7692))
+* **db:** Edge Function push con VAPID para el cron de cobros y el aviso de prueba ([710875e](https://github.com/lopezz-dev/muninn/commit/710875e67a601a132a30232a0792248bc8592365))
+* **db:** el servidor exige el segundo factor (ADR-0062) ([aa144ef](https://github.com/lopezz-dev/muninn/commit/aa144ef8bf408412adf011ceb9d952d93712423d))
+* **db:** el servidor exige el segundo factor (ADR-0062) ([67244e0](https://github.com/lopezz-dev/muninn/commit/67244e02dd3d192b28eabb1fe22703b432cdefaf))
+* **db:** tablas push_subscriptions y push_log con RLS (ADR-0040) ([f08102c](https://github.com/lopezz-dev/muninn/commit/f08102cde9e4e83e0b1136e83562e4587c0078d8))
+* **desktop:** GitHub OAuth en escritorio con deep link muninn://auth/callback ([89ba150](https://github.com/lopezz-dev/muninn/commit/89ba150e23371b7446fb098fc29fa6c278580be5))
+* **desktop:** GitHub OAuth en escritorio con deep link muninn://auth/callback ([f5d802a](https://github.com/lopezz-dev/muninn/commit/f5d802a585e33b37ac4fdc54c6bc2514ce4fc975))
+* **mcp:** crear tareas en lote (create_tasks) y proyecto por nombre sin archivados ([749efef](https://github.com/lopezz-dev/muninn/commit/749efeff1b74917304689c8418376284028f7b63))
+* **mcp:** crear tareas en lote con su checklist (create_tasks) ([328f5a8](https://github.com/lopezz-dev/muninn/commit/328f5a8eb210bd436fce35fb288b89518193e68f))
+* **web:** Ajustes › Notificaciones con avisos push por dispositivo ([8bbe6eb](https://github.com/lopezz-dev/muninn/commit/8bbe6ebe92f859737e9d4ca0144c6315002ecd87))
+* **web:** buscar tareas y notas en ⌘K y acción «Nueva nota» ([4924399](https://github.com/lopezz-dev/muninn/commit/4924399fba65829d1598e984e76532cf286bf453))
+* **web:** CAPTCHA con Cloudflare Turnstile en la entrada ([1b13c49](https://github.com/lopezz-dev/muninn/commit/1b13c49aec2f7b1643007ad9f048335e0ddda389))
+* **web:** CAPTCHA con Cloudflare Turnstile en la entrada ([b7fe9a1](https://github.com/lopezz-dev/muninn/commit/b7fe9a1c76f84e535fd6f444d4604a82d7c04e1c))
+* **web:** el segundo factor se activa y desactiva en su diálogo (ADR-0063) ([e567caf](https://github.com/lopezz-dev/muninn/commit/e567caf152253bbfdfa2099efc7829ae3e81cd8c))
+* **web:** el segundo factor se activa y desactiva en su diálogo (ADR-0063) ([84eb083](https://github.com/lopezz-dev/muninn/commit/84eb083fab60c920466ccabc7f10c62da1dafe48))
+* **web:** PWA con Web Push: suscripción por dispositivo, función push y aviso antes del cobro ([f7b49fc](https://github.com/lopezz-dev/muninn/commit/f7b49fcaa8f69c263ceac6f920b0f6f0864e15b1))
+* **web:** segundo factor (MFA) con app de códigos TOTP ([742d3b1](https://github.com/lopezz-dev/muninn/commit/742d3b13ab3c2f9c5a3bd4300adc0ebe0054b4c7))
+* **web:** ver y quitar los permisos OAuth dados a otras apps ([386e95c](https://github.com/lopezz-dev/muninn/commit/386e95c0b0538a52f765e1478c7d71d2eaaa3e26))
+
+
+### Bug Fixes
+
+* **core:** distinguir la app de escritorio y las apps conectadas en Sesiones ([7687029](https://github.com/lopezz-dev/muninn/commit/768702940d80b074a384efe61d70279228b56131))
+* **core:** distinguir la app de escritorio y las apps conectadas en Sesiones ([2ca5e1d](https://github.com/lopezz-dev/muninn/commit/2ca5e1d1ca7d56e7c78a44b9841cb1976159ebe9))
+* **core:** solo servicios de push conocidos en las suscripciones (SSRF) ([56fcf4e](https://github.com/lopezz-dev/muninn/commit/56fcf4e6005450fd9f7a247644965cadf71743fb))
+* **desktop:** abrir los enlaces externos con tauri-plugin-opener ([b7c0844](https://github.com/lopezz-dev/muninn/commit/b7c08448213e511f354dee54a1db8b4a98c9284c))
+* **desktop:** abrir los enlaces externos con tauri-plugin-opener ([295344a](https://github.com/lopezz-dev/muninn/commit/295344a861457ce4b249f76c3b2a0b6b7961167a))
+* **desktop:** solo PKCE en la vuelta de GitHub y solo con un login empezado aquí ([43fc509](https://github.com/lopezz-dev/muninn/commit/43fc509dba6eec784e17d3d8f499b5962bb2c00e))
+* **mcp:** el conector de claude.ai se presenta con el logo de Muninn ([ded3077](https://github.com/lopezz-dev/muninn/commit/ded30770ac382b7c536529bd33786f94644f5f86))
+* **mcp:** el proyecto por nombre prefiere el activo al archivado ([d78abb7](https://github.com/lopezz-dev/muninn/commit/d78abb7302a3b2bd34072c0b2fc9f5ffcab26dd8))
+* **web:** la barra de pestañas no se corta por abajo en la app del iPhone ([ff65506](https://github.com/lopezz-dev/muninn/commit/ff6550663f5291c271256eb1bf7980f822a68b73))
+* **web:** la barra de pestañas no se corta por abajo en la app del iPhone ([65a1add](https://github.com/lopezz-dev/muninn/commit/65a1adde1c49e3eb2c2c4b1121becfaa95b41936))
+
+
+### Performance Improvements
+
+* **ui:** iconos de Phosphor con solo los grosores que se usan ([78bff27](https://github.com/lopezz-dev/muninn/commit/78bff27f6144e9d0573549ed51b8326d97f19845))
+
 ## [0.4.0](https://github.com/lopezz-dev/muninn/compare/v0.3.0...v0.4.0) (2026-10-28)
 
 
