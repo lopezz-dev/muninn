@@ -2212,6 +2212,8 @@ dependencies = [
 name = "muninn"
 version = "0.4.0"
 dependencies = [
+ "objc2",
+ "objc2-foundation",
  "serde",
  "serde_json",
  "tauri",
@@ -2221,6 +2223,8 @@ dependencies = [
  "tauri-plugin-process",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "webview2-com",
+ "windows",
 ]
 
 [[package]]

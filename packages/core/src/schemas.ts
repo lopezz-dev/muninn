@@ -700,6 +700,8 @@ export interface AccountSession {
   aal: string | null
   /** La sesión de este dispositivo. */
   current: boolean
+  /** La app que la abrió por OAuth (p. ej. «Claude»); `null` si se entró desde Muninn. */
+  appName: string | null
 }
 
 /** Cerrar en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
