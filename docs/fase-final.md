@@ -122,6 +122,17 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   PR» de una tarea, «PR #n» en GitHub, un enlace de una nota y «GitHub» en Ajustes › Acerca de. Las imágenes del Asistente no llevan enlace.
 - [ ] Navegador: los mismos enlaces abren otra pestaña (Ctrl-clic, en segundo plano) y una imagen adjunta del Asistente se abre a tamaño real.
 
+**GitHub en escritorio** (28-10, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)).
+- [ ] Supabase › **Authentication › URL Configuration › Redirect URLs**: añade `muninn://auth/callback` (exacta, sin `/**`). Sin ella,
+  Supabase vuelve a la *Site URL* en el navegador y la app se queda «Esperando a GitHub…».
+- [ ] Con `pnpm dev:desktop` (Windows registra `muninn://` al arrancar), cierra sesión y pulsa **Continuar con GitHub**: se abre tu navegador
+  y sale «Sigue en el navegador». Autoriza; el navegador pregunta si abrir Muninn: acepta. La app pasa al frente, «Sesión iniciada» y entras.
+  No se abre una segunda ventana de Muninn.
+- [ ] En GitHub pulsa **Cancel**: «Acceso con GitHub cancelado». Pulsa **Cancelar** en la app mientras espera: el mismo aviso y el botón
+  vuelve a estar activo.
+- [ ] Con la app **instalada** (paso 10): lo mismo. Y con Muninn cerrado, abre en el navegador una vuelta pendiente (empieza el login, cierra la
+  app antes de autorizar y autoriza después): Muninn se abre y entra.
+
 ## 4. Publicar la web (≈ 30 min)
 
 Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales).
@@ -160,7 +171,23 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 - [ ] Programar el cron `muninn-push-charges` (`0 7 * * *`).
 - [ ] Comprobar: `curl -X POST` a `/push/send` sin secreto da 401 y con el secreto responde `{ users, results, pruned }`.
 
-## 4c. Seguridad de la cuenta (≈ 20 min)
+## 4c. CAPTCHA de la entrada (≈ 20 min)
+
+El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha hecho todavía. Pasos de
+[gotchas/web › CAPTCHA](gotchas/web.md#captcha-de-la-entrada-turnstile-pasos-manuales). **Hazlo antes de abrir el registro.**
+- [ ] Cloudflare › Turnstile › *Add widget*: modo **Managed** (o *Invisible*), con los *hostnames* `muninn-sepia.vercel.app` (y el
+  dominio propio si lo hay), `localhost` y `tauri.localhost`. Guarda la clave del sitio y la secreta en tu gestor de contraseñas.
+- [ ] `VITE_TURNSTILE_SITE_KEY` (la del sitio) en Vercel, Production y Preview, y en `apps/web/.env.local`. Vuelve a desplegar.
+- [ ] Comprobar en la web publicada que el widget carga (el botón pasa de «Comprobando…» a «Enviar código») **antes** del paso siguiente.
+- [ ] Supabase › Authentication › Attack Protection › *Enable Captcha protection*: proveedor **Turnstile** y la clave **secreta**.
+- [ ] Comprobar:
+  - entrar con el código del correo en la web publicada funciona, y **Reenviar código** también;
+  - en la app de escritorio (Windows: `http://tauri.localhost`; macOS: `tauri://localhost`) el widget carga y se entra;
+  - en la PWA del iPhone se entra;
+  - con `curl` a `/auth/v1/otp` sin `gotrue_meta_security.captcha_token`, Supabase responde `captcha_failed`.
+- [ ] Si en macOS el widget falla por el origen `tauri://`, apúntalo como tarea (ver gotchas/desktop).
+
+## 4d. Seguridad de la cuenta (≈ 20 min)
 
 Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
 y el iPhone con la sesión abierta.

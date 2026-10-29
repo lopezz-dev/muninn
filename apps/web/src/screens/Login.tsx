@@ -2,6 +2,8 @@ import { Button, Icon, type IconName, icons, notify, TextField } from '@muninn/u
 import { getRouteApi, useRouter } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
 import { enterDemo, hasSupabase, isTauri, loadSupabase, safeRedirect } from '../lib/auth'
+import { captchaSiteKey, useCaptcha } from '../lib/captcha'
+import { useGitHubDesktopLogin } from '../lib/github-desktop-login'
 import {
   authErrorMessage,
   enabledProviders,
@@ -57,6 +59,9 @@ export function Login() {
   const [busy, setBusy] = useState<'send' | 'verify' | 'github' | null>(null)
   const [resendIn, startCountdown] = useCountdown()
   const [github, setGithub] = useState(false)
+  // Sin servidor no hay nada que proteger: ni widget ni script de Cloudflare.
+  const captcha = useCaptcha(hasSupabase ? captchaSiteKey : null)
+  const waitingCaptcha = captcha.required && captcha.status !== 'ready'
 
   usePageMeta({
     title: 'Iniciar sesión',
@@ -68,12 +73,10 @@ export function Login() {
     if (!hasSupabase) return
     // Se adelanta la descarga de supabase-js mientras se escribe el correo.
     loadSupabase().catch(() => {})
-    // Solo se ofrece GitHub si está activado en el proyecto (y no en escritorio: faltan deep links).
-    if (!isTauri) {
-      enabledProviders()
-        .then((p) => setGithub(Boolean(p.github)))
-        .catch(() => setGithub(false))
-    }
+    // Solo se ofrece GitHub si está activado en el proyecto.
+    enabledProviders()
+      .then((p) => setGithub(Boolean(p.github)))
+      .catch(() => setGithub(false))
   }, [])
 
   // GitHub vuelve con `error_description` si se cancela o falla el permiso.
@@ -82,6 +85,14 @@ export function Login() {
       notify.error('No se pudo entrar con GitHub', { description: search.error_description })
     }
   }, [search.error_description])
+
+  useEffect(() => {
+    if (captcha.status === 'error') {
+      notify.error('No se pudo comprobar que no eres un robot', {
+        description: 'Revisa tu conexión y pulsa «Reintentar».',
+      })
+    }
+  }, [captcha.status])
 
   const goIn = async () => {
     forgetUserData()
@@ -96,10 +107,18 @@ export function Login() {
       setError('Escribe un correo válido, como tu@correo.com.')
       return
     }
+    if (captcha.required && !captcha.token) {
+      setError(
+        captcha.status === 'error'
+          ? 'Falta la comprobación anti-robots. Pulsa «Reintentar».'
+          : 'Un momento: estamos comprobando que no eres un robot.',
+      )
+      return
+    }
     setError(null)
     setBusy('send')
     try {
-      await sendEmailCode(value)
+      await sendEmailCode(value, captcha.token)
       setEmail(value)
       setCode('')
       setStep('code')
@@ -110,6 +129,8 @@ export function Login() {
       setError(message)
       notify.error('No se pudo enviar el código', { description: message })
     } finally {
+      // El token es de un solo uso: se pide otro para el siguiente envío (o el reenvío).
+      captcha.reset()
       setBusy(null)
     }
   }
@@ -135,7 +156,11 @@ export function Login() {
     }
   }
 
+  // En escritorio, GitHub se abre en el navegador del sistema y vuelve por deep link (ADR-0059).
+  const desktopGitHub = useGitHubDesktopLogin(isTauri && hasSupabase, goIn)
+
   const withGitHub = async () => {
+    if (isTauri) return desktopGitHub.start()
     setBusy('github')
     try {
       await signInWithGitHub(target)
@@ -228,9 +253,13 @@ export function Login() {
                 variant="primary"
                 size="lg"
                 className="font-semibold"
-                disabled={!hasSupabase || busy !== null}
+                disabled={!hasSupabase || busy !== null || waitingCaptcha}
               >
-                {busy === 'send' ? 'Enviando…' : 'Enviar código'}
+                {busy === 'send'
+                  ? 'Enviando…'
+                  : captcha.status === 'loading'
+                    ? 'Comprobando…'
+                    : 'Enviar código'}
               </Button>
             </form>
           ) : (
@@ -288,7 +317,7 @@ export function Login() {
                 <button
                   type="button"
                   className="cursor-pointer text-accent hover:text-accent-hover disabled:cursor-default disabled:text-fg-faint"
-                  disabled={resendIn > 0 || busy !== null}
+                  disabled={resendIn > 0 || busy !== null || waitingCaptcha}
                   onClick={() => send()}
                 >
                   {resendIn > 0 ? `Reenviar en ${resendIn} s` : 'Reenviar código'}
@@ -297,16 +326,57 @@ export function Login() {
             </form>
           )}
 
+          {/* Fuera de los dos formularios: el reenvío del código también necesita token. */}
+          {captcha.required ? (
+            <div className="flex flex-col gap-2">
+              <div ref={captcha.ref} />
+              {captcha.status === 'loading' ? (
+                <p role="status" className="text-xs text-fg-faint">
+                  Comprobando que no eres un robot…
+                </p>
+              ) : captcha.status === 'error' ? (
+                <p role="alert" className="text-xs text-danger">
+                  No se pudo completar la comprobación anti-robots.{' '}
+                  <button
+                    type="button"
+                    onClick={captcha.retry}
+                    className="cursor-pointer text-accent hover:text-accent-hover"
+                  >
+                    Reintentar
+                  </button>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {step === 'email' && github ? (
             <>
               <div className="flex items-center gap-3 text-xs text-fg-faint">
                 <span aria-hidden="true" className="h-px flex-1 bg-border" />o
                 <span aria-hidden="true" className="h-px flex-1 bg-border" />
               </div>
-              <Button size="lg" onClick={withGitHub} disabled={busy !== null} className="gap-2.5">
+              <Button
+                size="lg"
+                onClick={withGitHub}
+                disabled={busy !== null || desktopGitHub.waiting}
+                className="gap-2.5"
+              >
                 <Icon name="github" />
-                {busy === 'github' ? 'Abriendo GitHub…' : 'Continuar con GitHub'}
+                {desktopGitHub.waiting
+                  ? 'Esperando a GitHub…'
+                  : busy === 'github'
+                    ? 'Abriendo GitHub…'
+                    : 'Continuar con GitHub'}
               </Button>
+              {desktopGitHub.waiting ? (
+                <button
+                  type="button"
+                  onClick={desktopGitHub.cancel}
+                  className="cursor-pointer self-center text-[12.5px] text-accent hover:text-accent-hover"
+                >
+                  Cancelar
+                </button>
+              ) : null}
             </>
           ) : null}
 

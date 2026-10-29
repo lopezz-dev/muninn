@@ -6,7 +6,7 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 /** Hay credenciales de Supabase en el entorno. Sin ellas la app arranca en modo demo. */
 export const hasSupabase = Boolean(url && key)
 
-/** En escritorio no hay deep links todavía: el OAuth de GitHub volvería al navegador, no a la app. */
+/** Dentro de la app de escritorio (Tauri). El OAuth de GitHub vuelve por deep link (ADR-0059). */
 export const isTauri = Boolean(import.meta.env.TAURI_ENV_PLATFORM)
 
 /** Clave fija de la sesión en localStorage (por defecto supabase-js usa `sb-<ref>-auth-token`). */

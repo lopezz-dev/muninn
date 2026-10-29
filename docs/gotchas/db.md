@@ -121,7 +121,8 @@
 - **Síntoma:** al volver de GitHub se acaba en `http://localhost:3000` o en la URL equivocada.
 - **Causa:** Supabase solo redirige a direcciones de la lista permitida; si no está, usa la *Site URL*.
 - **Solución:** en **Authentication › URL Configuration**, *Site URL* con la dirección principal y en
-  *Redirect URLs* `http://localhost:5173/**`, `http://localhost:5174/**` y la del despliegue de la PWA.
+  *Redirect URLs* `http://localhost:5173/**`, `http://localhost:5174/**`, la del despliegue de la PWA y
+  `muninn://auth/callback` (GitHub en la app de escritorio, [ADR-0059](../adr/0059-deep-links-para-oauth-en-escritorio.md)).
 
 ### Probar RLS sin crear usuarios
 

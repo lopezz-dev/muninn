@@ -320,24 +320,26 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ## Acceso y seguridad
 Hoy se entra con un código por correo o con GitHub ([ADR-0022](adr/0022-auth-y-sesion.md)). Siguientes pasos,
 más o menos en este orden:
+- [x] **CAPTCHA en la entrada** con Cloudflare Turnstile antes de abrir el registro
+  ([ADR-0060](adr/0060-captcha-con-turnstile-en-la-entrada.md)). Montado; falta activarlo (fase final, paso 4c)
 - [ ] Dominio propio de Muninn como remitente (hoy, provisional: `no-reply@shion.es`)
 - [ ] **Claves de acceso (passkeys, WebAuthn):** entrar con Face ID, Touch ID, Windows Hello o una llave
   física, sin correo ni contraseña. Funciona en la PWA del iPhone y en el navegador; en Tauri, según el
   soporte de WebAuthn de cada sistema
 - [x] **Segundo factor (MFA) con app de códigos (TOTP)**, opcional: alta con QR y clave, código al entrar y desactivar con un
-  código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4c)
+  código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4d)
   - [ ] Exigirlo en el servidor (RLS) y para conectar integraciones sensibles (finanzas, GitHub con permisos de escritura):
     propuesto en [ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)
   - [ ] Códigos de recuperación (en supabase-js aún experimentales)
 - [x] **Apps con acceso** en Ajustes › Cuenta: ver y quitar los permisos OAuth dados a otras apps, como claude.ai
-  ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4c)
+  ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4d)
 - [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
   o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
-  prueba real, en la fase final (4c)
+  prueba real, en la fase final (4d)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
 - [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
-- [ ] Deep links en Tauri para GitHub OAuth en escritorio (hoy el botón se oculta)
+- [x] Deep links en Tauri para GitHub OAuth en escritorio (`muninn://auth/callback`, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)). Falta probarlo instalado: [fase final](fase-final.md), paso 3
 - [ ] Más proveedores: Apple (útil en iPhone) y Google
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
 
