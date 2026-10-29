@@ -27,6 +27,7 @@
 7. La política restrictiva del segundo factor (ADR-0062): `create policy require_mfa on <tabla> as restrictive for all to authenticated
    using ((select public.mfa_satisfied())) with check ((select public.mfa_satisfied()));`. La migración de ADR-0062 solo la puso en las
    tablas que existían. Una función `security definer` que lea datos del usuario se salta el RLS: que llame a `public.mfa_satisfied()`.
+   Las de push (`20261028180000_push_subscriptions`) la reciben en `20261029180000_require_mfa_push`.
 
 ### No editar migraciones ya aplicadas
 

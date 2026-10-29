@@ -165,6 +165,8 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 28 de octubre; nada de esto se ha hecho todavía.
 - [ ] Generar las claves VAPID en tu equipo (`npx web-push generate-vapid-keys`) y guardarlas en tu gestor de contraseñas.
 - [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
+  Justo después, `20261029180000_require_mfa_push` (la política del segundo factor en sus dos tablas) y comprobar que hay
+  tantas políticas `require_mfa` como tablas de `public` con RLS más una (hoy, 18 = 17 + 1).
 - [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
 - [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
 - [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
