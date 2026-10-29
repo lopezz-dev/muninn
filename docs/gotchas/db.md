@@ -24,6 +24,9 @@
 4. Índices que empiecen por `owner_id` o por la FK por la que se filtra.
 5. Si debe sincronizarse entre dispositivos: `alter publication supabase_realtime add table …`.
 6. Mapearla en `supabase-store.ts`, usando columnas `snake_case` que se convierten a `camelCase` automáticamente.
+7. La política restrictiva del segundo factor (ADR-0062): `create policy require_mfa on <tabla> as restrictive for all to authenticated
+   using ((select public.mfa_satisfied())) with check ((select public.mfa_satisfied()));`. La migración de ADR-0062 solo la puso en las
+   tablas que existían. Una función `security definer` que lea datos del usuario se salta el RLS: que llame a `public.mfa_satisfied()`.
 
 ### No editar migraciones ya aplicadas
 
@@ -130,6 +133,19 @@
   `begin; set local role authenticated; set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}'; select … ; rollback;`
   Con un `sub` que no es el dueño, las consultas devuelven 0 filas y los `insert` con su `owner_id` fallan
   con *new row violates row-level security policy*. Con `set local role anon`, todo devuelve 0 filas.
+
+### Probar el segundo factor en el servidor
+
+- **Síntoma:** con el segundo factor activado, la app (o claude.ai) ve listas vacías, o al vincular un repo sale *Conectar GitHub
+  requiere el segundo factor*.
+- **Causa:** es lo esperado con un token `aal1` (ADR-0062): la política `require_mfa` filtra todas las filas y no da error en los
+  `select`. Solo pasa si la cuenta tiene un factor `verified` en `auth.mfa_factors`; vincular GitHub exige `aal2` siempre.
+- **Solución:** completar el segundo factor (la app lo pide al entrar). Para comprobar la migración sin tocar datos, en el editor SQL:
+  `begin;`, crea en `auth.users` dos usuarios de prueba, a uno dale un factor `totp` `verified` en `auth.mfa_factors`, un proyecto a
+  cada uno, y con `set local role authenticated; set local request.jwt.claims = '{"sub":"<id>","role":"authenticated","aal":"aal1"}';`
+  comprueba: con factor y `aal1`, `select count(*) from projects` da 0 y `list_my_sessions()` falla con 42501; con `aal2`, da 1 y
+  vincular un repo funciona; sin factor y `aal1`, ve su proyecto y lo renombra, pero vincular un repo falla y desvincularlo no. Termina
+  con `rollback;`.
 
 ### `github_outbox` antes que cualquier tarea de GitHub
 

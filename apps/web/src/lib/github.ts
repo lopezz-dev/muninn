@@ -23,6 +23,11 @@ export function parseRepoInput(input: string): string | null | undefined {
 
 type ProjectRepo = Pick<Project, 'id' | 'name' | 'githubRepo'>
 
+/** El servidor exige el segundo factor para vincular un repo (ADR-0062): el trigger responde con este mensaje. */
+export function isMfaRequired(err: unknown): boolean {
+  return err instanceof Error && /segundo factor|mfa_required/i.test(err.message)
+}
+
 export interface RepoChoice {
   value: string
   label: string
@@ -160,6 +165,11 @@ export async function setProjectRepo(
     if (duplicate) {
       notify.error('Ese repositorio ya está vinculado a otro proyecto', {
         description: 'Cada repositorio va con un solo proyecto.',
+      })
+    } else if (isMfaRequired(err)) {
+      notify.error('Para conectar GitHub necesitas el segundo factor', {
+        description:
+          'Actívalo en Ajustes › Cuenta › Segundo factor y vuelve a vincular el repositorio.',
       })
     } else fail('No se pudo guardar el repositorio', err)
     return false
