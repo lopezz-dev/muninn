@@ -43,6 +43,24 @@ describe('notifyUndo', () => {
     expect(notify.error).not.toHaveBeenCalled()
   })
 
+  it('acepta una inversa síncrona', async () => {
+    let back = false
+    notifyUndo('Proyecto eliminado', {
+      undo: () => {
+        back = true
+      },
+      undone: 'Proyecto devuelto',
+    })
+    await clickUndo()
+    expect(back).toBe(true)
+    expect(notify.info).toHaveBeenCalledWith('Proyecto devuelto', undefined)
+  })
+
+  it('sin inversa (`null`), avisa igual pero sin «Deshacer»', () => {
+    notifyUndo('Categoría movida', { icon: 'move', undo: null })
+    expect(notify.success).toHaveBeenCalledWith('Categoría movida', { icon: 'move' })
+  })
+
   it('si la inversa falla, avisa del error en vez de perderlo', async () => {
     notifyUndo('Subtarea quitada', {
       undo: async () => {

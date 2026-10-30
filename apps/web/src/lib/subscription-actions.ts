@@ -4,7 +4,6 @@ import type {
   Subscription,
   UpdateSubscriptionInput,
 } from '@muninn/core'
-import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { notifyUndo } from './feedback'
 import { amountText } from './finance'
@@ -172,21 +171,12 @@ export async function archiveSubscription(m: Muninn, qc: QueryClient, s: Subscri
     return false
   }
   settleFinance(qc)
-  notify.success(`«${s.name}» archivada`, {
+  notifyUndo(`«${s.name}» archivada`, {
     icon: 'archive',
     description: 'ya no avisará; sus cobros se conservan',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await run(() => m.finance.subscriptions.restore(s.id))
-          notify.info(`«${s.name}» recuperada`)
-        } catch (err) {
-          fail('No se pudo recuperar la suscripción', err)
-        }
-        settleFinance(qc)
-      },
-    },
+    undo: () => run(() => m.finance.subscriptions.restore(s.id)).finally(() => settleFinance(qc)),
+    undone: `«${s.name}» recuperada`,
+    failTitle: 'No se pudo recuperar la suscripción',
   })
   return true
 }

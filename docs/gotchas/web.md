@@ -40,7 +40,10 @@
 - **Solución:** usa `notifyUndo(título, { undo, undone?, failTitle? })` de `lib/feedback.ts`. `undo` es la inversa: si lanza, se avisa
   con `failTitle`; si devuelve `false`, es que ya avisó ella (las acciones que se llaman a sí mismas con `{ undoing: true }`). Las que
   devuelven el objeto o `null` se adaptan con `async () => (await accion(…)) !== null`. Para el parche inverso, `previousValues(antes,
-  parche)` (`mutations.ts`).
+  parche)` (`mutations.ts`). La inversa puede ser síncrona (los borrados diferidos de ADR-0065/0067: cancelar la espera) y, si a veces
+  no la hay (mover sin el tablero en caché, el primer resumen del día), pasa `undo: null` y sale el aviso sin «Deshacer». Con
+  `{ undoing: true }`, la acción no avisa de nada al acabar bien: el texto de «deshecho» va en `undone`. Única excepción: el «Deshacer»
+  del asistente (`assistant-chat.ts`), que comparte la inversa con el botón de la respuesta y avisa él mismo.
 
 ### Módulos desactivados: qué mira cada pieza del shell
 

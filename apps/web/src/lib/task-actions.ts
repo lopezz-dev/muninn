@@ -82,7 +82,7 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
   const same = fromColumnId === columnId
   const inTarget = prev?.tasks.filter((t) => t.columnId === columnId && t.id !== taskId).length ?? 0
   const over = target?.wipLimit != null && inTarget + 1 > target.wipLimit
-  notify.success(
+  notifyUndo(
     o.verb === 'completed'
       ? `«${title}» completada`
       : o.verb === 'reopened'
@@ -95,23 +95,20 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
       description: over
         ? `${target?.name} supera su límite (${inTarget + 1} de ${target?.wipLimit})`
         : undefined,
-      action: fromColumnId
-        ? {
-            label: 'Deshacer',
-            onClick: async () => {
-              const ok = await moveTask(m, qc, {
-                projectId,
-                taskId,
-                columnId: fromColumnId,
-                index: fromIndex,
-                title,
-                fromColumnId: columnId,
-                undoing: true,
-              })
-              if (ok) notify.info('Movimiento deshecho', { icon: 'move' })
-            },
-          }
-        : undefined,
+      // Sin tablero en caché ni `o.fromColumnId` no se sabe de dónde venía.
+      undo: fromColumnId
+        ? () =>
+            moveTask(m, qc, {
+              projectId,
+              taskId,
+              columnId: fromColumnId,
+              index: fromIndex,
+              title,
+              fromColumnId: columnId,
+              undoing: true,
+            })
+        : null,
+      undone: ['Movimiento deshecho', { icon: 'move' }],
     },
   )
   return true
@@ -343,20 +340,18 @@ export function deleteArchivedTasksWithUndo(
         description: `${failed.length === 1 ? 'Queda 1' : `Quedan ${failed.length}`} en Archivadas.`,
       })
   }, DELETE_DELAY)
-  notify.success(one ? `«${tasks[0]?.title}» eliminada` : `${tasks.length} tareas eliminadas`, {
+  notifyUndo(one ? `«${tasks[0]?.title}» eliminada` : `${tasks.length} tareas eliminadas`, {
     icon: 'trash',
     description: fromGithub
       ? 'Si su issue de GitHub sigue abierta, volverá con la próxima sincronización.'
       : 'Con sus subtareas. Sus notas se quedan sin tarea.',
     duration: DELETE_DELAY,
-    action: {
-      label: 'Deshacer',
-      onClick: () => {
-        clearTimeout(timer)
-        view.show(ids)
-        notify.info(one ? 'Tarea devuelta a Archivadas' : 'Tareas devueltas a Archivadas')
-      },
+    // Aún no se ha borrado nada: deshacer es cancelar la espera, no puede fallar.
+    undo: () => {
+      clearTimeout(timer)
+      view.show(ids)
     },
+    undone: one ? 'Tarea devuelta a Archivadas' : 'Tareas devueltas a Archivadas',
   })
 }
 
