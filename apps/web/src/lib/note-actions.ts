@@ -1,6 +1,7 @@
 import type { CreateNoteInput, Muninn, Note, UpdateNoteInput } from '@muninn/core'
 import { type IconName, notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { notifyUndo } from './feedback'
 import { fail, serial } from './mutations'
 import { putNote, removeNote } from './notes'
 import { invalidateNotes, noteKeys } from './notes-queries'
@@ -42,17 +43,13 @@ export async function createNote(
   }
   cacheNote(qc, note)
   void invalidateNotes(qc)
-  notify.success('Nota creada', {
+  notifyUndo('Nota creada', {
     icon: 'plus',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        if (await archiveNote(m, qc, note, { undoing: true })) {
-          opts.onUndo?.(note)
-          notify.info('Nota archivada', { icon: 'archive' })
-        }
-      },
+    undo: async () => {
+      if (!(await archiveNote(m, qc, note, { undoing: true }))) return false
+      opts.onUndo?.(note)
     },
+    undone: ['Nota archivada', { icon: 'archive' }],
   })
   return note
 }
@@ -107,17 +104,10 @@ export async function patchNote(
     return false
   }
   if (opts.undoing) return true
-  notify.success(toast.message, {
+  notifyUndo(toast.message, {
     icon: toast.icon,
     id: `note-${id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        if (await patchNote(m, qc, id, before, toast, { undoing: true })) {
-          notify.info('Cambio deshecho')
-        }
-      },
-    },
+    undo: () => patchNote(m, qc, id, before, toast, { undoing: true }),
   })
   return true
 }
@@ -140,21 +130,15 @@ export async function archiveNote(
   }
   void invalidateNotes(qc)
   if (opts.undoing) return true
-  notify.success(`«${note.title.trim() || 'Sin título'}» archivada`, {
+  notifyUndo(`«${note.title.trim() || 'Sin título'}» archivada`, {
     icon: 'archive',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await serial(noteKey(note.id), () => m.notes.restore(note.id))
-          void invalidateNotes(qc)
-          opts.onUndo?.()
-          notify.info('Nota recuperada', { icon: 'archive' })
-        } catch (err) {
-          fail('No se pudo recuperar la nota', err)
-        }
-      },
+    undo: async () => {
+      await serial(noteKey(note.id), () => m.notes.restore(note.id))
+      void invalidateNotes(qc)
+      opts.onUndo?.()
     },
+    undone: ['Nota recuperada', { icon: 'archive' }],
+    failTitle: 'No se pudo recuperar la nota',
   })
   return true
 }

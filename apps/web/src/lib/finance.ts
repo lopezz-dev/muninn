@@ -6,7 +6,8 @@ import type {
   TransactionKind,
 } from '@muninn/core'
 import { formatAmount } from '@muninn/ui'
-import { addDays, dueLabel } from './dates'
+import { addDays, asDate, capitalize, dueLabel } from './dates'
+import { normalize as fold } from './text'
 
 /**
  * Lógica pura de la pantalla Finanzas (ADR-0037): etiquetas, agrupar por día, filtrar y los cambios
@@ -82,12 +83,6 @@ export const NO_TX_FILTER: TxFilter = { query: '', kind: null, categoryId: null,
 export const isFilteringTx = (f: TxFilter) =>
   f.query.trim() !== '' || f.kind !== null || f.categoryId !== null || f.accountId !== null
 
-const fold = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-
 /** Filtra en el navegador los movimientos de un mes (son pocos; así los filtros van al instante). */
 export function filterTransactions(
   list: Transaction[],
@@ -129,8 +124,6 @@ export function groupByDay(list: Transaction[], accountId?: string | null): DayG
   return groups
 }
 
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-const asDate = (iso: string) => new Date(`${iso}T12:00:00`)
 const WEEKDAY_DAY = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric' })
 const MONTH_YEAR = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
 const SHORT_MONTH = new Intl.DateTimeFormat('es-ES', { month: 'short' })
@@ -140,16 +133,16 @@ export function dayLabel(date: string, today: string) {
   const day = WEEKDAY_DAY.format(asDate(date))
   if (date === today) return `Hoy · ${day}`
   if (date === addDays(today, -1)) return `Ayer · ${day}`
-  return capital(day)
+  return capitalize(day)
 }
 
 /** «Octubre 2026». */
 export const monthLabel = (month: string) =>
-  capital(MONTH_YEAR.format(asDate(`${month}-15`)).replace(' de ', ' '))
+  capitalize(MONTH_YEAR.format(asDate(`${month}-15`)).replace(' de ', ' '))
 
 /** «Oct». */
 export const monthShort = (month: string) =>
-  capital(SHORT_MONTH.format(asDate(`${month}-15`)).replace('.', ''))
+  capitalize(SHORT_MONTH.format(asDate(`${month}-15`)).replace('.', ''))
 
 export function shiftMonth(month: string, delta: number) {
   const [y, m] = month.split('-').map(Number) as [number, number]

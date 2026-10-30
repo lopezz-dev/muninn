@@ -2,7 +2,8 @@ import type { BoardColumn, ColumnKind, Muninn, UpdateColumnInput } from '@muninn
 import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { applyColumnMove, applyTaskMove, type BoardData } from './board'
-import { fail, optimistic, rollback, serial, settle } from './mutations'
+import { notifyUndo } from './feedback'
+import { fail, optimistic, previousValues, rollback, serial, settle } from './mutations'
 import { keys } from './queries'
 
 /** Acciones sobre las columnas del tablero, con feedback y «Deshacer» (ver `task-actions.ts`). */
@@ -61,9 +62,7 @@ export async function updateColumn(
   message: string,
   opts: { undoing?: boolean } = {},
 ): Promise<boolean> {
-  const before = Object.fromEntries(
-    Object.keys(patch).map((k) => [k, column[k as keyof BoardColumn]]),
-  ) as UpdateColumnInput
+  const before = previousValues(column, patch)
   const prev = await optimistic(qc, column.projectId, (d) => ({
     ...d,
     columns: d.columns.map((c) => (c.id === column.id ? ({ ...c, ...patch } as BoardColumn) : c)),
@@ -77,24 +76,12 @@ export async function updateColumn(
   }
   settle(qc, column.projectId)
   if (opts.undoing) return true
-  notify.success(message, {
+  notifyUndo(message, {
     icon: 'move',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        const ok = await updateColumn(
-          m,
-          qc,
-          { ...column, ...patch } as BoardColumn,
-          before,
-          message,
-          {
-            undoing: true,
-          },
-        )
-        if (ok) notify.info('Cambio deshecho')
-      },
-    },
+    undo: () =>
+      updateColumn(m, qc, { ...column, ...patch } as BoardColumn, before, message, {
+        undoing: true,
+      }),
   })
   return true
 }

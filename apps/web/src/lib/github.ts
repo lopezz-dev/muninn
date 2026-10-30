@@ -3,6 +3,7 @@ import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { fail, serial } from './mutations'
 import { invalidateProjects } from './queries'
+import { sameRepo } from './text'
 
 /** Mismo formato que valida el core (`githubRepo` en schemas.ts). */
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
@@ -35,8 +36,6 @@ export interface RepoChoice {
   disabled?: boolean
   tone?: string
 }
-
-const sameRepo = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 /**
  * Lo que ofrece el selector de repo de `project`: «Sin repositorio» (`''`) y los repos a los que llega el

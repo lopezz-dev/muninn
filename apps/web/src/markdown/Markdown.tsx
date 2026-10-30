@@ -1,7 +1,7 @@
 // biome-ignore-all lint/suspicious/noArrayIndexKey: el árbol sale del texto, sin ids, y se rehace entero en cada cambio
 import { cn } from '@muninn/ui'
 import { Lexer, type Token, type Tokens } from 'marked'
-import { Fragment, type ReactNode, useMemo } from 'react'
+import { Fragment, memo, type ReactNode, useMemo } from 'react'
 import { externalLink } from '../lib/external-link'
 import { makeSlugger } from './outline'
 import { plainText } from './plain'
@@ -323,8 +323,12 @@ function block(t: Token, ctx: Ctx): ReactNode {
   }
 }
 
-/** Vista de un texto en Markdown (GFM: tablas, tachado, listas de tareas). */
-export function Markdown({
+/**
+ * Vista de un texto en Markdown (GFM: tablas, tachado, listas de tareas). Memorizada: el asistente pinta muchas
+ * respuestas a la vez y, sin `memo`, cada tecla en el cuadro de texto (o cada trozo de una respuesta en curso)
+ * reconstruía el árbol de todas. Con props estables no se vuelve a pintar.
+ */
+export const Markdown = memo(function Markdown({
   source,
   onToggleTask,
   headingIds,
@@ -358,4 +362,4 @@ export function Markdown({
       {body}
     </div>
   )
-}
+})

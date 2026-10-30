@@ -6,6 +6,7 @@ import type {
 } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { notifyUndo } from './feedback'
 import { amountText } from './finance'
 import { FINANCE_QUEUE, settleFinance } from './finance-actions'
 import { financeKeys } from './finance-queries'
@@ -34,26 +35,18 @@ export async function chargeSubscription(m: Muninn, qc: QueryClient, s: Subscrip
   try {
     const res = await run(() => m.finance.subscriptions.charge(s.id, { expected: s.nextDate }))
     settleFinance(qc)
-    notify.success(`Cobro de «${s.name}» apuntado`, {
+    notifyUndo(`Cobro de «${s.name}» apuntado`, {
       icon: 'recurring',
       description: amountText(res.transaction.amount, 'none'),
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          try {
-            await run(() =>
-              m.finance.subscriptions.revert(s.id, {
-                previousDate: res.previousDate,
-                transactionId: res.transaction.id,
-              }),
-            )
-            notify.info('Cobro deshecho')
-          } catch (err) {
-            fail('No se pudo deshacer el cobro', err)
-          }
-          settleFinance(qc)
-        },
-      },
+      undo: () =>
+        run(() =>
+          m.finance.subscriptions.revert(s.id, {
+            previousDate: res.previousDate,
+            transactionId: res.transaction.id,
+          }),
+        ).finally(() => settleFinance(qc)),
+      undone: 'Cobro deshecho',
+      failTitle: 'No se pudo deshacer el cobro',
     })
     return true
   } catch (err) {
@@ -69,23 +62,14 @@ export async function skipSubscription(m: Muninn, qc: QueryClient, s: Subscripti
   try {
     const res = await run(() => m.finance.subscriptions.skip(s.id, { expected: s.nextDate }))
     settleFinance(qc)
-    notify.success(`Cobro de «${s.name}» saltado`, {
+    notifyUndo(`Cobro de «${s.name}» saltado`, {
       icon: 'move',
       description: 'sin apuntar gasto',
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          try {
-            await run(() =>
-              m.finance.subscriptions.revert(s.id, { previousDate: res.previousDate }),
-            )
-            notify.info('Vuelve a estar pendiente')
-          } catch (err) {
-            fail('No se pudo deshacer', err)
-          }
-          settleFinance(qc)
-        },
-      },
+      undo: () =>
+        run(() => m.finance.subscriptions.revert(s.id, { previousDate: res.previousDate })).finally(
+          () => settleFinance(qc),
+        ),
+      undone: 'Vuelve a estar pendiente',
     })
     return true
   } catch (err) {
@@ -114,28 +98,19 @@ export async function createSubscription(
       return { sub: res.subscription, txId: res.transaction.id }
     })
     settleFinance(qc)
-    notify.success(
+    notifyUndo(
       opts.chargeNow
         ? `Gasto y suscripción «${sub.name}» guardados`
         : `Suscripción «${sub.name}» creada`,
       {
         icon: 'recurring',
         description: `${amountText(sub.amount, 'none')} · próximo cobro ${sub.nextDate.split('-').reverse().join('/')}`,
-        action: {
-          label: 'Deshacer',
-          onClick: async () => {
-            try {
-              await run(async () => {
-                if (txId) await m.finance.transactions.archive(txId)
-                await m.finance.subscriptions.archive(sub.id)
-              })
-              notify.info('Deshecho', { icon: 'archive' })
-            } catch (err) {
-              fail('No se pudo deshacer', err)
-            }
-            settleFinance(qc)
-          },
-        },
+        undo: () =>
+          run(async () => {
+            if (txId) await m.finance.transactions.archive(txId)
+            await m.finance.subscriptions.archive(sub.id)
+          }).finally(() => settleFinance(qc)),
+        undone: ['Deshecho', { icon: 'archive' }],
       },
     )
     return sub
@@ -166,17 +141,11 @@ export async function updateSubscription(
         nextDate: before.nextDate,
         remindDays: before.remindDays,
       }
-      notify.success('Suscripción guardada', {
+      notifyUndo('Suscripción guardada', {
         icon: 'check',
         id: `subscription-${before.id}`,
-        action: {
-          label: 'Deshacer',
-          onClick: async () => {
-            if (await updateSubscription(m, qc, saved, back, { undoing: true })) {
-              notify.info('Cambio deshecho')
-            }
-          },
-        },
+        undo: async () =>
+          (await updateSubscription(m, qc, saved, back, { undoing: true })) !== null,
       })
     }
     return saved
