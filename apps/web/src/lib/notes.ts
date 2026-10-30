@@ -1,6 +1,6 @@
 import type { Note } from '@muninn/core'
 import { plainText } from '../markdown/plain'
-import { normalize } from './text'
+import { matchesAll, words } from './text'
 
 /** Fijadas primero; dentro de cada grupo, la editada más recientemente arriba (como el core). */
 export const byPinnedThenRecent = (a: Note, b: Note) =>
@@ -25,13 +25,11 @@ export const NO_FILTER: NoteFilter = { query: '', pinned: false, projectId: null
 export const isFiltering = (f: NoteFilter) => Boolean(f.query.trim() || f.pinned || f.projectId)
 
 export function filterNotes(notes: Note[], f: NoteFilter): Note[] {
-  const words = normalize(f.query).split(/\s+/).filter(Boolean)
+  const terms = words(f.query)
   return notes.filter((n) => {
     if (f.pinned && !n.pinned) return false
     if (f.projectId && n.projectId !== f.projectId) return false
-    if (words.length === 0) return true
-    const hay = normalize(`${n.title}\n${n.content}`)
-    return words.every((w) => hay.includes(w))
+    return matchesAll(`${n.title}\n${n.content}`, terms)
   })
 }
 

@@ -7,7 +7,7 @@ import type {
 } from '@muninn/core'
 import { formatAmount } from '@muninn/ui'
 import { addDays, asDate, capitalize, dueLabel } from './dates'
-import { normalize as fold } from './text'
+import { matchesAll, words } from './text'
 
 /**
  * Lógica pura de la pantalla Finanzas (ADR-0037): etiquetas, agrupar por día, filtrar y los cambios
@@ -89,10 +89,10 @@ export function filterTransactions(
   f: TxFilter,
   accounts: Map<string, Pick<AccountWithBalance, 'kind'>>,
 ) {
-  const q = fold(f.query.trim())
+  const terms = words(f.query)
   return list.filter(
     (t) =>
-      (!q || fold(t.concept).includes(q) || fold(t.note).includes(q)) &&
+      matchesAll(`${t.concept}\n${t.note}`, terms) &&
       (!f.kind || entryKindOf(t, accounts) === f.kind) &&
       (!f.categoryId || t.categoryId === f.categoryId) &&
       (!f.accountId || t.accountId === f.accountId || t.toAccountId === f.accountId),

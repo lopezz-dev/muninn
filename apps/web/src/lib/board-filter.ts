@@ -1,6 +1,6 @@
 import type { TaskPriority, TaskSource, TaskWithColumn } from '@muninn/core'
 import { addDays } from './dates'
-import { normalize } from './text'
+import { matchesAll, words } from './text'
 
 /**
  * Filtros del tablero (texto, prioridad, etiquetas, origen y vencimiento). Dentro de un grupo vale
@@ -70,12 +70,7 @@ export function matches(task: TaskWithColumn, f: BoardFilter, today: string): bo
     const mine = task.labels.map((l) => l.toLowerCase())
     if (!f.labels.some((l) => mine.includes(l.toLowerCase()))) return false
   }
-  const words = normalize(f.query).split(/\s+/).filter(Boolean)
-  if (words.length) {
-    const hay = normalize(`${task.title}\n${task.description}\n${task.labels.join(' ')}`)
-    if (!words.every((w) => hay.includes(w))) return false
-  }
-  return true
+  return matchesAll(`${task.title}\n${task.description}\n${task.labels.join(' ')}`, words(f.query))
 }
 
 export function filterTasks(tasks: TaskWithColumn[], f: BoardFilter, today: string) {

@@ -59,6 +59,8 @@ Al guardar sale un aviso con **Deshacer**, por si te equivocas.
 - **Movimientos**: los del mes, agrupados por día y con el total de cada día. Cambia de mes igual que en el Resumen y filtra por texto,
   tipo, categoría o cuenta. En el móvil, el tipo, la categoría y la cuenta están tras el botón de filtro (el embudo), junto a la
   búsqueda. Si filtras una cuenta, los traspasos salen con signo: lo que sale (−) y lo que entra (+).
+  El texto busca en el concepto y en la nota, sin importar mayúsculas ni tildes; si escribes varias palabras, salen los movimientos
+  que las tienen todas, en el orden que sea («leche café» encuentra «Café con leche»).
 
 ## Editar y archivar
 

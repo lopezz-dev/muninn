@@ -1,7 +1,7 @@
 import { Lexer } from 'marked'
 import { makeSlugger } from '../markdown/outline'
 import { plainText } from '../markdown/plain'
-import { normalize } from './text'
+import { matchesAll, normalize, words } from './text'
 
 /**
  * Las guías de `docs/user/*.md` como datos. Aquí solo hay lógica pura (con tests): los ficheros los
@@ -162,29 +162,25 @@ const around = (text: string, at: number) =>
  * ninguno, el primero con la primera palabra.
  */
 export function searchDocs(docs: Doc[], query: string): DocHit[] {
-  const words = normalize(query).split(/\s+/).filter(Boolean)
-  if (words.length === 0) return docs.map((doc) => ({ doc, snippet: '' }))
+  const terms = words(query)
+  if (terms.length === 0) return docs.map((doc) => ({ doc, snippet: '' }))
+  const first = terms.slice(0, 1)
   const hits: (DocHit & { score: number })[] = []
   for (const doc of docs) {
     const parts = sections(doc.body)
-    const hay = normalize(
-      `${doc.title} ${doc.description} ${parts.map((p) => `${p.title} ${p.text}`).join(' ')}`,
-    )
-    if (!words.every((w) => hay.includes(w))) continue
-    const has = (p: Section, all: boolean) => {
-      const h = normalize(`${p.title} ${p.text}`)
-      return all ? words.every((w) => h.includes(w)) : h.includes(words[0] ?? '')
-    }
+    const all = `${doc.title} ${doc.description} ${parts.map((p) => `${p.title} ${p.text}`).join(' ')}`
+    if (!matchesAll(all, terms)) continue
+    const has = (p: Section, every: boolean) =>
+      matchesAll(`${p.title} ${p.text}`, every ? terms : first)
     const whole = parts.find((p) => has(p, true))
     const part = whole ?? parts.find((p) => has(p, false))
-    const at = part ? normalize(part.text).indexOf(words[0] ?? '') : -1
-    const title = normalize(doc.title)
+    const at = part ? normalize(part.text).indexOf(terms[0] ?? '') : -1
     hits.push({
       doc,
       snippet: part && at >= 0 ? around(part.text, at) : '',
       section: part?.id ? { id: part.id, title: part.title } : undefined,
       // Primero las del título; luego las que tienen todas las palabras en un mismo apartado.
-      score: (words.every((w) => title.includes(w)) ? 2 : 0) + (whole ? 1 : 0),
+      score: (matchesAll(doc.title, terms) ? 2 : 0) + (whole ? 1 : 0),
     })
   }
   return hits.sort((a, b) => b.score - a.score).map(({ score: _, ...hit }) => hit)

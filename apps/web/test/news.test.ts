@@ -84,6 +84,13 @@ describe('noticias en la web', () => {
     ])
   })
 
+  it('busca palabra a palabra en cualquier orden, entre título y resumen', () => {
+    const f = (search: string) => filterNews(items, sources, { tab: null, search }).map((i) => i.id)
+    expect(f('llega rust')).toEqual(['1'])
+    expect(f('herramientas título 2')).toEqual(['2'])
+    expect(f('rust herramientas')).toEqual([])
+  })
+
   it('pestañas de temas con su número, sin las fuentes sin tema', () => {
     expect(topicTabs(items, sources)).toEqual([
       ['IA local', 1],

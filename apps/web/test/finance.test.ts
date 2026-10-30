@@ -111,6 +111,19 @@ describe('finanzas · presentación', () => {
     expect(f({ accountId: 'h' })).toEqual(['Hucha'])
   })
 
+  it('busca palabra a palabra en cualquier orden, entre concepto y nota', () => {
+    const list = [
+      tx({ concept: 'Café con leche', note: 'Bar de Madrid' }),
+      tx({ concept: 'Cena', note: 'Madrid' }),
+    ]
+    const f = (query: string) =>
+      filterTransactions(list, { ...NO_TX_FILTER, query }, accounts).map((t) => t.concept)
+    expect(f('leche cafe')).toEqual(['Café con leche'])
+    expect(f('madrid  cafe')).toEqual(['Café con leche'])
+    expect(f('madrid')).toEqual(['Café con leche', 'Cena'])
+    expect(f('cena bar')).toEqual([])
+  })
+
   it('etiquetas de día y de mes', () => {
     expect(dayLabel('2026-10-19', '2026-10-19')).toBe('Hoy · lunes 19')
     expect(dayLabel('2026-10-18', '2026-10-19')).toBe('Ayer · domingo 18')
