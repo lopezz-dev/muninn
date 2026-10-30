@@ -49,12 +49,15 @@ proyecto de Muninn con la etiqueta `iphone`.
 | Tocar el botón con el logo | Abre el Asistente; el campo de escribir queda por encima de la barra |
 | La barra respecto al borde de abajo | Respeta la barra de gestos del iPhone (no la tapa) |
 | Ajustes › Módulos: desactivar Finanzas | Quedan 3 pestañas que se reparten el ancho |
+| Tocar tu foto (abajo a la derecha) | Sube la hoja «Tu cuenta»; se cierra tocando fuera, arrastrando el asa hacia abajo o con la X, y sigues en la misma pantalla |
+| Hoja › Barra de abajo: quitar, añadir (Buscar) y mover pestañas | La barra cambia al momento; «Deshacer» la deja como estaba; en otro dispositivo con la misma cuenta sale igual |
 | Cerrar la app del todo y abrirla en Inicio (con pocos datos) | La barra está pegada abajo desde el primer momento, sin hueco debajo |
 | Con la app abierta un rato, cambiar de sección, salir a la pantalla de inicio y volver | La barra sigue entera por encima de la barra de gestos: nunca se corta por abajo |
 | Inicio con títulos de tarea largos | Nada se sale por la derecha; los títulos ocupan hasta dos líneas |
 | iPad en vertical y en horizontal | En vertical, raíl de iconos con tooltips; en horizontal, la barra lateral completa |
 | Hacer algo que muestre un aviso (archivar y deshacer) | La píldora sale entera bajo la isla, sin taparse |
-| Ajustes desde **Más › Todos los ajustes** | Una lista de secciones; cada una se abre y vuelve con «‹ Ajustes» |
+| Hoja «Tu cuenta» › una sección de Ajustes | Se abre dentro de la hoja y «‹ Tu cuenta» vuelve a la lista; el contenido hace scroll sin mover la pantalla de detrás |
+| Abrir un enlace a `/ajustes/notificaciones` (pegado en Safari, o desde la app instalada) | Se abre Inicio con la hoja ya en Notificaciones |
 | Finanzas › Movimientos: el botón de filtro | Se abre una hoja con tipo, categorías y cuenta; la búsqueda y el botón caben en una línea |
 
 ## 5. Sin conexión y tiempo real
@@ -71,5 +74,5 @@ proyecto de Muninn con la etiqueta `iphone`.
 
 | Qué hacer | Esperado |
 |---|---|
-| Más › Documentación › abrir una guía con tablas | La tabla se desplaza en horizontal si no cabe; la página no |
+| Hoja «Tu cuenta» › Documentación › abrir una guía con tablas | La tabla se desplaza en horizontal si no cabe; la página no |
 | Pulsar un enlace a otra guía | Abre esa guía; atrás vuelve a la anterior |

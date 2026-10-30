@@ -1,9 +1,11 @@
-import { cn, Icon } from '@muninn/ui'
+import { Avatar, cn, Icon } from '@muninn/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
-import { useEnabledModules } from '../lib/modules'
-import { Logo } from './Logo'
-import { SECTIONS, sectionOf, tabIndexOf, tabsFor } from './nav'
+import { useEffect, useState } from 'react'
+import { accountSheet, useAccountSheet } from '../lib/account-sheet'
+import { useDockTabs } from '../lib/dock'
+import { useAuth } from '../lib/muninn'
+import { DOCK_TAB, SECTIONS, sectionOf, tabIndexOf } from './nav'
+import { useShell } from './shell-context'
 
 /** Hueco máximo que se corrige: la barra de estado más alta de un iPhone (59 pt) con margen. */
 const MAX_GAP = 80
@@ -76,20 +78,21 @@ function useCompactOnScroll(resetKey: string) {
 }
 
 /**
- * Barra de pestañas del teléfono (< 768 px), ADR-0054. Diseño: lienzo «Muninn — Móvil 2.0» (TabBar.dc.html).
- * Cuatro pestañas con su nombre y, aparte, el botón del Asistente con el logo de Muninn.
+ * Barra de pestañas del teléfono (< 768 px), ADR-0054 y ADR-0072. Diseño: lienzo «Dock y cuenta». De una a cuatro
+ * pestañas que eliges tú (Ajustes › Barra de abajo) y, aparte, siempre tu avatar: abre la hoja «Tu cuenta» con todo lo
+ * demás.
  */
 export function TabBar({ className }: { className?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const modules = useEnabledModules()
+  const shell = useShell()
+  const auth = useAuth()
+  const sheet = useAccountSheet()
   // Con un módulo desactivado, su pestaña desaparece y las demás se reparten el ancho.
-  const tabs = useMemo(() => tabsFor(modules), [modules])
-  const section = sectionOf(pathname)
-  const active = tabIndexOf(section, tabs)
-  const onAssistant = section === 'assistant'
+  const tabs = useDockTabs()
+  const active = tabIndexOf(sectionOf(pathname), tabs)
   const gap = useStandaloneGap(pathname)
   const [compact, setCompact] = useCompactOnScroll(pathname)
-  // Encogida, solo queda la pestaña activa; en el Asistente no hay ninguna activa, así que no se encoge.
+  // Encogida, solo queda la pestaña activa; si la pantalla no tiene pestaña, no se encoge.
   const shrunk = compact && active >= 0
 
   return (
@@ -112,13 +115,48 @@ export function TabBar({ className }: { className?: string }) {
           )}
         >
           {tabs.map((id, i) => {
-            const s = SECTIONS[id]
+            const s = DOCK_TAB[id]
             const isActive = i === active
             const hidden = shrunk && !isActive
+            const tabClass = cn(
+              'flex h-full min-w-0 cursor-pointer flex-col items-center justify-center gap-[3px] rounded-lg outline-offset-[-2px] transition-[flex-basis,opacity,background-color,color] duration-300 motion-reduce:transition-none',
+              hidden ? 'pointer-events-none flex-[0_0_0px] opacity-0' : 'flex-[1_1_0px]',
+              isActive ? 'bg-accent-soft text-accent' : 'text-fg-muted hover:text-fg',
+            )
+            const content = (
+              <>
+                <Icon name={s.icon} size={22} weight={isActive ? 'bold' : undefined} />
+                <span
+                  className={cn(
+                    'text-2xs leading-none whitespace-nowrap',
+                    isActive ? 'font-semibold' : 'font-medium',
+                    shrunk && 'hidden',
+                  )}
+                >
+                  {s.label}
+                </span>
+              </>
+            )
+            // «Buscar» no lleva a ninguna pantalla: abre el buscador encima de la que estés.
+            if (id === 'search') {
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-label="Buscar o preguntar"
+                  tabIndex={hidden ? -1 : undefined}
+                  aria-hidden={hidden || undefined}
+                  onClick={() => (shrunk ? setCompact(false) : shell.openPalette())}
+                  className={tabClass}
+                >
+                  {content}
+                </button>
+              )
+            }
             return (
               <Link
                 key={id}
-                to={s.to}
+                to={SECTIONS[id].to}
                 aria-label={s.label}
                 aria-current={isActive ? 'page' : undefined}
                 tabIndex={hidden ? -1 : undefined}
@@ -130,38 +168,40 @@ export function TabBar({ className }: { className?: string }) {
                     setCompact(false)
                   }
                 }}
-                className={cn(
-                  'flex h-full min-w-0 flex-col items-center justify-center gap-[3px] rounded-lg outline-offset-[-2px] transition-[flex-basis,opacity,background-color,color] duration-300 motion-reduce:transition-none',
-                  hidden ? 'pointer-events-none flex-[0_0_0px] opacity-0' : 'flex-[1_1_0px]',
-                  isActive ? 'bg-accent-soft text-accent' : 'text-fg-muted hover:text-fg',
-                )}
+                className={tabClass}
               >
-                <Icon name={s.icon} size={22} weight={isActive ? 'bold' : undefined} />
-                <span
-                  className={cn(
-                    'text-2xs leading-none whitespace-nowrap',
-                    isActive ? 'font-semibold' : 'font-medium',
-                    shrunk && 'hidden',
-                  )}
-                >
-                  {s.label}
-                </span>
+                {content}
               </Link>
             )
           })}
         </nav>
         <span className="flex-1" />
-        <Link
-          to="/asistente"
-          aria-label="Asistente: preguntar a Muninn"
-          aria-current={onAssistant ? 'page' : undefined}
+        <button
+          type="button"
+          aria-label="Tu cuenta y más"
+          aria-haspopup="dialog"
+          aria-expanded={sheet.open}
+          onClick={() => (sheet.open ? accountSheet.close() : accountSheet.open())}
           className={cn(
-            'pointer-events-auto grid size-[62px] shrink-0 place-items-center rounded-dock bg-accent text-accent-fg shadow-popover outline-offset-2 transition-[scale,box-shadow] duration-150 active:scale-[0.96]',
-            onAssistant && 'ring-2 ring-accent/40 ring-offset-2 ring-offset-bg',
+            'glass-raised pointer-events-auto grid size-[62px] shrink-0 cursor-pointer place-items-center rounded-dock border border-white/[0.09] bg-surface-raised shadow-popover outline-offset-2 transition-[scale,box-shadow] duration-150 active:scale-[0.96]',
+            sheet.open && 'border-accent ring-2 ring-accent/25',
           )}
         >
-          <Logo variant="mark" size={34} />
-        </Link>
+          {auth.kind === 'user' ? (
+            <Avatar
+              name={auth.account.name}
+              src={auth.account.avatarUrl}
+              className="size-9 text-sm"
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="grid size-9 place-items-center rounded-md bg-border-strong text-fg-subtle"
+            >
+              <Icon name="user" size={20} />
+            </span>
+          )}
+        </button>
       </div>
     </div>
   )

@@ -55,6 +55,21 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     },
   },
   {
+    id: 'barra',
+    label: 'Barra de abajo',
+    icon: 'dock',
+    subtitle:
+      'Las pestañas de abajo en el móvil: cuáles y en qué orden. Te sigue a todos tus dispositivos.',
+    group: 'tu',
+    tile: 'bg-accent-soft text-accent',
+    doc: {
+      pagina: 'moverte-por-muninn',
+      hash: 'elegir-las-pestanas-de-abajo',
+      title: 'Moverte por Muninn › Barra de abajo',
+      text: 'Qué pestañas puedes poner, cuántas caben y dónde queda todo lo demás.',
+    },
+  },
+  {
     id: 'atajos',
     label: 'Atajos de teclado',
     icon: 'keyboard',

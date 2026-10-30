@@ -2,6 +2,7 @@ import { ColorDot, cn, Dialog, DialogContent, Icon, IconButton, icons, Kbd } fro
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useId, useMemo, useState } from 'react'
+import { accountSheet, isPhone, settingsViewOf } from '../lib/account-sheet'
 import { changeAppearance, useAppearance } from '../lib/appearance'
 import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
@@ -143,7 +144,9 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         label: s.label,
         icon: s.icon,
         keywords: NAV_KEYWORDS[id],
-        run: () => navigate({ to: s.to }),
+        // En el teléfono, Ajustes se abre en la hoja de tu cuenta (ADR-0072), sin pasar por el historial.
+        run: () =>
+          isPhone() && settingsViewOf(s.to) ? accountSheet.open() : navigate({ to: s.to }),
       })
     }
     for (const p of tasksOn ? projects : []) {
@@ -215,7 +218,10 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         label: 'Cambiar la apariencia…',
         icon: 'palette',
         keywords: 'acento color tema',
-        run: () => navigate({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' } }),
+        run: () =>
+          isPhone()
+            ? accountSheet.open('apariencia')
+            : navigate({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' } }),
       },
       {
         id: 'sign-out',

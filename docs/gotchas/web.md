@@ -49,16 +49,29 @@
 
 - **Síntoma:** un módulo desactivado sigue saliendo en la barra de pestañas, el buscador o un atajo; o el menú parpadea al cargar.
 - **Causa:** cada pieza decide por su cuenta. Todas usan `useEnabledModules()` (`lib/modules.ts`) y `sectionEnabled()`
-  (`shell/nav.ts`): barra lateral, barra de pestañas del teléfono (`tabsFor`), «Más», buscador y la tecla **N**. Los ajustes llegan por la caché de
+  (`shell/nav.ts`): barra lateral, barra de pestañas del teléfono (`tabsFor`), «Ir a» de la hoja «Tu cuenta», buscador y la tecla **N**. Los ajustes llegan por la caché de
   react-query (`keys.settings`), que rellena el loader de `_app` antes de pintar; mientras valgan `null` se enseña todo.
 - **Solución:** una sección nueva con módulo se declara en `SECTION_MODULE`; no compruebes `enabledModules` a mano. La barra
-  de pestañas reparte el ancho entre las que queden (flex): no asumas cuatro.
+  de pestañas reparte el ancho entre las que queden (flex): no asumas cuatro, y desde el ADR-0072 son las que elige el usuario
+  (`useDockTabs`). Una sección nueva que pueda ir abajo se añade a `DOCK_OPTIONS`.
 - **Ref:** [ADR-0028](../adr/0028-modulos-activables-solo-en-la-interfaz.md)
 
 ### El buscador ⌘K es un chunk diferido que se pide al pintar el shell
 
 - `CommandPalette` no viaja en el JS del arranque: `AppShell` lo monta dentro de `<Suspense>` y el navegador lo pide en cuanto
   se pinta el shell. Si pulsas ⌘K antes de que llegue, se abre al terminar de cargar. No lo importes de forma estática desde el shell.
+
+### En el teléfono, `/ajustes/…` no es una pantalla: abre la hoja «Tu cuenta»
+
+- **Síntoma:** un enlace a un ajuste en el móvil abre la hoja y se cierra al instante; o al entrar de cero por
+  `/ajustes/notificaciones` se ve Inicio sin la hoja; o el botón atrás repite la misma pantalla.
+- **Causa:** la hoja no es una ruta ([ADR-0072](../adr/0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md)): su estado vive en
+  `lib/account-sheet.ts` y `AppShell` la cierra cuando cambia la ruta **resuelta** (`resolvedLocation`). Al arrancar, esa ruta pasa de
+  `undefined` a `/`: si eso contara como «cambio», cerraría la hoja que acaba de abrir el `beforeLoad`. Y un `navigate()` a `/ajustes/…`
+  ya ha empujado la entrada al historial cuando el `beforeLoad` la redirige a la pantalla de antes, así que queda repetida.
+- **Solución:** los enlaces a Ajustes, siempre con `<Link>` (un `<a>` de verdad): el shell intercepta el clic en el teléfono antes que el
+  router y abre la hoja sin tocar el historial. Evita `navigate({ to: '/ajustes/…' })` en lo que se use en el móvil; si hace falta, llama
+  a `accountSheet.open(sección)` cuando `isPhone()`. El primer valor de la ruta resuelta no cierra la hoja (`AppShell`).
 
 ### `@muninn/core` se importa como TypeScript fuente
 

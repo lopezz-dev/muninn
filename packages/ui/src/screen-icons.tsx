@@ -12,7 +12,7 @@ import {
   Plug,
   QrCode,
   ShieldCheck,
-  SignOut,
+  SquareHalfBottom,
   Sun,
 } from './screen-icons.generated'
 
@@ -35,9 +35,9 @@ export const screenIcons = {
   // Ajustes › Cuenta: sesiones y segundo factor (ADR-0061).
   devices: Devices,
   key: Key,
-  signOut: SignOut,
   copy: Copy,
   qr: QrCode,
+  dock: SquareHalfBottom,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type ScreenIconName = keyof typeof screenIcons

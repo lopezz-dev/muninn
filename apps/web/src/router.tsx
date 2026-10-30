@@ -7,6 +7,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router'
+import { accountSheet, isPhone, settingsViewOf } from './lib/account-sheet'
 import { getAuth, onAuthChange, safeRedirect } from './lib/auth'
 import { loadMuninn } from './lib/muninn'
 import { forgetUserData } from './lib/session'
@@ -213,10 +214,23 @@ const docPageRoute = createRoute({
   component: screen(() => import('./screens/DocPagina'), 'DocPagina'),
 })
 
+/**
+ * En el teléfono, Ajustes no es una pantalla: se abre la hoja «Tu cuenta» (ADR-0072) encima de la pantalla en la que
+ * estabas, o de Inicio si se entra de cero. Devuelve a dónde volver.
+ */
+function sheetInstead(view: string): string {
+  accountSheet.open(view)
+  const back = router.state.resolvedLocation
+  return back && !settingsViewOf(back.pathname) ? back.href : '/'
+}
+
+/** «Más» ya no existe (ADR-0072): lo que había ahí está en la hoja de tu cuenta. */
 const moreRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'mas',
-  component: screen(() => import('./screens/Mas'), 'Mas'),
+  beforeLoad: () => {
+    throw redirect({ href: isPhone() ? sheetInstead('root') : '/', replace: true })
+  },
 })
 
 // ─── Ajustes ─────────────────────────────────────────────────────────────────
@@ -224,19 +238,21 @@ const moreRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'ajustes',
+  beforeLoad: ({ location }) => {
+    const view = settingsViewOf(location.pathname)
+    if (!view || !isPhone() || (view !== 'root' && !settingsSection(view))) return
+    throw redirect({ href: sheetInstead(view), replace: true })
+  },
   component: screen(() => import('./screens/ajustes/Ajustes'), 'Ajustes'),
 })
 
 const settingsIndexRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/',
-  // En escritorio el menú va a la izquierda: se abre una sección. En el móvil, la lista de secciones.
+  // El menú va a la izquierda: se abre una sección. En el teléfono no se llega aquí (lo lleva la hoja).
   beforeLoad: () => {
-    if (typeof matchMedia === 'function' && matchMedia('(min-width: 768px)').matches) {
-      throw redirect({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' }, replace: true })
-    }
+    throw redirect({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' }, replace: true })
   },
-  component: screen(() => import('./screens/ajustes/Indice'), 'Indice'),
 })
 
 const settingsSectionRoute = createRoute({

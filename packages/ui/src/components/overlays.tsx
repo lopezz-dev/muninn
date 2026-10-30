@@ -1,5 +1,5 @@
 import { Dialog as RDialog } from 'radix-ui'
-import type { ComponentProps, ReactNode } from 'react'
+import { type ComponentProps, type PointerEvent, type ReactNode, useRef } from 'react'
 import { cn } from '../cn'
 import { icons } from '../icons'
 import { IconButton } from './button'
@@ -115,7 +115,52 @@ export interface SheetContentProps extends Omit<ComponentProps<typeof RDialog.Co
   side?: 'right' | 'bottom'
   /** Barra superior a la izquierda del botón de cerrar (ruta, acciones). */
   toolbar?: ReactNode
+  /** Delante del título, en la cabecera: un «‹ Volver» si la hoja navega por dentro. */
+  leading?: ReactNode
   footer?: ReactNode
+  /** Hoja inferior: arrastrar el asa hacia abajo la cierra (llama a esto). Sin él, el asa es solo decorativa. */
+  onDragClose?: () => void
+}
+
+/** Lo que hay que bajar el asa para que la hoja se cierre al soltar. */
+const DRAG_CLOSE_PX = 120
+
+/**
+ * Arrastre del asa de una hoja inferior: la hoja sigue al dedo y, al soltar, se cierra si bajó lo bastante o vuelve a su
+ * sitio. Se mueve con `translate` en línea, sin transición mientras se arrastra.
+ */
+function useDragToClose(onClose?: () => void) {
+  const ref = useRef<HTMLDivElement>(null)
+  const start = useRef<number | null>(null)
+  const place = (dy: number | null) => {
+    const el = ref.current
+    if (!el) return
+    el.style.translate = dy ? `0 ${dy}px` : ''
+    el.style.transition = dy === null ? 'translate 200ms var(--mn-motion-ease-out)' : 'none'
+  }
+  const handle = onClose
+    ? {
+        onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
+          start.current = e.clientY
+          e.currentTarget.setPointerCapture(e.pointerId)
+        },
+        onPointerMove: (e: PointerEvent<HTMLDivElement>) => {
+          if (start.current !== null) place(Math.max(0, e.clientY - start.current))
+        },
+        onPointerUp: (e: PointerEvent<HTMLDivElement>) => {
+          if (start.current === null) return
+          const dy = e.clientY - start.current
+          start.current = null
+          place(null)
+          if (dy > DRAG_CLOSE_PX) onClose()
+        },
+        onPointerCancel: () => {
+          start.current = null
+          place(null)
+        },
+      }
+    : null
+  return { ref, handle }
 }
 
 export function SheetContent({
@@ -123,16 +168,20 @@ export function SheetContent({
   hideTitle,
   side = 'right',
   toolbar,
+  leading,
   footer,
+  onDragClose,
   className,
   children,
   ...props
 }: SheetContentProps) {
   const Close = icons.close
+  const drag = useDragToClose(side === 'bottom' ? onDragClose : undefined)
   return (
     <RDialog.Portal>
       <RDialog.Overlay className={overlay} />
       <RDialog.Content
+        ref={drag.ref}
         aria-describedby={undefined}
         className={cn(
           'glass-raised fixed z-50 flex flex-col border-border-strong outline-none',
@@ -144,9 +193,29 @@ export function SheetContent({
         {...props}
       >
         {side === 'bottom' ? (
-          <span aria-hidden="true" className="mx-auto mt-2 h-1 w-9 rounded-full bg-border-strong" />
+          drag.handle ? (
+            // Zona de agarre más grande que el asa que se ve, para el dedo.
+            <div
+              aria-hidden="true"
+              className="flex shrink-0 cursor-grab touch-none justify-center pt-2 pb-1 active:cursor-grabbing"
+              {...drag.handle}
+            >
+              <span className="h-1 w-9 rounded-full bg-border-strong" />
+            </div>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="mx-auto mt-2 h-1 w-9 rounded-full bg-border-strong"
+            />
+          )
         ) : null}
-        <div className="flex h-13 shrink-0 items-center gap-1 border-b border-border-subtle pr-3 pl-5">
+        <div
+          className={cn(
+            'flex h-13 shrink-0 items-center gap-1 border-b border-border-subtle pr-3',
+            leading ? 'pl-2' : 'pl-5',
+          )}
+        >
+          {leading}
           <RDialog.Title
             className={cn('text-sm font-medium text-fg-muted', hideTitle && 'sr-only')}
           >

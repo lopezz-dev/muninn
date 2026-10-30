@@ -88,13 +88,6 @@ function Portada() {
     <Page className="gap-7 md:gap-8">
       <header className="flex flex-col gap-5 border-b border-border-subtle pb-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div className="flex items-start gap-4">
-          <Link
-            to="/mas"
-            aria-label="Volver"
-            className="grid size-11 shrink-0 place-items-center rounded-md border border-border bg-surface text-fg md:hidden"
-          >
-            <icons.chevronLeft size={18} />
-          </Link>
           <span className="hidden size-13 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent md:grid">
             <icons.docs size={26} aria-hidden="true" />
           </span>

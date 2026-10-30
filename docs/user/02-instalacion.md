@@ -43,7 +43,7 @@ vez que abras Muninn.
 Muninn solo instala versiones firmadas por el proyecto. Sin conexión no comprueba nada y no te molesta. En Linux, las
 actualizaciones automáticas funcionan con el `.AppImage`; con `.deb` o `.rpm`, instala la versión nueva a mano.
 
-La versión que tienes aparece arriba en la barra lateral, junto al nombre de Muninn, y en el móvil al pie de **Más**.
+La versión que tienes aparece arriba en la barra lateral, junto al nombre de Muninn, y en el móvil en **Acerca de Muninn**, en la hoja de tu cuenta (toca tu foto, abajo a la derecha).
 
 ## En el navegador
 
