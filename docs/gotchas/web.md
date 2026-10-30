@@ -522,6 +522,17 @@
   actividad conserva quién hizo qué). La demo usa el proveedor guionizado (`lib/assistant-demo.ts`) sobre el store en memoria: lo que hace
   es real dentro de la demo. Para probar el estado «Ollama no responde» basta con una sesión en un ordenador sin Ollama.
 
+### Asistente: el borrador vive en el `Composer` y los turnos van con `memo`
+
+- **Síntoma:** escribir en la caja del asistente va a tirones con conversaciones largas; o, en un test, `useImageAttachments` se queda
+  colgado hasta el *timeout*.
+- **Causa:** si el borrador (o las imágenes) vuelve a la pantalla `Asistente`, cada tecla repinta todas las respuestas y su Markdown.
+  `Reply` y `UserBubble` son `memo`: un `onUndo` creado en línea o un objeto nuevo por render los repinta igual. Y `useImageAttachments`
+  pregunta por la visión cada vez que cambia el `provider`: uno creado en cada render (sin `useMemo`) entra en bucle.
+- **Solución:** el borrador y las imágenes son del `Composer` (`screens/asistente/Composer.tsx`, con `useImageAttachments`). La pantalla
+  le habla con su *handle* (`prefill` para `?q=` sin modelo, `clear`, `submit` de las sugerencias, `focus`). A `Reply` pásale
+  `onUndo(turnId)` estable (`useCallback`) y booleanos, no funciones nuevas. El `provider`, siempre memorizado.
+
 ### Asistente: los módulos desactivados no se ofrecen al modelo
 
 - **Síntoma:** en la demo «He gastado 24,90…» responde «Finanzas está desactivado».
