@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/lopezz-dev/muninn/compare/v0.5.0...v0.6.0) (2026-10-30)
+
+
+### Features
+
+* **db:** apps OAuth aprobadas con el segundo factor cuentan como aal2 (ADR-0064) ([7694340](https://github.com/lopezz-dev/muninn/commit/769434047a6c110e4456c1e1314a473eb5303dcf))
+* **db:** apps OAuth aprobadas con el segundo factor cuentan como aal2 (ADR-0064) ([e4008e4](https://github.com/lopezz-dev/muninn/commit/e4008e4c6d8395e158d567c1c796a8a0300a735f))
+
+
+### Bug Fixes
+
+* **db:** la aprobación OAuth con segundo factor vale para una sola sesión (ADR-0066) ([449114a](https://github.com/lopezz-dev/muninn/commit/449114a70a6843f324d61c97943e0143a189c90c))
+* **db:** require_mfa en las tablas de avisos push ([5a5da7d](https://github.com/lopezz-dev/muninn/commit/5a5da7d833ac25579e9d4b0146c640418c20d91b))
+
 ## [0.5.0](https://github.com/lopezz-dev/muninn/compare/v0.4.0...v0.5.0) (2026-10-29)
 
 
