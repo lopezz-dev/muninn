@@ -108,7 +108,27 @@
 - **Causa:** es intencionado ([ADR-0030](../adr/0030-vista-lista-del-tablero.md)). `BoardList` pinta la caché del tablero sin dnd-kit, y la
   vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta.
 - **Solución:** si añades una acción a la fila (mover, archivar…), usa las de `task-actions.ts` para que sea optimista y con «Deshacer».
-  Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las dos vistas.
+  Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las tres vistas.
+
+### Calendario: con teclado, el destino no sale de la geometría
+
+- **Síntoma:** con Espacio se recoge una píldora del mes y, sin mover nada, el aviso dice «sobre el miércoles» (el día de al lado). Si
+  se suelta ahí, la tarea cambia de fecha sin quererlo.
+- **Causa:** la tarjeta flotante (`DragOverlay`) mide 240 px y una celda unos 120. Con teclado no hay puntero, y una colisión por
+  centro (`closestCenter`) cae en el día cuyo centro está más cerca del de la tarjeta, que ya no es el suyo.
+- **Solución:** `BoardCalendar` lleva el destino del teclado en una referencia (`keyTarget`), que empieza en el día de la tarea (o en
+  «Sin fecha»), y su `collisionDetection` la devuelve tal cual cuando no hay puntero. Con ratón o dedo se usa `pointerWithin`. Si
+  añades otro destino (otro panel que reciba tareas), dale un id en `lib/calendar.ts` y súmalo a `keyboardTarget` o a la tecla que lo
+  elija.
+- **Ref:** [ADR-0068](../adr/0068-vista-calendario-del-tablero.md)
+
+### Calendario: soltar cambia solo `dueDate`
+
+- **Síntoma:** al soltar en un día se espera que la tarea «se mueva» de columna u orden, o el «Deshacer» devuelve otra columna.
+- **Causa:** es intencionado ([ADR-0068](../adr/0068-vista-calendario-del-tablero.md)): `setDueDate` (`task-actions.ts`) es un `patchTask`
+  de un solo campo. El orden dentro de un día lo calcula `tasksByDay` (pendientes, prioridad, columna, posición) y no se guarda.
+- **Solución:** no llames a `moveTask` desde el calendario. Las fechas son texto `AAAA-MM-DD`: usa las funciones de `lib/calendar.ts` y
+  `lib/dates.ts`, nunca `new Date(dueDate)` en hora local.
 
 ### Tiempo real: una tabla o un dato sincronizable nuevo
 
