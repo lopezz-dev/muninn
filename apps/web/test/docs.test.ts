@@ -9,7 +9,7 @@ import {
   slugOf,
   splitFrontMatter,
 } from '../src/lib/docs'
-import { makeSlugger, outline, slugify } from '../src/markdown/outline'
+import { makeSlugger, nestOutline, outline, slugify } from '../src/markdown/outline'
 import { DOCS } from '../src/screens/docs/content'
 import { isDocIcon } from '../src/screens/docs/look'
 
@@ -132,6 +132,21 @@ describe('índice de una guía', () => {
       { depth: 2, text: 'Uno', id: 'uno' },
       { depth: 3, text: 'Uno.uno negrita', id: 'uno-uno-negrita' },
       { depth: 2, text: 'Uno', id: 'uno-2' },
+    ])
+  })
+
+  it('cuelga los subapartados de su apartado; uno sin apartado delante va suelto', () => {
+    const md = '### Suelto\n\n## Uno\n\n### A\n\n### B\n\n## Dos'
+    expect(nestOutline(outline(md))).toEqual([
+      { item: { depth: 3, text: 'Suelto', id: 'suelto' }, children: [] },
+      {
+        item: { depth: 2, text: 'Uno', id: 'uno' },
+        children: [
+          { depth: 3, text: 'A', id: 'a' },
+          { depth: 3, text: 'B', id: 'b' },
+        ],
+      },
+      { item: { depth: 2, text: 'Dos', id: 'dos' }, children: [] },
     ])
   })
 })

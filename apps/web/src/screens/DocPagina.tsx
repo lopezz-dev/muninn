@@ -5,7 +5,7 @@ import { EmptyState } from '../components/Page'
 import { type Doc, docLink, groupLabel, neighbours } from '../lib/docs'
 import { usePageMeta } from '../lib/seo'
 import { type CalloutLook, Markdown } from '../markdown/Markdown'
-import { outline, slugify } from '../markdown/outline'
+import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/outline'
 import { DOCS } from './docs/content'
 import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
@@ -80,6 +80,64 @@ function useActiveHeading(ids: string[]) {
     return () => io.disconnect()
   }, [ids.join('|')])
   return active
+}
+
+/**
+ * Índice de la guía: los apartados y, colgando de cada uno con su línea, sus subapartados (como las conversaciones
+ * anidadas). `active` es el que se está leyendo; en el móvil (`touch`) no se marca y las filas son más altas.
+ */
+function Toc({ toc, active, touch }: { toc: OutlineItem[]; active?: string; touch?: boolean }) {
+  return (
+    <ul className={cn('flex flex-col', touch ? 'py-1.5' : 'gap-0.5')}>
+      {nestOutline(toc).map(({ item, children }) => {
+        const inside = children.some((c) => c.id === active)
+        return (
+          <li key={item.id} className="flex flex-col">
+            <a
+              href={`#${item.id}`}
+              onClick={(e) => jump(e, item.id)}
+              aria-current={active === item.id ? 'location' : undefined}
+              className={cn(
+                'flex items-center rounded-md transition-colors hover:text-fg',
+                touch
+                  ? 'min-h-10 px-3.5 text-base text-fg-muted'
+                  : 'px-2 py-1 text-sm leading-snug text-fg-subtle hover:bg-surface-hover',
+                active === item.id && 'bg-fg/[0.07] text-fg',
+                inside && 'text-fg',
+              )}
+            >
+              {item.text}
+            </a>
+            {children.length > 0 ? (
+              <ul
+                className={cn(
+                  'flex flex-col border-l border-border',
+                  touch ? 'mb-1 ml-5' : 'my-0.5 ml-3',
+                )}
+              >
+                {children.map((c) => (
+                  <li key={c.id}>
+                    <a
+                      href={`#${c.id}`}
+                      onClick={(e) => jump(e, c.id)}
+                      aria-current={active === c.id ? 'location' : undefined}
+                      className={cn(
+                        '-ml-px flex items-center border-l text-sm leading-snug transition-colors hover:text-fg',
+                        touch ? 'min-h-9 pl-3.5 text-fg-muted' : 'py-1 pl-3 text-fg-subtle',
+                        active === c.id ? 'border-accent text-fg' : 'border-transparent',
+                      )}
+                    >
+                      {c.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 /** Guía anterior o siguiente, con su icono y su grupo. */
@@ -207,22 +265,9 @@ export function DocPagina() {
                   className="ml-auto text-fg-subtle transition-transform group-open:rotate-180"
                 />
               </summary>
-              <ul className="flex flex-col border-t border-border-subtle py-1.5">
-                {toc.map((t) => (
-                  <li key={t.id}>
-                    <a
-                      href={`#${t.id}`}
-                      onClick={(e) => jump(e, t.id)}
-                      className={cn(
-                        'flex min-h-10 items-center px-3.5 text-base text-fg-muted hover:text-fg',
-                        t.depth === 3 && 'pl-7 text-sm',
-                      )}
-                    >
-                      {t.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <div className="border-t border-border-subtle">
+                <Toc toc={toc} touch />
+              </div>
             </details>
           ) : null}
 
@@ -259,27 +304,11 @@ export function DocPagina() {
           aria-label="En esta página"
           className="hidden min-h-0 w-[220px] shrink-0 flex-col gap-1 overflow-y-auto pt-1 xl:flex"
         >
-          <span className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
+          <span className="mb-1.5 flex items-center gap-1.5 px-2 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
             <DocIcon name="list" size={13} />
             En esta página
           </span>
-          {toc.map((t) => (
-            <a
-              key={t.id}
-              href={`#${t.id}`}
-              onClick={(e) => jump(e, t.id)}
-              aria-current={active === t.id ? 'location' : undefined}
-              className={cn(
-                'border-l py-0.5 pl-3 text-sm leading-snug transition-colors',
-                t.depth === 3 && 'pl-5',
-                active === t.id
-                  ? 'border-accent text-fg'
-                  : 'border-border text-fg-subtle hover:text-fg',
-              )}
-            >
-              {t.text}
-            </a>
-          ))}
+          <Toc toc={toc} active={active} />
         </aside>
       ) : null}
     </div>
