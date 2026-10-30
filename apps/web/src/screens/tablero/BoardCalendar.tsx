@@ -7,14 +7,9 @@ import {
   DragOverlay,
   type DragStartEvent,
   type KeyboardCoordinateGetter,
-  KeyboardSensor,
-  MouseSensor,
   pointerWithin,
   type ScreenReaderInstructions,
-  TouchSensor,
   useDroppable,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core'
 import type { TaskWithColumn } from '@muninn/core'
 import {
@@ -62,6 +57,7 @@ import { useOnline } from '../../lib/use-online'
 import { useShell } from '../../shell/shell-context'
 import { CalendarMobile } from './CalendarMobile'
 import { AddTaskPopover, CompactCard, OverdueToggle, TaskPill } from './CalendarParts'
+import { useBoardSensors } from './dnd'
 import { TaskCardOverlay } from './TaskCard'
 
 export interface CalendarProps {
@@ -625,14 +621,7 @@ function CalendarDesktop({
     [],
   )
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: keyboard,
-      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
-    }),
-  )
+  const sensors = useBoardSensors(keyboard)
 
   // Con puntero, lo que hay bajo él; con teclado, el día más cercano al centro (sin las flechas de mes).
   const collision = useMemo<CollisionDetection>(

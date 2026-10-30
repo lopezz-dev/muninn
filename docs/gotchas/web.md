@@ -121,6 +121,9 @@
   arriba del todo, delante de la primera visible; en otro sitio, justo debajo de la visible que queda encima; sin visibles, al final.
   Los contadores y el límite de la columna usan el total (`total` en `Column`), no las visibles. Si añades otra forma de mover
   tarjetas, usa `fullIndex`; «Deshacer» ya usa la columna entera y no depende del filtro.
+- **Reparto por columnas:** visibles, `groups` (filtradas) y `totals` (columna entera) salen de `useBoardGroups` (`lib/board-groups.ts`),
+  el mismo para Tablero, móvil, Lista y el contador de la cabecera; no vuelvas a llamar a `filterTasks` + `groupByColumn` en una
+  vista. Sin filtro, `groups` y `totals` son **el mismo objeto**: no los mutes.
 
 ### La vista Lista no tiene arrastre y su vista vive en localStorage
 
@@ -308,7 +311,9 @@
 - **Causa:** `useSortable` pone `role="button"` y `KeyboardSensor` arranca con Espacio **y Enter**.
 - **Solución:** `SortableTaskCard` pasa `attributes: { role: 'link', … }` y el sensor de teclado se configura con
   `keyboardCodes: { start: ['Space'], … }`. El `MouseSensor` lleva `distance: 6` (un clic no es un arrastre) y dnd-kit
-  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta.
+  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta. Los sensores de todas las vistas con arrastre
+  (escritorio, móvil y calendario) salen de `useBoardSensors(coordinateGetter)` (`screens/tablero/dnd.ts`): solo cambia a dónde
+  llevan las flechas; no montes `useSensors` a mano en una vista nueva.
 - **Ref:** [ADR-0023](../adr/0023-drag-and-drop-con-dnd-kit.md)
 
 ### Tacto: `touch-action` y la capa de «deslizar para completar»

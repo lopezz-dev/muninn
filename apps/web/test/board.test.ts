@@ -13,6 +13,7 @@ import {
   isColKey,
   isTabKey,
   moveAcross,
+  tabId,
   tabKey,
 } from '../src/lib/board'
 
@@ -157,5 +158,6 @@ describe('ids de dnd-kit', () => {
     expect(isColKey('x')).toBe(false)
     expect(isTabKey(tabKey('x'))).toBe(true)
     expect(isTabKey(colKey('x'))).toBe(false)
+    expect(tabId(tabKey('x'))).toBe('x')
   })
 })
