@@ -242,6 +242,8 @@
   pantalla (`scrollToTopSelectors`) y recuerda su posición (`data-scroll-restoration-id`). Para que una lista haga scroll
   dentro, la cadena entera necesita `min-h-0` (desde `Page fit` hasta la lista con `overflow-y-auto`): un solo eslabón
   sin él y crece en lugar de hacer scroll.
+- **En una guía de Documentación** el texto tiene su propio scroll, `#guia` ([ADR-0071](../adr/0071-guia-de-documentacion-a-la-altura-de-la-ventana.md)):
+  ahí `#contenido` tampoco se mueve. El router lo vuelve arriba al cambiar de guía.
 
 ### El buscador ⌘K no usa `cmdk`
 

@@ -282,8 +282,9 @@ export const router = createRouter({
   defaultErrorComponent: ErrorScreen,
   defaultNotFoundComponent: NotFound,
   scrollRestoration: true,
-  // En escritorio hace scroll <main>, no la ventana (ADR-0050): al cambiar de pantalla también vuelve arriba.
-  scrollToTopSelectors: ['#contenido'],
+  // En escritorio hace scroll <main>, no la ventana (ADR-0050): al cambiar de pantalla también vuelve arriba. Lo
+  // mismo el texto de una guía, que lleva su propio scroll (ADR-0071).
+  scrollToTopSelectors: ['#contenido', '#guia'],
 })
 
 // Otra pestaña (o este mismo cliente) cambió de usuario: fuera los datos del anterior y a recalcular

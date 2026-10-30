@@ -148,7 +148,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0049](0049-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
 - [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
 - [ADR-0051](0051-imagenes-en-el-asistente.md) — Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
-- [ADR-0052](0052-documentacion-con-grupos-iconos-y-portada.md) — Documentación con grupos e iconos en el front matter, portada y búsqueda por apartado
+- [ADR-0052](0052-documentacion-con-grupos-iconos-y-portada.md) — Documentación con grupos e iconos en el front matter, portada y búsqueda por apartado *(reemplazado en parte por ADR-0071)*
+- [ADR-0071](0071-guia-de-documentacion-a-la-altura-de-la-ventana.md) — En escritorio la guía de Documentación cabe en la ventana, con «Anterior / Siguiente» fijo y el texto más ancho
 - [ADR-0053](0053-ajustes-por-grupos-buscador-y-restablecer.md) — Ajustes por grupos, con buscador, marca de «cambiado» y «Restablecer» con Deshacer
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
@@ -192,4 +193,5 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0013](0013-sistema-de-documentacion.md) — Sistema de documentación: ADRs, gotchas y docs de usuario
 - [ADR-0027](0027-documentacion-en-la-app-desde-docs-user.md) — La sección Documentación se genera con `docs/user/*.md` importados al compilar
 - [ADR-0046](0046-repo-publico-con-licencia-mit.md) — El repositorio es público, con licencia MIT y política de seguridad
-- [ADR-0052](0052-documentacion-con-grupos-iconos-y-portada.md) — Documentación con grupos e iconos en el front matter, portada y búsqueda por apartado
+- [ADR-0052](0052-documentacion-con-grupos-iconos-y-portada.md) — Documentación con grupos e iconos en el front matter, portada y búsqueda por apartado *(reemplazado en parte por ADR-0071)*
+- [ADR-0071](0071-guia-de-documentacion-a-la-altura-de-la-ventana.md) — En escritorio la guía de Documentación cabe en la ventana, con «Anterior / Siguiente» fijo y el texto más ancho

@@ -37,3 +37,19 @@ export function outline(source: string): OutlineItem[] {
   }
   return out
 }
+
+export interface OutlineSection {
+  item: OutlineItem
+  children: OutlineItem[]
+}
+
+/** Agrupa el índice en apartados (nivel 2) con sus subapartados (nivel 3). Un 3 sin 2 delante va suelto. */
+export function nestOutline(items: OutlineItem[]): OutlineSection[] {
+  const out: OutlineSection[] = []
+  for (const item of items) {
+    const last = out.at(-1)
+    if (item.depth === 3 && last) last.children.push(item)
+    else out.push({ item, children: [] })
+  }
+  return out
+}
