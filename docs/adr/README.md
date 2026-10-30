@@ -165,6 +165,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0067](0067-eliminar-tareas-archivadas.md) — Las tareas archivadas se pueden eliminar para siempre desde «Tareas archivadas», con «Deshacer» diferido
 - [ADR-0068](0068-vista-calendario-del-tablero.md) — Vista Calendario del tablero: arrastrar cambia solo la fecha, bandeja «Sin fecha» y móvil sin arrastre
 - [ADR-0069](0069-noticias-equilibradas-por-fuente.md) — Noticias equilibradas por fuente: rachas plegadas en «Todas» y resumen repartido
+- [ADR-0070](0070-staletime-global-de-30-segundos.md) — Lo leído vale 30 s (`staleTime` global): el tiempo real invalida y volver a la pestaña refresca lo caducado
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
