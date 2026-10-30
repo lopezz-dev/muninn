@@ -22,6 +22,15 @@
 - Solo funcionan si la PWA está **añadida a la pantalla de inicio** (iOS 16.4 o superior) y tras pedir permiso
   con un gesto del usuario (un clic). En Safari, sin instalar, no hay push.
 
+### Una consulta no se vuelve a pedir al montar la pantalla
+
+- **Síntoma:** cambias algo fuera de la app (o en una tabla sin tiempo real, como `activity`), vuelves a la pantalla y sigue lo
+  de antes durante unos segundos.
+- **Causa:** el `queryClient` tiene `staleTime: 30_000` (ADR-0070): durante 30 s lo leído se da por bueno y montar la pantalla no
+  repite la petición. Solo `invalidateQueries` (escrituras propias y tiempo real) o volver a la pestaña con datos caducados refrescan.
+- **Solución:** si una escritura cambia esos datos, termínala con `invalidateQueries` de su clave (no con `refetch` a mano). Si una
+  consulta concreta tiene que pedirse siempre al montar, ponle `staleTime: 0` en sus `queryOptions`.
+
 ### «Deshacer» siempre con `notifyUndo`
 
 - **Síntoma:** pulsas «Deshacer», falla (sin conexión, por ejemplo) y no aparece ningún aviso; o sale «Cambio deshecho» aunque no se
