@@ -39,6 +39,7 @@ const busy = isBusy
 export function settle(qc: QueryClient, projectId: string, taskId?: string) {
   if (busy(projectId)) return
   void qc.invalidateQueries({ queryKey: keys.board(projectId) })
+  void qc.invalidateQueries({ queryKey: keys.archivedTasks(projectId) })
   void qc.invalidateQueries({ queryKey: keys.overview })
   void qc.invalidateQueries({ queryKey: ['checklist-counts'] })
   if (taskId) void qc.invalidateQueries({ queryKey: keys.taskActivity(taskId) })

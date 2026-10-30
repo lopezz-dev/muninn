@@ -18,6 +18,8 @@ export const keys = {
   projectImage: (path: string) => ['project-image', path] as const,
   /** Columnas, tareas y subtareas hechas de un proyecto, en una sola entrada (ver `BoardData`). */
   board: (projectId: string) => ['projects', projectId, 'board'] as const,
+  /** Tareas archivadas de un proyecto (ADR-0067). Cuelga del proyecto: el tiempo real la refresca con él. */
+  archivedTasks: (projectId: string) => ['projects', projectId, 'archived-tasks'] as const,
   overview: ['overview'] as const,
   settings: ['settings'] as const,
   /** Repos a los que llega el token de la sincronización (Ajustes › Integraciones). */
@@ -67,6 +69,16 @@ export const boardQuery = (m: Muninn, projectId: string) =>
       ])
       return { columns, tasks, counts: await m.checklist.counts(tasks.map((t) => t.id)) }
     },
+  })
+
+/** Las archivadas de un proyecto, la última archivada primero. Solo se pide al abrir la lista. */
+export const archivedTasksQuery = (m: Muninn, projectId: string) =>
+  queryOptions({
+    queryKey: keys.archivedTasks(projectId),
+    queryFn: async () =>
+      (await m.tasks.list({ projectId, includeArchived: true }))
+        .filter((t) => t.archivedAt)
+        .sort((a, b) => (b.archivedAt ?? '').localeCompare(a.archivedAt ?? '')),
   })
 
 /**

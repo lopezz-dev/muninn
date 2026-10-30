@@ -16,8 +16,9 @@ import { keys } from './queries'
 
 /**
  * Acciones sobre tareas y subtareas, con feedback y «Deshacer» (ADR-0019). Cada una refleja el cambio
- * en la caché al instante y escribe en el core; ver `mutations.ts`. Nada de aquí borra datos:
- * archivar es reversible y el core no ofrece borrado de tareas en la UI.
+ * en la caché al instante y escribe en el core; ver `mutations.ts`. Archivar es reversible; eliminar para
+ * siempre solo se puede con las archivadas, y espera lo que dura el aviso para que «Deshacer» no pierda nada
+ * (`deleteArchivedTasksWithUndo`, ADR-0067).
  */
 
 type TaskRef = Pick<TaskWithColumn, 'id' | 'projectId' | 'columnId' | 'title'>
@@ -282,6 +283,85 @@ export async function archiveTask(
     },
   })
   return true
+}
+
+/** Saca una tarea de «Archivadas» y la devuelve a su columna. «Deshacer» la vuelve a archivar. */
+export async function restoreArchivedTask(
+  m: Muninn,
+  qc: QueryClient,
+  task: Pick<TaskRef, 'id' | 'projectId' | 'title'>,
+): Promise<boolean> {
+  try {
+    await serial(task.projectId, () => m.tasks.restore(task.id))
+  } catch (err) {
+    fail('No se pudo recuperar la tarea', err)
+    return false
+  }
+  settle(qc, task.projectId, task.id)
+  notify.success(`«${task.title}» recuperada`, {
+    icon: 'archive',
+    description: 'Vuelve a estar en su columna.',
+    action: {
+      label: 'Deshacer',
+      onClick: async () => {
+        try {
+          await serial(task.projectId, () => m.tasks.archive(task.id))
+          settle(qc, task.projectId, task.id)
+          notify.info(`«${task.title}» archivada otra vez`, { icon: 'archive' })
+        } catch (err) {
+          fail('No se pudo archivar la tarea', err)
+        }
+      },
+    },
+  })
+  return true
+}
+
+/** Lo que dura el aviso de «Eliminar»: hasta entonces no se borra nada. */
+const DELETE_DELAY = 6000
+
+/**
+ * Elimina para siempre tareas archivadas de un proyecto (ADR-0067, como los proyectos en ADR-0065). No pregunta:
+ * las quita de la vista y espera lo que dura el aviso; «Deshacer» las devuelve sin haber borrado nada. Si se cierra
+ * la app antes, no se borran.
+ */
+export function deleteArchivedTasksWithUndo(
+  m: Muninn,
+  qc: QueryClient,
+  projectId: string,
+  tasks: Pick<TaskWithColumn, 'id' | 'title' | 'source'>[],
+  view: { hide: (ids: string[]) => void; show: (ids: string[]) => void },
+) {
+  const ids = tasks.map((t) => t.id)
+  const one = tasks.length === 1
+  const fromGithub = tasks.some((t) => t.source === 'github')
+  view.hide(ids)
+  const timer = setTimeout(async () => {
+    const failed: string[] = []
+    for (const id of ids)
+      await serial(projectId, () => m.tasks.delete(id)).catch(() => failed.push(id))
+    settle(qc, projectId)
+    view.show(failed)
+    if (failed.length)
+      notify.error('No se pudo eliminar todo', {
+        description: `${failed.length === 1 ? 'Queda 1' : `Quedan ${failed.length}`} en Archivadas.`,
+      })
+  }, DELETE_DELAY)
+  notify.success(one ? `«${tasks[0]?.title}» eliminada` : `${tasks.length} tareas eliminadas`, {
+    icon: 'trash',
+    description: fromGithub
+      ? 'Si su issue de GitHub sigue abierta, volverá con la próxima sincronización.'
+      : 'Con sus subtareas. Sus notas se quedan sin tarea.',
+    duration: DELETE_DELAY,
+    action: {
+      label: 'Deshacer',
+      onClick: () => {
+        clearTimeout(timer)
+        view.show(ids)
+        notify.info(one ? 'Tarea devuelta a Archivadas' : 'Tareas devueltas a Archivadas')
+      },
+    },
+  })
 }
 
 // ─── Subtareas ──────────────────────────────────────────────────────────────

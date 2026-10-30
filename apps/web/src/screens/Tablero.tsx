@@ -31,6 +31,7 @@ import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, boardQuery, projectQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
 import { useShell } from '../shell/shell-context'
+import { ArchivedTasks } from './tablero/ArchivedTasks'
 import { BoardDesktop } from './tablero/BoardDesktop'
 import { BoardMobile } from './tablero/BoardMobile'
 import { ColumnDialog } from './tablero/ColumnDialog'
@@ -77,6 +78,7 @@ export function Tablero() {
   const [filter, setFilter] = useState<BoardFilter>(NO_FILTER)
   const [sheet, setSheet] = useState(false)
   const [newColumn, setNewColumn] = useState(false)
+  const [archivedOpen, setArchivedOpen] = useState(false)
   // Tablero o Lista, recordado por proyecto en este dispositivo (`lib/board-view.ts`).
   const [view, setView] = useState<BoardView>(() => readBoardView(projectId))
   useEffect(() => setView(readBoardView(projectId)), [projectId])
@@ -215,6 +217,9 @@ export function Tablero() {
                 <MenuItem icon={<icons.link />} onSelect={copyLink}>
                   Copiar enlace
                 </MenuItem>
+                <MenuItem icon={<icons.archive />} onSelect={() => setArchivedOpen(true)}>
+                  Tareas archivadas
+                </MenuItem>
                 <MenuItem icon={<icons.archive />} onSelect={archive}>
                   Archivar proyecto
                 </MenuItem>
@@ -283,6 +288,7 @@ export function Tablero() {
         target={newColumn ? 'new' : null}
         onClose={() => setNewColumn(false)}
       />
+      <ArchivedTasks projectId={p.id} open={archivedOpen} onOpenChange={setArchivedOpen} />
       <Outlet />
     </Page>
   )

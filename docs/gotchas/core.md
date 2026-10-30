@@ -165,3 +165,12 @@
   resumen en texto, sin cabeceras ni credenciales, 10 s y 3 MB. Si algún día hace falta cerrarlo, la vía es un proxy de salida que
   bloquee rangos privados (ADR nuevo).
 - **Ref:** [ADR-0042](../adr/0042-noticias-rss-con-descarga-en-servidor.md)
+
+### Borrar en el store de memoria: la cascada es a mano
+
+- **Síntoma:** en la demo o en los tests, tras eliminar una tarea quedan subtareas huérfanas, notas que apuntan a una tarea que no
+  existe o entradas de la cola de GitHub sin tarea; en Supabase, en cambio, todo cuadra.
+- **Causa:** en Supabase lo hacen las claves ajenas (`on delete cascade` / `set null`). `MemoryCollection.remove` solo quita la fila.
+- **Solución:** `tasks.remove` y `projects.remove` del store de memoria pasan por `dropTask`, que imita las claves ajenas (subtareas y
+  cola fuera, notas sin tarea, actividad intacta). Si añades una tabla que cuelga de las tareas, añádela ahí también. Y
+  `m.tasks.delete` solo acepta tareas archivadas ([ADR-0067](../adr/0067-eliminar-tareas-archivadas.md)).

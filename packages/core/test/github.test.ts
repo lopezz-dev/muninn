@@ -190,6 +190,26 @@ describe('github: issue → tarea', () => {
 })
 
 describe('github: tarea → issue (cola de salida)', () => {
+  it('eliminar una tarea archivada vacía su cola y, si la issue sigue abierta, vuelve como tarea nueva', async () => {
+    const { github, user } = await setup()
+    const r = await github.github.applyIssue(REPO, issue())
+    if (r.action !== 'created') throw new Error('debía crearse')
+    await user.tasks.complete(r.task.id)
+    await user.tasks.archive(r.task.id)
+    expect(await user.github.outbox.pending()).toHaveLength(1)
+    await user.tasks.delete(r.task.id)
+    expect(await user.github.outbox.pending()).toHaveLength(0)
+    const again = await github.github.applyIssue(REPO, issue())
+    if (again.action !== 'created') throw new Error('debía volver como tarea nueva')
+    expect(again.task.id).not.toBe(r.task.id)
+    // Cerrada, en cambio, no vuelve.
+    await user.tasks.archive(again.task.id)
+    await user.tasks.delete(again.task.id)
+    expect((await github.github.applyIssue(REPO, issue({ state: 'closed' }))).action).toBe(
+      'ignored',
+    )
+  })
+
   it('completar o reabrir en Muninn se apunta; lo que hace la sincronización, no', async () => {
     const { github, user, store } = await setup()
     const r = await github.github.applyIssue(REPO, issue())
