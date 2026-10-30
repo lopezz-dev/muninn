@@ -619,14 +619,6 @@
   `projects.imageUrl(path)` a través de la consulta.
 - **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)
 
-### El test del informe de la mañana caduca con Ollama encendido
-
-- **Síntoma:** `test/morning-report.test.ts` › «se guarda como nota…» falla en local con *Test timed out in 5000ms*; en el CI pasa.
-- **Causa:** `generateMorningReport` comprueba Ollama en `localhost:11434` y, si responde con el modelo, pide la entradilla de
-  verdad. Con `qwen3:8b` cargado eso tarda más de 5 s. En el CI no hay Ollama y el informe sale sin entradilla.
-- **Solución:** para `pnpm test`, apaga Ollama (o descarga el modelo de memoria). Pendiente: que el test inyecte un proveedor
-  falso en lugar de depender de lo que haya en el equipo.
-
 ### CAPTCHA de la entrada: Turnstile (pasos manuales)
 
 - **Síntoma:** con el CAPTCHA activo en Supabase, «Enviar código» falla con «No hemos podido comprobar que no eres un
