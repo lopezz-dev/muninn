@@ -78,8 +78,15 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     id: 'acento',
     section: 'apariencia',
     label: 'Color de acento',
-    description: 'Botones, selección y el botón del Asistente en el móvil.',
+    description: 'Botones, selección y la pestaña activa de la barra de abajo.',
     keywords: 'color tema',
+  },
+  {
+    id: 'barra-pestanas',
+    section: 'barra',
+    label: 'Pestañas de la barra de abajo',
+    description: 'Elige de una a cuatro y su orden. Tu avatar queda siempre a la derecha.',
+    keywords: 'dock pestañas móvil navegación inicio buscar más',
   },
   {
     id: 'atajos-buscador',

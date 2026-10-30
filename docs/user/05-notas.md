@@ -17,7 +17,7 @@ Se escriben en **Markdown** y se guardan solas mientras escribes.
 ## Dónde están
 
 En el ordenador, **Notas** está en la barra lateral: la lista a la izquierda y la nota abierta a la derecha. En el móvil
-está en **Más › Notas**; al abrir una nota se ve a pantalla completa y la flecha de arriba te devuelve a la lista.
+está en **Ir a › Notas**, en la hoja de tu cuenta (o en la barra de abajo, si la pones ahí); al abrir una nota se ve a pantalla completa y la flecha de arriba te devuelve a la lista.
 
 Cada nota tiene su propio enlace, así que puedes copiarlo o recargar la página sin perder el sitio.
 

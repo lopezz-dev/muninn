@@ -14,7 +14,7 @@ icon: github
 
 ## La pantalla GitHub
 
-En **GitHub** (en la barra lateral, o en **Más** en el móvil) tienes todo junto:
+En **GitHub** (en la barra lateral o, en el móvil, en **Ir a** de la hoja de tu cuenta) tienes todo junto:
 
 - **Tus repositorios.** Primero los vinculados, con su proyecto, cuántas issues siguen abiertas y cuándo cambió algo por última vez.
   Debajo, los demás repositorios a los que llega la sincronización, como «Sin vincular» (si son muchos, **Ver más**).

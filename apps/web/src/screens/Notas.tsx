@@ -128,13 +128,6 @@ export function Notas() {
       className="flex min-w-0 flex-col gap-3 md:sticky md:top-7 md:max-h-[calc(100dvh-3.5rem)] md:self-start md:overflow-y-auto md:pr-3"
     >
       <header className="flex items-center gap-3">
-        <Link
-          to="/mas"
-          aria-label="Volver"
-          className="grid size-11 place-items-center rounded-md border border-border bg-surface text-fg md:hidden"
-        >
-          <icons.chevronLeft size={18} />
-        </Link>
         <h1 className="flex-1 text-2xl font-semibold tracking-tight md:text-xl">Notas</h1>
         <IconButton
           aria-label="Nueva nota"

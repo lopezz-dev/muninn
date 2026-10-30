@@ -3,6 +3,7 @@ import { cn } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
 import { typingIn } from '../lib/keyboard'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
@@ -31,6 +32,30 @@ const NewTaskDialog = lazy(() =>
 const ProjectDialog = lazy(() =>
   import('./ProjectDialog').then((m) => ({ default: m.ProjectDialog })),
 )
+// La hoja «Tu cuenta» del teléfono lleva el contenido de Ajustes: solo se descarga al abrirla.
+const AccountSheet = lazy(() => import('./AccountSheet').then((m) => ({ default: m.AccountSheet })))
+
+/**
+ * En el teléfono, un enlace a `/ajustes/<sección>` no cambia de pantalla: abre la hoja «Tu cuenta» en esa sección,
+ * encima de la que estás (ADR-0072). Se intercepta el clic antes que el `<Link>` (que respeta `defaultPrevented`);
+ * lo que navega por código o entra de cero lo resuelve el `beforeLoad` de `/ajustes` en el router.
+ */
+function useSettingsLinksInSheet() {
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+        return
+      const a = (e.target as Element | null)?.closest?.('a[href]')
+      if (!(a instanceof HTMLAnchorElement) || a.origin !== location.origin || a.target) return
+      const view = settingsViewOf(a.pathname)
+      if (!view || !isPhone()) return
+      e.preventDefault()
+      accountSheet.open(view)
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [])
+}
 
 /**
  * Estructura común de todas las pantallas (ADR-0054): barra lateral completa en el ordenador (≥ 1024 px), raíl de
@@ -56,6 +81,10 @@ export function AppShell() {
     },
   )
   const mainRef = useRef<HTMLElement>(null)
+  const sheet = useAccountSheet()
+  const sheetLoaded = useRef(false)
+  if (sheet.open) sheetLoaded.current = true
+  useSettingsLinksInSheet()
   const modules = useEnabledModules()
   const settings = useQuery(settingsQuery(useMuninn())).data
   const reportOn =
@@ -109,6 +138,18 @@ export function AppShell() {
     prevSection.current = section
     mainRef.current?.focus({ preventScroll: true })
   }, [section])
+
+  // Al llegar a otra pantalla (desde «Ir a», una pestaña o un enlace de dentro), la hoja «Tu cuenta» se cierra. Se mira
+  // la ruta ya resuelta: un enlace directo a `/ajustes/…` en el teléfono vuelve a la misma y no la cierra.
+  const resolved = useRouterState({ select: (s) => s.resolvedLocation?.pathname })
+  const prevResolved = useRef(resolved)
+  useEffect(() => {
+    if (prevResolved.current === resolved) return
+    const first = prevResolved.current === undefined
+    prevResolved.current = resolved
+    // La primera vez no: si se entró por un enlace directo, la hoja ya viene abierta.
+    if (!first) accountSheet.close()
+  }, [resolved])
 
   // Una sección cuyo módulo está desactivado no se pinta: en su lugar, cómo activarlo.
   const off = section && !sectionEnabled(section, modules) ? section : null
@@ -168,6 +209,11 @@ export function AppShell() {
       {reportOn ? (
         <Suspense fallback={null}>
           <MorningReportRunner />
+        </Suspense>
+      ) : null}
+      {sheetLoaded.current ? (
+        <Suspense fallback={null}>
+          <AccountSheet />
         </Suspense>
       ) : null}
       {projectDialog.loaded ? (
