@@ -49,6 +49,8 @@
 
 - Los `inputSchema` del MCP son formas zod. Reutiliza los enums del core (`taskPriority`, `columnKind`…)
   para no duplicar valores válidos, y deja que el servicio haga la validación completa.
+- Las formas que repiten varias herramientas (`projectRef`, `isoDate`, `limit(max)`) están en `tools/shapes.ts`. Para resolver por nombre,
+  `pickByName(filas, ref, () => mensaje)` (`define.ts`): el mensaje enumera las opciones para que el modelo se corrija.
 
 ### MCP remoto: sin estado y solo POST
 
@@ -126,10 +128,12 @@
 
 ### Finanzas: importes en euros, cuentas y categorías por nombre
 
-- Las herramientas de Finanzas (`finance-tools.ts`) aceptan los importes en **euros** (`24.9`, `"24,90"`) y devuelven céntimos (`amount`,
+- Las herramientas de Finanzas (`packages/assistant/src/tools/finance.ts`) aceptan los importes en **euros** (`24.9`, `"24,90"`) y devuelven céntimos (`amount`,
   `balance`) y el texto (`amountText`, `balanceText`): así el modelo no multiplica por cien ni lee mal los céntimos.
 - `account` y `category` admiten id o nombre (exacto y, si no, el primero que lo contiene); sin `account`, un gasto o ingreso va a la
   primera cuenta corriente. `update_transaction` con `category: null` la quita.
+- Resuelve con `financeLookup(app)` (uno por llamada): lee cuentas y categorías como mucho una vez y nombra la salida con lo mismo
+  (`out`). No llames a `accounts.list` en cada resolución: eran hasta cinco viajes de red por herramienta.
 - No hay borrados: `archive_transaction` y `archive_finance_account`. Tras cambiar el core, `pnpm --filter @muninn/mcp build` y `build:edge`.
 - Suscripciones: `list_subscriptions` (con `upcomingDays`, las que hay que avisar), `create_subscription`, `record_subscription_charge`,
   `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.
