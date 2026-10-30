@@ -2,6 +2,7 @@ import { useDndContext, useDraggable } from '@dnd-kit/core'
 import type { BoardColumn, TaskWithColumn } from '@muninn/core'
 import {
   Button,
+  Chip,
   cn,
   DatePicker,
   Icon,
@@ -13,6 +14,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  ProgressBar,
   TextField,
   Tooltip,
 } from '@muninn/ui'
@@ -144,6 +146,107 @@ export function CalendarCard({
       className={cn(card, 'touch-manipulation', isDragging && 'border-dashed opacity-30')}
     >
       <CardBody task={task} progress={progress} today={today} />
+    </Link>
+  )
+}
+
+/**
+ * Tarjeta de la vista Semana: más densa que la del tablero y sin la fecha (ya la dice la columna). Lleva la columna
+ * de la tarea (en el calendario es lo que no se ve), hasta dos etiquetas, subtareas y la prioridad si importa.
+ */
+export function WeekCard({
+  task,
+  today,
+  projectId,
+  progress,
+  disabled,
+}: {
+  task: TaskWithColumn
+  today: string
+  projectId: string
+  progress?: Progress
+  disabled: boolean
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useTaskDrag(task, disabled)
+  const done = task.column.kind === 'done'
+  const overdue = isOverdue(task, today)
+  const flag = !done && (task.priority === 'high' || task.priority === 'urgent')
+  const subtasks = progress && progress.total > 0 ? progress : null
+  return (
+    <Link
+      ref={setNodeRef}
+      to="/proyectos/$projectId/tareas/$taskId"
+      params={{ projectId, taskId: task.id }}
+      data-task-id={task.id}
+      draggable={false}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        'flex shrink-0 flex-col gap-1.5 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-fg no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent touch-manipulation',
+        isDragging && 'border-dashed opacity-30',
+      )}
+    >
+      {task.labels.length > 0 ? (
+        <span className="flex min-w-0 flex-wrap gap-1">
+          {task.labels.slice(0, 2).map((l) => (
+            <Chip key={l} className="h-[18px] max-w-full truncate px-1.5 text-[11px]">
+              {l}
+            </Chip>
+          ))}
+          {task.labels.length > 2 ? (
+            <Chip className="h-[18px] px-1.5 text-[11px]">+{task.labels.length - 2}</Chip>
+          ) : null}
+        </span>
+      ) : null}
+      <span
+        className={cn(
+          'line-clamp-3 text-sm leading-snug break-words',
+          done && 'text-fg-subtle line-through',
+        )}
+      >
+        {task.title}
+      </span>
+      {subtasks ? (
+        <ProgressBar
+          value={subtasks.done / subtasks.total}
+          label={`Subtareas de «${task.title}»`}
+          className="h-[3px]"
+        />
+      ) : null}
+      <span className="flex min-w-0 items-center gap-1.5 text-xs text-fg-subtle">
+        {done ? (
+          <icons.check
+            size={12}
+            weight="bold"
+            className="shrink-0 text-success"
+            aria-hidden="true"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[task.column.kind])}
+          />
+        )}
+        {overdue ? null : <span className="min-w-0 truncate">{task.column.name}</span>}
+        {overdue ? (
+          <span className="inline-flex shrink-0 items-center gap-1 font-medium text-danger">
+            <icons.clock size={12} aria-hidden="true" />
+            Vencida
+          </span>
+        ) : null}
+        {subtasks ? (
+          <span className="shrink-0 tabular">
+            {subtasks.done}/{subtasks.total}
+          </span>
+        ) : null}
+        {flag ? (
+          <icons.flag
+            size={12}
+            className={cn('ml-auto shrink-0', PRIORITY_TEXT[task.priority])}
+            aria-label={`Prioridad ${priorityLabel(task.priority).toLowerCase()}`}
+          />
+        ) : null}
+      </span>
     </Link>
   )
 }

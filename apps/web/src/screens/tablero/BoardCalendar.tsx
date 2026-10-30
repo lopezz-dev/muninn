@@ -60,7 +60,7 @@ import { setDueDate } from '../../lib/task-actions'
 import { useOnline } from '../../lib/use-online'
 import { useShell } from '../../shell/shell-context'
 import { CalendarMobile } from './CalendarMobile'
-import { AddTaskPopover, CalendarCard, OverdueToggle, TaskPill } from './CalendarParts'
+import { AddTaskPopover, CalendarCard, OverdueToggle, TaskPill, WeekCard } from './CalendarParts'
 import { TaskCardOverlay } from './TaskCard'
 
 export interface CalendarProps {
@@ -254,7 +254,20 @@ function MonthCell({
   )
 }
 
-/** Columna de un día en la vista Semana: tarjetas completas y «Añadir» al pie. */
+/** «Hoy», «Mañana» o «Ayer» junto al número del día en la semana. */
+const relative = (iso: string, today: string) =>
+  iso === today
+    ? 'Hoy'
+    : iso === addDays(today, 1)
+      ? 'Mañana'
+      : iso === addDays(today, -1)
+        ? 'Ayer'
+        : ''
+
+/**
+ * Columna de un día en la vista Semana: cabecera con el día, las tareas (`WeekCard`) y «Añadir» justo debajo de la
+ * última. Un día vacío no dice nada: el hueco ya se entiende, y al arrastrar se ilumina entero.
+ */
 function WeekColumn({
   iso,
   tasks,
@@ -269,18 +282,19 @@ function WeekColumn({
 }: Omit<DayProps, 'inMonth' | 'more' | 'onMore'> & { total: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: dayKey(iso), disabled: !canWrite })
   const isToday = iso === today
+  const rel = relative(iso, today)
   return (
     <section
       ref={setNodeRef}
-      aria-label={dayLong(iso)}
+      aria-label={`${dayLong(iso)}${total ? `, ${total === 1 ? '1 tarea' : `${total} tareas`}` : ''}`}
       className={cn(
-        'flex min-h-0 min-w-0 flex-col gap-2 rounded-lg border p-2',
+        'group flex min-h-0 min-w-0 flex-col rounded-lg border transition-colors',
         isToday ? 'border-accent/35 bg-accent-soft/40' : 'border-border-subtle',
         !isToday && (weekend ? 'bg-surface-sunken' : 'bg-surface'),
         isOver && 'border-accent bg-accent-soft',
       )}
     >
-      <h3 className="flex items-baseline gap-1.5 px-1 pt-0.5">
+      <h3 className="flex shrink-0 flex-col gap-0.5 border-b border-border-subtle px-2.5 pt-2 pb-2">
         <span
           className={cn(
             'text-[11.5px] font-semibold tracking-wider uppercase',
@@ -289,16 +303,35 @@ function WeekColumn({
         >
           {WEEKDAYS[(new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7]}
         </span>
-        <span className={cn('text-xl font-semibold tabular', isToday && 'text-accent')}>
-          {Number(iso.slice(8))}
-        </span>
-        <span className="ml-auto text-xs font-normal text-fg-subtle tabular">
-          {tasks.length === total ? total || '' : `${tasks.length} de ${total}`}
+        <span className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+          <span
+            className={cn(
+              'text-2xl font-semibold tracking-tight tabular',
+              isToday && 'text-accent',
+            )}
+          >
+            {Number(iso.slice(8))}
+          </span>
+          {rel ? (
+            <span
+              className={cn(
+                'truncate text-xs font-medium',
+                isToday ? 'text-accent' : 'text-fg-subtle',
+              )}
+            >
+              {rel}
+            </span>
+          ) : null}
+          {total > 0 ? (
+            <span className="ml-auto text-xs text-fg-subtle tabular">
+              {tasks.length === total ? total : `${tasks.length} de ${total}`}
+            </span>
+          ) : null}
         </span>
       </h3>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1.5">
         {tasks.map((t) => (
-          <CalendarCard
+          <WeekCard
             key={t.id}
             task={t}
             today={today}
@@ -307,33 +340,73 @@ function WeekColumn({
             disabled={!canWrite}
           />
         ))}
-        {tasks.length === 0 ? (
-          <p className="px-1 text-sm text-fg-faint">
-            {total > 0 ? 'Ninguna cumple el filtro.' : 'Nada para este día.'}
-          </p>
+        {tasks.length === 0 && total > 0 ? (
+          <p className="px-1 py-1 text-xs text-fg-faint">Ninguna cumple el filtro.</p>
+        ) : null}
+        {canWrite ? (
+          <AddTaskPopover
+            projectId={projectId}
+            columns={board.columns}
+            date={iso}
+            today={today}
+            open={adding}
+            onOpenChange={onAdding}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={`Añadir tarea el ${dayShort(iso)}`}
+              className={cn(
+                'shrink-0 justify-start px-1.5 text-fg-subtle',
+                // En un día con tareas aparece al pasar por la columna; en uno vacío está siempre.
+                tasks.length > 0 &&
+                  'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100',
+              )}
+            >
+              <icons.plus size={14} aria-hidden="true" />
+              Añadir
+            </Button>
+          </AddTaskPopover>
         ) : null}
       </div>
-      {canWrite ? (
-        <AddTaskPopover
-          projectId={projectId}
-          columns={board.columns}
-          date={iso}
-          today={today}
-          open={adding}
-          onOpenChange={onAdding}
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="justify-start"
-            aria-label={`Añadir tarea el ${dayShort(iso)}`}
-          >
-            <icons.plus size={14} aria-hidden="true" />
-            Añadir
-          </Button>
-        </AddTaskPopover>
-      ) : null}
     </section>
+  )
+}
+
+/** Bandeja plegada: un raíl estrecho que la vuelve a abrir y que también recibe tareas (quitar la fecha). */
+function UndatedRail({
+  count,
+  dragging,
+  canWrite,
+  onOpen,
+}: {
+  count: number
+  dragging: boolean
+  canWrite: boolean
+  onOpen: () => void
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: UNDATED, disabled: !canWrite })
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={onOpen}
+      aria-label={`Abrir «Sin fecha» (${count})`}
+      className={cn(
+        'flex w-10 shrink-0 cursor-pointer flex-col items-center gap-2 rounded-lg border bg-surface-sunken py-3 text-fg-subtle transition-colors hover:text-fg',
+        isOver
+          ? 'border-dashed border-accent bg-accent-soft text-accent'
+          : dragging
+            ? 'border-dashed border-border-strong'
+            : 'border-border-subtle',
+      )}
+    >
+      <icons.calendar size={15} aria-hidden="true" />
+      <span className="text-xs font-semibold tabular">{count}</span>
+      <span className="text-xs font-medium [writing-mode:vertical-rl]">
+        {dragging ? 'Soltar para quitar la fecha' : 'Sin fecha'}
+      </span>
+    </button>
   )
 }
 
@@ -454,7 +527,11 @@ function CalendarDesktop({
   const canWrite = useOnline()
   // El día que manda en lo que se ve: su mes o su semana. Siempre abre en hoy.
   const [anchor, setAnchor] = useState(today)
-  const [trayOpen, setTrayOpen] = useState(true)
+  // La bandeja empieza abierta en el mes y plegada en la semana, donde el ancho es para los días.
+  const [trayByScale, setTrayByScale] = useState({ month: true, week: false })
+  const trayOpen = trayByScale[scale]
+  const setTrayOpen = (open: boolean | ((o: boolean) => boolean)) =>
+    setTrayByScale((t) => ({ ...t, [scale]: typeof open === 'function' ? open(t[scale]) : open }))
   const [dragId, setDragId] = useState<string | null>(null)
   const [adding, setAdding] = useState<string | null>(null)
   const [moreDay, setMoreDay] = useState<string | null>(null)
@@ -735,7 +812,19 @@ function CalendarDesktop({
               </ol>
             </div>
           ) : (
-            <div className="grid min-h-0 flex-1 grid-cols-7 gap-2">
+            <div
+              className="grid min-h-0 flex-1 gap-2 transition-[grid-template-columns] duration-200 ease-out"
+              // Los días con tareas (y hoy) se llevan el ancho; los vacíos, como un fin de semana libre, se estrechan.
+              style={{
+                gridTemplateColumns: days
+                  .map((d) =>
+                    (byDay[d]?.length ?? 0) > 0 || d === today
+                      ? 'minmax(0,1fr)'
+                      : 'minmax(0,0.55fr)',
+                  )
+                  .join(' '),
+              }}
+            >
               {days.map((iso, c) => (
                 <WeekColumn
                   key={iso}
@@ -768,7 +857,14 @@ function CalendarDesktop({
             onAdding={(o) => setAdding(o ? UNDATED : null)}
             onClose={() => setTrayOpen(false)}
           />
-        ) : null}
+        ) : (
+          <UndatedRail
+            count={undated.length}
+            dragging={dragTask !== undefined}
+            canWrite={canWrite}
+            onOpen={() => setTrayOpen(true)}
+          />
+        )}
       </div>
 
       <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }}>

@@ -150,7 +150,10 @@ El calendario coloca cada tarea en el día en que vence. Siempre se abre en hoy.
 - **Arrastra una tarea a otro día** para cambiar su fecha. Solo cambia la fecha: la tarea se queda en su columna. Te sale un aviso
   («Vence el mié 4 nov») con **Deshacer**. Si la dejas un momento sobre ‹ o ›, el calendario pasa al mes siguiente o al anterior.
 - **Sin fecha.** Las tareas sin fecha están en la bandeja de la derecha (ábrela o ciérrala con **Sin fecha · N**). Arrastra una a un
-  día para ponerle fecha, o suelta una tarea en la bandeja para **quitarle** la fecha.
+  día para ponerle fecha, o suelta una tarea en la bandeja para **quitarle** la fecha. Cerrada, queda una tira estrecha a la derecha:
+  también puedes soltar ahí. En la vista **Semana** empieza cerrada, para que los días tengan sitio.
+- **En la semana** cada tarea enseña su columna, sus etiquetas y sus subtareas. Los días sin tareas se estrechan para dejar sitio a los
+  que tienen.
 - **Crear en un día:** pulsa el **+** que aparece al pasar el ratón por un día (o haz clic en su hueco), escribe el título y pulsa
   Enter. La tarea nace con esa fecha, en la columna «Por hacer» (puedes elegir otra). **Más opciones…** abre el formulario completo.
 - **Con el teclado:** ve con Tab hasta una tarea y pulsa **Espacio** para cogerla. Las flechas ← → la mueven un día y ↑ ↓ una semana,

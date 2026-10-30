@@ -18,14 +18,17 @@ en el lienzo «Muninn — Calendario» (https://claude.ai/artifact/5a4s3wiHqsZVG
   tablero ya trae todas las tareas del proyecto. Los cálculos (rejilla, orden del día, atajos de fecha, teclado) viven en
   `lib/calendar.ts`, con tests.
 - **Mes y Semana.** El mes tiene seis filas que empiezan en lunes (como el `Calendar` de ADR-0049). Cada día enseña hasta tres
-  píldoras; si no caben, dos y «+N más», que abre un desplegable con todas. La semana enseña las tarjetas de siempre (`CardBody`).
+  píldoras; si no caben, dos y «+N más», que abre un desplegable con todas. La semana usa una tarjeta propia más densa
+  (`WeekCard`): sin la fecha (ya la dice la columna), con su columna, hasta dos etiquetas, subtareas y la bandera si es alta o
+  urgente. Los días con tareas (y hoy) se llevan el ancho; los vacíos se estrechan. «Añadir» va justo debajo de la última tarea.
 - **Arrastrar cambia solo la fecha**, nunca la columna. Soltar en un día escribe `dueDate` con `setDueDate` (`patchTask`,
   optimista y con «Deshacer», [ADR-0025](0025-escrituras-optimistas-y-deshacer.md)), y el aviso dice cuándo vence («Vence el
   mié 4 nov»). Quedarse 600 ms sobre ‹ o › cambia de mes o de semana durante el arrastre.
 - **Sin orden propio dentro de un día:** primero las pendientes, luego por prioridad, por columna y por su orden en la columna.
   El modelo no tiene un orden por día, y no se inventa.
 - **Tareas sin fecha en una bandeja lateral** plegable. Sus tarjetas se arrastran a un día, y soltar una tarea en la bandeja le
-  **quita** la fecha.
+  **quita** la fecha. Plegada queda un raíl de 40 px que la vuelve a abrir y que también recibe tareas. Empieza abierta en el mes
+  y plegada en la semana, donde el ancho es para los días (con la bandeja abierta, cada día se quedaba en unos 115 px).
 - **Hechas a la vista**, atenuadas y tachadas. Vencida = fecha pasada y sin hacer (`isOverdue`, la misma regla que el filtro):
   texto en rojo y un contador «N vencidas» que activa el filtro «Vence: Vencidas».
 - **Crear en un día:** el «+» del día (o un clic en su hueco) abre `AddTaskPopover`. Tiene la fecha ya puesta y la columna por
