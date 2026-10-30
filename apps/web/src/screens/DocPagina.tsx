@@ -91,7 +91,7 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
       to="/documentacion/$pagina"
       params={{ pagina: doc.slug }}
       className={cn(
-        'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
+        'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg md:py-2.5 outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
         next && 'flex-row-reverse text-right',
       )}
     >
@@ -108,9 +108,11 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
 }
 
 /**
- * Una guía (ADR-0052): cabecera con icono, estado y tiempo de lectura; el texto centrado a medida de
- * lectura (ADR-0048); «En esta página» a la derecha en pantallas anchas (desplegable en el móvil) y la guía
- * anterior y siguiente al final.
+ * Una guía (ADR-0052): cabecera con icono, estado y tiempo de lectura; el texto y, en pantallas anchas,
+ * «En esta página» a su lado (desplegable en el móvil); la guía anterior y siguiente al final.
+ *
+ * En escritorio (ADR-0071) la guía cabe en la ventana: el texto hace scroll en `#guia` y «Anterior / Siguiente»
+ * queda fijo debajo. En el móvil hace scroll la página y van al final, como siempre.
  */
 export function DocPagina() {
   const { pagina } = route.useParams()
@@ -144,9 +146,13 @@ export function DocPagina() {
   const sections = toc.filter((t) => t.depth === 2).length
 
   return (
-    <div className="flex min-w-0 flex-1 gap-10 xl:gap-12">
-      <article className="flex min-w-0 flex-1 justify-center">
-        <div className="flex w-full max-w-[760px] min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-1 gap-8 md:min-h-0">
+      <article className="flex min-w-0 max-w-[1000px] flex-1 flex-col md:min-h-0">
+        <div
+          id="guia"
+          data-scroll-restoration-id="guia"
+          className="flex min-w-0 flex-col gap-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-3 md:pb-6"
+        >
           <Link
             to="/documentacion"
             className="-mb-1 flex h-11 items-center gap-1.5 self-start text-md text-accent md:hidden"
@@ -227,31 +233,31 @@ export function DocPagina() {
             renderLink={renderLink}
             className="mt-2"
           />
-
-          {prev || next ? (
-            <nav
-              aria-label="Otras guías"
-              className="mt-8 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row"
-            >
-              {prev ? (
-                <Neighbour doc={prev} dir="prev" />
-              ) : (
-                <span className="hidden flex-1 sm:block" />
-              )}
-              {next ? (
-                <Neighbour doc={next} dir="next" />
-              ) : (
-                <span className="hidden flex-1 sm:block" />
-              )}
-            </nav>
-          ) : null}
         </div>
+
+        {prev || next ? (
+          <nav
+            aria-label="Otras guías"
+            className="mt-8 flex shrink-0 flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row md:mt-0 md:pt-3"
+          >
+            {prev ? (
+              <Neighbour doc={prev} dir="prev" />
+            ) : (
+              <span className="hidden flex-1 sm:block" />
+            )}
+            {next ? (
+              <Neighbour doc={next} dir="next" />
+            ) : (
+              <span className="hidden flex-1 sm:block" />
+            )}
+          </nav>
+        ) : null}
       </article>
 
       {toc.length > 1 ? (
         <aside
           aria-label="En esta página"
-          className="sticky top-7 hidden max-h-[calc(100dvh-3.5rem)] w-[220px] shrink-0 flex-col gap-1 self-start overflow-y-auto pt-24 xl:flex"
+          className="hidden min-h-0 w-[220px] shrink-0 flex-col gap-1 overflow-y-auto pt-1 xl:flex"
         >
           <span className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
             <DocIcon name="list" size={13} />

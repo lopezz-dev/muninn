@@ -62,7 +62,8 @@ En **Documentación** (abajo en la barra lateral, o en **Más** en el móvil) es
 izquierda ves el menú, agrupado en **Primeros pasos**, **Tu trabajo**, **Módulos**, **Asistentes e IA** y **Cuenta**, con una marca
 **Parcial** o **Próximamente** en las que aún no están completas; arriba, un buscador
 que mira en los títulos y en el texto de todas. Cada guía tiene su enlace, un índice **En esta página** (en pantallas
-anchas) y los botones **Anterior** y **Siguiente**.
+anchas) y los botones **Anterior** y **Siguiente**. En el ordenador esos dos botones se quedan siempre abajo, a la vista:
+no hace falta bajar hasta el final para pasar a la siguiente guía.
 
 ## Activar y desactivar módulos
 
