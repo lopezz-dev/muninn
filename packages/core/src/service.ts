@@ -68,6 +68,37 @@ export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = [
 
 const OPEN_ACTIVE_KINDS: ColumnKind[] = ['in_progress', 'review']
 
+/** El `source` de las tareas que crea cada actor si no se indica otro. */
+const SOURCE_BY_ACTOR: Record<ActorKind, TaskSource> = {
+  user: 'manual',
+  system: 'manual',
+  mcp: 'mcp',
+  assistant: 'mcp',
+  agent: 'agent',
+  github: 'github',
+}
+
+/** Por fecha de vencimiento, la más cercana primero (las fechas `AAAA-MM-DD` se ordenan como texto). */
+const byDue = (a: Task, b: Task) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')
+
+/** Orden binario de dos claves (las de fractional-indexing no se comparan con `localeCompare`). */
+const byKey = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+
+/** Ids por petición en los filtros `in (…)`: PostgREST los lleva en la URL y con cientos se pasa de largo. */
+const IN_CHUNK = 100
+
+/** Lanza `fn` con los ids de `IN_CHUNK` en `IN_CHUNK` (a la vez) y junta los resultados. */
+async function inChunks<T>(ids: string[], fn: (chunk: string[]) => Promise<T[]>) {
+  const chunks: string[][] = []
+  for (let i = 0; i < ids.length; i += IN_CHUNK) chunks.push(ids.slice(i, i + IN_CHUNK))
+  return (await Promise.all(chunks.map(fn))).flat()
+}
+
+/** `owner/repo` y número de la issue de una tarea de GitHub; `null` si la tarea no viene de una issue. */
+function issueRefOf(task: Task) {
+  return task.source === 'github' && task.externalId ? parseGithubExternalId(task.externalId) : null
+}
+
 const AGENT_ONLY_GITHUB = 'Solo las tareas de GitHub pueden ir al agente'
 
 /** Intentos de llevar un estado a GitHub antes de dejarlo (con su error a la vista). */
@@ -212,14 +243,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     d.setUTCDate(d.getUTCDate() + days)
     return d.toISOString().slice(0, 10)
   }
-  const defaultSource: TaskSource =
-    actor === 'mcp' || actor === 'assistant'
-      ? 'mcp'
-      : actor === 'agent'
-        ? 'agent'
-        : actor === 'github'
-          ? 'github'
-          : 'manual'
+  const defaultSource = SOURCE_BY_ACTOR[actor]
 
   const activityRow = (
     entityType: Activity['entityType'],
@@ -303,17 +327,20 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       status: 'active',
       position: await place('projects', siblings),
     })
+    // Las posiciones ya vienen calculadas: el orden de llegada no importa y van a la vez.
     const positions = positionsFor(DEFAULT_COLUMNS.length)
-    for (const [i, c] of DEFAULT_COLUMNS.entries()) {
-      await store.columns.insert({
-        projectId: project.id,
-        name: c.name,
-        kind: c.kind,
-        color: null,
-        wipLimit: null,
-        position: positions[i] as string,
-      })
-    }
+    await Promise.all(
+      DEFAULT_COLUMNS.map((c, i) =>
+        store.columns.insert({
+          projectId: project.id,
+          name: c.name,
+          kind: c.kind,
+          color: null,
+          wipLimit: null,
+          position: positions[i] as string,
+        }),
+      ),
+    )
     await log('project', project.id, 'created', project.id, { name: project.name })
     return project
   }
@@ -387,7 +414,12 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   // ─── Columnas ──────────────────────────────────────────────────────────────
 
   async function listColumns(projectId: string) {
-    return store.columns.list({ projectId })
+    return store.columns.list({ projectIds: [projectId] })
+  }
+
+  /** Columnas de varios proyectos en una consulta (por tandas si son muchos). */
+  async function listColumnsOf(projectIds: string[]) {
+    return inChunks(projectIds, (ids) => store.columns.list({ projectIds: ids }))
   }
 
   async function createColumn(input: CreateColumnInput) {
@@ -463,8 +495,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   /** Columnas indexadas por id, de un proyecto o de todos los no archivados. */
   async function columnIndex(projectId?: string) {
     const projectIds = projectId ? [projectId] : (await listProjects()).map((p) => p.id)
-    const all = (await Promise.all(projectIds.map((id) => listColumns(id)))).flat()
-    return new Map(all.map((c) => [c.id, c]))
+    return new Map((await listColumnsOf(projectIds)).map((c) => [c.id, c]))
   }
 
   const withColumn = (t: Task, cols: Map<string, BoardColumn>): TaskWithColumn => {
@@ -474,6 +505,26 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   async function listTasks(query: TaskQuery = {}): Promise<TaskWithColumn[]> {
     const q = parse(taskQuery, query)
+    const filters = {
+      priority: q.priority,
+      source: q.source,
+      dueBefore: q.dueBefore,
+      search: q.search,
+      includeArchived: q.includeArchived,
+      limit: q.limit,
+    }
+    // De un proyecto y sin filtrar por tipo de columna, el índice solo sirve para pintar: las dos lecturas van a la vez.
+    if (q.projectId && !q.kinds) {
+      const [cols, tasks] = await Promise.all([
+        columnIndex(q.projectId),
+        store.tasks.list({
+          ...filters,
+          projectId: q.projectId,
+          columnIds: q.columnId ? [q.columnId] : undefined,
+        }),
+      ])
+      return tasks.map((t) => withColumn(t, cols))
+    }
     const cols = await columnIndex(q.projectId)
     let columnIds = q.columnId ? [q.columnId] : undefined
     if (q.kinds) {
@@ -482,17 +533,22 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     }
     // Sin proyecto concreto, limitamos a columnas de proyectos no archivados.
     if (!q.projectId && !columnIds) columnIds = [...cols.keys()]
-    const tasks = await store.tasks.list({
-      projectId: q.projectId,
-      columnIds,
-      priority: q.priority,
-      source: q.source,
-      dueBefore: q.dueBefore,
-      search: q.search,
-      includeArchived: q.includeArchived,
-      limit: q.limit,
-    })
+    const tasks = await store.tasks.list({ ...filters, projectId: q.projectId, columnIds })
     return tasks.map((t) => withColumn(t, cols))
+  }
+
+  /**
+   * Todo lo que pinta el tablero de un proyecto: columnas, tareas (con su columna) y el progreso de las subtareas.
+   * Columnas y tareas van a la vez y la lista de columnas se reutiliza para las tareas (no se pide dos veces).
+   */
+  async function projectBoard(projectId: string) {
+    const [columns, tasks] = await Promise.all([
+      listColumns(projectId),
+      store.tasks.list({ projectId }),
+    ])
+    const cols = new Map(columns.map((c) => [c.id, c]))
+    const withCols = tasks.map((t) => withColumn(t, cols))
+    return { columns, tasks: withCols, counts: await checklistCounts(tasks.map((t) => t.id)) }
   }
 
   /** La columna «Para el agente» del proyecto (ADR-0032), o `null`. Los FileStore antiguos no la traen. */
@@ -790,6 +846,17 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     await store.githubOutbox.enqueue(task.id, 'agent')
   }
 
+  /** Si la tarea tiene un cambio de ese tipo en la cola de salida, aún sin llegar a GitHub. */
+  async function isSending(taskId: string, kind: OutboxKind) {
+    const pending = await store.githubOutbox.pending({
+      maxAttempts: GITHUB_MAX_ATTEMPTS,
+      taskId,
+      kind,
+      limit: 1,
+    })
+    return pending.length > 0
+  }
+
   /** El proyecto vinculado a un repo (`github_repo`, sin distinguir mayúsculas), si no está archivado. */
   async function projectForRepo(repo: string) {
     const [project] = await store.projects.list({
@@ -849,13 +916,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       changed = true
     }
     // Si hay un cambio de Muninn sin llegar a GitHub, el estado de la issue es viejo: manda Muninn.
-    const sending = await store.githubOutbox.pending({
-      maxAttempts: GITHUB_MAX_ATTEMPTS,
-      taskId: task.id,
-      kind: 'state',
-      limit: 1,
-    })
-    if (sending.length > 0) return { action: changed ? 'updated' : 'unchanged', task }
+    if (await isSending(task.id, 'state'))
+      return { action: changed ? 'updated' : 'unchanged', task }
     const column = await store.columns.get(task.columnId)
     const done = column?.kind === 'done'
     if (issue.state === 'closed' && !done) {
@@ -881,8 +943,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
    */
   async function githubStateOf(taskId: string) {
     const task = await getTask(taskId)
-    const ref =
-      task.source === 'github' && task.externalId ? parseGithubExternalId(task.externalId) : null
+    const ref = issueRefOf(task)
     if (!ref) return null
     const column = await store.columns.get(task.columnId)
     const state: GithubIssueState = column?.kind === 'done' ? 'closed' : 'open'
@@ -927,8 +988,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
    */
   async function githubAgentStateOf(taskId: string) {
     const task = await getTask(taskId)
-    const ref =
-      task.source === 'github' && task.externalId ? parseGithubExternalId(task.externalId) : null
+    const ref = issueRefOf(task)
     if (!ref) return null
     const agent = await agentColumnOf(task.projectId)
     return { ...ref, labeled: !task.archivedAt && agent !== null && task.columnId === agent }
@@ -989,13 +1049,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     const task = await taskForIssue(parse(githubRepo, repo), issueNumber)
     if (!task || task.archivedAt) return null
     if ((await agentColumnOf(task.projectId)) !== task.columnId) return null
-    const sending = await store.githubOutbox.pending({
-      maxAttempts: GITHUB_MAX_ATTEMPTS,
-      taskId: task.id,
-      kind: 'agent',
-      limit: 1,
-    })
-    if (sending.length > 0) return null
+    if (await isSending(task.id, 'agent')) return null
     const moved = await moveTask(task.id, { columnId: (await defaultColumn(task.projectId)).id })
     await log('task', task.id, 'agent_stopped', task.projectId, {})
     return moved
@@ -1038,13 +1092,11 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   async function checklistCounts(taskIds: string[]) {
     const counts: Record<string, { done: number; total: number }> = {}
     // Por tandas: con muchos ids, la URL de la consulta de PostgREST se pasaría de largo.
-    for (let i = 0; i < taskIds.length; i += 100) {
-      for (const item of await store.checklist.list({ taskIds: taskIds.slice(i, i + 100) })) {
-        const c = counts[item.taskId] ?? { done: 0, total: 0 }
-        c.total += 1
-        if (item.done) c.done += 1
-        counts[item.taskId] = c
-      }
+    for (const item of await inChunks(taskIds, (ids) => store.checklist.list({ taskIds: ids }))) {
+      const c = counts[item.taskId] ?? { done: 0, total: 0 }
+      c.total += 1
+      if (item.done) c.done += 1
+      counts[item.taskId] = c
     }
     return counts
   }
@@ -1158,15 +1210,19 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   // ─── Informes (UI de inicio, MCP, Jarvis) ──────────────────────────────────
 
   async function projectStatus(projectId: string): Promise<ProjectStatusReport> {
-    const project = await getProject(projectId)
-    const columns = await listColumns(projectId)
+    // Cuatro lecturas independientes a la vez: con Supabase cada una es un viaje de red.
+    const [project, columns, rawTasks, recentActivity] = await Promise.all([
+      getProject(projectId),
+      listColumns(projectId),
+      store.tasks.list({ projectId }),
+      store.activity.list({ projectId, limit: 15 }),
+    ])
     const cols = new Map(columns.map((c) => [c.id, c]))
-    const tasks = (await store.tasks.list({ projectId })).map((t) => withColumn(t, cols))
+    const tasks = rawTasks.map((t) => withColumn(t, cols))
     const t0 = today()
     const in7 = addDays(t0, 7)
     const weekAgo = new Date(clock().getTime() - 7 * 86_400_000).toISOString()
     const open = tasks.filter((t) => t.column.kind !== 'done')
-    const byDue = (a: Task, b: Task) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')
 
     return {
       project,
@@ -1194,7 +1250,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
         .filter((t) => t.dueDate && t.dueDate >= t0 && t.dueDate <= in7)
         .sort(byDue)
         .slice(0, 20),
-      recentActivity: await store.activity.list({ projectId, limit: 15 }),
+      recentActivity,
     }
   }
 
@@ -1214,12 +1270,32 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       completedTodayTasks: [],
       completedByDay: [],
     }
-    for (const p of projects) {
-      const cols = new Map((await listColumns(p.id)).map((c) => [c.id, c]))
+    // Columnas y tareas de todos los proyectos en dos consultas (no dos por proyecto); se reparten en memoria.
+    const ids = projects.map((p) => p.id)
+    const [allColumns, allTasks, lastActivity] = await Promise.all([
+      listColumnsOf(ids),
       // Con archivadas: archivar una tarea hecha no debe quitarla de «Hechas hoy» ni de la gráfica.
-      const every = (await store.tasks.list({ projectId: p.id, includeArchived: true })).map(
-        (t) => ({ ...withColumn(t, cols), projectName: p.name }),
-      )
+      inChunks(ids, (chunk) => store.tasks.list({ projectIds: chunk, includeArchived: true })),
+      // El último evento de cada proyecto: una lectura por proyecto, pero todas a la vez.
+      Promise.all(ids.map((id) => store.activity.list({ projectId: id, limit: 1 }))),
+    ])
+    const cols = new Map(allColumns.map((c) => [c.id, c]))
+    const columnPosition = new Map(allColumns.map((c) => [c.id, c.position]))
+    // Orden del tablero: columna y luego posición. Claves de fractional-indexing: orden binario, nunca `localeCompare`.
+    const byBoard = (a: TaskWithColumn, b: TaskWithColumn) =>
+      byKey(columnPosition.get(a.columnId) ?? '', columnPosition.get(b.columnId) ?? '') ||
+      byKey(a.position, b.position)
+    const tasksByProject = new Map<string, Task[]>()
+    for (const t of allTasks) {
+      const list = tasksByProject.get(t.projectId)
+      if (list) list.push(t)
+      else tasksByProject.set(t.projectId, [t])
+    }
+    for (const [i, p] of projects.entries()) {
+      const every = (tasksByProject.get(p.id) ?? []).map((t) => ({
+        ...withColumn(t, cols),
+        projectName: p.name,
+      }))
       const tasks = every.filter((t) => !t.archivedAt)
       for (const t of every) {
         if (!t.completedAt) continue
@@ -1231,11 +1307,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       const overdue = open.filter((t) => t.dueDate && t.dueDate < t0)
       const active = open.filter((t) => OPEN_ACTIVE_KINDS.includes(t.column.kind))
       const count = (kind: ColumnKind) => open.filter((t) => t.column.kind === kind).length
-      const [last] = await store.activity.list({ projectId: p.id, limit: 1 })
-      const position = new Map([...cols.values()].map((c) => [c.id, c.position]))
-      const byBoard = (a: TaskWithColumn, b: TaskWithColumn) =>
-        (position.get(a.columnId) ?? '').localeCompare(position.get(b.columnId) ?? '') ||
-        a.position.localeCompare(b.position)
+      const [last] = lastActivity[i] ?? []
       report.projects.push({
         id: p.id,
         name: p.name,
@@ -1257,9 +1329,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
         agent: p.agentColumnId ? open.filter((t) => t.columnId === p.agentColumnId).length : 0,
         lastActivityAt: last?.createdAt ?? p.updatedAt,
         next: [
-          ...open
-            .filter((t) => t.dueDate)
-            .sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')),
+          ...open.filter((t) => t.dueDate).sort(byDue),
           ...open.filter((t) => !t.dueDate).sort(byBoard),
         ].slice(0, 2),
       })
@@ -1268,7 +1338,6 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       report.upcoming.push(...open.filter((t) => t.dueDate && t.dueDate > t0 && t.dueDate <= in7))
       report.inProgress.push(...active)
     }
-    const byDue = (a: Task, b: Task) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')
     report.overdue.sort(byDue)
     report.upcoming.sort(byDue)
     report.completedTodayTasks.sort((a, b) =>
@@ -1329,9 +1398,11 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       restoreImage: restoreProjectImage,
       imageUrl: projectImageUrl,
       status: projectStatus,
+      board: projectBoard,
     },
     columns: {
       list: listColumns,
+      listMany: listColumnsOf,
       create: createColumn,
       update: updateColumn,
       move: moveColumn,
