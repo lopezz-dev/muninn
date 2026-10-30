@@ -39,8 +39,9 @@ en el lienzo «Muninn — Calendario» (https://claude.ai/artifact/5a4s3wiHqsZVG
 - **Teclado:** Espacio recoge y suelta, ← → mueven un día, ↑ ↓ una semana, S lleva a «Sin fecha», Escape cancela y Enter abre
   la tarea. Con teclado, el destino no lo decide la geometría (la tarjeta flotante es más ancha que una celda): lo lleva una
   referencia que empieza en el día de la tarea.
-- **Móvil (< 768 px) sin arrastre:** mes compacto con puntos y la lista del día elegido. «Solo esta semana» pliega el mes a la
-  semana del día elegido (las flechas pasan entonces de semana), para que la lista suba a la vista. Cada tarea es una sola tarjeta
+- **Móvil (< 768 px) sin arrastre:** el calendario abre **plegado en la semana** del día elegido (hoy), con su lista a la vista;
+  «Ver el mes» despliega el mes compacto con puntos, y «Solo esta semana» lo vuelve a plegar. Plegado, las flechas pasan de
+  semana; desplegado, de mes. Con el mes desplegado, la lista del día quedaba casi bajo el dock. Cada tarea es una sola tarjeta
   (`CompactBody`, sin la fecha) con el botón de la fecha dentro. Para cambiar la fecha, el botón del
   calendario de cada tarea o mantenerla pulsada abren la hoja «Cambiar fecha»: Hoy, Mañana, Próximo lunes, En una semana, otra
   fecha (`DateField`, nativo en táctil por ADR-0049) y Quitar fecha. Deslizar a la izquierda completa, como en el tablero

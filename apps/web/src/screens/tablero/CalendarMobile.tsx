@@ -203,8 +203,8 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
   const [sel, setSel] = useState(today)
   const [dateTask, setDateTask] = useState<TaskWithColumn | null>(null)
   const [undatedOpen, setUndatedOpen] = useState(false)
-  // Plegado, el mes se queda en la semana del día elegido y la lista del día sube a la vista.
-  const [folded, setFolded] = useState(false)
+  // Abre plegado: la semana del día elegido arriba y su lista a la vista. «Ver el mes» lo despliega.
+  const [folded, setFolded] = useState(true)
 
   const visible = useMemo(
     () => filterTasks(board.tasks, filter, today),
