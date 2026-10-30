@@ -1276,9 +1276,10 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       listColumnsOf(ids),
       // Con archivadas: archivar una tarea hecha no debe quitarla de «Hechas hoy» ni de la gráfica.
       inChunks(ids, (chunk) => store.tasks.list({ projectIds: chunk, includeArchived: true })),
-      // El último evento de cada proyecto: una lectura por proyecto, pero todas a la vez.
-      Promise.all(ids.map((id) => store.activity.list({ projectId: id, limit: 1 }))),
+      // El último evento de cada proyecto, todos en una sola lectura.
+      ids.length > 0 ? store.activity.latestByProject(ids) : [],
     ])
+    const lastActivityOf = new Map(lastActivity.map((a) => [a.projectId, a.createdAt]))
     const cols = new Map(allColumns.map((c) => [c.id, c]))
     const columnPosition = new Map(allColumns.map((c) => [c.id, c.position]))
     // Orden del tablero: columna y luego posición. Claves de fractional-indexing: orden binario, nunca `localeCompare`.
@@ -1291,7 +1292,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       if (list) list.push(t)
       else tasksByProject.set(t.projectId, [t])
     }
-    for (const [i, p] of projects.entries()) {
+    for (const p of projects) {
       const every = (tasksByProject.get(p.id) ?? []).map((t) => ({
         ...withColumn(t, cols),
         projectName: p.name,
@@ -1307,7 +1308,6 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       const overdue = open.filter((t) => t.dueDate && t.dueDate < t0)
       const active = open.filter((t) => OPEN_ACTIVE_KINDS.includes(t.column.kind))
       const count = (kind: ColumnKind) => open.filter((t) => t.column.kind === kind).length
-      const [last] = lastActivity[i] ?? []
       report.projects.push({
         id: p.id,
         name: p.name,
@@ -1327,7 +1327,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
           review: count('review'),
         },
         agent: p.agentColumnId ? open.filter((t) => t.columnId === p.agentColumnId).length : 0,
-        lastActivityAt: last?.createdAt ?? p.updatedAt,
+        lastActivityAt: lastActivityOf.get(p.id) ?? p.updatedAt,
         next: [
           ...open.filter((t) => t.dueDate).sort(byDue),
           ...open.filter((t) => !t.dueDate).sort(byBoard),

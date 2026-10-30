@@ -468,6 +468,48 @@ describe('consultas', () => {
     expect(o.dueToday.map((t) => t.projectName)).toEqual(['A', 'B', 'C', 'D'])
   })
 
+  it('overview lee la última actividad de todos los proyectos en una lectura', async () => {
+    const { store, app } = setup()
+    const a = await app.projects.create({ name: 'A' })
+    await app.projects.create({ name: 'B' })
+    clock = new Date('2026-10-19T11:00:00Z')
+    await app.tasks.create({ projectId: a.id, title: 'más tarde' })
+    // Un proyecto sin ningún evento: cae a su `updatedAt`.
+    clock = new Date('2026-10-19T12:00:00Z')
+    const quiet = await store.projects.insert({
+      name: 'C',
+      description: '',
+      color: 'blue',
+      icon: null,
+      imagePath: null,
+      coverPath: null,
+      githubRepo: null,
+      agentColumnId: null,
+      status: 'active',
+      position: 'z',
+    })
+    const calls = { list: 0, latest: 0 }
+    const list = store.activity.list.bind(store.activity)
+    const latest = store.activity.latestByProject.bind(store.activity)
+    store.activity.list = (q) => {
+      calls.list += 1
+      return list(q)
+    }
+    store.activity.latestByProject = (ids) => {
+      calls.latest += 1
+      return latest(ids)
+    }
+    const o = await app.overview()
+    expect(calls).toEqual({ list: 0, latest: 1 })
+    const last = Object.fromEntries(o.projects.map((p) => [p.name, p.lastActivityAt]))
+    expect(last).toEqual({
+      A: '2026-10-19T11:00:00.000Z',
+      B: '2026-10-19T10:00:00.000Z',
+      C: quiet.updatedAt,
+    })
+    expect(quiet.updatedAt).toBe('2026-10-19T12:00:00.000Z')
+  })
+
   it('las tareas de todos los proyectos piden las columnas en una consulta', async () => {
     const { app, calls, reset } = counting()
     for (const name of ['A', 'B', 'C']) {

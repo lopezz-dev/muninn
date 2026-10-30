@@ -67,7 +67,9 @@
   proyecto a proyecto (1 + 2·N viajes, uno tras otro).
 - **Solución:** el store acepta varios proyectos a la vez (`columns.list({ projectIds })`, `tasks.list({ projectIds })`) y el servicio
   reparte en memoria. Desde fuera: `m.columns.listMany(ids)` y, para el tablero, `m.projects.board(id)` (columnas, tareas y subtareas sin
-  pedir las columnas dos veces). Las lecturas independientes van con `Promise.all`. Los tests de `service.test.ts › consultas` cuentan
+  pedir las columnas dos veces). Las lecturas independientes van con `Promise.all`. La última actividad de cada proyecto sale de
+  `activity.latestByProject(ids)`, una sola llamada (en Supabase, la función `activity_latest_by_project`); no la saques con
+  `activity.list({ projectId, limit: 1 })` por proyecto, aunque vaya en paralelo. Los tests de `service.test.ts › consultas` cuentan
   las llamadas al store: si añades un bucle de lecturas, fallan.
 
 ### `overview()` incluye las archivadas para contar lo hecho
