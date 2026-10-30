@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.7.0](https://github.com/lopezz-dev/muninn/compare/v0.6.0...v0.7.0) (2026-10-30)
+
+
+### Features
+
+* **core:** eliminar tareas archivadas para siempre, con «Deshacer» diferido (ADR-0067) ([28d8541](https://github.com/lopezz-dev/muninn/commit/28d854136516257ab17b91ffa5d0269010d8540c))
+* **core:** eliminar tareas archivadas para siempre, con «Deshacer» diferido (ADR-0067) ([ac6f2bc](https://github.com/lopezz-dev/muninn/commit/ac6f2bc42f1a6a7456f23e09a602755666615f09))
+* **mcp:** descripción y web de Muninn en la información del servidor ([#99](https://github.com/lopezz-dev/muninn/issues/99)) ([29216ca](https://github.com/lopezz-dev/muninn/commit/29216ca2561af82362ea078b4734ef68cdc91d8a))
+* **web:** Noticias equilibradas por fuente (ADR-0069) ([1ade98e](https://github.com/lopezz-dev/muninn/commit/1ade98e6da3a761e155a31f7dccc962de0a3beaf))
+* **web:** todas las búsquedas encuentran palabras en cualquier orden ([#95](https://github.com/lopezz-dev/muninn/issues/95)) ([3da8c6a](https://github.com/lopezz-dev/muninn/commit/3da8c6af25ccd5a7c2c4c41ec119e0967d959175))
+* **web:** vista Calendario del tablero (ADR-0068) ([#88](https://github.com/lopezz-dev/muninn/issues/88)) ([30bf126](https://github.com/lopezz-dev/muninn/commit/30bf126953e56bc6e0cdeff480442acbd8918280))
+
+
+### Bug Fixes
+
+* **core:** Noticias quita el enlace «Leer» del final del resumen ([ab8f747](https://github.com/lopezz-dev/muninn/commit/ab8f7470ee45291154f4f8ee773758e1a5acd45d))
+* **web:** aislar el test del informe de la mañana del Ollama local ([0327633](https://github.com/lopezz-dev/muninn/commit/0327633c63c28460a7d9eb34c128fbf7e5b23cf2))
+* **web:** informe de la mañana con proveedor inyectable, test sin Ollama local ([6b0c2fb](https://github.com/lopezz-dev/muninn/commit/6b0c2fbaec4fb62defcc0b4dd4914bf4c37b1d6a))
+
+
+### Performance Improvements
+
+* **core:** overview lee la última actividad de todos los proyectos en una llamada ([#94](https://github.com/lopezz-dev/muninn/issues/94)) ([879a03f](https://github.com/lopezz-dev/muninn/commit/879a03f721349a2809ad4843cd78621f73055541))
+* **web:** staleTime global de 30 s en react-query (ADR-0070) ([#93](https://github.com/lopezz-dev/muninn/issues/93)) ([8f484cb](https://github.com/lopezz-dev/muninn/commit/8f484cba2fdd983196722a3362fceef00572c97e))
+
 ## [0.6.0](https://github.com/lopezz-dev/muninn/compare/v0.5.0...v0.6.0) (2026-10-30)
 
 
