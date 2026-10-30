@@ -40,7 +40,7 @@ export function generateTodayDigest(
     }
     const since = Date.now() - DIGEST_WINDOW_HOURS * 3_600_000
     const [items, sources, projects] = await Promise.all([
-      m.news.items.list({ limit: 100 }),
+      m.news.items.list({ limit: 200 }),
       m.news.sources.list(),
       m.projects.list(),
     ])

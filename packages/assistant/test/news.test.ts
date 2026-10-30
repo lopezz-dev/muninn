@@ -77,6 +77,28 @@ describe('resumen diario de noticias', () => {
     expect(seen[0]?.role).toBe('system')
   })
 
+  it('una fuente muy activa no deja fuera a las demás', async () => {
+    const app = await setup(DIGEST_MAX_ITEMS + 5)
+    const busy = await app.news.items.list()
+    // El de la otra fuente es el más antiguo: sin repartir, quedaría fuera de los DIGEST_MAX_ITEMS.
+    const quiet = {
+      ...busy[0],
+      id: 'node-1',
+      sourceId: 'node',
+      title: 'Node.js 27',
+    } as (typeof busy)[0]
+    const provider = createScriptedProvider([{ when: () => true, steps: [{ text: '- x' }] }])
+    const out = await generateDigest({
+      provider,
+      items: [...busy, quiet],
+      sources: await app.news.sources.list(),
+      projects: [],
+      today: app.today(),
+    })
+    expect(out?.itemIds).toHaveLength(DIGEST_MAX_ITEMS)
+    expect(out?.itemIds).toContain('node-1')
+  })
+
   it('prompt y limpieza', () => {
     expect(cleanDigest('\n\n- a\n\n\n\n- b  ')).toBe('- a\n\n- b')
     const [system] = digestPrompt({ items: [], sources: [], projects: [], today: '2026-10-22' })

@@ -34,6 +34,8 @@ export const itemDate = (i: Pick<NewsItem, 'publishedAt' | 'fetchedAt'>) =>
 export interface NewsFilter {
   /** `null`: todas; `'__saved'`: las guardadas; si no, un tema. */
   tab: string | null
+  /** Solo los de una fuente (al pulsar su nombre en un artículo); `null` o sin poner: todas. */
+  source?: string | null
   search: string
 }
 
@@ -53,8 +55,42 @@ export function filterNews(items: NewsItem[], sources: NewsSource[], f: NewsFilt
     (i) =>
       (f.tab === null ||
         (f.tab === SAVED_TAB ? Boolean(i.savedAt) : topic.get(i.sourceId) === f.tab)) &&
+      (!f.source || i.sourceId === f.source) &&
       (!needle || fold(`${i.title} ${i.summary}`).includes(needle)),
   )
+}
+
+/** Artículos seguidos de una misma fuente que se ven antes de plegar el resto de la racha. */
+export const NEWS_RUN_KEEP = 3
+
+export type NewsRow =
+  | { kind: 'item'; item: NewsItem }
+  /** Lo plegado de una racha; `key` (el id de su primer artículo) es lo que se guarda al desplegarla. */
+  | { kind: 'more'; key: string; sourceId: string; items: NewsItem[] }
+
+/**
+ * Pliega las rachas de una misma fuente (ADR-0069): de cada tramo seguido de la misma fuente se ven `keep` y el resto
+ * queda tras «Ver N más de …», en su sitio, para que las demás fuentes asomen sin perder el orden por fecha. Una racha
+ * que solo esconde un artículo no se pliega. `open` son las rachas ya desplegadas.
+ */
+export function collapseRuns(
+  items: NewsItem[],
+  open: ReadonlySet<string> = new Set(),
+  keep = NEWS_RUN_KEEP,
+): NewsRow[] {
+  const rows: NewsRow[] = []
+  for (let i = 0; i < items.length; ) {
+    let j = i + 1
+    while (j < items.length && items[j]?.sourceId === items[i]?.sourceId) j++
+    const run = items.slice(i, j)
+    const key = run[0]?.id ?? ''
+    const fold = run.length > keep + 1 && !open.has(key)
+    for (const item of fold ? run.slice(0, keep) : run) rows.push({ kind: 'item', item })
+    if (fold)
+      rows.push({ kind: 'more', key, sourceId: run[0]?.sourceId ?? '', items: run.slice(keep) })
+    i = j
+  }
+  return rows
 }
 
 /** Pestañas de temas: los de las fuentes activas, con cuántos artículos tiene cada uno. */

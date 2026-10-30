@@ -63,6 +63,32 @@ export function relatedProjects<P extends Pick<Project, 'id' | 'name'>>(
   })
 }
 
+/**
+ * Como mucho `max` artículos repartidos entre fuentes (ADR-0069): por rondas, el más reciente de cada fuente que quede, así
+ * una fuente que publica cincuenta al día no se lleva todo el hueco. Espera los artículos del más reciente al más antiguo
+ * y los devuelve en ese orden.
+ */
+export function balanceBySource<T extends Pick<NewsItem, 'sourceId'>>(
+  items: T[],
+  max: number,
+): T[] {
+  if (items.length <= max) return items
+  const queues = new Map<string, T[]>()
+  for (const i of items) {
+    const q = queues.get(i.sourceId)
+    if (q) q.push(i)
+    else queues.set(i.sourceId, [i])
+  }
+  const picked = new Set<T>()
+  for (let round = 0; picked.size < max; round++) {
+    for (const q of queues.values()) {
+      const i = q[round]
+      if (i && picked.size < max) picked.add(i)
+    }
+  }
+  return items.filter((i) => picked.has(i))
+}
+
 /** Noticias (ADR-0042): fuentes del usuario, artículos descargados por la Edge Function y el resumen diario. */
 export function createNews({ store, nowIso, today, parse, log }: NewsContext) {
   const getSource = async (id: string) => {

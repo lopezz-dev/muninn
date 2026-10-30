@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   assertPublicUrl,
+  balanceBySource,
   createMemoryStore,
   createMuninn,
   decodeEntities,
@@ -285,6 +286,21 @@ describe('noticias en el core', () => {
       relatedProjects({ title: 'Firmar apps', summary: 'para huginndb y más' }, projects),
     ).toEqual([projects[0]])
     expect(relatedProjects({ title: 'MuninnX no cuenta', summary: '' }, projects)).toEqual([])
+  })
+
+  it('reparte el hueco entre fuentes y conserva el orden', () => {
+    // Del más reciente al más antiguo: Expansión publica sin parar y Node.js y Apple, de vez en cuando.
+    const items = [
+      ...['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id, sourceId: 'exp' })),
+      { id: 'n1', sourceId: 'node' },
+      { id: 'e7', sourceId: 'exp' },
+      { id: 'a1', sourceId: 'apple' },
+      { id: 'a2', sourceId: 'apple' },
+    ]
+    expect(balanceBySource(items, 5).map((i) => i.id)).toEqual(['e1', 'e2', 'n1', 'a1', 'a2'])
+    expect(balanceBySource(items, 3).map((i) => i.id)).toEqual(['e1', 'n1', 'a1'])
+    // Si caben todos, no se toca nada.
+    expect(balanceBySource(items, 50)).toBe(items)
   })
 })
 

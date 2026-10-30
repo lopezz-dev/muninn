@@ -39,6 +39,9 @@ en ese momento. Los artículos se guardan **30 días**; los que marques con **Le
 - Arriba, **Lo importante de hoy**: el resumen del día.
 - Las pestañas filtran por **tema** y **Guardadas**; el buscador, por texto. También puedes buscar desde **Ctrl K / ⌘ K** con
   **Buscar en Noticias**.
+- En **Todas**, si una fuente publica muchos artículos seguidos, ves los 3 primeros y el resto queda en **Ver N más de …**,
+  en su sitio. Así las fuentes que publican poco no se pierden debajo.
+- Pulsa el **nombre de la fuente** en un artículo para ver solo los suyos; **Solo … ✕** quita el filtro.
 - Si un artículo habla de uno de tus proyectos, sale **Relacionada con …**.
 - Cada artículo tiene **Crear tarea** (abre «Nueva tarea» con el título y el enlace), **Guardar como nota**, **Leer luego**
   y **Abrir** (en tu navegador, también desde la app de escritorio; queda marcado como leído). El título hace lo mismo.
@@ -48,6 +51,8 @@ en ese momento. Los artículos se guardan **30 días**; los que marques con **Le
 Lo escribe el **modelo de tu ordenador** (el mismo del [Asistente](11-asistente.md)), así que lo que te interesa no sale de
 casa. Se hace solo la primera vez que abres Noticias en el día **en el ordenador donde está Ollama**; también puedes pulsar
 **Resumir** o **Rehacer** (con «Deshacer» para volver al anterior). Se guarda en tu cuenta, así que en el iPhone lo ves igual.
+
+El resumen reparte su espacio entre tus fuentes: aunque una publique cincuenta artículos al día, las demás también entran.
 
 Si ese día no abres Muninn en el ordenador, no habrá resumen nuevo: verás los artículos igualmente.
 

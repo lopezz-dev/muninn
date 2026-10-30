@@ -12,6 +12,7 @@ import { useAuth, useMuninn } from '../lib/muninn'
 import {
   addSource,
   archiveSource,
+  collapseRuns,
   filterNews,
   markRead,
   newSince,
@@ -114,9 +115,11 @@ interface ArticleProps {
   related: string[]
   tasksOn: boolean
   notesOn: boolean
+  /** Filtra la lista por la fuente del artículo (al pulsar su nombre). */
+  onSource: () => void
 }
 
-function Article({ item, source, related, tasksOn, notesOn }: ArticleProps) {
+function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleProps) {
   const m = useMuninn()
   const qc = useQueryClient()
   const shell = useShell()
@@ -125,8 +128,15 @@ function Article({ item, source, related, tasksOn, notesOn }: ArticleProps) {
   return (
     <article className="flex flex-col gap-2 border-t border-border-subtle px-[18px] py-4 first:border-t-0">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-subtle">
-        <b className="font-medium text-fg-muted">{source?.title ?? 'Fuente'}</b>·{' '}
-        {timeAgo(item.publishedAt ?? item.fetchedAt)}
+        <button
+          type="button"
+          className="cursor-pointer font-medium text-fg-muted hover:text-fg hover:underline"
+          title={`Ver solo ${source?.title ?? 'esta fuente'}`}
+          onClick={onSource}
+        >
+          {source?.title ?? 'Fuente'}
+        </button>
+        · {timeAgo(item.publishedAt ?? item.fetchedAt)}
         {item.author ? ` · ${item.author}` : ''}
         {related.map((p) => (
           <Chip key={p} variant="accent" className="ml-auto">
@@ -301,6 +311,9 @@ export function Noticias() {
   const itemsQ = useQuery(newsItemsQuery(m))
   const projects = useQuery(projectsQuery(m)).data ?? []
   const [tab, setTab] = useState<string | null>(null)
+  const [onlySource, setOnlySource] = useState<string | null>(null)
+  // Rachas de una misma fuente que el usuario ha desplegado («Ver N más de …»).
+  const [openRuns, setOpenRuns] = useState<ReadonlySet<string>>(new Set())
   const [search, setSearch] = useState(q ?? '')
   const [refreshing, setRefreshing] = useState(false)
 
@@ -309,10 +322,22 @@ export function Noticias() {
   const items = itemsQ.data ?? []
   const tabs = useMemo(() => topicTabs(items, sources), [items, sources])
   const visible = useMemo(
-    () => filterNews(items, sources, { tab, search }),
-    [items, sources, tab, search],
+    () => filterNews(items, sources, { tab, source: onlySource, search }),
+    [items, sources, tab, onlySource, search],
+  )
+  // Solo en «Todas» y sin buscar: ahí es donde una fuente muy activa tapa a las demás (ADR-0069).
+  const rows = useMemo(
+    () =>
+      tab === null && !onlySource && !search.trim()
+        ? collapseRuns(visible, openRuns)
+        : visible.map((item) => ({ kind: 'item' as const, item })),
+    [visible, tab, onlySource, search, openRuns],
   )
   const sourceById = useMemo(() => new Map(sources.map((s) => [s.id, s])), [sources])
+  const pickTab = (t: string | null) => {
+    setTab(t)
+    setOnlySource(null)
+  }
   const fresh = newSince(items)
   const savedCount = items.filter((i) => i.savedAt).length
 
@@ -359,7 +384,7 @@ export function Noticias() {
                     role="tab"
                     aria-selected={tab === null}
                     className={tabClass(tab === null)}
-                    onClick={() => setTab(null)}
+                    onClick={() => pickTab(null)}
                   >
                     Todas · {items.length}
                   </button>
@@ -370,7 +395,7 @@ export function Noticias() {
                       role="tab"
                       aria-selected={tab === t}
                       className={tabClass(tab === t)}
-                      onClick={() => setTab(t)}
+                      onClick={() => pickTab(t)}
                     >
                       {t} · {n}
                     </button>
@@ -380,11 +405,22 @@ export function Noticias() {
                     role="tab"
                     aria-selected={tab === SAVED_TAB}
                     className={tabClass(tab === SAVED_TAB)}
-                    onClick={() => setTab(SAVED_TAB)}
+                    onClick={() => pickTab(SAVED_TAB)}
                   >
                     Guardadas{savedCount ? ` · ${savedCount}` : ''}
                   </button>
                 </div>
+                {onlySource ? (
+                  <button
+                    type="button"
+                    className={cn(tabClass(true), 'inline-flex items-center gap-1.5')}
+                    aria-label={`Quitar el filtro: solo ${sourceById.get(onlySource)?.title ?? 'una fuente'}`}
+                    onClick={() => setOnlySource(null)}
+                  >
+                    Solo {sourceById.get(onlySource)?.title ?? 'una fuente'}
+                    <Icon name="close" size={12} />
+                  </button>
+                ) : null}
                 <TextField
                   label="Buscar en noticias"
                   hideLabel
@@ -397,16 +433,30 @@ export function Noticias() {
               </div>
               {visible.length ? (
                 <Card aria-label="Artículos" className="overflow-hidden">
-                  {visible.map((i) => (
-                    <Article
-                      key={i.id}
-                      item={i}
-                      source={sourceById.get(i.sourceId)}
-                      related={m.news.related(i, projects).map((p) => p.name)}
-                      tasksOn={!modules || modules.has('tasks')}
-                      notesOn={!modules || modules.has('notes')}
-                    />
-                  ))}
+                  {rows.map((r) =>
+                    r.kind === 'item' ? (
+                      <Article
+                        key={r.item.id}
+                        item={r.item}
+                        source={sourceById.get(r.item.sourceId)}
+                        related={m.news.related(r.item, projects).map((p) => p.name)}
+                        tasksOn={!modules || modules.has('tasks')}
+                        notesOn={!modules || modules.has('notes')}
+                        onSource={() => setOnlySource(r.item.sourceId)}
+                      />
+                    ) : (
+                      <button
+                        key={`more-${r.key}`}
+                        type="button"
+                        className="flex w-full cursor-pointer items-center gap-1.5 border-t border-border-subtle px-[18px] py-2.5 text-left text-xs font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+                        onClick={() => setOpenRuns((prev) => new Set(prev).add(r.key))}
+                      >
+                        <Icon name="chevronDown" size={14} />
+                        Ver {r.items.length} más de{' '}
+                        {sourceById.get(r.sourceId)?.title ?? 'esta fuente'}
+                      </button>
+                    ),
+                  )}
                 </Card>
               ) : (
                 <p className="px-1 py-6 text-center text-sm text-fg-subtle">
