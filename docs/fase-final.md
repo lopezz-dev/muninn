@@ -165,6 +165,8 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 28 de octubre; nada de esto se ha hecho todavía.
 - [ ] Generar las claves VAPID en tu equipo (`npx web-push generate-vapid-keys`) y guardarlas en tu gestor de contraseñas.
 - [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
+  Justo después, `20261029180000_require_mfa_push` (la política del segundo factor en sus dos tablas) y comprobar que hay
+  tantas políticas `require_mfa` como tablas de `public` con RLS más una (hoy, 19 = 18 + 1, con `oauth_mfa_grants`).
 - [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
 - [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
 - [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
@@ -232,6 +234,21 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   *(**Falla.** Con el factor activado, el MCP responde «Proyecto … no existe». Reconectado después de activarlo, la sesión OAuth nueva
   sigue siendo `aal1`: el servidor OAuth no hereda el `aal2`. Al desactivarlo, vuelve. Tarea «El MCP remoto no ve datos con el
   segundo factor activado»: necesita un ADR que complemente a ADR-0062. Mientras, no activar el segundo factor si se usa el MCP.)*
+- [x] **Apps aprobadas con el segundo factor ([ADR-0064](adr/0064-apps-oauth-aprobadas-con-segundo-factor.md), [ADR-0066](adr/0066-aprobacion-oauth-atada-a-una-sesion.md)),
+  migración:** antes, en el editor SQL, `begin;` + la migración `20261029200000_oauth_mfa_grants` + `supabase/tests/oauth_mfa_grants.sql`:
+  acaba en «RESULTADO 1:false 2:false 2b:true 2c:42501 3:true 4:1 4b:42501 5:0 6:0 7:0 7b:0 8:1 9:1 9b:0» y no deja nada. Después,
+  aplicarla (y alinear la versión). *(29 de octubre: la prueba da justo eso y no deja nada; aplicada desde el editor SQL con la versión
+  registrada en la misma consulta. Comprobado: tabla con RLS y sus tres políticas, las cuatro funciones de `postgres`, el trigger
+  `oauth_mfa_grants_bind` activo en `auth.sessions`, `anon` sin `execute` en `approve_oauth_client_mfa` y `authenticated` sin `insert`; 17
+  políticas `require_mfa`. `get_advisors`: dos funciones `security definer` nuevas ejecutables por `authenticated`, intencionadas, y dos
+  claves ajenas sin índice en una tabla de una fila por app. Ojo: al copiarla con PowerShell 5.1, `Get-Content` sin `-Encoding UTF8`
+  rompe las tildes.)*
+- [ ] **Apps aprobadas con el segundo factor, con claude.ai, cuando `develop` esté en `main`:** con el factor activado, en **Apps con
+  acceso**, quitar claude.ai; reconectar el conector (el
+  consentimiento pide el código); «¿Qué tareas tiene Muninn?» responde con tus datos y `select * from oauth_mfa_grants` tiene una fila
+  con `session_id` = el de la sesión de claude.ai en Sesiones y dispositivos. Si `session_id` queda vacío, mira los avisos de Postgres
+  (`bind_oauth_mfa_grant`): Supabase puede haber cambiado sus tablas.
+  Quitar otra vez el acceso: la fila desaparece y el conector deja de ver datos al momento.
 - [ ] Vincular un repo en Ajustes › Integraciones funciona con el segundo factor. Desactívalo, vuelve a entrar e intenta vincular otro:
   sale «Para conectar GitHub necesitas el segundo factor» y no se guarda. Quitar un repo sí deja. La sincronización (`github`) sigue igual.
   *(Sin probar: huginnDB no se deja vincular porque lo retiene el proyecto archivado «Muninn» → tarea «Un proyecto archivado sigue

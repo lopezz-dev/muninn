@@ -40,6 +40,8 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
   }
   let factors = [...(seed.factors ?? [])]
   let grants = [...(seed.grants ?? [])]
+  // Autorizaciones aprobadas con el segundo factor (ADR-0066); en memoria no cambia lo que ven las apps, solo se apunta.
+  const mfaApproved = new Set<string>()
   const hasVerified = () => factors.some((f) => f.status === 'verified')
   // Con un factor confirmado de partida, la sesión ya pasó el código al entrar.
   let aal: AssuranceLevel['current'] = hasVerified() ? 'aal2' : 'aal1'
@@ -59,6 +61,11 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
     oauthGrants: {
       async list() {
         return structuredClone(grants)
+      },
+      async approveWithMfa(authorizationId) {
+        if (aal !== 'aal2') return false
+        mfaApproved.add(authorizationId)
+        return true
       },
       async revoke(clientId) {
         grants = grants.filter((g) => g.clientId !== clientId)

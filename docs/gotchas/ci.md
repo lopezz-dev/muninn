@@ -139,3 +139,13 @@
 - **Por qué:** recibe `TAURI_SIGNING_PRIVATE_KEY`. Con `@v0`, quien controlase esa etiqueta podría cambiar el código que ve la clave.
 - **Cómo subirla:** busca el commit de la nueva versión (`gh api repos/tauri-apps/tauri-action/git/ref/tags/action-vX.Y.Z`), revisa
   sus cambios y sustituye el SHA y el comentario `# action-vX.Y.Z` en `release.yml`. La 1.0 cambia entradas: léete sus notas antes.
+
+### Al fusionar `develop` → `main`, GitHub borra `develop`
+
+- **Síntoma:** tras fusionar el PR de `develop` a `main`, `git ls-remote origin develop` no devuelve nada y crear un PR contra
+  `develop` falla con «Base ref must be a branch».
+- **Causa:** el repo tiene activado **Settings › General › Automatically delete head branches**, y en ese PR la rama de origen es
+  `develop`. Pasó el 29 de octubre con #79.
+- **Solución:** volver a subirla desde una copia al día (`git push origin develop`, en el mismo commit que se fusionó). Para que no
+  vuelva a pasar, protege `develop` (**Settings › Branches**: una regla para `develop` impide borrarla) o desactiva el borrado
+  automático.
