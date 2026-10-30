@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { sectionEnabled, sectionOf, TABS, tabIndexOf, tabsFor } from '../src/shell/nav'
+import {
+  DEFAULT_DOCK,
+  moveDockTab,
+  parseDock,
+  sectionEnabled,
+  sectionOf,
+  tabIndexOf,
+  tabsFor,
+  toggleDockTab,
+} from '../src/shell/nav'
 import {
   bestMatch,
   filterItems,
@@ -19,16 +28,48 @@ describe('navegación', () => {
     expect(sectionOf('/no-existe')).toBeNull()
   })
 
-  it('la barra del teléfono tiene cuatro pestañas y lo demás vive en «Más»', () => {
-    expect(TABS).toEqual(['home', 'projects', 'finance', 'more'])
-    expect(tabIndexOf('projects')).toBe(1)
-    expect(tabIndexOf('notes')).toBe(3)
-    expect(tabIndexOf('settings')).toBe(3)
-    expect(tabIndexOf(null)).toBe(3)
+  it('la pestaña activa es la de la sección; si no está en la barra, ninguna', () => {
+    const tabs = parseDock(['home', 'projects', 'search'])
+    expect(tabIndexOf('projects', tabs)).toBe(1)
+    expect(tabIndexOf('notes', tabs)).toBe(-1)
+    expect(tabIndexOf('settings', tabs)).toBe(-1)
+    expect(tabIndexOf(null, tabs)).toBe(-1)
+  })
+})
+
+describe('barra de abajo configurable', () => {
+  it('sin guardar, o con algo que no vale, la de fábrica', () => {
+    expect(parseDock(undefined)).toEqual(DEFAULT_DOCK)
+    expect(parseDock('home')).toEqual(DEFAULT_DOCK)
+    expect(parseDock([])).toEqual(DEFAULT_DOCK)
+    expect(parseDock(['more', 'assistant', 'settings'])).toEqual(DEFAULT_DOCK)
   })
 
-  it('en el Asistente no hay pestaña activa: se marca su botón', () => {
-    expect(tabIndexOf('assistant')).toBe(-1)
+  it('quita repetidos y desconocidos y se queda con cuatro como mucho', () => {
+    expect(parseDock(['notes', 'notes', 'more', 'search'])).toEqual(['notes', 'search'])
+    expect(parseDock(['home', 'projects', 'notes', 'finance', 'news'])).toEqual([
+      'home',
+      'projects',
+      'notes',
+      'finance',
+    ])
+  })
+
+  it('añadir y quitar: nunca vacía ni más de cuatro', () => {
+    expect(toggleDockTab(['home', 'notes'], 'notes')).toEqual(['home'])
+    expect(toggleDockTab(['home'], 'home')).toBeNull()
+    expect(toggleDockTab(['home'], 'search')).toEqual(['home', 'search'])
+    expect(toggleDockTab(['home', 'projects', 'notes', 'finance'], 'news')).toBeNull()
+  })
+
+  it('mover un puesto, sin salirse de los bordes', () => {
+    expect(moveDockTab(['home', 'notes', 'finance'], 'notes', -1)).toEqual([
+      'notes',
+      'home',
+      'finance',
+    ])
+    expect(moveDockTab(['home', 'notes'], 'home', -1)).toBeNull()
+    expect(moveDockTab(['home', 'notes'], 'notes', 1)).toBeNull()
   })
 })
 
@@ -47,15 +88,17 @@ describe('módulos activos', () => {
 
   it('mientras no se sepa (null) se enseña todo', () => {
     expect(sectionEnabled('finance', null)).toBe(true)
-    expect(tabsFor(null)).toEqual(TABS)
+    expect(tabsFor(null)).toEqual(DEFAULT_DOCK)
   })
 
-  it('la barra pierde la pestaña de un módulo desactivado y la activa se recalcula', () => {
-    const tabs = tabsFor(only('tasks', 'notes'))
-    expect(tabs).toEqual(['home', 'projects', 'more'])
-    expect(tabIndexOf('projects', tabs)).toBe(1)
-    expect(tabIndexOf('notes', tabs)).toBe(2)
-    expect(tabIndexOf('finance', tabs)).toBe(2)
+  it('la barra pierde la pestaña de un módulo desactivado; Buscar siempre se queda', () => {
+    const tabs = tabsFor(only('tasks'), ['home', 'finance', 'notes', 'search'])
+    expect(tabs).toEqual(['home', 'search'])
+    expect(tabIndexOf('notes', tabs)).toBe(-1)
+  })
+
+  it('si no queda ninguna pestaña, Inicio', () => {
+    expect(tabsFor(only('tasks'), ['finance'])).toEqual(['home'])
   })
 })
 

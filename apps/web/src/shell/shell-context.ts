@@ -36,3 +36,6 @@ export const isApple =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent)
 
 export const PALETTE_SHORTCUT = isApple ? '⌘K' : 'Ctrl K'
+
+/** Menú de tu cuenta al pie de la barra lateral (ADR-0072). No choca con ⌘K ni con los atajos del tablero. */
+export const USER_MENU_SHORTCUT = isApple ? '⌘⇧U' : 'Ctrl ⇧ U'

@@ -1,19 +1,37 @@
-import { Avatar, cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
+import { cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
+import { lazy, type ReactNode, Suspense, useState } from 'react'
 import { ProjectAvatar } from '../components/ProjectAvatar'
 import { useEnabledModules } from '../lib/modules'
-import { useAuth, useMuninn } from '../lib/muninn'
+import { useMuninn } from '../lib/muninn'
 import { overviewQuery, projectsQuery } from '../lib/queries'
 import { useMediaQuery } from '../lib/use-media'
 import { Logo } from './Logo'
-import { SECTIONS, type SectionId, SIDEBAR_FOOTER, SIDEBAR_MAIN, sectionEnabled } from './nav'
+import { SECTIONS, type SectionId, SIDEBAR_MAIN, sectionEnabled } from './nav'
 import { PALETTE_SHORTCUT, useShell } from './shell-context'
+import { UserButton } from './UserButton'
 
-// En tablet (768–1023 px) la barra es un raíl de iconos de 44 px; los nombres quedan para el lector de pantalla.
-const navItem =
-  'group flex h-11 items-center justify-center gap-2.5 rounded-md text-[13.5px] font-medium text-fg-muted transition-colors duration-150 hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-raised data-[status=active]:text-fg lg:h-8 lg:justify-start lg:px-2.5'
+// El menú de tu cuenta llega en diferido (lleva el menú de Radix); mientras, el mismo botón sin menú.
+const UserMenu = lazy(() => import('./UserMenu').then((m) => ({ default: m.UserMenu })))
+
+/** Barra plegada a mano en el ordenador (`localStorage`, solo este dispositivo). */
+const RAIL_KEY = 'muninn.sidebarRail'
+
+function readRail() {
+  try {
+    return localStorage.getItem(RAIL_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** En el raíl (tablet, o plegada) cada zona mide 44 px; los nombres quedan para el lector de pantalla. */
+const navItem = (rail: boolean) =>
+  cn(
+    'group flex items-center gap-2.5 rounded-md text-[13.5px] font-medium text-fg-muted transition-colors duration-150 hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-raised data-[status=active]:text-fg',
+    rail ? 'h-11 justify-center' : 'h-8 justify-start px-2.5',
+  )
 
 /** En el raíl, el nombre sale como tooltip; con la barra ancha ya se lee al lado y sobra. */
 function RailTip({ label, rail, children }: { label: string; rail: boolean; children: ReactNode }) {
@@ -30,15 +48,15 @@ function NavItem({ id, count, rail }: { id: SectionId; count?: number; rail: boo
   const s = SECTIONS[id]
   return (
     <RailTip label={s.label} rail={rail}>
-      <Link to={s.to} activeOptions={{ exact: s.to === '/' }} className={navItem}>
+      <Link to={s.to} activeOptions={{ exact: s.to === '/' }} className={navItem(rail)}>
         <Icon
           name={s.icon}
           size={rail ? 20 : undefined}
           className="text-fg-faint transition-colors group-data-[status=active]:text-accent"
         />
-        <span className="max-lg:sr-only">{s.label}</span>
-        {count ? (
-          <span className="ml-auto text-xs text-fg-faint tabular max-lg:hidden">{count}</span>
+        <span className={rail ? 'sr-only' : undefined}>{s.label}</span>
+        {count && !rail ? (
+          <span className="ml-auto text-xs text-fg-faint tabular">{count}</span>
         ) : null}
       </Link>
     </RailTip>
@@ -46,33 +64,67 @@ function NavItem({ id, count, rail }: { id: SectionId; count?: number; rail: boo
 }
 
 /**
- * Barra lateral: raíl de iconos en tablet (768–1023 px) y barra completa en el ordenador (≥ 1024 px), ADR-0054.
- * Diseño: Sidebar.dc.html.
+ * Barra lateral: raíl de iconos en tablet (768–1023 px) y barra completa en el ordenador (≥ 1024 px), ADR-0054. En el
+ * ordenador se pliega a raíl con el botón de arriba; al pie, tu usuario abre el menú de tu cuenta (ADR-0072).
+ * Diseño: Sidebar.dc.html y lienzo «Dock y cuenta».
  */
 export function Sidebar({ className }: { className?: string }) {
   const m = useMuninn()
-  const auth = useAuth()
   const shell = useShell()
   const modules = useEnabledModules()
   const projects = useQuery(projectsQuery(m)).data ?? []
   const overview = useQuery(overviewQuery(m)).data
   const openCount = new Map(overview?.projects.map((p) => [p.id, p.open]))
-  const rail = !useMediaQuery('(min-width: 1024px)')
+  const wide = useMediaQuery('(min-width: 1024px)')
+  const [folded, setFolded] = useState(readRail)
+  const rail = !wide || folded
+  const toggleFold = () => {
+    setFolded(!folded)
+    try {
+      localStorage.setItem(RAIL_KEY, folded ? '0' : '1')
+    } catch {
+      // Sin almacenamiento, dura hasta recargar.
+    }
+  }
 
   return (
     <aside
       aria-label="Barra lateral"
       className={cn(
-        'glass-sidebar sticky top-0 h-dvh w-16 shrink-0 flex-col gap-4 overflow-y-auto border-r border-border-subtle px-2.5 py-3.5 lg:w-60',
+        'glass-sidebar sticky top-0 h-dvh shrink-0 flex-col gap-4 overflow-y-auto border-r border-border-subtle px-2.5 py-3.5',
+        rail ? 'w-16' : 'w-60',
         className,
       )}
     >
-      <div className="flex items-center justify-center gap-2.5 py-1 lg:justify-start lg:px-2">
+      <div
+        className={cn(
+          'flex items-center gap-2.5 py-1',
+          rail ? 'flex-col justify-center' : 'justify-start px-2',
+        )}
+      >
         <Logo />
-        <span className="text-md font-semibold tracking-tight max-lg:sr-only">Muninn</span>
-        <span className="ml-auto font-mono text-2xs text-fg-faint max-lg:hidden">
-          v{__APP_VERSION__}
+        <span className={cn('text-md font-semibold tracking-tight', rail && 'sr-only')}>
+          Muninn
         </span>
+        {rail ? null : (
+          <span className="ml-auto font-mono text-2xs text-fg-faint">v{__APP_VERSION__}</span>
+        )}
+        {wide ? (
+          <Tooltip
+            content={folded ? 'Desplegar barra' : 'Plegar barra'}
+            side={rail ? 'right' : 'bottom'}
+          >
+            <button
+              type="button"
+              aria-label={folded ? 'Desplegar barra' : 'Plegar barra'}
+              aria-pressed={folded}
+              onClick={toggleFold}
+              className="grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
+            >
+              <icons.sidebar size={15} />
+            </button>
+          </Tooltip>
+        ) : null}
       </div>
 
       <RailTip label="Buscar o preguntar" rail={rail}>
@@ -80,11 +132,14 @@ export function Sidebar({ className }: { className?: string }) {
           type="button"
           onClick={() => shell.openPalette()}
           aria-keyshortcuts={PALETTE_SHORTCUT.startsWith('⌘') ? 'Meta+K' : 'Control+K'}
-          className="flex h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border-strong bg-surface text-sm text-fg-subtle transition-colors hover:text-fg lg:h-[34px] lg:justify-start lg:px-2.5"
+          className={cn(
+            'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-md border border-border-strong bg-surface text-sm text-fg-subtle transition-colors hover:text-fg',
+            rail ? 'h-11 justify-center' : 'h-[34px] justify-start px-2.5',
+          )}
         >
           <Icon name="search" size={rail ? 20 : undefined} />
-          <span className="max-lg:sr-only">Buscar o preguntar…</span>
-          <Kbd className="ml-auto max-lg:hidden">{PALETTE_SHORTCUT}</Kbd>
+          <span className={rail ? 'sr-only' : undefined}>Buscar o preguntar…</span>
+          {rail ? null : <Kbd className="ml-auto">{PALETTE_SHORTCUT}</Kbd>}
         </button>
       </RailTip>
 
@@ -99,9 +154,9 @@ export function Sidebar({ className }: { className?: string }) {
         ))}
       </nav>
 
-      {sectionEnabled('projects', modules) ? (
+      {sectionEnabled('projects', modules) && !rail ? (
         // En el raíl no caben los proyectos: se llega a ellos desde Proyectos.
-        <section aria-labelledby="sidebar-projects" className="flex flex-col gap-0.5 max-lg:hidden">
+        <section aria-labelledby="sidebar-projects" className="flex flex-col gap-0.5">
           <div className="flex items-center pr-1 pb-1.5 pl-2.5">
             <h2
               id="sidebar-projects"
@@ -154,45 +209,10 @@ export function Sidebar({ className }: { className?: string }) {
 
       <div className="flex-1" />
 
-      <nav aria-label="Ayuda y ajustes" className="flex flex-col gap-0.5">
-        {SIDEBAR_FOOTER.map((id) => (
-          <NavItem key={id} id={id} rail={rail} />
-        ))}
-      </nav>
-
       <div className="border-t border-border-subtle pt-1.5">
-        <Link
-          to="/ajustes/$seccion"
-          params={{ seccion: 'cuenta' }}
-          aria-label={`Tu cuenta: ${auth.kind === 'user' ? auth.account.name : 'modo demo'}`}
-          className="flex items-center justify-center gap-2.5 rounded-md py-1.5 transition-colors hover:bg-surface-hover lg:justify-start lg:px-2"
-        >
-          {auth.kind === 'user' ? (
-            <Avatar name={auth.account.name} src={auth.account.avatarUrl} />
-          ) : (
-            <span
-              aria-hidden="true"
-              className="grid size-7 place-items-center rounded-md bg-border-strong text-fg-subtle"
-            >
-              <Icon name="user" />
-            </span>
-          )}
-          <span className="flex min-w-0 flex-col leading-tight max-lg:sr-only">
-            <span className="truncate text-sm font-medium">
-              {auth.kind === 'user' ? auth.account.name : 'Modo demo'}
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-fg-faint">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'size-1.5 rounded-full',
-                  auth.kind === 'user' ? 'bg-success' : 'bg-fg-faint',
-                )}
-              />
-              {auth.kind === 'user' ? 'Guardado en tu cuenta' : 'Datos sin guardar'}
-            </span>
-          </span>
-        </Link>
+        <Suspense fallback={<UserButton rail={rail} />}>
+          <UserMenu rail={rail} />
+        </Suspense>
       </div>
     </aside>
   )

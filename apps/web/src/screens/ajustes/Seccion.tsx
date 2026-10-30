@@ -10,9 +10,10 @@ import { externalLink } from '../../lib/external-link'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { bySection, type PrefKey, resetPrefs, useChangedPrefs } from '../../lib/settings-changes'
-import { PALETTE_SHORTCUT } from '../../shell/shell-context'
+import { PALETTE_SHORTCUT, USER_MENU_SHORTCUT } from '../../shell/shell-context'
 import { AppsConAcceso } from './AppsConAcceso'
 import { AsistenteAjustes, InformeAjustes } from './AsistenteAjustes'
+import { Barra } from './Barra'
 import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
 import { Notificaciones } from './Notificaciones'
@@ -35,7 +36,7 @@ const PROVIDER_LABEL: Record<string, string> = {
 }
 
 /** Para resetear desde una fila o desde la cabecera de la sección. */
-function useReset(section: string) {
+export function useReset(section: string) {
   const m = useMuninn()
   const qc = useQueryClient()
   const changed = bySection(useChangedPrefs())[section] ?? []
@@ -212,7 +213,7 @@ function Apariencia() {
           icon="palette"
           tile="bg-accent-soft text-accent"
           title="Color de acento"
-          description="Botones, selección y el botón del Asistente en el móvil. Por defecto, ámbar."
+          description="Botones, selección y la pestaña activa de la barra de abajo. Por defecto, ámbar."
           changed={changed.includes('accent')}
           onReset={() => reset(['accent'], 'Acento restablecido')}
           resetLabel="Volver a ámbar"
@@ -260,6 +261,10 @@ const SHORTCUTS: { group: string; id: string; items: { keys: string[]; action: s
     group: 'En toda la app',
     id: 'atajos-general',
     items: [
+      {
+        keys: [USER_MENU_SHORTCUT],
+        action: 'Abrir el menú de tu cuenta, al pie de la barra lateral',
+      },
       { keys: ['Esc'], action: 'Cerrar un diálogo, un menú o el panel de una tarea' },
       { keys: ['Tab'], action: 'Pasar al siguiente control (el primero: «Saltar al contenido»)' },
     ],
@@ -335,6 +340,7 @@ function Acerca() {
 const BODY: Record<string, () => ReactNode> = {
   cuenta: () => <Cuenta />,
   apariencia: () => <Apariencia />,
+  barra: () => <Barra />,
   atajos: () => <Atajos />,
   modulos: () => <Modulos />,
   notificaciones: () => <Notificaciones />,
@@ -345,14 +351,25 @@ const BODY: Record<string, () => ReactNode> = {
   acerca: () => <Acerca />,
 }
 
-const RESET_LABEL: Record<string, string> = {
+export const RESET_LABEL: Record<string, string> = {
   apariencia: 'Apariencia restablecida',
   informe: 'Informe de la mañana restablecido',
 }
 
+/** El contenido de una sección, sin su cabecera: lo comparten la pantalla de Ajustes y la hoja «Tu cuenta» del móvil. */
+export function SectionContent({ section }: { section: SettingsSection }) {
+  const body = BODY[section.id]
+  return body ? (
+    body()
+  ) : section.soon ? (
+    <EmptyState icon="bell" title={section.label} soon={section.soon.phase}>
+      {section.soon.text}
+    </EmptyState>
+  ) : null
+}
+
 function Body({ section }: { section: SettingsSection }) {
   const { changed, reset } = useReset(section.id)
-  const body = BODY[section.id]
   return (
     <>
       <SectionHeader
@@ -362,13 +379,7 @@ function Body({ section }: { section: SettingsSection }) {
           reset(changed, RESET_LABEL[section.id] ?? `${section.label}: valores de fábrica`)
         }
       />
-      {body ? (
-        body()
-      ) : section.soon ? (
-        <EmptyState icon="bell" title={section.label} soon={section.soon.phase}>
-          {section.soon.text}
-        </EmptyState>
-      ) : null}
+      <SectionContent section={section} />
     </>
   )
 }
@@ -380,14 +391,8 @@ export function Seccion() {
   if (!section) return null
   return (
     <div className="flex min-w-0 flex-1 gap-10 xl:gap-12">
+      {/* En el móvil no se llega aquí: las secciones se abren en la hoja «Tu cuenta» (ADR-0072). */}
       <div className="flex min-w-0 max-w-[820px] flex-1 flex-col gap-6">
-        <Link
-          to="/ajustes"
-          className="-mb-3 -ml-1 inline-flex h-11 items-center gap-1 self-start rounded-md pr-2 text-base text-accent md:hidden"
-        >
-          <icons.chevronLeft size={18} aria-hidden="true" />
-          Ajustes
-        </Link>
         <Body section={section} />
       </div>
       <HelpAside section={section} />

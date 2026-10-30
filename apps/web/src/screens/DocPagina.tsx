@@ -5,10 +5,11 @@ import { EmptyState } from '../components/Page'
 import { type Doc, docLink, groupLabel, neighbours } from '../lib/docs'
 import { usePageMeta } from '../lib/seo'
 import { type CalloutLook, Markdown } from '../markdown/Markdown'
-import { outline, slugify } from '../markdown/outline'
+import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/outline'
 import { DOCS } from './docs/content'
 import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
+import { TreeItem, TreeList } from './docs/tree'
 
 const route = getRouteApi('/_app/documentacion/$pagina')
 
@@ -82,6 +83,61 @@ function useActiveHeading(ids: string[]) {
   return active
 }
 
+/**
+ * Índice de la guía: los apartados y, colgando de cada uno en árbol (`TreeList`), sus subapartados. `active` es el
+ * que se está leyendo; en el móvil (`touch`) no se marca y las filas son más altas.
+ */
+function Toc({ toc, active, touch }: { toc: OutlineItem[]; active?: string; touch?: boolean }) {
+  return (
+    <ul className={cn('flex flex-col', touch ? 'py-1.5' : 'gap-0.5')}>
+      {nestOutline(toc).map(({ item, children }) => {
+        const inside = children.some((c) => c.id === active)
+        return (
+          <li key={item.id} className="flex flex-col">
+            <a
+              href={`#${item.id}`}
+              onClick={(e) => jump(e, item.id)}
+              aria-current={active === item.id ? 'location' : undefined}
+              className={cn(
+                'flex items-center rounded-md transition-colors hover:text-fg',
+                touch
+                  ? 'min-h-10 px-3.5 text-base text-fg-muted'
+                  : 'px-2 py-1 text-sm leading-snug text-fg-subtle hover:bg-surface-hover',
+                active === item.id && 'bg-fg/[0.07] text-fg',
+                inside && 'text-fg',
+              )}
+            >
+              {item.text}
+            </a>
+            {children.length > 0 ? (
+              <TreeList className={touch ? 'mb-1 ml-5' : 'ml-3'}>
+                {children.map((c) => (
+                  <TreeItem key={c.id}>
+                    <a
+                      href={`#${c.id}`}
+                      onClick={(e) => jump(e, c.id)}
+                      aria-current={active === c.id ? 'location' : undefined}
+                      className={cn(
+                        'flex items-center rounded-md text-sm leading-snug transition-colors hover:text-fg',
+                        touch
+                          ? 'min-h-9 px-1.5 text-fg-muted'
+                          : 'px-2 py-1 text-fg-subtle hover:bg-surface-hover',
+                        active === c.id && 'bg-fg/[0.07] text-fg',
+                      )}
+                    >
+                      {c.text}
+                    </a>
+                  </TreeItem>
+                ))}
+              </TreeList>
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 /** Guía anterior o siguiente, con su icono y su grupo. */
 function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
   const next = dir === 'next'
@@ -91,7 +147,7 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
       to="/documentacion/$pagina"
       params={{ pagina: doc.slug }}
       className={cn(
-        'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
+        'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg md:py-2.5 outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
         next && 'flex-row-reverse text-right',
       )}
     >
@@ -108,9 +164,11 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
 }
 
 /**
- * Una guía (ADR-0052): cabecera con icono, estado y tiempo de lectura; el texto centrado a medida de
- * lectura (ADR-0048); «En esta página» a la derecha en pantallas anchas (desplegable en el móvil) y la guía
- * anterior y siguiente al final.
+ * Una guía (ADR-0052): cabecera con icono, estado y tiempo de lectura; el texto y, en pantallas anchas,
+ * «En esta página» a su lado (desplegable en el móvil); la guía anterior y siguiente al final.
+ *
+ * En escritorio (ADR-0071) la guía cabe en la ventana: el texto hace scroll en `#guia` y «Anterior / Siguiente»
+ * queda fijo debajo. En el móvil hace scroll la página y van al final, como siempre.
  */
 export function DocPagina() {
   const { pagina } = route.useParams()
@@ -144,9 +202,13 @@ export function DocPagina() {
   const sections = toc.filter((t) => t.depth === 2).length
 
   return (
-    <div className="flex min-w-0 flex-1 gap-10 xl:gap-12">
-      <article className="flex min-w-0 flex-1 justify-center">
-        <div className="flex w-full max-w-[760px] min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-1 gap-8 md:min-h-0">
+      <article className="flex min-w-0 max-w-[1000px] flex-1 flex-col md:min-h-0">
+        <div
+          id="guia"
+          data-scroll-restoration-id="guia"
+          className="flex min-w-0 flex-col gap-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-3 md:pb-6"
+        >
           <Link
             to="/documentacion"
             className="-mb-1 flex h-11 items-center gap-1.5 self-start text-md text-accent md:hidden"
@@ -201,22 +263,9 @@ export function DocPagina() {
                   className="ml-auto text-fg-subtle transition-transform group-open:rotate-180"
                 />
               </summary>
-              <ul className="flex flex-col border-t border-border-subtle py-1.5">
-                {toc.map((t) => (
-                  <li key={t.id}>
-                    <a
-                      href={`#${t.id}`}
-                      onClick={(e) => jump(e, t.id)}
-                      className={cn(
-                        'flex min-h-10 items-center px-3.5 text-base text-fg-muted hover:text-fg',
-                        t.depth === 3 && 'pl-7 text-sm',
-                      )}
-                    >
-                      {t.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <div className="border-t border-border-subtle">
+                <Toc toc={toc} touch />
+              </div>
             </details>
           ) : null}
 
@@ -227,53 +276,37 @@ export function DocPagina() {
             renderLink={renderLink}
             className="mt-2"
           />
-
-          {prev || next ? (
-            <nav
-              aria-label="Otras guías"
-              className="mt-8 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row"
-            >
-              {prev ? (
-                <Neighbour doc={prev} dir="prev" />
-              ) : (
-                <span className="hidden flex-1 sm:block" />
-              )}
-              {next ? (
-                <Neighbour doc={next} dir="next" />
-              ) : (
-                <span className="hidden flex-1 sm:block" />
-              )}
-            </nav>
-          ) : null}
         </div>
+
+        {prev || next ? (
+          <nav
+            aria-label="Otras guías"
+            className="mt-8 flex shrink-0 flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row md:mt-0 md:pt-3"
+          >
+            {prev ? (
+              <Neighbour doc={prev} dir="prev" />
+            ) : (
+              <span className="hidden flex-1 sm:block" />
+            )}
+            {next ? (
+              <Neighbour doc={next} dir="next" />
+            ) : (
+              <span className="hidden flex-1 sm:block" />
+            )}
+          </nav>
+        ) : null}
       </article>
 
       {toc.length > 1 ? (
         <aside
           aria-label="En esta página"
-          className="sticky top-7 hidden max-h-[calc(100dvh-3.5rem)] w-[220px] shrink-0 flex-col gap-1 self-start overflow-y-auto pt-24 xl:flex"
+          className="hidden min-h-0 w-[220px] shrink-0 flex-col gap-1 overflow-y-auto pt-1 xl:flex"
         >
-          <span className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
+          <span className="mb-1.5 flex items-center gap-1.5 px-2 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
             <DocIcon name="list" size={13} />
             En esta página
           </span>
-          {toc.map((t) => (
-            <a
-              key={t.id}
-              href={`#${t.id}`}
-              onClick={(e) => jump(e, t.id)}
-              aria-current={active === t.id ? 'location' : undefined}
-              className={cn(
-                'border-l py-0.5 pl-3 text-sm leading-snug transition-colors',
-                t.depth === 3 && 'pl-5',
-                active === t.id
-                  ? 'border-accent text-fg'
-                  : 'border-border text-fg-subtle hover:text-fg',
-              )}
-            >
-              {t.text}
-            </a>
-          ))}
+          <Toc toc={toc} active={active} />
         </aside>
       ) : null}
     </div>

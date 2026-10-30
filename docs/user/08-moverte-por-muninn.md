@@ -1,6 +1,6 @@
 ---
 title: Moverte por Muninn
-description: La barra lateral, las pestañas del móvil, el buscador y la apariencia.
+description: La barra lateral, las pestañas del móvil y tu cuenta, el buscador y la apariencia.
 order: 8
 status: parcial
 group: primeros-pasos
@@ -15,13 +15,17 @@ icon: compass
 ## En el ordenador: la barra lateral
 
 A la izquierda tienes las secciones de los módulos que tienes activos (ver más abajo): **Inicio**, **Proyectos**, **Notas**,
-**Finanzas**, **Asistente**, **Noticias** y **GitHub**. Abajo están **Documentación** y **Ajustes**.
+**Finanzas**, **Asistente**, **Noticias** y **GitHub**.
 
 En el apartado **Proyectos** aparecen tus proyectos con su logo o, si no tiene, su inicial y su color. Pulsa uno para abrir su tablero, o el
 botón **+** para crear otro.
 
-Al pie de la barra está tu cuenta, con tu nombre y tu foto (o tus iniciales). Púlsala para ir a
-**Ajustes › Cuenta**, donde puedes cerrar sesión.
+Al pie de la barra está tu cuenta, con tu nombre y tu foto (o tus iniciales). Púlsala (o pulsa **⌘⇧U** en Mac, **Ctrl ⇧ U** en
+Windows y Linux) y se abre un menú con **Cuenta**, **Ajustes**, **Atajos de teclado**, **Documentación**, **Acerca de Muninn** y
+**Cerrar sesión**. Muévete por él con las flechas y ciérralo con **Esc**.
+
+¿Quieres más sitio? El botón que hay junto al logo, arriba, **pliega la barra** y la deja solo con los iconos (como en la
+tablet). Púlsalo otra vez para desplegarla. Muninn lo recuerda en este ordenador.
 
 ## En la tablet: la barra de iconos
 
@@ -30,18 +34,39 @@ iconos, para dejarle más sitio a lo que estás haciendo. Mantén el dedo o el r
 Tus proyectos no salen aquí: los tienes en **Proyectos**. Si giras el iPad o usas una pantalla más ancha, vuelve la
 barra completa.
 
-## En el móvil: las pestañas
+## En el móvil: las pestañas y tu cuenta
 
-En el teléfono, abajo tienes las pestañas, cada una con su nombre: **Inicio**, **Proyectos** y **Más**, y
-**Finanzas** si lo tienes activado. La que está en color es donde estás. A la derecha, el botón con el logo de Muninn
-abre el [Asistente](11-asistente.md).
+En el teléfono, abajo tienes hasta cuatro pestañas, cada una con su nombre. Al principio son **Inicio**, **Proyectos**,
+**Finanzas** y **Notas** (las de un módulo desactivado no salen), pero **las eliges tú** (ver más abajo). La que está en color
+es donde estás.
 
 Al bajar por una pantalla, la barra se encoge y deja solo la pestaña en la que estás, para que veas más. Sube un poco,
 o tócala, y vuelve entera.
 
-En **Más** encontrarás el resto: Notas, Noticias, GitHub, Documentación, tu cuenta, el buscador y los ajustes. Al pie
-verás la versión de Muninn. En el móvil,
-**Ajustes** es una lista: toca una sección para abrirla y **‹ Ajustes** para volver.
+A la derecha, siempre, está **tu foto** (o tus iniciales). Tócala y sube desde abajo la hoja **Tu cuenta**, con todo lo demás:
+
+- Arriba, **tu cuenta**: tócala para ver con qué entras, tus sesiones y el segundo factor, y **Cerrar sesión** al final.
+- **Ir a**: las secciones que no tienes en la barra (Notas, Noticias, GitHub, Docs…) y **Buscar**. El **Asistente** sale
+  atenuado: de momento contesta en el ordenador, con su modelo; en el móvil llegará más adelante.
+- **Ajustes**, por grupos, como en el ordenador.
+- **Documentación** y **Acerca de Muninn**.
+
+Cada ajuste se abre dentro de la misma hoja; **‹** te devuelve a la lista. Para cerrarla, toca fuera, arrastra la rayita de
+arriba hacia abajo o pulsa la **X**: sigues en la pantalla en la que estabas. Si abres un enlace a un ajuste (por ejemplo, el
+botón «Ir a Módulos»), se abre la hoja ya en ese ajuste, encima de lo que estabas viendo.
+
+### Elegir las pestañas de abajo
+
+En **Ajustes › Barra de abajo** (en la hoja de tu cuenta) eliges qué pestañas quieres y en qué orden:
+
+- Arriba ves cómo queda la barra.
+- En **En la barra**, las flechas cambian una pestaña de sitio y el interruptor la quita. Siempre queda al menos una.
+- En **Fuera de la barra**, el interruptor la añade. Caben **cuatro**: para poner otra, quita una antes.
+- Además de las secciones, puedes poner **Buscar**, que abre el buscador sin salir de donde estás.
+- El **Asistente** no se puede poner todavía, porque en el móvil aún no contesta.
+
+Cada cambio se aplica al momento y se puede deshacer desde el aviso. Con cuenta, se guarda en ella: tu barra te sigue a todos
+tus dispositivos. Si desactivas un módulo, su pestaña se esconde, y vuelve al activarlo.
 
 ## Inicio
 
@@ -58,16 +83,17 @@ Si aún no tienes proyectos o tareas, Inicio te lo dice y te ofrece crear el pri
 
 ## Documentación
 
-En **Documentación** (abajo en la barra lateral, o en **Más** en el móvil) están estas mismas guías dentro de la app. A la
+En **Documentación** (en el menú de tu cuenta, al pie de la barra lateral, o en la hoja de tu cuenta en el móvil) están estas mismas guías dentro de la app. A la
 izquierda ves el menú, agrupado en **Primeros pasos**, **Tu trabajo**, **Módulos**, **Asistentes e IA** y **Cuenta**, con una marca
 **Parcial** o **Próximamente** en las que aún no están completas; arriba, un buscador
 que mira en los títulos y en el texto de todas. Cada guía tiene su enlace, un índice **En esta página** (en pantallas
-anchas) y los botones **Anterior** y **Siguiente**.
+anchas) y los botones **Anterior** y **Siguiente**. En el ordenador esos dos botones se quedan siempre abajo, a la vista:
+no hace falta bajar hasta el final para pasar a la siguiente guía.
 
 ## Activar y desactivar módulos
 
 En **Ajustes › Módulos** eliges qué usas: **Tareas y proyectos**, **Notas**, **Finanzas**, **GitHub** y **Noticias**. Lo que
-desactives desaparece de la barra lateral, de las pestañas del móvil, del centro **Más** y del buscador, y la tecla **N** deja de
+desactives desaparece de la barra lateral, de las pestañas del móvil, de **Ir a** en la hoja de tu cuenta y del buscador, y la tecla **N** deja de
 abrir «Nueva tarea» si desactivas las tareas. **No se borra nada**: al volver a activarlo, todo sigue donde estaba. Si abres un
 enlace a algo desactivado, Muninn te lo dice y te deja activarlo ahí mismo. Cada cambio avisa y se puede deshacer.
 
@@ -115,8 +141,8 @@ En **Ajustes › Apariencia**:
 
 - **Cristal:** activa o desactiva el desenfoque translúcido de paneles y menús. Si tu sistema tiene
   activado «Reducir transparencia», Muninn empieza sin cristal.
-- **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y el
-  botón del Asistente en el móvil.
+- **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y la
+  pestaña activa de la barra de abajo en el móvil.
 
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
@@ -125,13 +151,15 @@ sigue a todos tus dispositivos; en modo demo, solo en este.
 
 ## Ajustes
 
-En **Ajustes** (abajo en la barra lateral, o en **Más** en el móvil) las secciones van por grupos. Al lado de cada una ves
+En **Ajustes** (en el menú de tu cuenta, al pie de la barra lateral, o en la hoja de tu cuenta en el móvil) las secciones
+van por grupos. Al lado de cada una ves
 lo más útil sin abrirla: con qué entras, cuántos módulos tienes activos o a qué hora va el informe.
 
 | Grupo | Sección | Qué hay |
 |---|---|---|
 | Tú | **Cuenta** | Tu nombre y correo, cómo entras (código o GitHub) y **Cerrar sesión**. En modo demo, **Salir del modo demo** |
 | Tú | **Apariencia** | Cristal y color de acento (ver arriba) |
+| Tú | **Barra de abajo** | Las pestañas del móvil y su orden (ver [Elegir las pestañas de abajo](#elegir-las-pestañas-de-abajo)) |
 | Tú | **Atajos de teclado** | Los atajos del buscador, del tablero y de toda la app |
 | Espacio de trabajo | **Módulos** | Activar y desactivar módulos (ver arriba) |
 | Espacio de trabajo | **Notificaciones** | Activar los avisos en este dispositivo, **Enviar prueba** y los dispositivos que los reciben (ver [Notificaciones](13-notificaciones.md)) |
@@ -164,6 +192,7 @@ En pantallas muy anchas, a la derecha de cada sección sale la guía de esta doc
 | Atajo | Qué hace |
 |---|---|
 | **⌘K** / **Ctrl K** | Abre o cierra el buscador |
+| **⌘⇧U** / **Ctrl ⇧ U** | Abre el menú de tu cuenta, al pie de la barra lateral |
 | **N** | Nueva tarea (fuera de un campo de texto) |
 | **↑** **↓** | Moverse por los resultados del buscador |
 | **Intro** | Abrir el resultado elegido |

@@ -98,11 +98,11 @@
      arranca con Windows, con un icono en la bandeja).
   2. **Orígenes permitidos.** Ollama solo acepta peticiones del navegador desde orígenes conocidos. En PowerShell:
      ```powershell
-     [Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://tauri.localhost,https://tauri.localhost,tauri://localhost', 'User')
+     [Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://tauri.localhost,https://tauri.localhost,https://muninn-sepia.vercel.app', 'User')
      ```
      Sal de Ollama desde la bandeja y vuelve a abrirlo (lee las variables al arrancar). `tauri.localhost` es el origen de la app de
-     escritorio en Windows; `5173`/`5174`, el de `pnpm dev`. Cuando la web esté publicada, añade su URL (y en Chrome acepta el permiso de
-     «acceso a la red local» si lo pide).
+     escritorio en Windows; `5173`/`5174`, el de `pnpm dev`; la última, la web publicada (en Chrome, acepta el permiso de «acceso a la
+     red local» si lo pide). **No pongas `tauri://localhost`** ni nada que no empiece por `http://` o `https://`: ver la entrada siguiente.
   3. **Modelo:** `ollama pull qwen3:8b` (5,2 GB, en `%USERPROFILE%\.ollama\models`). Opcional, para comparar: `ollama pull qwen3:14b` (9,3 GB).
   4. **Comprobar:** `curl http://localhost:11434/api/tags` lista el modelo, y `ollama run qwen3:8b "hola"` contesta.
   5. **Banco de pruebas** (datos de ejemplo en memoria, no toca tu cuenta): `pnpm --filter @muninn/assistant bench -- --model qwen3:8b`.
@@ -110,6 +110,18 @@
 - **Ojo:** el contexto (16384 tokens) lo pide la app en cada llamada (`num_ctx`): no hace falta `OLLAMA_CONTEXT_LENGTH`. El modelo se queda
   10 minutos en la VRAM tras usarlo (`keep_alive`); si un juego necesita la GPU, `ollama stop qwen3:8b`. Los registros están en
   `%LOCALAPPDATA%\Ollama\server.log`.
+
+### Ollama no arranca: «bad origin» en `OLLAMA_ORIGINS`
+
+- **Síntoma:** el Asistente dice que Ollama no responde aunque el icono de la bandeja está; `curl http://localhost:11434/api/tags` no
+  conecta y `%LOCALAPPDATA%\Ollama\app.log` repite `ollama exited … exit status 2` cada segundo.
+- **Causa:** en `server.log`, `panic: bad origin: origins must contain '*' or include http://,https://,chrome-extension://…`. Ollama
+  (visto con la 0.40.13) se cae al arrancar si algún origen de `OLLAMA_ORIGINS` tiene otro esquema, como `tauri://localhost`. Lo
+  recomendaba esta guía hasta el 30-10.
+- **Solución:** quita ese origen (valor del paso 2 de la entrada anterior) y reinicia Ollama desde la bandeja. Compruébalo con
+  `curl -H "Origin: https://muninn-sepia.vercel.app" http://localhost:11434/api/tags`: 200 si el origen está permitido, 403 si falta.
+- **macOS:** la app de escritorio llama desde `tauri://localhost`, que Ollama no admite en la lista. Pendiente de decidir (¿`*` solo en
+  ese equipo, o llamar a Ollama desde Rust en lugar de desde la vista?).
 
 ### Instalar la voz: whisper.cpp y Piper (pasos manuales, cuando se implemente)
 

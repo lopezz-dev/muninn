@@ -1,6 +1,6 @@
 # ADR-0054: Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado por ADR-0072 en las pestañas del teléfono, el botón del Asistente y «Más»; lo demás sigue vigente
 - **Fecha:** 2026-10-28
 - **Área:** web, ui
 - **Reemplaza a:** [ADR-0021](0021-shell-de-la-app.md) en lo que toca al móvil (el dock con menisco) y al corte de la barra lateral

@@ -8,6 +8,7 @@ import { DOCS } from './docs/content'
 import { DocIcon, DocTile, GROUP_ICON } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
 import { DocResults, DocSearchField, useDocSearch } from './docs/search'
+import { TreeItem, TreeList } from './docs/tree'
 
 const GROUPS = groupDocs(DOCS)
 
@@ -87,13 +88,6 @@ function Portada() {
     <Page className="gap-7 md:gap-8">
       <header className="flex flex-col gap-5 border-b border-border-subtle pb-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div className="flex items-start gap-4">
-          <Link
-            to="/mas"
-            aria-label="Volver"
-            className="grid size-11 shrink-0 place-items-center rounded-md border border-border bg-surface text-fg md:hidden"
-          >
-            <icons.chevronLeft size={18} />
-          </Link>
           <span className="hidden size-13 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent md:grid">
             <icons.docs size={26} aria-hidden="true" />
           </span>
@@ -145,13 +139,13 @@ function Portada() {
   )
 }
 
-/** Índice de la izquierda (escritorio, con una guía abierta): buscador y guías por grupos. */
+/** Índice de la izquierda (escritorio, con una guía abierta): buscador y guías colgando de su grupo, con scroll propio. */
 function Indice() {
   const search = useDocSearch()
   return (
     <nav
       aria-label="Páginas de ayuda"
-      className="sticky top-7 flex max-h-[calc(100dvh-3.5rem)] w-[248px] shrink-0 flex-col gap-3 self-start overflow-y-auto pb-4"
+      className="flex min-h-0 w-[248px] shrink-0 flex-col gap-3 overflow-y-auto"
     >
       <Link
         to="/documentacion"
@@ -165,31 +159,34 @@ function Indice() {
         <DocResults search={search} dense />
       ) : (
         GROUPS.map((g) => (
-          <div key={g.id} className="flex flex-col gap-0.5">
+          <div key={g.id} className="flex flex-col">
             <GroupTitle id={g.id} label={g.label} className="px-2.5 pt-2 pb-1" />
-            {g.docs.map((d) => (
-              <Link
-                key={d.slug}
-                to="/documentacion/$pagina"
-                params={{ pagina: d.slug }}
-                className={cn(
-                  'group flex h-[30px] items-center gap-2.5 rounded-md px-2.5 text-[13.5px] text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
-                  'data-[status=active]:bg-fg/[0.07] data-[status=active]:text-fg',
-                )}
-              >
-                <DocIcon
-                  name={d.icon}
-                  size={16}
-                  className="shrink-0 text-fg-subtle group-data-[status=active]:text-accent"
-                />
-                <span className="min-w-0 flex-1 truncate">{d.title}</span>
-                <StatusBadge status={d.status} compact />
-              </Link>
-            ))}
+            <TreeList className="ml-4">
+              {g.docs.map((d) => (
+                <TreeItem key={d.slug}>
+                  <Link
+                    to="/documentacion/$pagina"
+                    params={{ pagina: d.slug }}
+                    className={cn(
+                      'group flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13.5px] text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
+                      'data-[status=active]:bg-fg/[0.07] data-[status=active]:text-fg',
+                    )}
+                  >
+                    <DocIcon
+                      name={d.icon}
+                      size={16}
+                      className="shrink-0 text-fg-subtle group-data-[status=active]:text-accent"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{d.title}</span>
+                    <StatusBadge status={d.status} compact />
+                  </Link>
+                </TreeItem>
+              ))}
+            </TreeList>
           </div>
         ))
       )}
-      <p className="px-2.5 pt-3 text-xs leading-relaxed text-fg-faint">
+      <p className="mt-auto px-2.5 pt-3 text-xs leading-relaxed text-fg-faint">
         Versión {__APP_VERSION__} · generada desde <span className="font-mono">docs/user</span>
       </p>
     </nav>
@@ -198,7 +195,8 @@ function Indice() {
 
 /**
  * Documentación (ADR-0027, ADR-0052): las guías de `docs/user`. Sin guía abierta, la portada. Con una guía,
- * en escritorio, el índice a la izquierda y la guía; en móvil, la guía a pantalla completa.
+ * en escritorio, el índice a la izquierda y la guía, todo a la altura de la ventana (`fit`, ADR-0071); en móvil, la
+ * guía a pantalla completa.
  */
 export function Documentacion() {
   const desktop = useIsDesktop()
@@ -207,7 +205,7 @@ export function Documentacion() {
   if (!open) return <Portada />
   if (!desktop) return <Outlet />
   return (
-    <Page className="flex-row gap-10 xl:gap-12">
+    <Page fit className="flex-row gap-8">
       <Indice />
       <Outlet />
     </Page>

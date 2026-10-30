@@ -3,6 +3,7 @@ import { cn } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet } from '@tanstack/react-router'
 import { AppIcon } from '../../components/AppIcon'
+import { useDock } from '../../lib/dock'
 import { MODULE_ORDER, useEnabledModules } from '../../lib/modules'
 import { reportPrefs } from '../../lib/morning-report-prefs'
 import { useAuth, useMuninn } from '../../lib/muninn'
@@ -26,6 +27,7 @@ export function useSectionHints(): Partial<Record<string, string>> {
   const modules = useEnabledModules()
   const report = reportPrefs(useQuery(settingsQuery(m)).data)
   const devices = useQueryClient().getQueryData<PushDevice[]>(pushKeys.devices)
+  const dock = useDock()
   const on = modules ? ACTIVABLE.filter((x) => modules.has(x)).length : null
   return {
     cuenta:
@@ -34,6 +36,7 @@ export function useSectionHints(): Partial<Record<string, string>> {
         : auth.account.provider === 'github'
           ? 'GitHub'
           : 'Código por correo',
+    barra: dock.length === 1 ? '1 pestaña' : `${dock.length} pestañas`,
     modulos: on === null ? undefined : `${on} de ${ACTIVABLE.length}`,
     notificaciones:
       auth.kind === 'demo' || devices === undefined
@@ -85,8 +88,8 @@ function RailLink({
 
 /**
  * Ajustes (ADR-0053): menú por grupos con buscador a la izquierda y la sección elegida. Mientras haya texto en el
- * buscador, los resultados ocupan el sitio de la sección. En el móvil el menú no se ve: `/ajustes` es la lista de
- * secciones (`Indice`) y cada sección trae su «‹ Ajustes».
+ * buscador, los resultados ocupan el sitio de la sección. En el móvil no se llega aquí: Ajustes vive en la hoja «Tu
+ * cuenta» (ADR-0072).
  */
 export function Ajustes() {
   const search = useSettingsSearch()

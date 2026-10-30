@@ -42,7 +42,12 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - **Agrupa, no disperses:** varias cosas del mismo tema (el seguimiento de un PR, una pasada de refactor, los flecos de una
   función) van en **una sola tarea** con cada punto como subtarea de su checklist, y el detalle de cada una, numerado igual, en
   la descripción. Tareas sueltas solo para lo que es independiente de verdad. Antes de crear una, mira si ya hay una tarea
-  paraguas del tema y añade la subtarea ahí.
+  paraguas del tema y añade la subtarea ahí. Si ves tareas sueltas del mismo tema, fúndelas: la más completa hace de paraguas,
+  las demás pasan a su checklist y su descripción, y se archivan (no se borran).
+- **Planifica con fechas:** toda tarea abierta lleva fecha límite (`dueDate`), nunca en el pasado. Al crear una, encájala según
+  su prioridad y lo ya planificado (mira las fechas de las demás con `list_tasks`); si cae en una tarea paraguas, revisa la fecha
+  de la paraguas en vez de crear otra. Lo de las próximas semanas va en «Pendiente» y lo posterior en «Backlog». Si algo se
+  retrasa o se adelanta, mueve también las fechas de lo que depende de ello.
 - Las tareas «Pruebas: …» son manuales de la fase final (`docs/fase-final.md`): no las cierra ningún PR.
 
 ## Git (obligatorio, también si la sesión o la herramienta dicen otra cosa)
