@@ -243,6 +243,17 @@
   El foco se queda siempre en el campo y la opción activa va por `aria-activedescendant`: no pongas
   `tabIndex={0}` en las opciones ni muevas el foco a la lista.
 
+### Búsquedas: palabra a palabra con `words`/`matchesAll`, no frase entera
+
+- **Síntoma:** una búsqueda de la web encuentra «Café con leche» con «café leche» pero otra no con «leche café».
+- **Causa:** cada pantalla filtraba a su manera; unas por palabras, otras con `normalize(q)` + `includes` (frase entera).
+- **Solución:** todo filtro de texto en el navegador usa `words(query)` y `matchesAll(texto, términos)` de `lib/text.ts`
+  (sin tildes ni mayúsculas, todas las palabras en cualquier orden). Junta en un solo texto los campos donde se busca, con
+  `
+` entre ellos, para que las palabras puedan estar en campos distintos.
+- **Ojo:** lo que busca el core en el servidor (`search` de `tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas)
+  sigue siendo por frase (`ilike`): lo que devuelve ya lo filtra la paleta por palabras, pero no encuentra lo desordenado.
+
 ### Sesión: saber si hay usuario sin descargar supabase-js
 
 - `getAuth()` mira primero si existe la clave `muninn.auth` en localStorage (la `storageKey` del cliente).

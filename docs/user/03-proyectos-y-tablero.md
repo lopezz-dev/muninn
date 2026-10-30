@@ -31,8 +31,8 @@ En la pantalla **Proyectos** (en la barra lateral, o en las pestañas del móvil
 
 Arriba ves cuántos proyectos tienes, cuántas tareas abiertas y cuántas vencidas. Puedes filtrar (**Todos**, **Con
 vencidas** y, con GitHub activado, **Con GitHub**), ordenar por **urgencia**, **actividad reciente** o **nombre**, y buscar
-por nombre en el ordenador. Al final, **Archivados** guarda los proyectos que archivaste: ábrelo y pulsa **Recuperar** para
-traer uno de vuelta, o la papelera para **eliminarlo para siempre** (con **Eliminar todos** vacías la lista). Eliminar un
+por nombre en el ordenador (sin importar mayúsculas ni tildes, y con varias palabras en cualquier orden). Al final,
+**Archivados** guarda los proyectos que archivaste: ábrelo y pulsa **Recuperar** para traer uno de vuelta, o la papelera para **eliminarlo para siempre** (con **Eliminar todos** vacías la lista). Eliminar un
 proyecto borra también sus columnas y tareas; sus notas se quedan, sin proyecto. Tienes unos segundos para pulsar
 **Deshacer** en el aviso; después ya no se puede recuperar. Si cierras Muninn antes de que pasen, no se borra nada.
 

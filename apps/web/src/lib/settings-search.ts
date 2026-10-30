@@ -1,4 +1,4 @@
-import { normalize } from './text'
+import { matchesAll, words } from './text'
 
 /**
  * Lo que encuentra el buscador de Ajustes (ADR-0053): cada ajuste con su sección y el `id` de su fila, para ir a
@@ -238,16 +238,13 @@ export function searchSettings(
   query: string,
   sectionLabel: (id: string) => string = () => '',
 ): SettingEntry[] {
-  const words = normalize(query).split(/\s+/).filter(Boolean)
-  if (words.length === 0) return []
+  const terms = words(query)
+  if (terms.length === 0) return []
   return entries
     .map((e, i) => {
-      const hay = normalize(
-        `${e.label} ${e.description} ${e.keywords ?? ''} ${sectionLabel(e.section)}`,
-      )
-      if (!words.every((w) => hay.includes(w))) return null
-      const label = normalize(e.label)
-      return { e, i, inLabel: words.every((w) => label.includes(w)) }
+      const hay = `${e.label} ${e.description} ${e.keywords ?? ''} ${sectionLabel(e.section)}`
+      if (!matchesAll(hay, terms)) return null
+      return { e, i, inLabel: matchesAll(e.label, terms) }
     })
     .filter((x) => x !== null)
     .sort((a, b) => Number(b.inLabel) - Number(a.inLabel) || a.i - b.i)
