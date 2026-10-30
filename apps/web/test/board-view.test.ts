@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   BOARD_VIEW_KEY,
   readBoardView,
+  readCalendarScale,
   saveBoardView,
   type ViewStorage,
 } from '../src/lib/board-view'
@@ -26,6 +27,18 @@ describe('vista del tablero', () => {
     expect(readBoardView('p2', s)).toBe('board')
   })
 
+  it('el calendario se recuerda con su escala (mes o semana)', () => {
+    const s = memory()
+    saveBoardView('p1', 'calendar', s)
+    expect(readBoardView('p1', s)).toBe('calendar')
+    expect(readCalendarScale('p1', s)).toBe('month')
+    saveBoardView('p1', 'calendar', s, 'week')
+    expect(readBoardView('p1', s)).toBe('calendar')
+    expect(readCalendarScale('p1', s)).toBe('week')
+    saveBoardView('p1', 'list', s)
+    expect(readCalendarScale('p1', s)).toBe('month')
+  })
+
   it('volver a «Tablero» quita la entrada', () => {
     const s = memory()
     saveBoardView('p1', 'list', s)
@@ -34,7 +47,7 @@ describe('vista del tablero', () => {
   })
 
   it('ignora lo que no entiende y sobrevive sin almacenamiento', () => {
-    expect(readBoardView('p1', memory({ [BOARD_VIEW_KEY]: '{"p1":"calendar"}' }))).toBe('board')
+    expect(readBoardView('p1', memory({ [BOARD_VIEW_KEY]: '{"p1":"agenda"}' }))).toBe('board')
     expect(readBoardView('p1', memory({ [BOARD_VIEW_KEY]: 'no es json' }))).toBe('board')
     expect(readBoardView('p1', memory({ [BOARD_VIEW_KEY]: '["list"]' }))).toBe('board')
     expect(readBoardView('p1', null)).toBe('board')

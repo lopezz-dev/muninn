@@ -11,11 +11,13 @@ export interface TooltipProps {
   /** El disparador: un elemento enfocable (botón, enlace). */
   children: ReactNode
   side?: 'top' | 'right' | 'bottom' | 'left'
+  /** No se abre (p. ej. mientras se arrastra el disparador). El disparador sigue igual: no se vuelve a montar. */
+  disabled?: boolean
 }
 
-export function Tooltip({ content, children, side = 'top' }: TooltipProps) {
+export function Tooltip({ content, children, side = 'top', disabled }: TooltipProps) {
   return (
-    <RTooltip.Root>
+    <RTooltip.Root open={disabled ? false : undefined}>
       <RTooltip.Trigger asChild>{children}</RTooltip.Trigger>
       <RTooltip.Portal>
         <RTooltip.Content

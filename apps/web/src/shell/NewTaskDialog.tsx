@@ -51,11 +51,11 @@ export function NewTaskDialog({
     if (!open) return
     setTitle(preset.title ?? '')
     setPriority('none')
-    setDueDate('')
+    setDueDate(preset.dueDate ?? '')
     setError(undefined)
     setProjectId(preset.projectId ?? '')
     setColumnId(preset.columnId ?? '')
-  }, [open, preset.projectId, preset.columnId, preset.title])
+  }, [open, preset.projectId, preset.columnId, preset.title, preset.dueDate])
 
   const effectiveProject = projects.some((p) => p.id === projectId) ? projectId : projects[0]?.id
   const board = useQuery({
