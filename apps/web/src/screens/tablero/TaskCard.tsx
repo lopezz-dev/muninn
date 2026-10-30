@@ -18,7 +18,7 @@ interface CardBodyProps {
 }
 
 /** Lo que se ve dentro de una tarjeta: etiquetas, título, progreso y datos. Diseño: Tablero.dc.html. */
-function CardBody({ task, progress, today }: CardBodyProps) {
+export function CardBody({ task, progress, today }: CardBodyProps) {
   const done = task.column.kind === 'done'
   const subtasks = progress && progress.total > 0 ? progress : null
   // Sin nada que mostrar, la fila de datos no existe: la tarjeta no lleva un hueco vacío abajo.
@@ -59,7 +59,7 @@ function CardBody({ task, progress, today }: CardBodyProps) {
   )
 }
 
-const card =
+export const card =
   'flex flex-col gap-2 rounded-md border border-border bg-surface-raised px-3 py-2.5 text-fg no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent'
 
 interface TaskCardProps extends CardBodyProps {

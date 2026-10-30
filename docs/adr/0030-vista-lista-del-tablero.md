@@ -1,6 +1,6 @@
 # ADR-0030: Vista Lista del tablero: la misma consulta, sin arrastre, recordada por dispositivo
 
-- **Estado:** Aceptado
+- **Estado:** Aceptado; el punto «Calendario no entra todavía» lo cierra ADR-0068 (lo demás sigue vigente)
 - **Fecha:** 2026-10-19
 - **Área:** web
 

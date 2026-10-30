@@ -264,6 +264,10 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
 - [ ] Vista **Lista** en un proyecto:
   - la casilla de cada fila se toca bien y completa con «Deshacer»;
   - al cerrar y abrir la app sigue en Lista, y en el ordenador sigue en Tablero.
+- [ ] Vista **Calendario** en un proyecto:
+  - tocar un día enseña sus tareas; mantener pulsada una abre «Cambiar fecha» (no el menú de enlace de Safari) y «Mañana» la mueve con
+    «Deshacer»;
+  - «Otra fecha» abre la rueda de iOS, y deslizar a la izquierda completa.
 - [ ] Finanzas:
   - «Nuevo movimiento» se abre desde abajo;
   - el importe saca el teclado decimal y no hace zoom;

@@ -11,6 +11,7 @@ import { type IconName, notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { AGENT_ONLY_GITHUB, blocksAgentDrop, flushGithubSoon } from './agent'
 import { applyTaskMove, type BoardData, indexInColumn } from './board'
+import { dueToast } from './calendar'
 import { fail, optimistic, rollback, serial, settle } from './mutations'
 import { keys } from './queries'
 
@@ -245,6 +246,26 @@ export async function patchTask(
     },
   })
   return true
+}
+
+/**
+ * Cambia (o quita, con `null`) la fecha de vencimiento: lo que hace soltar una tarea en un día del calendario o
+ * en «Sin fecha» (ADR-0068). La columna no cambia. El aviso dice cuándo vence y su «Deshacer» devuelve la de antes.
+ */
+export async function setDueDate(
+  m: Muninn,
+  qc: QueryClient,
+  task: TaskWithColumn,
+  dueDate: string | null,
+): Promise<boolean> {
+  if ((task.dueDate ?? null) === dueDate) return true
+  return patchTask(
+    m,
+    qc,
+    task,
+    { dueDate },
+    { message: dueToast(dueDate, m.today()), icon: 'calendar' },
+  )
 }
 
 /** Archiva (la quita del tablero). «Deshacer» la restaura en su columna y posición. */

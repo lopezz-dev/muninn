@@ -10,7 +10,7 @@ icon: projects
 # Proyectos y tablero
 
 > **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color, logo y portada), mover tareas arrastrándolas,
-> personalizar las columnas y ver el tablero como lista. La vista de calendario y el color de las columnas llegarán más
+> personalizar las columnas y ver el tablero como lista o como calendario. El color de las columnas llegará más
 > adelante. En modo demo, sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
@@ -122,17 +122,59 @@ y lo cuenta así en los resúmenes.
 Si la columna tiene tareas, eliges a qué columna pasan (**Borrar y mover sus tareas a…**). Un proyecto siempre necesita
 al menos una columna. No hay diálogo de confirmación: pulsa **Deshacer** en el aviso y la columna vuelve, con sus tareas.
 
-## Tablero o lista
+## Tablero, lista o calendario
 
-Arriba del tablero tienes **Tablero · Lista**. La lista enseña las mismas tareas, agrupadas por columna, una por fila:
+Arriba del tablero tienes **Tablero · Lista · Calendario**. La lista enseña las mismas tareas, agrupadas por columna, una por fila:
 
 - La **casilla** de cada fila la completa (o la reabre si ya está hecha), con su aviso y **Deshacer**.
 - Un clic en el título abre la tarea, igual que en el tablero. Para cambiarla de columna, hazlo desde la tarea.
 - Cada grupo se pliega con un clic en su cabecera y tiene su **Añadir tarea** al pie (menos «Hecho»).
 - En la lista no se arrastra: para reordenar tarjetas, vuelve al tablero.
-- Los filtros valen para las dos vistas.
+- Los filtros valen para las tres vistas.
 - Muninn recuerda la vista que elegiste **en cada proyecto y en cada dispositivo**: puedes tener la lista en el móvil y el
   tablero en el ordenador.
+
+## El calendario
+
+El calendario coloca cada tarea en el día en que vence. Siempre se abre en hoy.
+
+### En el ordenador
+
+- **Mes o semana.** Elige con **Mes · Semana**. Las flechas ‹ › cambian de mes (o de semana) y **Hoy** te devuelve al día de hoy.
+  Muninn recuerda si lo dejaste en mes o en semana.
+- **Cada tarea es una píldora** con el color de su columna y la bandera si es de prioridad media, alta o urgente. Las **vencidas**
+  (la fecha ya pasó y no están hechas) salen en rojo; las **hechas**, tachadas. Pasa el ratón por encima para ver la tarjeta entera, y
+  haz clic para abrirla.
+- Si en un día no caben, verás **«+N más»**: ábrelo para verlas todas. Cuanto más alta sea la ventana, más tareas caben por día.
+- El botón **«N vencidas»** filtra solo las vencidas (es el filtro **Vence › Vencidas**). Púlsalo otra vez para quitarlo.
+- **Arrastra una tarea a otro día** para cambiar su fecha. Solo cambia la fecha: la tarea se queda en su columna. Te sale un aviso
+  («Vence el mié 4 nov») con **Deshacer**. Si la dejas un momento sobre ‹ o ›, el calendario pasa al mes siguiente o al anterior.
+- **Sin fecha.** Las tareas sin fecha están en la bandeja de la derecha (ábrela o ciérrala con **Sin fecha · N**). Arrastra una a un
+  día para ponerle fecha, o suelta una tarea en la bandeja para **quitarle** la fecha. Cerrada, queda una tira estrecha a la derecha:
+  también puedes soltar ahí. En el mes se abre sola si tiene tareas; en la vista **Semana** empieza cerrada, para que los días
+  tengan sitio.
+- **En la semana** cada tarea enseña su columna, sus etiquetas y sus subtareas. Los días sin tareas se estrechan para dejar sitio a los
+  que tienen.
+- **Crear en un día:** pulsa el **+** que aparece al pasar el ratón por un día (o haz clic en su hueco), escribe el título y pulsa
+  Enter. La tarea nace con esa fecha, en la columna «Por hacer» (puedes elegir otra). **Más opciones…** abre el formulario completo.
+- **Con el teclado:** ve con Tab hasta una tarea y pulsa **Espacio** para cogerla. Las flechas ← → la mueven un día y ↑ ↓ una semana,
+  **S** la lleva a «Sin fecha» y **Espacio** la suelta. **Escape** cancela.
+- Dentro de un día no se ordena a mano: primero las pendientes, luego por prioridad y por columna.
+
+### En el móvil
+
+- Se abre en **la semana de hoy**, con las tareas de hoy debajo. Cada día tiene un punto por tarea (rojo si está vencida); toca
+  un día para ver las suyas. Las flechas pasan de semana en semana.
+- **Ver el mes** despliega el mes entero (y las flechas pasan de mes en mes); **Solo esta semana** lo vuelve a plegar.
+- Para **cambiar la fecha**, toca el botón del calendario junto a la tarea o mantenla pulsada. Elige **Hoy**, **Mañana**,
+  **Próximo lunes**, **En una semana**, otra fecha o **Quitar fecha**. Siempre con **Deshacer**.
+- **Desliza a la izquierda** para completarla, como en el tablero.
+- **Añadir el …** crea una tarea en el día que tienes elegido. Si hay tareas sin fecha, **Sin fecha · N** abre su lista, y desde ahí
+  puedes ponerles una.
+- En el móvil no se arrastra en el calendario: con el dedo es más rápido elegir en la hoja.
+
+> **Sin conexión** puedes mirar el calendario, pero no cambiar fechas ni crear tareas: esos botones desaparecen hasta que vuelva
+> la red.
 
 ## Filtrar el tablero
 

@@ -229,3 +229,12 @@
 - **Solución:** no lo partas en seis. El cursor se fuerza al final (`onSelect`); el `input` mantiene 16 px de letra aunque sea
   invisible (si no, el iPhone hace zoom). El temblor del error vuelve a montar **solo la fila de casillas**: si montara el
   `input`, perdería el foco. Tras un error con el campo desactivado, devuélvele el foco tú (`SegundoFactorDialogos.tsx`).
+
+### `IconButton` no reenvía `ref`: para dnd-kit, envuélvelo
+
+- **Síntoma:** `Property 'ref' does not exist on type 'IconButtonProps'` al usar `setNodeRef` de `useDroppable` en un `IconButton`.
+- **Causa:** `IconButton` no declara `ref` en sus props.
+- **Solución:** envuélvelo en un `<span ref={setNodeRef} className="flex">` (así lo hacen las flechas ‹ › del calendario, que reciben
+  tareas arrastradas). Para un `Tooltip` sobre algo que se arrastra, pásale `disabled` mientras haya un arrastre: así no se queda abierto,
+  y el disparador no se vuelve a montar (desmontarlo cortaría el arrastre).
+
