@@ -97,6 +97,23 @@ describe('lector de feeds', () => {
     expect(plainText('<p>uno</p>\n<p>dos</p>')).toBe('uno dos')
   })
 
+  it('quita el enlace de «Leer» del final del resumen', () => {
+    // Tal cual lo manda Expansión: el enlace «Leer» y un píxel de seguimiento.
+    const expansion =
+      '<![CDATA[Unicaja gana 543 millones.&nbsp;<a href="https://www.expansion.com/a.html">Leer</a><img src="http://x.test/m" alt=""/>]]>'
+    expect(plainText(expansion)).toBe('Unicaja gana 543 millones.')
+    expect(plainText('Texto. &lt;a href="https://x.test"&gt;Read more »&lt;/a&gt;')).toBe('Texto.')
+    expect(plainText('Texto <a href="https://x.test">[…] Seguir leyendo</a>')).toBe('Texto')
+    // Un enlace con otro texto se queda.
+    expect(plainText('Lo cuenta <a href="https://x.test">Reuters</a>.')).toBe('Lo cuenta Reuters .')
+  })
+
+  it('un resumen que solo es «Leer» se queda vacío', () => {
+    const f = parseFeed(`<rss><channel><item><title>T</title><link>https://x.test/1</link>
+      <description><![CDATA[<a href="https://x.test/1">Leer</a>]]></description></item></channel></rss>`)
+    expect(f.items[0]?.summary).toBe('')
+  })
+
   it('descarga condicional: 304, error y feed', async () => {
     const seen: Record<string, string>[] = []
     const fake = (status: number, body = '', headers: Record<string, string> = {}) =>
