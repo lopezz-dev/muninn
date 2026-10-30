@@ -1,6 +1,6 @@
 import type { IconName } from '@muninn/ui'
 import { noteTitle } from '../lib/notes'
-import { normalize } from '../lib/text'
+import { matchesAll, normalize, words } from '../lib/text'
 
 export type PaletteGroup = 'ask' | 'nav' | 'projects' | 'tasks' | 'notes' | 'actions'
 
@@ -40,14 +40,9 @@ export { normalize }
  * dentro de cada grupo, primero lo que empieza por la búsqueda.
  */
 export function filterItems(items: PaletteItem[], query: string): PaletteItem[] {
-  const words = normalize(query).split(/\s+/).filter(Boolean)
-  const matched = words.length
-    ? items.filter((it) => {
-        const hay = normalize(`${it.label} ${it.keywords ?? ''}`)
-        return words.every((w) => hay.includes(w))
-      })
-    : items
-  const first = words[0] ?? ''
+  const terms = words(query)
+  const matched = items.filter((it) => matchesAll(`${it.label} ${it.keywords ?? ''}`, terms))
+  const first = terms[0] ?? ''
   return [...matched].sort((a, b) => {
     const g = GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group)
     if (g) return g
@@ -70,7 +65,7 @@ export function bestMatch(items: PaletteItem[], query: string): number {
 
 /** Tramo de la etiqueta que coincide con la primera palabra buscada, para resaltarlo. */
 export function matchRange(label: string, query: string): [number, number] | null {
-  const word = normalize(query).trim().split(/\s+/)[0]
+  const word = words(query)[0]
   if (!word) return null
   const i = normalize(label).indexOf(word)
   return i < 0 ? null : [i, i + word.length]

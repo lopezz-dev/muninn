@@ -46,6 +46,7 @@ export const colId = (key: string) => key.slice(4)
 export const tabKey = (id: string) => `tab:${id}`
 export const isTabKey = (id: unknown): id is string =>
   typeof id === 'string' && id.startsWith('tab:')
+export const tabId = (key: string) => key.slice(4)
 
 // ─── Agrupar y mover ────────────────────────────────────────────────────────
 

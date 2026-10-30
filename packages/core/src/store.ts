@@ -278,6 +278,11 @@ export interface ActivityLog {
     since?: string
     limit?: number
   }): Promise<Activity[]>
+  /**
+   * Fecha del último evento de cada proyecto, en una sola lectura. Los proyectos sin actividad no salen. En Supabase lo
+   * calcula la función `activity_latest_by_project`.
+   */
+  latestByProject(projectIds: string[]): Promise<{ projectId: string; createdAt: string }[]>
 }
 
 export class NotFoundError extends Error {

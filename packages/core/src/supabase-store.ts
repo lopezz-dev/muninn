@@ -222,6 +222,19 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       if (error) throw error
       return (data as Row[]).map((r) => fromRow<Activity>(r))
     },
+    async latestByProject(projectIds) {
+      if (projectIds.length === 0) return []
+      // RPC: los ids van en el cuerpo (no en la URL) y Postgres saca el último evento de cada proyecto por el índice.
+      const { data, error } = await client.rpc('activity_latest_by_project', {
+        owner: ownerId,
+        project_ids: projectIds,
+      })
+      if (error) throw error
+      return (data as Row[]).map((r) => ({
+        projectId: r.project_id as string,
+        createdAt: r.created_at as string,
+      }))
+    },
   }
 
   const settings: SettingsStore = {

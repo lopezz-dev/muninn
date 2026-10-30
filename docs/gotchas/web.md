@@ -22,6 +22,15 @@
 - Solo funcionan si la PWA está **añadida a la pantalla de inicio** (iOS 16.4 o superior) y tras pedir permiso
   con un gesto del usuario (un clic). En Safari, sin instalar, no hay push.
 
+### Una consulta no se vuelve a pedir al montar la pantalla
+
+- **Síntoma:** cambias algo fuera de la app (o en una tabla sin tiempo real, como `activity`), vuelves a la pantalla y sigue lo
+  de antes durante unos segundos.
+- **Causa:** el `queryClient` tiene `staleTime: 30_000` (ADR-0070): durante 30 s lo leído se da por bueno y montar la pantalla no
+  repite la petición. Solo `invalidateQueries` (escrituras propias y tiempo real) o volver a la pestaña con datos caducados refrescan.
+- **Solución:** si una escritura cambia esos datos, termínala con `invalidateQueries` de su clave (no con `refetch` a mano). Si una
+  consulta concreta tiene que pedirse siempre al montar, ponle `staleTime: 0` en sus `queryOptions`.
+
 ### «Deshacer» siempre con `notifyUndo`
 
 - **Síntoma:** pulsas «Deshacer», falla (sin conexión, por ejemplo) y no aparece ningún aviso; o sale «Cambio deshecho» aunque no se
@@ -115,6 +124,9 @@
   arriba del todo, delante de la primera visible; en otro sitio, justo debajo de la visible que queda encima; sin visibles, al final.
   Los contadores y el límite de la columna usan el total (`total` en `Column`), no las visibles. Si añades otra forma de mover
   tarjetas, usa `fullIndex`; «Deshacer» ya usa la columna entera y no depende del filtro.
+- **Reparto por columnas:** visibles, `groups` (filtradas) y `totals` (columna entera) salen de `useBoardGroups` (`lib/board-groups.ts`),
+  el mismo para Tablero, móvil, Lista y el contador de la cabecera; no vuelvas a llamar a `filterTasks` + `groupByColumn` en una
+  vista. Sin filtro, `groups` y `totals` son **el mismo objeto**: no los mutes.
 
 ### La vista Lista no tiene arrastre y su vista vive en localStorage
 
@@ -237,6 +249,17 @@
   El foco se queda siempre en el campo y la opción activa va por `aria-activedescendant`: no pongas
   `tabIndex={0}` en las opciones ni muevas el foco a la lista.
 
+### Búsquedas: palabra a palabra con `words`/`matchesAll`, no frase entera
+
+- **Síntoma:** una búsqueda de la web encuentra «Café con leche» con «café leche» pero otra no con «leche café».
+- **Causa:** cada pantalla filtraba a su manera; unas por palabras, otras con `normalize(q)` + `includes` (frase entera).
+- **Solución:** todo filtro de texto en el navegador usa `words(query)` y `matchesAll(texto, términos)` de `lib/text.ts`
+  (sin tildes ni mayúsculas, todas las palabras en cualquier orden). Junta en un solo texto los campos donde se busca, con
+  `
+` entre ellos, para que las palabras puedan estar en campos distintos.
+- **Ojo:** lo que busca el core en el servidor (`search` de `tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas)
+  sigue siendo por frase (`ilike`): lo que devuelve ya lo filtra la paleta por palabras, pero no encuentra lo desordenado.
+
 ### Sesión: saber si hay usuario sin descargar supabase-js
 
 - `getAuth()` mira primero si existe la clave `muninn.auth` en localStorage (la `storageKey` del cliente).
@@ -291,7 +314,9 @@
 - **Causa:** `useSortable` pone `role="button"` y `KeyboardSensor` arranca con Espacio **y Enter**.
 - **Solución:** `SortableTaskCard` pasa `attributes: { role: 'link', … }` y el sensor de teclado se configura con
   `keyboardCodes: { start: ['Space'], … }`. El `MouseSensor` lleva `distance: 6` (un clic no es un arrastre) y dnd-kit
-  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta.
+  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta. Los sensores de todas las vistas con arrastre
+  (escritorio, móvil y calendario) salen de `useBoardSensors(coordinateGetter)` (`screens/tablero/dnd.ts`): solo cambia a dónde
+  llevan las flechas; no montes `useSensors` a mano en una vista nueva.
 - **Ref:** [ADR-0023](../adr/0023-drag-and-drop-con-dnd-kit.md)
 
 ### Tacto: `touch-action` y la capa de «deslizar para completar»
@@ -499,6 +524,17 @@
 - **Ojo:** «Deshacer» guarda las inversas **en memoria** (`useAssistantChat`): tras recargar, los cambios siguen listados pero sin botón (la
   actividad conserva quién hizo qué). La demo usa el proveedor guionizado (`lib/assistant-demo.ts`) sobre el store en memoria: lo que hace
   es real dentro de la demo. Para probar el estado «Ollama no responde» basta con una sesión en un ordenador sin Ollama.
+
+### Asistente: el borrador vive en el `Composer` y los turnos van con `memo`
+
+- **Síntoma:** escribir en la caja del asistente va a tirones con conversaciones largas; o, en un test, `useImageAttachments` se queda
+  colgado hasta el *timeout*.
+- **Causa:** si el borrador (o las imágenes) vuelve a la pantalla `Asistente`, cada tecla repinta todas las respuestas y su Markdown.
+  `Reply` y `UserBubble` son `memo`: un `onUndo` creado en línea o un objeto nuevo por render los repinta igual. Y `useImageAttachments`
+  pregunta por la visión cada vez que cambia el `provider`: uno creado en cada render (sin `useMemo`) entra en bucle.
+- **Solución:** el borrador y las imágenes son del `Composer` (`screens/asistente/Composer.tsx`, con `useImageAttachments`). La pantalla
+  le habla con su *handle* (`prefill` para `?q=` sin modelo, `clear`, `submit` de las sugerencias, `focus`). A `Reply` pásale
+  `onUndo(turnId)` estable (`useCallback`) y booleanos, no funciones nuevas. El `provider`, siempre memorizado.
 
 ### Asistente: los módulos desactivados no se ofrecen al modelo
 

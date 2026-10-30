@@ -238,6 +238,16 @@ export function createMemoryStore(
         .slice(0, limit)
         .map((a) => structuredClone(a))
     },
+    async latestByProject(projectIds) {
+      const wanted = new Set(projectIds)
+      const latest = new Map<string, string>()
+      for (const a of activity) {
+        if (!a.projectId || !wanted.has(a.projectId)) continue
+        const prev = latest.get(a.projectId)
+        if (!prev || a.createdAt > prev) latest.set(a.projectId, a.createdAt)
+      }
+      return [...latest].map(([projectId, createdAt]) => ({ projectId, createdAt }))
+    },
   }
 
   /** Fecha por la que se ordena un artículo: la de publicación o, sin ella, la de descarga. */

@@ -2,11 +2,12 @@ import type { BoardColumn, TaskWithColumn } from '@muninn/core'
 import { Checkbox, cn, icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { DueDate, LabelChips, PriorityFlag, SourceBadge } from '../../components/task-meta'
 import { useAgentColumn } from '../../lib/agent'
-import { type BoardData, groupByColumn } from '../../lib/board'
-import { type BoardFilter, filterTasks } from '../../lib/board-filter'
+import type { BoardData } from '../../lib/board'
+import type { BoardFilter } from '../../lib/board-filter'
+import { useBoardGroups } from '../../lib/board-groups'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, reopenTask } from '../../lib/task-actions'
@@ -179,13 +180,7 @@ export function BoardList({
   today: string
   filter: BoardFilter
 }) {
-  const visible = useMemo(
-    () => filterTasks(board.tasks, filter, today),
-    [board.tasks, filter, today],
-  )
-  const groups = useMemo(() => groupByColumn(board.columns, visible), [board.columns, visible])
-  const totals = useMemo(() => groupByColumn(board.columns, board.tasks), [board])
-  const filtering = visible !== board.tasks
+  const { groups, totals, filtering } = useBoardGroups(board, filter, today)
   return (
     <div className="flex flex-col gap-3">
       {board.columns.map((c) => (

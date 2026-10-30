@@ -3,7 +3,7 @@ import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
 import { fail, notifyUndo } from './feedback'
 import { isBusy, serial } from './mutations'
-import { normalize as fold } from './text'
+import { matchesAll, words } from './text'
 
 /**
  * Noticias (ADR-0042): consultas bajo `['news', …]` (el tiempo real refresca ese prefijo entero) y acciones con
@@ -46,13 +46,13 @@ export const SAVED_TAB = '__saved'
 /** Los artículos que se ven con ese filtro (por tema de su fuente, guardadas y texto). */
 export function filterNews(items: NewsItem[], sources: NewsSource[], f: NewsFilter): NewsItem[] {
   const topic = new Map(sources.map((s) => [s.id, s.topic]))
-  const needle = fold(f.search.trim())
+  const terms = words(f.search)
   return items.filter(
     (i) =>
       (f.tab === null ||
         (f.tab === SAVED_TAB ? Boolean(i.savedAt) : topic.get(i.sourceId) === f.tab)) &&
       (!f.source || i.sourceId === f.source) &&
-      (!needle || fold(`${i.title} ${i.summary}`).includes(needle)),
+      matchesAll(`${i.title}\n${i.summary}`, terms),
   )
 }
 

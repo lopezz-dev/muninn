@@ -37,8 +37,9 @@ en ese momento. Los artículos se guardan **30 días**; los que marques con **Le
 ## Leer
 
 - Arriba, **Lo importante de hoy**: el resumen del día.
-- Las pestañas filtran por **tema** y **Guardadas**; el buscador, por texto. También puedes buscar desde **Ctrl K / ⌘ K** con
-  **Buscar en Noticias**.
+- Las pestañas filtran por **tema** y **Guardadas**; el buscador, por texto: mira el título y el resumen, sin importar mayúsculas
+  ni tildes, y si escribes varias palabras salen los artículos que las tienen todas, en el orden que sea. También puedes buscar desde
+  **Ctrl K / ⌘ K** con **Buscar en Noticias**.
 - En **Todas**, si una fuente publica muchos artículos seguidos, ves los 3 primeros y el resto queda en **Ver N más de …**,
   en su sitio. Así las fuentes que publican poco no se pierden debajo.
 - Pulsa el **nombre de la fuente** en un artículo para ver solo los suyos; **Solo … ✕** quita el filtro.
