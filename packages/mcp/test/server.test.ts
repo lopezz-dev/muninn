@@ -27,10 +27,12 @@ describe('servidor MCP', () => {
     expect(names).not.toContain('delete_task')
   })
 
-  it('se presenta con el nombre y el logo de Muninn', async () => {
+  it('se presenta con el nombre, la descripción y el logo de Muninn', async () => {
     const { client } = await connect()
     const info = client.getServerVersion()
     expect(info?.title).toBe('Muninn')
+    expect(info?.description).toMatch(/proyectos y tareas/)
+    expect(info?.websiteUrl).toBe('https://muninn-sepia.vercel.app')
     expect(info?.icons?.[0]).toMatchObject({ mimeType: 'image/png', sizes: ['96x96'] })
     expect(info?.icons?.[0]?.src).toMatch(/^data:image\/png;base64,iVBORw0KGgo/)
   })

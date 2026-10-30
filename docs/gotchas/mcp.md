@@ -120,8 +120,10 @@
 - **Causa:** la URL del MCP es de `supabase.co` y claude.ai, al parecer, usa el favicon de ese dominio.
 - **Solución (hecha el 28-10, sin desplegar):** el SDK (1.32.1) acepta `title` e `icons` en la información del servidor (especificación
   MCP 2025-11-25). `packages/mcp/src/server.ts` crea el servidor con `title: 'Muninn'` e `icons: [MUNINN_ICON]`; el logo está en
-  `src/icon.ts` como PNG de 96×96 en *data URI* (sale de `apps/web/scripts/logo.mjs`), para no atar el MCP al dominio de la web. Lo
-  comprueba `test/server.test.ts`. Falta redesplegar `mcp` y volver a añadir el conector (fase final, pasos 2 y 7).
+  `src/icon.ts` como PNG de 96×96 en *data URI* (sale de `apps/web/scripts/logo.mjs`), para no atar el MCP al dominio de la web. Desde
+  el 30-10 también lleva `description` y `websiteUrl` (`MUNINN_DESCRIPTION` y `MUNINN_WEBSITE` en `server.ts`). Lo comprueba
+  `test/server.test.ts`. Tras redesplegar `mcp`, quita y vuelve a añadir el conector en claude.ai: la información del servidor se lee al
+  conectar (fase final, pasos 2 y 7).
 - **Si claude.ai no lo lee** (no está comprobado que use `icons`), la otra vía es servir el MCP desde un dominio de Muninn (un *rewrite* de
   Vercel a la función), que cambia la URL del recurso en los metadatos OAuth: necesita ADR.
 - **Si cambias el logo**, regenera el *data URI* de `src/icon.ts` igual que los iconos de la web.
