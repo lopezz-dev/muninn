@@ -643,6 +643,8 @@
     - GitHub › la OAuth App de Muninn: *Homepage URL* (el *callback* es de Supabase y no cambia);
     - `OLLAMA_ORIGINS` en cada ordenador que use el Asistente desde la web, y reiniciar Ollama;
     - el secreto `MUNINN_MCP_ALLOWED_ORIGINS` de la función `mcp`, si incluye la URL de la web;
+    - si el MCP ya se sirve desde el dominio de la web (`/mcp`): el secreto con sus URL públicas y los conectores de claude.ai y Claude
+      Code, que hay que quitar y volver a añadir con la URL nueva (ver gotchas/mcp, «El conector sale con el icono de Supabase»);
     - Search Console (cuando esté dado de alta): añadir la propiedad nueva y volver a enviar `sitemap.xml`.
     - Cloudflare › Turnstile: añadir el dominio a los *hostnames* del widget del CAPTCHA (ADR-0060), o el login fallará.
   - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
