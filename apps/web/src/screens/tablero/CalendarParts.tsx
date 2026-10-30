@@ -30,7 +30,7 @@ import { useMuninn } from '../../lib/muninn'
 import { createTask } from '../../lib/task-actions'
 import { useShell } from '../../shell/shell-context'
 import { KIND_DOT } from './Column'
-import { CardBody, card, type Progress } from './TaskCard'
+import { CardBody, type Progress } from './TaskCard'
 
 /** Lo que dnd-kit necesita de una tarea arrastrable del calendario: enlace al detalle y asa a la vez. */
 function useTaskDrag(task: TaskWithColumn, disabled: boolean) {
@@ -119,88 +119,52 @@ export function TaskPill({
   )
 }
 
-/** Tarjeta del calendario (semana y bandeja «Sin fecha»): la de siempre del tablero, arrastrable a un día. */
-export function CalendarCard({
-  task,
-  today,
-  projectId,
-  progress,
-  disabled,
-}: {
-  task: TaskWithColumn
-  today: string
-  projectId: string
-  progress?: Progress
-  disabled: boolean
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useTaskDrag(task, disabled)
-  return (
-    <Link
-      ref={setNodeRef}
-      to="/proyectos/$projectId/tareas/$taskId"
-      params={{ projectId, taskId: task.id }}
-      data-task-id={task.id}
-      draggable={false}
-      {...attributes}
-      {...listeners}
-      className={cn(card, 'touch-manipulation', isDragging && 'border-dashed opacity-30')}
-    >
-      <CardBody task={task} progress={progress} today={today} />
-    </Link>
-  )
-}
-
 /**
- * Tarjeta de la vista Semana: más densa que la del tablero y sin la fecha (ya la dice la columna). Lleva la columna
- * de la tarea (en el calendario es lo que no se ve), hasta dos etiquetas, subtareas y la prioridad si importa.
+ * Lo que se ve de una tarea en el calendario fuera del mes: hasta dos etiquetas, el título, las subtareas y una línea
+ * con su columna (en el calendario es lo que no se ve), «Vencida» si toca y la bandera si es alta o urgente. Sin la
+ * fecha: ya la dice el día. `large`, para el móvil.
  */
-export function WeekCard({
+export function CompactBody({
   task,
   today,
-  projectId,
   progress,
-  disabled,
+  large,
 }: {
   task: TaskWithColumn
   today: string
-  projectId: string
   progress?: Progress
-  disabled: boolean
+  large?: boolean
 }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useTaskDrag(task, disabled)
   const done = task.column.kind === 'done'
   const overdue = isOverdue(task, today)
   const flag = !done && (task.priority === 'high' || task.priority === 'urgent')
   const subtasks = progress && progress.total > 0 ? progress : null
   return (
-    <Link
-      ref={setNodeRef}
-      to="/proyectos/$projectId/tareas/$taskId"
-      params={{ projectId, taskId: task.id }}
-      data-task-id={task.id}
-      draggable={false}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        'flex shrink-0 flex-col gap-1.5 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-fg no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent touch-manipulation',
-        isDragging && 'border-dashed opacity-30',
-      )}
-    >
+    <>
       {task.labels.length > 0 ? (
         <span className="flex min-w-0 flex-wrap gap-1">
           {task.labels.slice(0, 2).map((l) => (
-            <Chip key={l} className="h-[18px] max-w-full truncate px-1.5 text-[11px]">
+            <Chip
+              key={l}
+              className={cn(
+                'max-w-full truncate px-1.5',
+                large ? 'h-5 text-[11.5px]' : 'h-[18px] text-[11px]',
+              )}
+            >
               {l}
             </Chip>
           ))}
           {task.labels.length > 2 ? (
-            <Chip className="h-[18px] px-1.5 text-[11px]">+{task.labels.length - 2}</Chip>
+            <Chip className={cn('px-1.5', large ? 'h-5 text-[11.5px]' : 'h-[18px] text-[11px]')}>
+              +{task.labels.length - 2}
+            </Chip>
           ) : null}
         </span>
       ) : null}
       <span
         className={cn(
-          'line-clamp-3 text-sm leading-snug break-words',
+          'line-clamp-3 leading-snug break-words',
+          large ? 'text-md' : 'text-sm',
           done && 'text-fg-subtle line-through',
         )}
       >
@@ -213,7 +177,12 @@ export function WeekCard({
           className="h-[3px]"
         />
       ) : null}
-      <span className="flex min-w-0 items-center gap-1.5 text-xs text-fg-subtle">
+      <span
+        className={cn(
+          'flex min-w-0 items-center gap-1.5 text-fg-subtle',
+          large ? 'text-[13px]' : 'text-xs',
+        )}
+      >
         {done ? (
           <icons.check
             size={12}
@@ -240,13 +209,55 @@ export function WeekCard({
           </span>
         ) : null}
         {flag ? (
-          <icons.flag
-            size={12}
-            className={cn('ml-auto shrink-0', PRIORITY_TEXT[task.priority])}
-            aria-label={`Prioridad ${priorityLabel(task.priority).toLowerCase()}`}
-          />
+          <span
+            className={cn(
+              'ml-auto inline-flex shrink-0 items-center gap-1 font-medium',
+              PRIORITY_TEXT[task.priority],
+            )}
+          >
+            <icons.flag size={12} aria-hidden="true" />
+            {large ? (
+              priorityLabel(task.priority)
+            ) : (
+              <span className="sr-only">{`Prioridad ${priorityLabel(task.priority).toLowerCase()}`}</span>
+            )}
+          </span>
         ) : null}
       </span>
+    </>
+  )
+}
+
+/** Tarjeta compacta y arrastrable del calendario: la de la semana y la de la bandeja «Sin fecha». */
+export function CompactCard({
+  task,
+  today,
+  projectId,
+  progress,
+  disabled,
+}: {
+  task: TaskWithColumn
+  today: string
+  projectId: string
+  progress?: Progress
+  disabled: boolean
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useTaskDrag(task, disabled)
+  return (
+    <Link
+      ref={setNodeRef}
+      to="/proyectos/$projectId/tareas/$taskId"
+      params={{ projectId, taskId: task.id }}
+      data-task-id={task.id}
+      draggable={false}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        'flex shrink-0 flex-col gap-1.5 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-fg no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent touch-manipulation',
+        isDragging && 'border-dashed opacity-30',
+      )}
+    >
+      <CompactBody task={task} today={today} progress={progress} />
     </Link>
   )
 }

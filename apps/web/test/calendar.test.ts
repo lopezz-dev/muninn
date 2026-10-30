@@ -1,6 +1,7 @@
 import type { TaskWithColumn } from '@muninn/core'
 import { describe, expect, it } from 'vitest'
 import {
+  cellSlots,
   dayLong,
   dayShort,
   dueToast,
@@ -149,6 +150,15 @@ describe('celdas y teclado', () => {
   it('si no caben, la última plaza es «+N más»', () => {
     expect(visibleInCell([1, 2, 3])).toEqual({ shown: [1, 2, 3], more: 0 })
     expect(visibleInCell([1, 2, 3, 4, 5])).toEqual({ shown: [1, 2], more: 3 })
+    expect(visibleInCell([1, 2], 1)).toEqual({ shown: [], more: 2 })
+  })
+
+  it('las plazas de una celda salen de su alto (nunca menos de una)', () => {
+    expect(cellSlots(100)).toBe(2)
+    expect(cellSlots(101)).toBe(3)
+    expect(cellSlots(60)).toBe(1)
+    expect(cellSlots(20)).toBe(1)
+    expect(cellSlots(400)).toBe(8)
   })
 
   it('las flechas mueven un día o una semana; desde la bandeja vuelven a la fecha de reserva', () => {

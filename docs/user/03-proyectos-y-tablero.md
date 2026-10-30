@@ -145,13 +145,14 @@ El calendario coloca cada tarea en el día en que vence. Siempre se abre en hoy.
 - **Cada tarea es una píldora** con el color de su columna y la bandera si es de prioridad media, alta o urgente. Las **vencidas**
   (la fecha ya pasó y no están hechas) salen en rojo; las **hechas**, tachadas. Pasa el ratón por encima para ver la tarjeta entera, y
   haz clic para abrirla.
-- Si en un día no caben, verás **«+N más»**: ábrelo para verlas todas.
+- Si en un día no caben, verás **«+N más»**: ábrelo para verlas todas. Cuanto más alta sea la ventana, más tareas caben por día.
 - El botón **«N vencidas»** filtra solo las vencidas (es el filtro **Vence › Vencidas**). Púlsalo otra vez para quitarlo.
 - **Arrastra una tarea a otro día** para cambiar su fecha. Solo cambia la fecha: la tarea se queda en su columna. Te sale un aviso
   («Vence el mié 4 nov») con **Deshacer**. Si la dejas un momento sobre ‹ o ›, el calendario pasa al mes siguiente o al anterior.
 - **Sin fecha.** Las tareas sin fecha están en la bandeja de la derecha (ábrela o ciérrala con **Sin fecha · N**). Arrastra una a un
   día para ponerle fecha, o suelta una tarea en la bandeja para **quitarle** la fecha. Cerrada, queda una tira estrecha a la derecha:
-  también puedes soltar ahí. En la vista **Semana** empieza cerrada, para que los días tengan sitio.
+  también puedes soltar ahí. En el mes se abre sola si tiene tareas; en la vista **Semana** empieza cerrada, para que los días
+  tengan sitio.
 - **En la semana** cada tarea enseña su columna, sus etiquetas y sus subtareas. Los días sin tareas se estrechan para dejar sitio a los
   que tienen.
 - **Crear en un día:** pulsa el **+** que aparece al pasar el ratón por un día (o haz clic en su hueco), escribe el título y pulsa
@@ -163,11 +164,13 @@ El calendario coloca cada tarea en el día en que vence. Siempre se abre en hoy.
 ### En el móvil
 
 - Arriba ves el mes, con un punto por tarea en cada día (rojo si está vencida). Toca un día para ver sus tareas debajo.
+- **Solo esta semana** pliega el mes a la semana del día elegido y deja más sitio a sus tareas. Las flechas pasan entonces de
+  semana en semana; **Ver el mes** lo despliega.
 - Para **cambiar la fecha**, toca el botón del calendario junto a la tarea o mantenla pulsada. Elige **Hoy**, **Mañana**,
   **Próximo lunes**, **En una semana**, otra fecha o **Quitar fecha**. Siempre con **Deshacer**.
 - **Desliza a la izquierda** para completarla, como en el tablero.
-- **Añadir el …** crea una tarea en el día que tienes elegido. **Sin fecha · N** abre la lista de tareas sin fecha, y desde ahí puedes
-  ponerles una.
+- **Añadir el …** crea una tarea en el día que tienes elegido. Si hay tareas sin fecha, **Sin fecha · N** abre su lista, y desde ahí
+  puedes ponerles una.
 - En el móvil no se arrastra en el calendario: con el dedo es más rápido elegir en la hoja.
 
 > **Sin conexión** puedes mirar el calendario, pero no cambiar fechas ni crear tareas: esos botones desaparecen hasta que vuelva

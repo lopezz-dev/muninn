@@ -139,6 +139,17 @@ export function nextDueAfter(tasks: Pick<TaskWithColumn, 'dueDate'>[], after: st
   return next
 }
 
+/**
+ * Alto fijo de una celda del mes (rellenos y número del día: 4 + 20 + 4, menos los 2 px que «+N más» mide menos que
+ * una píldora) y de cada plaza (píldora de 22 px + 3 de hueco).
+ */
+const CELL_HEADER = 26
+const CELL_SLOT = 25
+
+/** Plazas que caben en una celda del mes de `height` px (al menos una: la de «+N más»). */
+export const cellSlots = (height: number) =>
+  Math.max(1, Math.min(8, Math.floor((height - CELL_HEADER) / CELL_SLOT)))
+
 /** Cuántas tareas caben en una celda del mes: si sobran, la última plaza es «+N más». */
 export function visibleInCell<T>(list: T[], max = 3): { shown: T[]; more: number } {
   if (list.length <= max) return { shown: list, more: 0 }

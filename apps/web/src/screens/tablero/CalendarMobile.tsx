@@ -14,16 +14,17 @@ import {
   shiftMonth,
   tasksByDay,
   undatedTasks,
+  weekDays,
 } from '../../lib/calendar'
+import { addDays } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, setDueDate } from '../../lib/task-actions'
 import { useOnline } from '../../lib/use-online'
 import { useShell } from '../../shell/shell-context'
 import type { CalendarProps } from './BoardCalendar'
-import { OverdueToggle } from './CalendarParts'
+import { CompactBody, OverdueToggle } from './CalendarParts'
 import { KIND_DOT } from './Column'
 import { SwipeToComplete } from './SwipeToComplete'
-import { CardBody, card } from './TaskCard'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const LONG_PRESS_MS = 500
@@ -94,27 +95,24 @@ function DayTask({
         if (task.column.kind !== 'done') void completeTask(m, qc, task)
       }}
     >
-      <div className="flex items-stretch gap-2">
+      {/* Una sola tarjeta: el enlace ocupa casi todo y el botón de la fecha va dentro, a la derecha. */}
+      <div className="flex items-stretch rounded-md border border-border bg-surface-raised transition-colors hover:border-border-strong">
         <Link
           to="/proyectos/$projectId/tareas/$taskId"
           params={{ projectId, taskId: task.id }}
           data-task-id={task.id}
           draggable={false}
           {...press}
-          className={cn(
-            card,
-            'min-w-0 flex-1 touch-pan-y gap-2.5 p-3.5 select-none [-webkit-touch-callout:none]',
-          )}
+          className="flex min-w-0 flex-1 touch-pan-y flex-col gap-2 rounded-md py-3 pl-3.5 text-fg no-underline outline-none select-none [-webkit-touch-callout:none] focus-visible:outline-2 focus-visible:outline-accent"
         >
-          <CardBody task={task} progress={progress} today={today} />
+          <CompactBody task={task} progress={progress} today={today} large />
         </Link>
         {canWrite ? (
           <IconButton
             aria-label={`Cambiar la fecha de «${task.title}»`}
             icon={<icons.calendar size={18} />}
-            variant="secondary"
             size="lg"
-            className="h-auto min-h-11"
+            className="m-1 self-center text-fg-subtle"
             onClick={onDate}
           />
         ) : null}
@@ -205,6 +203,8 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
   const [sel, setSel] = useState(today)
   const [dateTask, setDateTask] = useState<TaskWithColumn | null>(null)
   const [undatedOpen, setUndatedOpen] = useState(false)
+  // Plegado, el mes se queda en la semana del día elegido y la lista del día sube a la vista.
+  const [folded, setFolded] = useState(false)
 
   const visible = useMemo(
     () => filterTasks(board.tasks, filter, today),
@@ -220,7 +220,9 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
     () => board.tasks.filter((t) => isOverdue(t, today)).length,
     [board.tasks, today],
   )
-  const days = monthGrid(month)
+  const week = weekDays(sel)
+  const days = folded ? week : monthGrid(month)
+  const title = monthTitle(folded ? sel.slice(0, 7) : month)
   const list = byDay[sel] ?? []
   const total = allByDay[sel]?.length ?? 0
 
@@ -228,28 +230,33 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
     setSel(iso)
     if (!iso.startsWith(month)) setMonth(iso.slice(0, 7))
   }
+  // Las flechas pasan de mes o, con el mes plegado, de semana.
+  const shift = (n: number) => {
+    if (folded) choose(addDays(sel, 7 * n))
+    else setMonth((mo) => shiftMonth(mo, n))
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <section aria-label={monthTitle(month)} className="flex flex-col gap-1.5">
+      <section aria-label={title} className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <h2 aria-live="polite" className="flex-1 text-lg font-semibold tracking-tight">
-            {monthTitle(month)}
+            {title}
           </h2>
           <Button size="sm" className="h-9 rounded-full px-3.5" onClick={() => choose(today)}>
             Hoy
           </Button>
           <IconButton
-            aria-label="Mes anterior"
+            aria-label={folded ? 'Semana anterior' : 'Mes anterior'}
             icon={<icons.chevronLeft size={18} />}
             size="lg"
-            onClick={() => setMonth((mo) => shiftMonth(mo, -1))}
+            onClick={() => shift(-1)}
           />
           <IconButton
-            aria-label="Mes siguiente"
+            aria-label={folded ? 'Semana siguiente' : 'Mes siguiente'}
             icon={<icons.chevronRight size={18} />}
             size="lg"
-            onClick={() => setMonth((mo) => shiftMonth(mo, 1))}
+            onClick={() => shift(1)}
           />
         </div>
         <div
@@ -260,7 +267,7 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
             <span key={w}>{w}</span>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-0.5">
+        <div className="grid grid-cols-7">
           {days.map((iso) => {
             const tasks = byDay[iso] ?? []
             const isToday = iso === today
@@ -273,14 +280,14 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
                 aria-label={`${dayLong(iso)}${tasks.length ? `, ${tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`}` : ''}`}
                 onClick={() => choose(iso)}
                 className={cn(
-                  'flex h-[46px] cursor-pointer flex-col items-center gap-1 rounded-lg pt-1 text-sm tabular transition-colors',
+                  'flex h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg text-sm tabular transition-colors',
                   selected
                     ? isToday
                       ? 'bg-accent font-bold text-accent-fg'
                       : 'bg-surface-hover font-bold text-fg'
                     : isToday
                       ? 'font-bold text-accent'
-                      : iso.startsWith(month)
+                      : folded || iso.startsWith(month)
                         ? 'font-medium text-fg'
                         : 'font-medium text-fg-subtle',
                 )}
@@ -305,19 +312,36 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
             )
           })}
         </div>
-      </section>
-
-      <div className="flex gap-2 overflow-x-auto">
         <button
           type="button"
-          onClick={() => setUndatedOpen(true)}
-          className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 text-sm font-medium whitespace-nowrap text-fg-muted"
+          aria-expanded={!folded}
+          onClick={() => setFolded((f) => !f)}
+          className="mx-auto flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-medium text-fg-subtle hover:text-fg"
         >
-          <icons.calendar size={15} aria-hidden="true" />
-          Sin fecha · {undated.length}
+          <icons.chevronDown
+            size={13}
+            aria-hidden="true"
+            className={cn('transition-transform', !folded && 'rotate-180')}
+          />
+          {folded ? 'Ver el mes' : 'Solo esta semana'}
         </button>
-        <OverdueToggle count={overdue} filter={filter} onFilterChange={onFilterChange} touch />
-      </div>
+      </section>
+
+      {undated.length > 0 || overdue > 0 ? (
+        <div className="-mt-2 flex gap-2 overflow-x-auto">
+          {undated.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setUndatedOpen(true)}
+              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 text-sm font-medium whitespace-nowrap text-fg-muted"
+            >
+              <icons.calendar size={15} aria-hidden="true" />
+              Sin fecha · {undated.length}
+            </button>
+          ) : null}
+          <OverdueToggle count={overdue} filter={filter} onFilterChange={onFilterChange} touch />
+        </div>
+      ) : null}
 
       <section aria-label={dayLong(sel)} className="flex flex-col gap-3">
         <h3 className="flex items-baseline gap-2 text-md font-semibold">

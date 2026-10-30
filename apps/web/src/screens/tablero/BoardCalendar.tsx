@@ -28,11 +28,12 @@ import {
   SegmentedControl,
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { BoardData } from '../../lib/board'
 import { type BoardFilter, filterTasks, isFiltering } from '../../lib/board-filter'
 import {
   type CalendarScale,
+  cellSlots,
   dayKey,
   dayLong,
   dayOf,
@@ -60,7 +61,7 @@ import { setDueDate } from '../../lib/task-actions'
 import { useOnline } from '../../lib/use-online'
 import { useShell } from '../../shell/shell-context'
 import { CalendarMobile } from './CalendarMobile'
-import { AddTaskPopover, CalendarCard, OverdueToggle, TaskPill, WeekCard } from './CalendarParts'
+import { AddTaskPopover, CompactCard, OverdueToggle, TaskPill } from './CalendarParts'
 import { TaskCardOverlay } from './TaskCard'
 
 export interface CalendarProps {
@@ -109,6 +110,8 @@ function NavArrow({ id, label, onClick }: { id: string; label: string; onClick: 
 }
 
 interface DayProps {
+  /** Plazas de la celda del mes (píldoras más «+N más»), según su alto: `cellSlots`. */
+  slots?: number
   iso: string
   tasks: TaskWithColumn[]
   inMonth: boolean
@@ -125,6 +128,7 @@ interface DayProps {
 
 /** Celda del mes: número, hasta tres píldoras (o dos y «+N más») y crear al hacer clic en el hueco. */
 function MonthCell({
+  slots = 3,
   iso,
   tasks,
   inMonth,
@@ -140,14 +144,14 @@ function MonthCell({
 }: DayProps) {
   const { setNodeRef, isOver } = useDroppable({ id: dayKey(iso), disabled: !canWrite })
   const isToday = iso === today
-  const { shown, more: hidden } = visibleInCell(tasks)
+  const { shown, more: hidden } = visibleInCell(tasks, slots)
   const label = `${dayLong(iso)}${tasks.length ? `, ${tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`}` : ''}`
   return (
     <li
       ref={setNodeRef}
       aria-label={label}
       className={cn(
-        'group relative flex min-h-0 min-w-0 flex-col gap-[3px] overflow-hidden border-t border-r border-border-subtle px-1.5 pt-1 pb-1.5',
+        'group relative flex min-h-0 min-w-0 flex-col gap-[3px] overflow-hidden border-t border-r border-border-subtle px-1.5 py-1',
         weekend ? 'bg-surface-sunken' : 'bg-surface',
         isToday && 'bg-accent-soft/40',
         isOver && 'bg-accent-soft outline-[1.5px] -outline-offset-2 outline-accent/60',
@@ -156,7 +160,7 @@ function MonthCell({
       <div className="flex items-center gap-1">
         <span
           className={cn(
-            'grid size-6 place-items-center rounded-full text-[12.5px] tabular',
+            'grid size-5 place-items-center rounded-full text-xs tabular',
             isToday
               ? 'bg-accent font-bold text-accent-fg'
               : inMonth
@@ -180,7 +184,7 @@ function MonthCell({
               aria-label={`Añadir tarea el ${dayShort(iso)}`}
               icon={<icons.plus size={13} />}
               size="sm"
-              className="ml-auto size-[22px] opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+              className="ml-auto size-5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
             />
           </AddTaskPopover>
         ) : null}
@@ -265,7 +269,7 @@ const relative = (iso: string, today: string) =>
         : ''
 
 /**
- * Columna de un día en la vista Semana: cabecera con el día, las tareas (`WeekCard`) y «Añadir» justo debajo de la
+ * Columna de un día en la vista Semana: cabecera con el día, las tareas (`CompactCard`) y «Añadir» justo debajo de la
  * última. Un día vacío no dice nada: el hueco ya se entiende, y al arrastrar se ilumina entero.
  */
 function WeekColumn({
@@ -331,7 +335,7 @@ function WeekColumn({
       </h3>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1.5">
         {tasks.map((t) => (
-          <WeekCard
+          <CompactCard
             key={t.id}
             task={t}
             today={today}
@@ -438,7 +442,7 @@ function UndatedTray({
       ref={setNodeRef}
       aria-label="Sin fecha"
       className={cn(
-        'flex min-h-0 w-[272px] shrink-0 flex-col gap-2 rounded-lg border bg-surface-sunken p-2',
+        'flex min-h-0 w-[248px] shrink-0 flex-col gap-2 rounded-lg border bg-surface-sunken p-2',
         isOver ? 'border-dashed border-accent bg-accent-soft' : 'border-border-subtle',
       )}
     >
@@ -462,7 +466,7 @@ function UndatedTray({
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {tasks.map((t) => (
-          <CalendarCard
+          <CompactCard
             key={t.id}
             task={t}
             today={today}
@@ -528,10 +532,11 @@ function CalendarDesktop({
   // El día que manda en lo que se ve: su mes o su semana. Siempre abre en hoy.
   const [anchor, setAnchor] = useState(today)
   // La bandeja empieza abierta en el mes y plegada en la semana, donde el ancho es para los días.
-  const [trayByScale, setTrayByScale] = useState({ month: true, week: false })
-  const trayOpen = trayByScale[scale]
-  const setTrayOpen = (open: boolean | ((o: boolean) => boolean)) =>
-    setTrayByScale((t) => ({ ...t, [scale]: typeof open === 'function' ? open(t[scale]) : open }))
+  // En el mes, mientras no se toque, se abre sola si hay algo dentro (vacía solo quita ancho a los días).
+  const [trayByScale, setTrayByScale] = useState<Record<CalendarScale, boolean | null>>({
+    month: null,
+    week: false,
+  })
   const [dragId, setDragId] = useState<string | null>(null)
   const [adding, setAdding] = useState<string | null>(null)
   const [moreDay, setMoreDay] = useState<string | null>(null)
@@ -551,6 +556,19 @@ function CalendarDesktop({
     [board.tasks, today],
   )
   const taskById = useMemo(() => new Map(board.tasks.map((t) => [t.id, t])), [board.tasks])
+  const trayOpen = trayByScale[scale] ?? undated.length > 0
+  const setTrayOpen = (open: boolean | ((o: boolean) => boolean)) =>
+    setTrayByScale((t) => ({ ...t, [scale]: typeof open === 'function' ? open(trayOpen) : open }))
+
+  // Cuántas píldoras caben en una celda del mes: se mide el alto de las filas, no se supone.
+  const [slots, setSlots] = useState(3)
+  // Ref con limpieza (React 19): observa la rejilla mientras está montada (solo en el mes).
+  const gridRef = useCallback((el: HTMLOListElement | null) => {
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => setSlots(cellSlots(el.clientHeight / 6)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const month = anchor.slice(0, 7)
   const days = scale === 'month' ? monthGrid(month) : weekDays(anchor)
@@ -789,12 +807,14 @@ function CalendarDesktop({
                 ))}
               </div>
               <ol
+                ref={gridRef}
                 aria-label={label}
                 className="grid min-h-0 flex-1 grid-cols-7 grid-rows-[repeat(6,minmax(84px,1fr))]"
               >
                 {days.map((iso, i) => (
                   <MonthCell
                     key={iso}
+                    slots={slots}
                     iso={iso}
                     tasks={byDay[iso] ?? []}
                     inMonth={iso.startsWith(month)}

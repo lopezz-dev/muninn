@@ -17,8 +17,9 @@ en el lienzo «Muninn — Calendario» (https://claude.ai/artifact/5a4s3wiHqsZVG
   filtros (`lib/board-filter.ts`), y coloca cada tarea en el día de su `dueDate`. No hay consulta por rango de fechas: el
   tablero ya trae todas las tareas del proyecto. Los cálculos (rejilla, orden del día, atajos de fecha, teclado) viven en
   `lib/calendar.ts`, con tests.
-- **Mes y Semana.** El mes tiene seis filas que empiezan en lunes (como el `Calendar` de ADR-0049). Cada día enseña hasta tres
-  píldoras; si no caben, dos y «+N más», que abre un desplegable con todas. La semana usa una tarjeta propia más densa
+- **Mes y Semana.** El mes tiene seis filas que empiezan en lunes (como el `Calendar` de ADR-0049). Cada día enseña las píldoras
+  que caben en su alto, medido con un `ResizeObserver` (`cellSlots`: una a 1280×760, dos a 1440×900, tres a 1920×1080). Si no
+  caben todas, la última plaza es «+N más», que abre un desplegable con todas. Nunca se corta. La semana usa una tarjeta propia más densa
   (`WeekCard`): sin la fecha (ya la dice la columna), con su columna, hasta dos etiquetas, subtareas y la bandera si es alta o
   urgente. Los días con tareas (y hoy) se llevan el ancho; los vacíos se estrechan. «Añadir» va justo debajo de la última tarea.
 - **Arrastrar cambia solo la fecha**, nunca la columna. Soltar en un día escribe `dueDate` con `setDueDate` (`patchTask`,
@@ -27,8 +28,9 @@ en el lienzo «Muninn — Calendario» (https://claude.ai/artifact/5a4s3wiHqsZVG
 - **Sin orden propio dentro de un día:** primero las pendientes, luego por prioridad, por columna y por su orden en la columna.
   El modelo no tiene un orden por día, y no se inventa.
 - **Tareas sin fecha en una bandeja lateral** plegable. Sus tarjetas se arrastran a un día, y soltar una tarea en la bandeja le
-  **quita** la fecha. Plegada queda un raíl de 40 px que la vuelve a abrir y que también recibe tareas. Empieza abierta en el mes
-  y plegada en la semana, donde el ancho es para los días (con la bandeja abierta, cada día se quedaba en unos 115 px).
+  **quita** la fecha. Plegada queda un raíl de 40 px que la vuelve a abrir y que también recibe tareas. En el mes se abre sola si
+  tiene algo; en la semana empieza plegada, porque el ancho es para los días (con la bandeja abierta, cada día se quedaba en unos
+  115 px). Sus tarjetas son las compactas de la semana (`CompactCard`).
 - **Hechas a la vista**, atenuadas y tachadas. Vencida = fecha pasada y sin hacer (`isOverdue`, la misma regla que el filtro):
   texto en rojo y un contador «N vencidas» que activa el filtro «Vence: Vencidas».
 - **Crear en un día:** el «+» del día (o un clic en su hueco) abre `AddTaskPopover`. Tiene la fecha ya puesta y la columna por
@@ -37,7 +39,9 @@ en el lienzo «Muninn — Calendario» (https://claude.ai/artifact/5a4s3wiHqsZVG
 - **Teclado:** Espacio recoge y suelta, ← → mueven un día, ↑ ↓ una semana, S lleva a «Sin fecha», Escape cancela y Enter abre
   la tarea. Con teclado, el destino no lo decide la geometría (la tarjeta flotante es más ancha que una celda): lo lleva una
   referencia que empieza en el día de la tarea.
-- **Móvil (< 768 px) sin arrastre:** mes compacto con puntos y la lista del día elegido. Para cambiar la fecha, el botón del
+- **Móvil (< 768 px) sin arrastre:** mes compacto con puntos y la lista del día elegido. «Solo esta semana» pliega el mes a la
+  semana del día elegido (las flechas pasan entonces de semana), para que la lista suba a la vista. Cada tarea es una sola tarjeta
+  (`CompactBody`, sin la fecha) con el botón de la fecha dentro. Para cambiar la fecha, el botón del
   calendario de cada tarea o mantenerla pulsada abren la hoja «Cambiar fecha»: Hoy, Mañana, Próximo lunes, En una semana, otra
   fecha (`DateField`, nativo en táctil por ADR-0049) y Quitar fecha. Deslizar a la izquierda completa, como en el tablero
   (`SwipeToComplete`, ahora en su propio fichero). «Sin fecha · N» abre una hoja con esas tareas.
