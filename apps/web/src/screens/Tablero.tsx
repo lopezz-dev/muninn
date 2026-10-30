@@ -19,13 +19,8 @@ import { getRouteApi, Link, Outlet, useMatch, useNavigate } from '@tanstack/reac
 import { lazy, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { ProjectAvatar } from '../components/ProjectAvatar'
-import {
-  activeGroups,
-  type BoardFilter,
-  filterTasks,
-  labelsOf,
-  NO_FILTER,
-} from '../lib/board-filter'
+import { activeGroups, type BoardFilter, labelsOf, NO_FILTER } from '../lib/board-filter'
+import { useBoardGroups } from '../lib/board-groups'
 import { type BoardView, readBoardView, readCalendarScale, saveBoardView } from '../lib/board-view'
 import type { CalendarScale } from '../lib/calendar'
 import { useMuninn } from '../lib/muninn'
@@ -124,10 +119,8 @@ export function Tablero() {
   const board = useQuery({ ...boardQuery(m, projectId), enabled: project.isSuccess })
   const tasks = board.data?.tasks
   const labels = useMemo(() => labelsOf(tasks ?? []), [tasks])
-  const shown = useMemo(
-    () => (tasks ? filterTasks(tasks, filter, m.today()).length : 0),
-    [tasks, filter, m],
-  )
+  // El mismo reparto que pinta la vista (memorizado igual): aquí solo se cuenta.
+  const shown = useBoardGroups(board.data, filter, m.today()).visible.length
   const openTask = useMatch({
     from: '/_app/proyectos/$projectId/tareas/$taskId',
     shouldThrow: false,

@@ -4,12 +4,7 @@ import {
   type DragOverEvent,
   DragOverlay,
   type DragStartEvent,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
   type UniqueIdentifier,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core'
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import type { BoardColumn } from '@muninn/core'
@@ -20,13 +15,13 @@ import {
   colId,
   colKey,
   findColumn,
-  groupByColumn,
   type ItemsByColumn,
   idsByColumn,
   isColKey,
   moveAcross,
 } from '../../lib/board'
-import { type BoardFilter, filterTasks, fullIndex } from '../../lib/board-filter'
+import { type BoardFilter, fullIndex } from '../../lib/board-filter'
+import { useBoardGroups } from '../../lib/board-groups'
 import { moveColumn } from '../../lib/column-actions'
 import { useMuninn } from '../../lib/muninn'
 import { moveTask } from '../../lib/task-actions'
@@ -38,6 +33,7 @@ import {
   boardKeyboard,
   placeOf,
   screenReaderInstructions,
+  useBoardSensors,
 } from './dnd'
 import { TaskCardOverlay } from './TaskCard'
 
@@ -72,16 +68,9 @@ export function BoardDesktop({
 
   // Con un filtro puesto solo se ven (y se arrastran) las tareas que lo cumplen; el índice que se manda al
   // servidor sigue siendo el de la columna entera (`fullIndex`).
-  const visible = useMemo(
-    () => filterTasks(board.tasks, filter, today),
-    [board.tasks, filter, today],
-  )
-  const groups = useMemo(() => groupByColumn(board.columns, visible), [board.columns, visible])
+  const { groups, totals } = useBoardGroups(board, filter, today)
   const idle = useMemo(() => idsByColumn(groups), [groups])
-  const allIds = useMemo(
-    () => idsByColumn(groupByColumn(board.columns, board.tasks)),
-    [board.columns, board.tasks],
-  )
+  const allIds = useMemo(() => idsByColumn(totals), [totals])
   const items = drag?.items ?? idle
   const colOrder = drag?.cols ?? board.columns.map((c) => c.id)
   const columnById = useMemo(() => new Map(board.columns.map((c) => [c.id, c])), [board.columns])
@@ -99,15 +88,7 @@ export function BoardDesktop({
     [],
   )
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: boardKeyboard,
-      // Enter queda para abrir la tarea (las tarjetas son enlaces).
-      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
-    }),
-  )
+  const sensors = useBoardSensors(boardKeyboard)
 
   const colName = (id: string) => columnById.get(id)?.name ?? ''
   const a11y = {

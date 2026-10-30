@@ -5,13 +5,8 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
-  KeyboardSensor,
-  MouseSensor,
   pointerWithin,
-  TouchSensor,
   useDroppable,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -23,14 +18,15 @@ import { cn, IconButton, icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAgentColumn } from '../../lib/agent'
-import { type BoardData, groupByColumn, isColKey, isTabKey, tabKey } from '../../lib/board'
-import { type BoardFilter, filterTasks, fullIndex } from '../../lib/board-filter'
+import { type BoardData, isColKey, isTabKey, tabId, tabKey } from '../../lib/board'
+import { type BoardFilter, fullIndex } from '../../lib/board-filter'
+import { useBoardGroups } from '../../lib/board-groups'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, moveTask } from '../../lib/task-actions'
-import { AgentMark, KIND_DOT } from './Column'
+import { AgentMark, ColumnCount, KIND_DOT } from './Column'
 import { ColumnDialog } from './ColumnDialog'
 import { ColumnMenu } from './ColumnMenu'
-import { announcements, screenReaderInstructions } from './dnd'
+import { announcements, screenReaderInstructions, useBoardSensors } from './dnd'
 import { QuickAdd } from './QuickAdd'
 import { SwipeToComplete } from './SwipeToComplete'
 import { SortableTaskCard, TaskCardOverlay } from './TaskCard'
@@ -73,9 +69,7 @@ function Tab({
     >
       <span aria-hidden="true" className={cn('size-2 rounded-xs', KIND_DOT[column.kind])} />
       {column.name}
-      <span className="text-xs text-fg-subtle tabular">
-        {column.wipLimit ? `${count}/${column.wipLimit}` : count}
-      </span>
+      <ColumnCount count={count} limit={column.wipLimit} />
     </button>
   )
 }
@@ -101,12 +95,7 @@ export function BoardMobile({
   const agentColumnId = useAgentColumn(projectId).columnId
   // Con un filtro puesto solo se ven las tareas que lo cumplen; el índice que se manda al servidor sigue
   // siendo el de la columna entera (`fullIndex`).
-  const visible = useMemo(
-    () => filterTasks(board.tasks, filter, today),
-    [board.tasks, filter, today],
-  )
-  const groups = useMemo(() => groupByColumn(board.columns, visible), [board.columns, visible])
-  const totals = useMemo(() => groupByColumn(board.columns, board.tasks), [board])
+  const { groups, totals } = useBoardGroups(board, filter, today)
   const initial = board.columns.find((c) => c.kind === 'in_progress') ?? board.columns[0]
   const [picked, setPicked] = useState(initial?.id)
   const column = board.columns.find((c) => c.id === picked) ?? board.columns[0]
@@ -115,14 +104,7 @@ export function BoardMobile({
   const [editing, setEditing] = useState<BoardColumn | 'new' | null>(null)
   const taskById = useMemo(() => new Map(board.tasks.map((t) => [t.id, t])), [board.tasks])
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
-    }),
-  )
+  const sensors = useBoardSensors(sortableKeyboardCoordinates)
 
   // Una pestaña bajo el dedo manda sobre las tarjetas; si no, la tarjeta más cercana.
   const collision: CollisionDetection = (args) => {
@@ -140,7 +122,7 @@ export function BoardMobile({
     const id = String(active.id)
     const overId = String(over.id)
     if (isTabKey(overId)) {
-      const to = overId.slice(4)
+      const to = tabId(overId)
       if (to === column.id) return
       setPicked(to)
       void moveTask(m, qc, { projectId, taskId: id, columnId: to })
@@ -169,7 +151,7 @@ export function BoardMobile({
       name: (id) => `«${taskById.get(String(id))?.title ?? ''}»`,
       where: (id) =>
         isTabKey(id)
-          ? `sobre la pestaña ${board.columns.find((c) => c.id === String(id).slice(4))?.name ?? ''}`
+          ? `sobre la pestaña ${board.columns.find((c) => c.id === tabId(String(id)))?.name ?? ''}`
           : `posición ${tasks.findIndex((t) => t.id === String(id)) + 1} de ${tasks.length}`,
     }),
   }
