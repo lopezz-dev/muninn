@@ -49,6 +49,8 @@
 
 - Los `inputSchema` del MCP son formas zod. Reutiliza los enums del core (`taskPriority`, `columnKind`…)
   para no duplicar valores válidos, y deja que el servicio haga la validación completa.
+- Las formas que repiten varias herramientas (`projectRef`, `isoDate`, `limit(max)`) están en `tools/shapes.ts`. Para resolver por nombre,
+  `pickByName(filas, ref, () => mensaje)` (`define.ts`): el mensaje enumera las opciones para que el modelo se corrija.
 
 ### MCP remoto: sin estado y solo POST
 
@@ -114,22 +116,26 @@
 
 ### El conector sale con el icono de Supabase
 
-- **Síntoma:** en claude.ai, el conector «Muninn» lleva el logo de Supabase.
-- **Causa:** la URL del MCP es de `supabase.co` y claude.ai, al parecer, usa el favicon de ese dominio.
-- **Solución (hecha el 28-10, sin desplegar):** el SDK (1.32.1) acepta `title` e `icons` en la información del servidor (especificación
-  MCP 2025-11-25). `packages/mcp/src/server.ts` crea el servidor con `title: 'Muninn'` e `icons: [MUNINN_ICON]`; el logo está en
-  `src/icon.ts` como PNG de 96×96 en *data URI* (sale de `apps/web/scripts/logo.mjs`), para no atar el MCP al dominio de la web. Lo
-  comprueba `test/server.test.ts`. Falta redesplegar `mcp` y volver a añadir el conector (fase final, pasos 2 y 7).
-- **Si claude.ai no lo lee** (no está comprobado que use `icons`), la otra vía es servir el MCP desde un dominio de Muninn (un *rewrite* de
-  Vercel a la función), que cambia la URL del recurso en los metadatos OAuth: necesita ADR.
+- **Síntoma:** en claude.ai, el conector «Muninn» lleva el logo de Supabase (el rayo verde), también después de quitarlo y volver a
+  añadirlo.
+- **Causa (comprobada el 30-10):** claude.ai saca el icono del **dominio de la URL** del conector (`…supabase.co`): ya sale en la
+  pantalla «You're not connected to Muninn yet», antes de hablar con el servidor. No usa el `icons` de la información del servidor.
+- **Lo que hay en el código:** `packages/mcp/src/server.ts` crea el servidor con `title`, `description`, `websiteUrl` e `icons`
+  (especificación MCP 2025-11-25; el logo está en `src/icon.ts` como PNG de 96×96 en *data URI*, sale de `apps/web/scripts/logo.mjs`).
+  Desplegado el 30-10 y comprobado en `test/server.test.ts`. Sirve a otros clientes MCP, pero no cambia el icono de claude.ai.
+- **Solución (pendiente, con el dominio propio):** servir el MCP desde `https://<dominio de Muninn>/mcp`, con un *rewrite* de Vercel a la
+  función y la URL del recurso de los metadatos OAuth según por dónde llega la petición. Cambia en parte ADR-0033, así que necesita ADR.
+  Los pasos están en la tarea «Dominio propio: la web y el MCP con la dirección de Muninn» del proyecto Muninn.
 - **Si cambias el logo**, regenera el *data URI* de `src/icon.ts` igual que los iconos de la web.
 
 ### Finanzas: importes en euros, cuentas y categorías por nombre
 
-- Las herramientas de Finanzas (`finance-tools.ts`) aceptan los importes en **euros** (`24.9`, `"24,90"`) y devuelven céntimos (`amount`,
+- Las herramientas de Finanzas (`packages/assistant/src/tools/finance.ts`) aceptan los importes en **euros** (`24.9`, `"24,90"`) y devuelven céntimos (`amount`,
   `balance`) y el texto (`amountText`, `balanceText`): así el modelo no multiplica por cien ni lee mal los céntimos.
 - `account` y `category` admiten id o nombre (exacto y, si no, el primero que lo contiene); sin `account`, un gasto o ingreso va a la
   primera cuenta corriente. `update_transaction` con `category: null` la quita.
+- Resuelve con `financeLookup(app)` (uno por llamada): lee cuentas y categorías como mucho una vez y nombra la salida con lo mismo
+  (`out`). No llames a `accounts.list` en cada resolución: eran hasta cinco viajes de red por herramienta.
 - No hay borrados: `archive_transaction` y `archive_finance_account`. Tras cambiar el core, `pnpm --filter @muninn/mcp build` y `build:edge`.
 - Suscripciones: `list_subscriptions` (con `upcomingDays`, las que hay que avisar), `create_subscription`, `record_subscription_charge`,
   `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.

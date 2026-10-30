@@ -1,5 +1,6 @@
 import {
   buildMorningReport,
+  type ChatProvider,
   createOllamaProvider,
   reportIntro,
   reportTitle,
@@ -21,12 +22,13 @@ let running: Promise<Note | null> | null = null
 
 /**
  * Hace el informe de hoy y lo guarda. Vuelve a leer los ajustes del servidor justo antes (otro ordenador pudo hacerlo).
- * `force`: aunque ya esté hecho hoy o esté desactivado («Hacer ahora»).
+ * `force`: aunque ya esté hecho hoy o esté desactivado («Hacer ahora»). `provider`: quién escribe la entradilla; por
+ * defecto, el Ollama de los ajustes (los tests pasan uno falso para no depender del equipo).
  */
 export function generateMorningReport(
   m: Muninn,
   qc: QueryClient,
-  opts: { modules: ReadonlySet<ModuleName> | null; force?: boolean },
+  opts: { modules: ReadonlySet<ModuleName> | null; force?: boolean; provider?: ChatProvider },
 ): Promise<Note | null> {
   running ??= (async () => {
     const settings = await m.settings.get()
@@ -50,7 +52,9 @@ export function generateMorningReport(
       generatedAt: new Date(),
       scheduledTime: prefs.time,
     })
-    const provider = createOllamaProvider({ baseUrl: assistant.ollamaUrl, model: assistant.model })
+    const provider =
+      opts.provider ??
+      createOllamaProvider({ baseUrl: assistant.ollamaUrl, model: assistant.model })
     const intro =
       (await provider.status()).state === 'ready' ? await reportIntro(provider, body) : null
     const note = await saveMorningReport(m, {

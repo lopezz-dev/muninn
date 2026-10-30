@@ -72,6 +72,26 @@ describe('proyectos', () => {
 })
 
 describe('tareas', () => {
+  it('solo se elimina una tarea archivada, con sus subtareas; sus notas se quedan sin tarea', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't' })
+    const other = await app.tasks.create({ projectId: p.id, title: 'otra' })
+    await app.checklist.add(t.id, 'sub')
+    await app.checklist.add(other.id, 'sub de otra')
+    const note = await app.notes.create({ title: 'n', taskId: t.id })
+    await expect(app.tasks.delete(t.id)).rejects.toThrow(ValidationError)
+    await app.tasks.archive(t.id)
+    await app.tasks.delete(t.id)
+    await expect(app.tasks.get(t.id)).rejects.toThrow()
+    expect(await app.checklist.list(t.id)).toHaveLength(0)
+    expect(await app.checklist.list(other.id)).toHaveLength(1)
+    expect(await app.notes.get(note.id)).toMatchObject({ taskId: null, projectId: p.id })
+    // La actividad se queda: es el historial, y dice que se eliminó.
+    const log = (await app.recentActivity()).filter((a) => a.entityId === t.id)
+    expect(log.map((a) => a.action)).toEqual(expect.arrayContaining(['created', 'deleted']))
+  })
+
   it('se crean en la columna "todo" y al final', async () => {
     const { app } = setup()
     const p = await app.projects.create({ name: 'P' })
@@ -410,6 +430,135 @@ describe('proyectos: estadísticas e imagen', () => {
     expect(isImageOf('p1', 'p1/a.jpg')).toBe(true)
     expect(isImageOf('p1', 'p2/a.jpg')).toBe(false)
     expect(isImageOf('p1', 'p1/a/b.jpg')).toBe(false)
+  })
+})
+
+describe('consultas', () => {
+  /** Cuenta las lecturas de columnas y tareas del store: no deben crecer con el número de proyectos. */
+  const counting = () => {
+    const { store, app } = setup()
+    const calls = { columns: 0, tasks: 0 }
+    const columnsList = store.columns.list.bind(store.columns)
+    const tasksList = store.tasks.list.bind(store.tasks)
+    store.columns.list = (q) => {
+      calls.columns += 1
+      return columnsList(q)
+    }
+    store.tasks.list = (q) => {
+      calls.tasks += 1
+      return tasksList(q)
+    }
+    const reset = () => {
+      calls.columns = 0
+      calls.tasks = 0
+    }
+    return { app, calls, reset }
+  }
+
+  it('overview lee columnas y tareas una vez, haya los proyectos que haya', async () => {
+    const { app, calls, reset } = counting()
+    for (const name of ['A', 'B', 'C', 'D']) {
+      const p = await app.projects.create({ name })
+      await app.tasks.create({ projectId: p.id, title: `tarea de ${name}`, dueDate: '2026-10-19' })
+    }
+    reset()
+    const o = await app.overview()
+    expect(calls).toEqual({ columns: 1, tasks: 1 })
+    expect(o.projects.map((p) => p.open)).toEqual([1, 1, 1, 1])
+    expect(o.dueToday.map((t) => t.projectName)).toEqual(['A', 'B', 'C', 'D'])
+  })
+
+  it('overview lee la última actividad de todos los proyectos en una lectura', async () => {
+    const { store, app } = setup()
+    const a = await app.projects.create({ name: 'A' })
+    await app.projects.create({ name: 'B' })
+    clock = new Date('2026-10-19T11:00:00Z')
+    await app.tasks.create({ projectId: a.id, title: 'más tarde' })
+    // Un proyecto sin ningún evento: cae a su `updatedAt`.
+    clock = new Date('2026-10-19T12:00:00Z')
+    const quiet = await store.projects.insert({
+      name: 'C',
+      description: '',
+      color: 'blue',
+      icon: null,
+      imagePath: null,
+      coverPath: null,
+      githubRepo: null,
+      agentColumnId: null,
+      status: 'active',
+      position: 'z',
+    })
+    const calls = { list: 0, latest: 0 }
+    const list = store.activity.list.bind(store.activity)
+    const latest = store.activity.latestByProject.bind(store.activity)
+    store.activity.list = (q) => {
+      calls.list += 1
+      return list(q)
+    }
+    store.activity.latestByProject = (ids) => {
+      calls.latest += 1
+      return latest(ids)
+    }
+    const o = await app.overview()
+    expect(calls).toEqual({ list: 0, latest: 1 })
+    const last = Object.fromEntries(o.projects.map((p) => [p.name, p.lastActivityAt]))
+    expect(last).toEqual({
+      A: '2026-10-19T11:00:00.000Z',
+      B: '2026-10-19T10:00:00.000Z',
+      C: quiet.updatedAt,
+    })
+    expect(quiet.updatedAt).toBe('2026-10-19T12:00:00.000Z')
+  })
+
+  it('las tareas de todos los proyectos piden las columnas en una consulta', async () => {
+    const { app, calls, reset } = counting()
+    for (const name of ['A', 'B', 'C']) {
+      const p = await app.projects.create({ name })
+      await app.tasks.create({ projectId: p.id, title: name })
+    }
+    reset()
+    const tasks = await app.tasks.list()
+    expect(calls).toEqual({ columns: 1, tasks: 1 })
+    expect(tasks.map((t) => t.column.kind)).toEqual(['todo', 'todo', 'todo'])
+  })
+
+  it('el tablero trae columnas, tareas con su columna y subtareas sin pedir las columnas dos veces', async () => {
+    const { app, calls, reset } = counting()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 'con subtareas' })
+    await app.checklist.add(t.id, 'una')
+    const dos = await app.checklist.add(t.id, 'dos')
+    await app.checklist.update(dos.id, { done: true })
+    reset()
+    const board = await app.projects.board(p.id)
+    expect(calls).toEqual({ columns: 1, tasks: 1 })
+    expect(board.columns.map((c) => c.kind)).toEqual(DEFAULT_COLUMNS.map((c) => c.kind))
+    expect(board.tasks.map((x) => [x.title, x.column.kind])).toEqual([['con subtareas', 'todo']])
+    expect(board.counts).toEqual({ [t.id]: { done: 1, total: 2 } })
+  })
+
+  it('las columnas de varios proyectos, en una consulta y en su orden', async () => {
+    const { app, calls, reset } = counting()
+    const a = await app.projects.create({ name: 'A' })
+    const b = await app.projects.create({ name: 'B' })
+    reset()
+    const cols = await app.columns.listMany([a.id, b.id])
+    expect(calls.columns).toBe(1)
+    expect(cols.filter((c) => c.projectId === b.id).map((c) => c.kind)).toEqual(
+      DEFAULT_COLUMNS.map((c) => c.kind),
+    )
+    expect(await app.columns.listMany([])).toEqual([])
+  })
+
+  it('las tareas de un proyecto filtradas por columna siguen filtrando', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const cols = await app.columns.list(p.id)
+    const doing = cols.find((c) => c.kind === 'in_progress')?.id as string
+    await app.tasks.create({ projectId: p.id, title: 'pendiente' })
+    await app.tasks.create({ projectId: p.id, title: 'en curso', columnId: doing })
+    const only = await app.tasks.list({ projectId: p.id, columnId: doing })
+    expect(only.map((t) => [t.title, t.column.kind])).toEqual([['en curso', 'in_progress']])
   })
 })
 

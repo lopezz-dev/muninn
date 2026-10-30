@@ -10,7 +10,14 @@ const MONTH_YEAR = new Intl.DateTimeFormat('es-ES', {
   year: 'numeric',
 })
 
-const asDate = (iso: string) => new Date(`${iso}T12:00:00`)
+const CLOCK = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' })
+const WEEKDAY_SHORT = new Intl.DateTimeFormat('es-ES', { weekday: 'short' })
+
+/** Una fecha `AAAA-MM-DD` a mediodía local: así ninguna zona horaria la mueve de día al formatearla. */
+export const asDate = (iso: string) => new Date(`${iso}T12:00:00`)
+
+/** Primera letra en mayúscula («lun» → «Lun»). */
+export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export const addDays = (iso: string, days: number) => {
   const d = new Date(`${iso}T00:00:00Z`)
@@ -49,13 +56,8 @@ export function timeAgo(iso: string, now = new Date()) {
 }
 
 /** «09:12» en la zona horaria del navegador. */
-export const clock = (iso: string) =>
-  new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+export const clock = (iso: string) => CLOCK.format(new Date(iso))
 
 /** Inicial de la semana en español para la gráfica: «Lun», «Mar»… */
-export function weekdayShort(iso: string) {
-  const s = new Intl.DateTimeFormat('es-ES', { weekday: 'short' })
-    .format(asDate(iso))
-    .replace('.', '')
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
+export const weekdayShort = (iso: string) =>
+  capitalize(WEEKDAY_SHORT.format(asDate(iso)).replace('.', ''))

@@ -6,18 +6,41 @@ import {
   type DroppableContainer,
   getFirstCollision,
   type KeyboardCoordinateGetter,
+  KeyboardSensor,
+  MouseSensor,
   pointerWithin,
   rectIntersection,
   type ScreenReaderInstructions,
+  TouchSensor,
   type UniqueIdentifier,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core'
 import type { MutableRefObject } from 'react'
 import { colId, findColumn, type ItemsByColumn, isColKey, isTabKey } from '../../lib/board'
 
 /**
- * Piezas de dnd-kit que comparten el tablero de escritorio y el de móvil: elegir sobre qué se suelta,
- * mover con el teclado entre columnas y avisar a los lectores de pantalla (en español).
+ * Piezas de dnd-kit que comparten el tablero de escritorio, el de móvil y el calendario: los sensores,
+ * elegir sobre qué se suelta, mover con el teclado entre columnas y avisar a los lectores de pantalla
+ * (en español).
  */
+
+/**
+ * Sensores de todas las vistas con arrastre. Ratón: a los 6 px (un clic sigue abriendo la tarea). Tacto:
+ * mantener pulsado 250 ms, para que deslizar siga haciendo scroll. Teclado: Espacio recoge y suelta,
+ * Escape cancela; Enter queda para abrir la tarea (las tarjetas son enlaces). Lo único que cambia entre
+ * vistas es a dónde llevan las flechas (`coordinateGetter`).
+ */
+export function useBoardSensors(coordinateGetter: KeyboardCoordinateGetter) {
+  return useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter,
+      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
+    }),
+  )
+}
 
 type Kind = 'card' | 'column'
 const typeOf = (c: { data: { current?: Record<string, unknown> } }) =>

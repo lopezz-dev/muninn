@@ -53,13 +53,20 @@ export function decodeEntities(text: string) {
   })
 }
 
-/** Quita CDATA, etiquetas HTML y entidades: texto plano en una línea. */
+/** Enlaces de «Leer más» que muchos feeds cuelgan al final del resumen (Expansión: `<a href>Leer</a>`). */
+const READ_MORE =
+  /<a\b[^>]*>\s*(?:\[?\s*(?:…|\.\.\.)\s*\]?\s*)?(?:leer(?: más)?|seguir leyendo|sigue leyendo|read more|continue reading|more)\s*(?:»|›|→|…|\.\.\.)?\s*<\/a>/gi
+
+/** Quita CDATA, etiquetas HTML, enlaces de «Leer más» y entidades: texto plano en una línea. */
 export function plainText(html: string) {
   const unwrapped = html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
   // Las entidades primero: en RSS el HTML suele venir escapado (&lt;p&gt;).
   const decoded = /<|&lt;/.test(unwrapped) ? decodeEntities(unwrapped) : unwrapped
   return decodeEntities(
-    decoded.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' '),
+    decoded
+      .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+      .replace(READ_MORE, ' ')
+      .replace(/<[^>]+>/g, ' '),
   )
     .replace(/\s+/g, ' ')
     .trim()

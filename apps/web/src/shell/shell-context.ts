@@ -8,6 +8,8 @@ export interface NewTaskPreset {
   /** Título y descripción ya escritos (p. ej. «Crear tarea» desde una noticia). */
   title?: string
   description?: string
+  /** Fecha de vencimiento ya puesta (`AAAA-MM-DD`): «Añadir» en un día del calendario. */
+  dueDate?: string
 }
 
 /** Acciones globales del shell que cualquier pantalla puede disparar. */

@@ -23,6 +23,7 @@ import {
   byPosition,
   type CategoryStoreQuery,
   type Collection,
+  type ColumnStoreQuery,
   type NewRow,
   type NewsItemStoreQuery,
   type NoteStoreQuery,
@@ -181,6 +182,15 @@ export function createMemoryStore(
   const pushDevices = toMap(initial.pushDevices ?? [])
   const pushLog = new Set(initial.pushLog ?? [])
 
+  // Lo que en Supabase hacen las claves ajenas al borrar una tarea: sus subtareas y su cola de GitHub se van con ella;
+  // sus notas se quedan sin tarea. La actividad se queda: es el historial.
+  const dropTask = (id: string) => {
+    for (const c of [...checklist.values()].filter((c) => c.taskId === id)) checklist.delete(c.id)
+    for (let i = outbox.length - 1; i >= 0; i--) if (outbox[i]?.taskId === id) outbox.splice(i, 1)
+    for (const n of notes.values()) if (n.taskId === id) notes.set(n.id, { ...n, taskId: null })
+    tasks.delete(id)
+  }
+
   const snapshot = (): MemorySnapshot =>
     structuredClone({
       projects: [...projects.values()],
@@ -227,6 +237,16 @@ export function createMemoryStore(
         .sort((a, b) => b.id - a.id)
         .slice(0, limit)
         .map((a) => structuredClone(a))
+    },
+    async latestByProject(projectIds) {
+      const wanted = new Set(projectIds)
+      const latest = new Map<string, string>()
+      for (const a of activity) {
+        if (!a.projectId || !wanted.has(a.projectId)) continue
+        const prev = latest.get(a.projectId)
+        if (!prev || a.createdAt > prev) latest.set(a.projectId, a.createdAt)
+      }
+      return [...latest].map(([projectId, createdAt]) => ({ projectId, createdAt }))
     },
   }
 
@@ -494,11 +514,7 @@ export function createMemoryStore(
         // Lo que en Supabase hacen las claves ajenas: columnas, tareas (con sus subtareas) y actividad se van con el
         // proyecto; las notas se quedan sin él.
         async remove(id: string) {
-          for (const t of [...tasks.values()].filter((t) => t.projectId === id)) {
-            for (const c of [...checklist.values()].filter((c) => c.taskId === t.id))
-              checklist.delete(c.id)
-            tasks.delete(t.id)
-          }
+          for (const t of [...tasks.values()].filter((t) => t.projectId === id)) dropTask(t.id)
           for (const c of [...columns.values()].filter((c) => c.projectId === id))
             columns.delete(c.id)
           for (const n of notes.values())
@@ -510,30 +526,39 @@ export function createMemoryStore(
         },
       },
     ),
-    columns: new MemoryCollection<BoardColumn, { projectId: string }>(
+    columns: new MemoryCollection<BoardColumn, ColumnStoreQuery>(
       'Columna',
       columns,
-      (rows, q) => rows.filter((c) => c.projectId === q.projectId).sort(byPosition),
+      (rows, q) => rows.filter((c) => q.projectIds.includes(c.projectId)).sort(byPosition),
       changed,
       now,
     ),
-    tasks: new MemoryCollection<Task, TaskStoreQuery>(
-      'Tarea',
-      tasks,
-      (rows, q) =>
-        rows
-          .filter((t) => q.includeArchived || !t.archivedAt)
-          .filter((t) => !q.projectId || t.projectId === q.projectId)
-          .filter((t) => !q.columnIds || q.columnIds.includes(t.columnId))
-          .filter((t) => !q.priority || q.priority.includes(t.priority))
-          .filter((t) => !q.source || t.source === q.source)
-          .filter((t) => !q.externalId || t.externalId === q.externalId)
-          .filter((t) => !q.dueBefore || (t.dueDate !== null && t.dueDate <= q.dueBefore))
-          .filter((t) => !q.search || includesText([t.title, t.description], q.search))
-          .sort(byPosition)
-          .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
-      changed,
-      now,
+    tasks: Object.assign(
+      new MemoryCollection<Task, TaskStoreQuery>(
+        'Tarea',
+        tasks,
+        (rows, q) =>
+          rows
+            .filter((t) => q.includeArchived || !t.archivedAt)
+            .filter((t) => !q.projectId || t.projectId === q.projectId)
+            .filter((t) => !q.projectIds || q.projectIds.includes(t.projectId))
+            .filter((t) => !q.columnIds || q.columnIds.includes(t.columnId))
+            .filter((t) => !q.priority || q.priority.includes(t.priority))
+            .filter((t) => !q.source || t.source === q.source)
+            .filter((t) => !q.externalId || t.externalId === q.externalId)
+            .filter((t) => !q.dueBefore || (t.dueDate !== null && t.dueDate <= q.dueBefore))
+            .filter((t) => !q.search || includesText([t.title, t.description], q.search))
+            .sort(byPosition)
+            .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+        changed,
+        now,
+      ),
+      {
+        async remove(id: string) {
+          dropTask(id)
+          changed()
+        },
+      },
     ),
     checklist: new MemoryCollection<ChecklistItem, { taskIds: string[] }>(
       'Elemento de checklist',

@@ -1,8 +1,10 @@
 import type { GithubRepoSummary, Muninn, Project } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { notifyUndo } from './feedback'
 import { fail, serial } from './mutations'
 import { invalidateProjects } from './queries'
+import { sameRepo } from './text'
 
 /** Mismo formato que valida el core (`githubRepo` en schemas.ts). */
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
@@ -35,8 +37,6 @@ export interface RepoChoice {
   disabled?: boolean
   tone?: string
 }
-
-const sameRepo = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 /**
  * Lo que ofrece el selector de repo de `project`: «Sin repositorio» (`''`) y los repos a los que llega el
@@ -114,7 +114,7 @@ export async function moveProjectRepo(
   from: RepoProject,
   to: RepoProject,
   repo: string,
-  undo = false,
+  undoing = false,
 ): Promise<boolean> {
   try {
     await serial(from.id, () => m.projects.update(from.id, { githubRepo: null }))
@@ -131,18 +131,13 @@ export async function moveProjectRepo(
     return false
   }
   await invalidateProjects(qc)
-  if (undo) {
-    notify.info(`${repo} vuelve a «${to.name}»`)
-  } else {
-    notify.success(`${repo} va ahora con «${to.name}»`, {
-      icon: 'link',
-      description: `Ya no está vinculado a «${from.name}».`,
-      action: {
-        label: 'Deshacer',
-        onClick: () => void moveProjectRepo(m, qc, to, from, repo, true),
-      },
-    })
-  }
+  if (undoing) return true
+  notifyUndo(`${repo} va ahora con «${to.name}»`, {
+    icon: 'link',
+    description: `Ya no está vinculado a «${from.name}».`,
+    undo: () => moveProjectRepo(m, qc, to, from, repo, true),
+    undone: `${repo} vuelve a «${from.name}»`,
+  })
   return true
 }
 
@@ -152,7 +147,7 @@ export async function setProjectRepo(
   qc: QueryClient,
   project: Pick<Project, 'id' | 'name' | 'githubRepo'>,
   repo: string | null,
-  undo = false,
+  undoing = false,
 ): Promise<boolean> {
   const prev = project.githubRepo
   if (prev === repo) return true
@@ -174,14 +169,14 @@ export async function setProjectRepo(
     } else fail('No se pudo guardar el repositorio', err)
     return false
   }
-  const restore = () => setProjectRepo(m, qc, { ...project, githubRepo: repo }, prev, true)
-  if (undo) {
-    notify.info(repo ? `«${project.name}» vuelve a ${repo}` : `«${project.name}» sin repositorio`)
-  } else {
-    notify.success(
-      repo ? `«${project.name}» vinculado a ${repo}` : `«${project.name}» ya no tiene repositorio`,
-      { icon: 'link', action: { label: 'Deshacer', onClick: () => void restore() } },
-    )
-  }
+  if (undoing) return true
+  notifyUndo(
+    repo ? `«${project.name}» vinculado a ${repo}` : `«${project.name}» ya no tiene repositorio`,
+    {
+      icon: 'link',
+      undo: () => setProjectRepo(m, qc, { ...project, githubRepo: repo }, prev, true),
+      undone: prev ? `«${project.name}» vuelve a ${prev}` : `«${project.name}» sin repositorio`,
+    },
+  )
   return true
 }

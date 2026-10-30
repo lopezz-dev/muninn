@@ -18,6 +18,7 @@ import {
   type ActivityLog,
   type CategoryStoreQuery,
   type Collection,
+  type ColumnStoreQuery,
   type GithubOutbox,
   type NewRow,
   type NewsDigestStore,
@@ -43,8 +44,21 @@ type Client = SupabaseClient<any, any, any>
 type Builder = any
 type Row = Record<string, unknown>
 
-const toSnake = (k: string) => k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
-const toCamel = (k: string) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())
+/** Convierte una clave con caché: son pocas columnas y se repiten en cada fila (miles en una lista de movimientos). */
+const memoKey = (convert: (k: string) => string) => {
+  const cache = new Map<string, string>()
+  return (k: string) => {
+    let v = cache.get(k)
+    if (v === undefined) {
+      v = convert(k)
+      cache.set(k, v)
+    }
+    return v
+  }
+}
+
+const toSnake = memoKey((k) => k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`))
+const toCamel = memoKey((k) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()))
 
 function toRow(obj: object): Row {
   const out: Row = {}
@@ -207,6 +221,19 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       const { data, error } = await qb.order('id', { ascending: false }).limit(limit)
       if (error) throw error
       return (data as Row[]).map((r) => fromRow<Activity>(r))
+    },
+    async latestByProject(projectIds) {
+      if (projectIds.length === 0) return []
+      // RPC: los ids van en el cuerpo (no en la URL) y Postgres saca el último evento de cada proyecto por el índice.
+      const { data, error } = await client.rpc('activity_latest_by_project', {
+        owner: ownerId,
+        project_ids: projectIds,
+      })
+      if (error) throw error
+      return (data as Row[]).map((r) => ({
+        projectId: r.project_id as string,
+        createdAt: r.created_at as string,
+      }))
     },
   }
 
@@ -674,12 +701,15 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         },
       },
     ),
-    columns: col('board_columns', 'Columna', (qb, q: { projectId: string }) =>
-      qb.eq('project_id', q.projectId).order('position'),
+    columns: col('board_columns', 'Columna', (qb, q: ColumnStoreQuery) =>
+      qb.in('project_id', q.projectIds).order('position'),
     ),
+    // Borrar una tarea (`remove` de `col`) se lleva en cascada sus subtareas y su cola de GitHub; las notas se quedan
+    // sin tarea (`on delete set null`) y la actividad no tiene clave ajena a la tarea: se conserva (ADR-0067).
     tasks: col('tasks', 'Tarea', (qb, q: TaskStoreQuery) => {
       if (!q.includeArchived) qb = qb.is('archived_at', null)
       if (q.projectId) qb = qb.eq('project_id', q.projectId)
+      if (q.projectIds) qb = qb.in('project_id', q.projectIds)
       if (q.columnIds) qb = qb.in('column_id', q.columnIds)
       if (q.priority) qb = qb.in('priority', q.priority)
       if (q.source) qb = qb.eq('source', q.source)

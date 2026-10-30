@@ -17,6 +17,7 @@ import {
   projectsQuery,
   unarchiveProjectWithUndo,
 } from '../lib/queries'
+import { matchesAll, words } from '../lib/text'
 import { useIsDesktop } from '../lib/use-media'
 import { useShell } from '../shell/shell-context'
 
@@ -332,10 +333,10 @@ export function Proyectos() {
     overdue: (p) => (stats.get(p.id)?.overdue ?? 0) > 0,
     github: (p) => Boolean(p.githubRepo),
   }
-  const needle = search.trim().toLocaleLowerCase('es')
+  const terms = words(search)
   const shown = all
     .filter(tests[filter])
-    .filter((p) => !needle || p.name.toLocaleLowerCase('es').includes(needle))
+    .filter((p) => matchesAll(p.name, terms))
     .sort((a, b) =>
       sort === 'name'
         ? a.name.localeCompare(b.name, 'es')
@@ -478,7 +479,7 @@ export function Proyectos() {
             </div>
           ) : shown.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-fg-muted">
-              {needle
+              {terms.length
                 ? `Ningún proyecto se llama «${search.trim()}».`
                 : 'Ningún proyecto con este filtro.'}
             </p>

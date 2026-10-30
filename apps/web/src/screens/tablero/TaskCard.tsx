@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { TaskWithColumn } from '@muninn/core'
 import { cn, ProgressBar } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
+import { memo } from 'react'
 import { DueDate, LabelChips, PriorityFlag, SourceBadge } from '../../components/task-meta'
 import { timeAgo } from '../../lib/dates'
 
@@ -17,8 +18,12 @@ interface CardBodyProps {
   today: string
 }
 
-/** Lo que se ve dentro de una tarjeta: etiquetas, título, progreso y datos. Diseño: Tablero.dc.html. */
-function CardBody({ task, progress, today }: CardBodyProps) {
+/**
+ * Lo que se ve dentro de una tarjeta: etiquetas, título, progreso y datos. Diseño: Tablero.dc.html. Memorizada: al
+ * arrastrar, cada movimiento repinta las columnas, pero las tarjetas que no cambian conservan sus props (la caché del
+ * tablero reutiliza los objetos de las tareas intactas) y no se vuelven a pintar.
+ */
+export const CardBody = memo(function CardBody({ task, progress, today }: CardBodyProps) {
   const done = task.column.kind === 'done'
   const subtasks = progress && progress.total > 0 ? progress : null
   // Sin nada que mostrar, la fila de datos no existe: la tarjeta no lleva un hueco vacío abajo.
@@ -32,9 +37,9 @@ function CardBody({ task, progress, today }: CardBodyProps) {
       <span className={cn('text-base leading-snug break-words', done && 'text-fg-muted')}>
         {task.title}
       </span>
-      {progress && progress.total > 0 ? (
+      {subtasks ? (
         <ProgressBar
-          value={progress.done / progress.total}
+          value={subtasks.done / subtasks.total}
           label={`Subtareas de «${task.title}»`}
           className="h-[3px]"
         />
@@ -46,9 +51,9 @@ function CardBody({ task, progress, today }: CardBodyProps) {
           ) : task.dueDate ? (
             <DueDate due={task.dueDate} today={today} />
           ) : null}
-          {progress && progress.total > 0 ? (
+          {subtasks ? (
             <span className="tabular">
-              {progress.done}/{progress.total}
+              {subtasks.done}/{subtasks.total}
             </span>
           ) : null}
           <SourceBadge source={task.source} externalId={task.externalId} />
@@ -57,9 +62,9 @@ function CardBody({ task, progress, today }: CardBodyProps) {
       ) : null}
     </>
   )
-}
+})
 
-const card =
+export const card =
   'flex flex-col gap-2 rounded-md border border-border bg-surface-raised px-3 py-2.5 text-fg no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent'
 
 interface TaskCardProps extends CardBodyProps {

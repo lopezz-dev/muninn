@@ -1,5 +1,5 @@
 import type { Muninn } from '@muninn/core'
-import { type QueryClient, queryOptions } from '@tanstack/react-query'
+import { queryOptions } from '@tanstack/react-query'
 
 /**
  * Consultas de Finanzas. Todas cuelgan de `['finance', …]`: el tiempo real (`sync.ts`) y las acciones
@@ -59,9 +59,6 @@ export const recentTransactionsQuery = (m: Muninn) =>
     queryKey: financeKeys.recent,
     queryFn: () => m.finance.transactions.list({ limit: 6 }),
   })
-
-export const invalidateFinance = (qc: QueryClient) =>
-  qc.invalidateQueries({ queryKey: financeKeys.all })
 
 /** Panel mensual: entradas, salidas, ahorro, por categoría y últimos 6 meses (calculado en el core). */
 export const monthReportQuery = (m: Muninn, month: string) =>

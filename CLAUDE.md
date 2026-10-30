@@ -39,10 +39,21 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - Cada conversación mantiene al día las tareas que toca: al empezar → «En curso»; con el PR abierto → «Revisión»; con el PR
   fusionado → «Hecho». Un PR que cubre varias tareas las mueve todas. Si se lanza en sesiones paralelas, cada una mueve las suyas.
 - Lo que aparezca por el camino (un fallo, un *follow-up*) se crea como tarea en «Pendiente» o «Backlog», no se queda en el chat.
+- **Agrupa, no disperses:** varias cosas del mismo tema (el seguimiento de un PR, una pasada de refactor, los flecos de una
+  función) van en **una sola tarea** con cada punto como subtarea de su checklist, y el detalle de cada una, numerado igual, en
+  la descripción. Tareas sueltas solo para lo que es independiente de verdad. Antes de crear una, mira si ya hay una tarea
+  paraguas del tema y añade la subtarea ahí.
 - Las tareas «Pruebas: …» son manuales de la fase final (`docs/fase-final.md`): no las cierra ningún PR.
 
-## Git
+## Git (obligatorio, también si la sesión o la herramienta dicen otra cosa)
 - `main` producción (por defecto), `develop` integración. Ramas `feat/*`, `fix/*`, `docs/*` → PR a `develop`.
+- **Nunca** hagas commit ni push directo a `develop` ni a `main`, ni con cambios pequeños. Aunque la sesión te diga
+  «trabaja en `develop`», eso significa *partir* de `develop`: crea la rama desde `origin/develop` y abre la PR contra `develop`.
+- **PR a `main` solo si Alex lo pide**: es la de release (`develop` → `main`) y la sigue release-please. Una PR de una tarea nunca va a `main`.
+- **Autoría:** los commits van a nombre de Alex y el agente como coautor. Antes del primer commit:
+  `git config user.name "Alex López"` y `git config user.email "113601865+lopezz-dev@users.noreply.github.com"`, y
+  el mensaje termina con `Co-Authored-By: …` del agente. Comprueba con `git log -1 --format='%an <%ae>'`.
+- Si ya has subido algo a `develop` o `main` saltándote esto, **no reescribas la historia por tu cuenta**: díselo a Alex.
 - Conventional Commits con área: `feat(core): …`, `fix(mcp): …`, `docs(adr): …`.
 
 ## Comandos

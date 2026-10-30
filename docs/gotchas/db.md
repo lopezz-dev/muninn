@@ -62,6 +62,15 @@
 - **Solución:** tras aplicarla, alinea la versión con el fichero:
   `update supabase_migrations.schema_migrations set version = '<timestamp del fichero>' where name = '<nombre>';`
 
+### Funciones RPC que leen datos del usuario: `security invoker` y el dueño como parámetro
+
+- **Síntoma:** una RPC devuelve filas de otros usuarios, o no devuelve nada cuando la llama el MCP.
+- **Causa:** `security definer` se salta el RLS; y con la service role (MCP) `auth.uid()` es `null`, así que filtrar por él no sirve.
+- **Solución:** para lecturas, `security invoker` (el RLS de la tabla, segundo factor incluido, sigue mandando) y el `owner` como
+  parámetro, que el store pasa siempre (`activity_latest_by_project(owner, project_ids)`). Los ids van en el cuerpo de la RPC, no en
+  la URL: no hace falta trocearlos con `inChunks`. Si es «el último por grupo», `cross join lateral (… order by … desc limit 1)`
+  sobre un índice `(grupo, fecha desc)` lee una fila por grupo.
+
 ### Funciones con `search_path` fijo
 
 - **Síntoma:** el asesor de seguridad avisa de *Function Search Path Mutable*.

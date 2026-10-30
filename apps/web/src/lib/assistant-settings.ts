@@ -1,6 +1,6 @@
 import type { Muninn, UserSettings } from '@muninn/core'
-import { notify } from '@muninn/ui'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
+import { notifyUndo } from './feedback'
 import { useMuninn } from './muninn'
 import { fail, serial } from './mutations'
 import { keys, settingsQuery } from './queries'
@@ -67,16 +67,9 @@ export async function saveAssistantPrefs(
     return false
   }
   if (!opts.undoing) {
-    notify.success(opts.label ?? 'Ajuste guardado', {
+    notifyUndo(opts.label ?? 'Ajuste guardado', {
       icon: 'assistant',
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          if (await saveAssistantPrefs(m, qc, before, { undoing: true })) {
-            notify.info('Cambio deshecho')
-          }
-        },
-      },
+      undo: () => saveAssistantPrefs(m, qc, before, { undoing: true }),
     })
   }
   return true

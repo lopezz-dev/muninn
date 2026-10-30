@@ -1,7 +1,9 @@
 import type { Muninn, NewsItem, NewsSource } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
-import { fail, isBusy, serial } from './mutations'
+import { fail, notifyUndo } from './feedback'
+import { isBusy, serial } from './mutations'
+import { matchesAll, words } from './text'
 
 /**
  * Noticias (ADR-0042): consultas bajo `['news', …]` (el tiempo real refresca ese prefijo entero) y acciones con
@@ -34,27 +36,57 @@ export const itemDate = (i: Pick<NewsItem, 'publishedAt' | 'fetchedAt'>) =>
 export interface NewsFilter {
   /** `null`: todas; `'__saved'`: las guardadas; si no, un tema. */
   tab: string | null
+  /** Solo los de una fuente (al pulsar su nombre en un artículo); `null` o sin poner: todas. */
+  source?: string | null
   search: string
 }
 
 export const SAVED_TAB = '__saved'
 
-const fold = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-
 /** Los artículos que se ven con ese filtro (por tema de su fuente, guardadas y texto). */
 export function filterNews(items: NewsItem[], sources: NewsSource[], f: NewsFilter): NewsItem[] {
   const topic = new Map(sources.map((s) => [s.id, s.topic]))
-  const needle = fold(f.search.trim())
+  const terms = words(f.search)
   return items.filter(
     (i) =>
       (f.tab === null ||
         (f.tab === SAVED_TAB ? Boolean(i.savedAt) : topic.get(i.sourceId) === f.tab)) &&
-      (!needle || fold(`${i.title} ${i.summary}`).includes(needle)),
+      (!f.source || i.sourceId === f.source) &&
+      matchesAll(`${i.title}\n${i.summary}`, terms),
   )
+}
+
+/** Artículos seguidos de una misma fuente que se ven antes de plegar el resto de la racha. */
+export const NEWS_RUN_KEEP = 3
+
+export type NewsRow =
+  | { kind: 'item'; item: NewsItem }
+  /** Lo plegado de una racha; `key` (el id de su primer artículo) es lo que se guarda al desplegarla. */
+  | { kind: 'more'; key: string; sourceId: string; items: NewsItem[] }
+
+/**
+ * Pliega las rachas de una misma fuente (ADR-0069): de cada tramo seguido de la misma fuente se ven `keep` y el resto
+ * queda tras «Ver N más de …», en su sitio, para que las demás fuentes asomen sin perder el orden por fecha. Una racha
+ * que solo esconde un artículo no se pliega. `open` son las rachas ya desplegadas.
+ */
+export function collapseRuns(
+  items: NewsItem[],
+  open: ReadonlySet<string> = new Set(),
+  keep = NEWS_RUN_KEEP,
+): NewsRow[] {
+  const rows: NewsRow[] = []
+  for (let i = 0; i < items.length; ) {
+    let j = i + 1
+    while (j < items.length && items[j]?.sourceId === items[i]?.sourceId) j++
+    const run = items.slice(i, j)
+    const key = run[0]?.id ?? ''
+    const fold = run.length > keep + 1 && !open.has(key)
+    for (const item of fold ? run.slice(0, keep) : run) rows.push({ kind: 'item', item })
+    if (fold)
+      rows.push({ kind: 'more', key, sourceId: run[0]?.sourceId ?? '', items: run.slice(keep) })
+    i = j
+  }
+  return rows
 }
 
 /** Pestañas de temas: los de las fuentes activas, con cuántos artículos tiene cada uno. */
@@ -93,15 +125,11 @@ export async function addSource(
   } finally {
     settleNews(qc)
   }
-  notify.success(`Fuente «${source.title}» añadida`, {
+  notifyUndo(`Fuente «${source.title}» añadida`, {
     icon: 'news',
     description: 'Sus artículos llegan en la próxima descarga',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await archiveSource(m, qc, source, { undoing: true })
-      },
-    },
+    undo: () => archiveSource(m, qc, source, { undoing: true }),
+    undone: 'Fuente quitada',
   })
   return source
 }
@@ -111,7 +139,8 @@ export async function setSourceEnabled(
   qc: QueryClient,
   source: NewsSource,
   enabled: boolean,
-) {
+  undoing = false,
+): Promise<boolean> {
   qc.setQueryData<NewsSource[]>(newsKeys.sources, (list) =>
     list?.map((s) => (s.id === source.id ? { ...s, enabled } : s)),
   )
@@ -119,16 +148,18 @@ export async function setSourceEnabled(
     await run(() => m.news.sources.update(source.id, { enabled }))
   } catch (err) {
     fail('No se pudo cambiar la fuente', err)
-    return settleNews(qc)
+    settleNews(qc)
+    return false
   }
   settleNews(qc)
-  notify.success(enabled ? `«${source.title}» activada` : `«${source.title}» en pausa`, {
+  if (undoing) return true
+  const title = (on: boolean) => (on ? `«${source.title}» activada` : `«${source.title}» en pausa`)
+  notifyUndo(title(enabled), {
     icon: 'news',
-    action: {
-      label: 'Deshacer',
-      onClick: () => void setSourceEnabled(m, qc, { ...source, enabled }, !enabled),
-    },
+    undo: () => setSourceEnabled(m, qc, { ...source, enabled }, !enabled, true),
+    undone: title(!enabled),
   })
+  return true
 }
 
 export async function archiveSource(
@@ -136,32 +167,25 @@ export async function archiveSource(
   qc: QueryClient,
   source: NewsSource,
   opts: { undoing?: boolean } = {},
-) {
+): Promise<boolean> {
   qc.setQueryData<NewsSource[]>(newsKeys.sources, (list) => list?.filter((s) => s.id !== source.id))
   try {
     await run(() => m.news.sources.archive(source.id))
   } catch (err) {
     fail('No se pudo quitar la fuente', err)
-    return settleNews(qc)
+    settleNews(qc)
+    return false
   }
   settleNews(qc)
-  if (opts.undoing) return notify.info('Fuente quitada')
-  notify.success(`«${source.title}» quitada`, {
+  if (opts.undoing) return true
+  notifyUndo(`«${source.title}» quitada`, {
     icon: 'archive',
     description: 'Sus artículos guardados se conservan',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await run(() => m.news.sources.restore(source.id))
-          notify.info('Fuente recuperada')
-        } catch (err) {
-          fail('No se pudo recuperar', err)
-        }
-        settleNews(qc)
-      },
-    },
+    undo: () => run(() => m.news.sources.restore(source.id)).finally(() => settleNews(qc)),
+    undone: 'Fuente recuperada',
+    failTitle: 'No se pudo recuperar',
   })
+  return true
 }
 
 export async function setSaved(
@@ -170,7 +194,7 @@ export async function setSaved(
   item: NewsItem,
   saved: boolean,
   undoing = false,
-) {
+): Promise<boolean> {
   const savedAt = saved ? new Date().toISOString() : null
   qc.setQueryData<NewsItem[]>(newsKeys.items, (list) =>
     list?.map((i) => (i.id === item.id ? { ...i, savedAt } : i)),
@@ -179,14 +203,16 @@ export async function setSaved(
     await run(() => m.news.items.setSaved(item.id, saved))
   } catch (err) {
     fail('No se pudo guardar', err)
-    return settleNews(qc)
+    settleNews(qc)
+    return false
   }
   settleNews(qc)
-  if (undoing) return
-  notify.success(saved ? 'Guardada para leer luego' : 'Ya no está guardada', {
+  if (undoing) return true
+  notifyUndo(saved ? 'Guardada para leer luego' : 'Ya no está guardada', {
     icon: 'pin',
-    action: { label: 'Deshacer', onClick: () => void setSaved(m, qc, item, !saved, true) },
+    undo: () => setSaved(m, qc, item, !saved, true),
   })
+  return true
 }
 
 /** Al abrir un artículo: leído, sin aviso (es navegar, no cambiar nada que haya que deshacer). */

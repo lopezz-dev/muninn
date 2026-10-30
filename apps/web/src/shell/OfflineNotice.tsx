@@ -1,22 +1,10 @@
 import { icons, notify } from '@muninn/ui'
-import { useEffect, useRef, useSyncExternalStore } from 'react'
-
-const subscribe = (cb: () => void) => {
-  window.addEventListener('online', cb)
-  window.addEventListener('offline', cb)
-  return () => {
-    window.removeEventListener('online', cb)
-    window.removeEventListener('offline', cb)
-  }
-}
+import { useEffect, useRef } from 'react'
+import { useOnline } from '../lib/use-online'
 
 /** Aviso de «sin conexión» y de «conexión recuperada». Se carga en diferido: solo hace falta si se corta la red. */
 export function OfflineNotice() {
-  const online = useSyncExternalStore(
-    subscribe,
-    () => navigator.onLine,
-    () => true,
-  )
+  const online = useOnline()
   const was = useRef(online)
   useEffect(() => {
     if (online && !was.current) notify.info('Conexión recuperada', { icon: 'sync' })

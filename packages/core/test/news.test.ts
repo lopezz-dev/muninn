@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   assertPublicUrl,
+  balanceBySource,
   createMemoryStore,
   createMuninn,
   decodeEntities,
@@ -95,6 +96,23 @@ describe('lector de feeds', () => {
       '«Hola» ñ é &unknown;',
     )
     expect(plainText('<p>uno</p>\n<p>dos</p>')).toBe('uno dos')
+  })
+
+  it('quita el enlace de «Leer» del final del resumen', () => {
+    // Tal cual lo manda Expansión: el enlace «Leer» y un píxel de seguimiento.
+    const expansion =
+      '<![CDATA[Unicaja gana 543 millones.&nbsp;<a href="https://www.expansion.com/a.html">Leer</a><img src="http://x.test/m" alt=""/>]]>'
+    expect(plainText(expansion)).toBe('Unicaja gana 543 millones.')
+    expect(plainText('Texto. &lt;a href="https://x.test"&gt;Read more »&lt;/a&gt;')).toBe('Texto.')
+    expect(plainText('Texto <a href="https://x.test">[…] Seguir leyendo</a>')).toBe('Texto')
+    // Un enlace con otro texto se queda.
+    expect(plainText('Lo cuenta <a href="https://x.test">Reuters</a>.')).toBe('Lo cuenta Reuters .')
+  })
+
+  it('un resumen que solo es «Leer» se queda vacío', () => {
+    const f = parseFeed(`<rss><channel><item><title>T</title><link>https://x.test/1</link>
+      <description><![CDATA[<a href="https://x.test/1">Leer</a>]]></description></item></channel></rss>`)
+    expect(f.items[0]?.summary).toBe('')
   })
 
   it('descarga condicional: 304, error y feed', async () => {
@@ -268,6 +286,21 @@ describe('noticias en el core', () => {
       relatedProjects({ title: 'Firmar apps', summary: 'para huginndb y más' }, projects),
     ).toEqual([projects[0]])
     expect(relatedProjects({ title: 'MuninnX no cuenta', summary: '' }, projects)).toEqual([])
+  })
+
+  it('reparte el hueco entre fuentes y conserva el orden', () => {
+    // Del más reciente al más antiguo: Expansión publica sin parar y Node.js y Apple, de vez en cuando.
+    const items = [
+      ...['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id, sourceId: 'exp' })),
+      { id: 'n1', sourceId: 'node' },
+      { id: 'e7', sourceId: 'exp' },
+      { id: 'a1', sourceId: 'apple' },
+      { id: 'a2', sourceId: 'apple' },
+    ]
+    expect(balanceBySource(items, 5).map((i) => i.id)).toEqual(['e1', 'e2', 'n1', 'a1', 'a2'])
+    expect(balanceBySource(items, 3).map((i) => i.id)).toEqual(['e1', 'n1', 'a1'])
+    // Si caben todos, no se toca nada.
+    expect(balanceBySource(items, 50)).toBe(items)
   })
 })
 

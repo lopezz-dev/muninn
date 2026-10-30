@@ -5,8 +5,8 @@ import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { EmptyState } from '../../components/Page'
 import { timeAgo } from '../../lib/dates'
+import { fail, notifyUndo } from '../../lib/feedback'
 import { useAuth, useMuninn } from '../../lib/muninn'
-import { fail } from '../../lib/mutations'
 import {
   browserSubscription,
   currentSupport,
@@ -170,20 +170,14 @@ function DeviceRow({ device, current }: { device: PushDevice; current: boolean }
     )
     try {
       await m.push.unsubscribe(device.id)
-      notify.success(`«${device.label ?? 'Dispositivo'}» ya no recibe avisos`, {
+      notifyUndo(`«${device.label ?? 'Dispositivo'}» ya no recibe avisos`, {
         icon: 'trash',
-        action: {
-          label: 'Deshacer',
-          onClick: async () => {
-            try {
-              await m.push.restore(device)
-              notify.info('Dispositivo recuperado')
-            } catch (err) {
-              fail('No se pudo recuperar el dispositivo', err)
-            }
-            void qc.invalidateQueries({ queryKey: keys.devices })
-          },
-        },
+        undo: () =>
+          m.push
+            .restore(device)
+            .finally(() => void qc.invalidateQueries({ queryKey: keys.devices })),
+        undone: 'Dispositivo recuperado',
+        failTitle: 'No se pudo recuperar el dispositivo',
       })
     } catch (err) {
       if (prev) qc.setQueryData(keys.devices, prev)

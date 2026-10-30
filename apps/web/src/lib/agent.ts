@@ -1,7 +1,7 @@
 import type { BoardColumn, Muninn, Project, TaskWithColumn } from '@muninn/core'
-import { notify } from '@muninn/ui'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { notifyUndo } from './feedback'
 import { useEnabledModules } from './modules'
 import { useMuninn } from './muninn'
 import { fail, serial } from './mutations'
@@ -58,7 +58,7 @@ export async function setAgentColumn(
   project: Pick<Project, 'id' | 'agentColumnId'>,
   columns: Pick<BoardColumn, 'id' | 'name'>[],
   columnId: string | null,
-  undo = false,
+  undoing = false,
 ): Promise<boolean> {
   const prev = project.agentColumnId ?? null
   if (prev === columnId) return true
@@ -69,23 +69,21 @@ export async function setAgentColumn(
     fail('No se pudo cambiar la columna del agente', err)
     return false
   }
-  const name = columns.find((c) => c.id === columnId)?.name
-  if (undo) {
-    notify.info(name ? `«${name}» vuelve a ser la columna del agente` : 'Sin columna del agente')
-    return true
-  }
-  const restore = () =>
-    setAgentColumn(m, qc, { id: project.id, agentColumnId: columnId }, columns, prev, true)
-  notify.success(
-    name ? `«${name}» es ahora la columna del agente` : 'Ya no hay columna del agente',
-    {
-      icon: 'agent',
-      description: name
-        ? 'Lo que muevas aquí desde GitHub se etiqueta para que lo resuelva el agente.'
-        : undefined,
-      action: { label: 'Deshacer', onClick: () => void restore() },
-    },
-  )
+  if (undoing) return true
+  const nameOf = (id: string | null) => columns.find((c) => c.id === id)?.name
+  const name = nameOf(columnId)
+  const prevName = nameOf(prev)
+  notifyUndo(name ? `«${name}» es ahora la columna del agente` : 'Ya no hay columna del agente', {
+    icon: 'agent',
+    description: name
+      ? 'Lo que muevas aquí desde GitHub se etiqueta para que lo resuelva el agente.'
+      : undefined,
+    undo: () =>
+      setAgentColumn(m, qc, { id: project.id, agentColumnId: columnId }, columns, prev, true),
+    undone: prevName
+      ? `«${prevName}» vuelve a ser la columna del agente`
+      : 'Sin columna del agente',
+  })
   return true
 }
 

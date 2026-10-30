@@ -8,6 +8,7 @@ import type {
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
 import type { BoardData } from './board'
+import { fail, notifyUndo } from './feedback'
 
 /** Claves de react-query en un solo sitio: invalidar es predecible. */
 export const keys = {
@@ -18,6 +19,8 @@ export const keys = {
   projectImage: (path: string) => ['project-image', path] as const,
   /** Columnas, tareas y subtareas hechas de un proyecto, en una sola entrada (ver `BoardData`). */
   board: (projectId: string) => ['projects', projectId, 'board'] as const,
+  /** Tareas archivadas de un proyecto (ADR-0067). Cuelga del proyecto: el tiempo real la refresca con él. */
+  archivedTasks: (projectId: string) => ['projects', projectId, 'archived-tasks'] as const,
   overview: ['overview'] as const,
   settings: ['settings'] as const,
   /** Repos a los que llega el token de la sincronización (Ajustes › Integraciones). */
@@ -60,13 +63,17 @@ export const projectImageQuery = (m: Muninn, path: string | null) =>
 export const boardQuery = (m: Muninn, projectId: string) =>
   queryOptions({
     queryKey: keys.board(projectId),
-    queryFn: async (): Promise<BoardData> => {
-      const [columns, tasks] = await Promise.all([
-        m.columns.list(projectId),
-        m.tasks.list({ projectId }),
-      ])
-      return { columns, tasks, counts: await m.checklist.counts(tasks.map((t) => t.id)) }
-    },
+    queryFn: (): Promise<BoardData> => m.projects.board(projectId),
+  })
+
+/** Las archivadas de un proyecto, la última archivada primero. Solo se pide al abrir la lista. */
+export const archivedTasksQuery = (m: Muninn, projectId: string) =>
+  queryOptions({
+    queryKey: keys.archivedTasks(projectId),
+    queryFn: async () =>
+      (await m.tasks.list({ projectId, includeArchived: true }))
+        .filter((t) => t.archivedAt)
+        .sort((a, b) => (b.archivedAt ?? '').localeCompare(a.archivedAt ?? '')),
   })
 
 /**
@@ -121,23 +128,18 @@ export async function createProjectWithUndo(m: Muninn, qc: QueryClient, input: C
   try {
     const project = await m.projects.create(input)
     await invalidateProjects(qc)
-    notify.success(`Proyecto «${project.name}» creado`, {
+    notifyUndo(`Proyecto «${project.name}» creado`, {
       icon: 'plus',
       description: 'con el tablero por defecto',
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          await m.projects.archive(project.id)
-          await invalidateProjects(qc)
-          notify.info(`«${project.name}» archivado`, { icon: 'archive' })
-        },
+      undo: async () => {
+        await m.projects.archive(project.id)
+        await invalidateProjects(qc)
       },
+      undone: [`«${project.name}» archivado`, { icon: 'archive' }],
     })
     return project
   } catch (err) {
-    notify.error('No se pudo crear el proyecto', {
-      description: err instanceof Error ? err.message : undefined,
-    })
+    fail('No se pudo crear el proyecto', err)
     return null
   }
 }
@@ -156,30 +158,27 @@ export async function archiveProjectWithUndo(
   try {
     await m.projects.archive(id)
     await invalidateProjects(qc)
-    notify.success(`«${name}» archivado`, {
+    notifyUndo(`«${name}» archivado`, {
       icon: 'archive',
       description: repo ? `Ya no está vinculado a ${repo}.` : undefined,
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          await m.projects.update(id, { status: 'active' })
-          let relinked = true
-          if (repo)
-            await m.projects.update(id, { githubRepo: repo }).catch(() => (relinked = false))
-          await invalidateProjects(qc)
-          if (relinked) notify.info(`«${name}» recuperado`)
-          else
-            notify.info(`«${name}» recuperado, sin ${repo}`, {
-              description: 'Vuelve a vincularlo en GitHub: puede pedir el segundo factor.',
-            })
-        },
+      undo: async () => {
+        await m.projects.update(id, { status: 'active' })
+        let relinked = true
+        if (repo) await m.projects.update(id, { githubRepo: repo }).catch(() => (relinked = false))
+        await invalidateProjects(qc)
+        if (relinked) return
+        // Recuperado, pero sin el repo: el aviso lo dice aquí y no se repite el genérico.
+        notify.info(`«${name}» recuperado, sin ${repo}`, {
+          description: 'Vuelve a vincularlo en GitHub: puede pedir el segundo factor.',
+        })
+        return false
       },
+      undone: `«${name}» recuperado`,
+      failTitle: 'No se pudo recuperar el proyecto',
     })
     return true
   } catch (err) {
-    notify.error('No se pudo archivar el proyecto', {
-      description: err instanceof Error ? err.message : undefined,
-    })
+    fail('No se pudo archivar el proyecto', err)
     return false
   }
 }
@@ -211,26 +210,19 @@ export function deleteArchivedWithUndo(
         description: `Quedan ${failed.length} en Archivados.`,
       })
   }, wait)
-  notify.success(title, {
+  notifyUndo(title, {
     icon: 'trash',
     description: 'Con sus tareas. Las notas se quedan sin proyecto.',
     duration: wait,
-    action: {
-      label: 'Deshacer',
-      onClick: () => {
-        clearTimeout(timer)
-        view.show(ids)
-        notify.info(
-          projects.length === 1
-            ? 'Proyecto devuelto a Archivados'
-            : 'Proyectos devueltos a Archivados',
-        )
-      },
+    // Aún no se ha borrado nada: deshacer es cancelar la espera, no puede fallar.
+    undo: () => {
+      clearTimeout(timer)
+      view.show(ids)
     },
+    undone:
+      projects.length === 1 ? 'Proyecto devuelto a Archivados' : 'Proyectos devueltos a Archivados',
   })
 }
-
-const errorText = (err: unknown) => (err instanceof Error ? err.message : undefined)
 
 type ProjectFields = Pick<UpdateProjectInput, 'name' | 'description' | 'color'>
 
@@ -244,24 +236,21 @@ export async function updateProjectWithUndo(
   try {
     const project = await m.projects.update(before.id, patch)
     await invalidateProjects(qc)
-    notify.success(`«${project.name}» guardado`, {
+    notifyUndo(`«${project.name}» guardado`, {
       icon: 'check',
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          await m.projects.update(before.id, {
-            name: before.name,
-            description: before.description,
-            color: before.color,
-          })
-          await invalidateProjects(qc)
-          notify.info('Cambios deshechos')
-        },
+      undo: async () => {
+        await m.projects.update(before.id, {
+          name: before.name,
+          description: before.description,
+          color: before.color,
+        })
+        await invalidateProjects(qc)
       },
+      undone: 'Cambios deshechos',
     })
     return project
   } catch (err) {
-    notify.error('No se pudo guardar el proyecto', { description: errorText(err) })
+    fail('No se pudo guardar el proyecto', err)
     return null
   }
 }
@@ -280,27 +269,22 @@ export async function setProjectImageWithUndo(
     if (image) await m.projects.setImage(project.id, image, kind)
     else await m.projects.restoreImage(project.id, null, kind)
     await invalidateProjects(qc)
-    notify.success(image ? `${what} actualizado` : `${what} quitado`, {
+    notifyUndo(image ? `${what} actualizado` : `${what} quitado`, {
       icon: 'image',
       description: project.name,
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          await m.projects.restoreImage(project.id, previous, kind)
-          await invalidateProjects(qc)
-          notify.info(`${what} como estaba`)
-        },
+      undo: async () => {
+        await m.projects.restoreImage(project.id, previous, kind)
+        await invalidateProjects(qc)
       },
+      undone: `${what} como estaba`,
     })
     return true
   } catch (err) {
-    notify.error(
+    fail(
       image
         ? `No se pudo subir: ${what.toLowerCase()}`
         : `No se pudo quitar: ${what.toLowerCase()}`,
-      {
-        description: errorText(err),
-      },
+      err,
     )
     return false
   }
@@ -311,17 +295,16 @@ export async function unarchiveProjectWithUndo(m: Muninn, qc: QueryClient, proje
   try {
     await m.projects.update(project.id, { status: 'active' })
     await invalidateProjects(qc)
-    notify.success(`«${project.name}» recuperado`, {
+    notifyUndo(`«${project.name}» recuperado`, {
       icon: 'archive',
-      action: {
-        label: 'Deshacer',
-        onClick: async () => {
-          await m.projects.archive(project.id)
-          await invalidateProjects(qc)
-        },
+      undo: async () => {
+        await m.projects.archive(project.id)
+        await invalidateProjects(qc)
       },
+      undone: [`«${project.name}» archivado`, { icon: 'archive' }],
+      failTitle: 'No se pudo archivar el proyecto',
     })
   } catch (err) {
-    notify.error('No se pudo recuperar el proyecto', { description: errorText(err) })
+    fail('No se pudo recuperar el proyecto', err)
   }
 }

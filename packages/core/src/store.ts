@@ -40,7 +40,7 @@ import type {
  */
 export interface Store {
   projects: Collection<Project, ProjectStoreQuery>
-  columns: Collection<BoardColumn, { projectId: string }>
+  columns: Collection<BoardColumn, ColumnStoreQuery>
   tasks: Collection<Task, TaskStoreQuery>
   checklist: Collection<ChecklistItem, { taskIds: string[] }>
   notes: Collection<Note, NoteStoreQuery>
@@ -214,8 +214,15 @@ export interface ProjectStoreQuery {
   githubRepo?: string
 }
 
+/** Las columnas de varios proyectos a la vez (el resumen de Inicio, el índice de columnas), por posición. */
+export interface ColumnStoreQuery {
+  projectIds: string[]
+}
+
 export interface TaskStoreQuery {
   projectId?: string
+  /** Las de cualquiera de estos proyectos (una consulta en vez de una por proyecto). */
+  projectIds?: string[]
   columnIds?: string[]
   priority?: TaskPriority[]
   source?: TaskSource
@@ -271,6 +278,11 @@ export interface ActivityLog {
     since?: string
     limit?: number
   }): Promise<Activity[]>
+  /**
+   * Fecha del último evento de cada proyecto, en una sola lectura. Los proyectos sin actividad no salen. En Supabase lo
+   * calcula la función `activity_latest_by_project`.
+   */
+  latestByProject(projectIds: string[]): Promise<{ projectId: string; createdAt: string }[]>
 }
 
 export class NotFoundError extends Error {

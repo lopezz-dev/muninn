@@ -34,6 +34,8 @@
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
   personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
   y «Deshacer» en cada acción ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md))
+- [x] Tareas archivadas (menú **⋯** del tablero): recuperarlas o eliminarlas para siempre, con «Deshacer» diferido como los
+  proyectos archivados ([ADR-0067](adr/0067-eliminar-tareas-archivadas.md); sale del backlog)
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
 - [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
@@ -49,7 +51,9 @@
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
-- [ ] Tablero: vista **Calendario**. No entra todavía: necesita decidir cómo se arrastra una fecha y dónde van las tareas sin fecha
+- [x] Tablero: vista **Calendario** (mes y semana, arrastrar cambia la fecha con «Deshacer», bandeja «Sin fecha», crear en un día;
+  en el móvil, mes compacto y hoja «Cambiar fecha» sin arrastre; ADR-0068, diseño en el lienzo
+  [«Muninn — Calendario»](https://claude.ai/artifact/5a4s3wiHqsZVG88jZKwAMB))
 - [ ] Sync GitHub: issues → tareas, cerrar issue ↔ completar (ADR-0031, [#16](https://github.com/lopezz-dev/muninn/pull/16))
   - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
@@ -94,6 +98,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > no mostraba el número de issue («GitHub» a secas): arreglado. Queda lo del iPhone real:
 - [ ] En el iPhone: cambiar a **Lista** en un proyecto; la casilla de cada fila se toca bien (zona de 44 px) y completa con «Deshacer»
 - [ ] Cerrar y abrir la app: el proyecto sigue en Lista (se recuerda por dispositivo); en el ordenador sigue en Tablero
+
+### F2 · Vista Calendario (ADR-0068)
+> En el navegador (Playwright, 1440×900 y 390×844, modo demo) pasa el 30 de octubre: crear en un día y sin fecha, arrastrar de la bandeja a
+> un día y de un día a la bandeja con «Deshacer», teclado (Espacio, flechas, Espacio), «+N más», «N vencidas», semana, mes vacío, hoja
+> «Cambiar fecha» en el móvil y sin conexión (sin arrastre ni «+»). Queda lo del iPhone real:
+- [ ] En el iPhone: cambiar a **Calendario**; tocar un día enseña sus tareas; **mantener pulsada** una tarea abre «Cambiar fecha» (y no el
+  menú de enlace de Safari); «Otra fecha» abre la rueda de iOS; deslizar a la izquierda completa
+- [ ] En el ordenador, con datos reales: arrastrar entre meses parándose sobre ‹ ›; la vista se recuerda en mes o semana al recargar
 
 ### F2 · Sincronización con GitHub ([#16](https://github.com/lopezz-dev/muninn/pull/16))
 > Probado el 20 de octubre con `lopezz-dev/huginnDB` (issues de prueba #253 y #254, ya cerradas y con sus tareas archivadas): `gh` para
@@ -347,7 +359,6 @@ más o menos en este orden:
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
 - Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
-- Borrado definitivo de tareas desde la app (hoy solo se archivan)
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice

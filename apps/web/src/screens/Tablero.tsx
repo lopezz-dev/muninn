@@ -19,18 +19,15 @@ import { getRouteApi, Link, Outlet, useMatch, useNavigate } from '@tanstack/reac
 import { lazy, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { ProjectAvatar } from '../components/ProjectAvatar'
-import {
-  activeGroups,
-  type BoardFilter,
-  filterTasks,
-  labelsOf,
-  NO_FILTER,
-} from '../lib/board-filter'
-import { type BoardView, readBoardView, saveBoardView } from '../lib/board-view'
+import { activeGroups, type BoardFilter, labelsOf, NO_FILTER } from '../lib/board-filter'
+import { useBoardGroups } from '../lib/board-groups'
+import { type BoardView, readBoardView, readCalendarScale, saveBoardView } from '../lib/board-view'
+import type { CalendarScale } from '../lib/calendar'
 import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, boardQuery, projectQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
 import { useShell } from '../shell/shell-context'
+import { ArchivedTasks } from './tablero/ArchivedTasks'
 import { BoardDesktop } from './tablero/BoardDesktop'
 import { BoardMobile } from './tablero/BoardMobile'
 import { ColumnDialog } from './tablero/ColumnDialog'
@@ -38,15 +35,40 @@ import { FilterBar, FilterSheet, FilterSummary } from './tablero/FilterBar'
 
 const route = getRouteApi('/_app/proyectos/$projectId')
 
-// La lista no viaja con el tablero: solo la descarga quien la abre.
+// La lista y el calendario no viajan con el tablero: solo los descarga quien los abre.
 const BoardList = lazy(() =>
   import('./tablero/BoardList').then((mod) => ({ default: mod.BoardList })),
+)
+const BoardCalendar = lazy(() =>
+  import('./tablero/BoardCalendar').then((mod) => ({ default: mod.BoardCalendar })),
 )
 
 const VIEWS: { value: BoardView; label: string; icon: ReactNode }[] = [
   { value: 'board', label: 'Tablero', icon: <icons.projects size={14} aria-hidden="true" /> },
   { value: 'list', label: 'Lista', icon: <screenIcons.list size={14} aria-hidden="true" /> },
+  { value: 'calendar', label: 'Calendario', icon: <icons.calendar size={14} aria-hidden="true" /> },
 ]
+
+/** Mientras llega el calendario: su rejilla de verdad, con fantasmas, para que no salte de alto. */
+function CalendarSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="grid min-h-[560px] flex-1 grid-cols-7 grid-rows-6 overflow-hidden rounded-lg border border-border-subtle"
+    >
+      {Array.from({ length: 42 }, (_, i) => (
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: celdas fijas de relleno
+          key={i}
+          className="flex flex-col gap-1.5 border-t border-r border-border-subtle p-1.5"
+        >
+          <Ghost className="h-3 w-4" />
+          {i % 3 === 0 ? null : <Ghost className={i % 2 ? 'h-4 w-4/5' : 'h-4 w-3/5'} />}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function BoardSkeleton() {
   return (
@@ -77,21 +99,28 @@ export function Tablero() {
   const [filter, setFilter] = useState<BoardFilter>(NO_FILTER)
   const [sheet, setSheet] = useState(false)
   const [newColumn, setNewColumn] = useState(false)
-  // Tablero o Lista, recordado por proyecto en este dispositivo (`lib/board-view.ts`).
+  const [archivedOpen, setArchivedOpen] = useState(false)
+  // Tablero, Lista o Calendario (y su escala), recordado por proyecto en este dispositivo (`lib/board-view.ts`).
   const [view, setView] = useState<BoardView>(() => readBoardView(projectId))
-  useEffect(() => setView(readBoardView(projectId)), [projectId])
+  const [scale, setScale] = useState<CalendarScale>(() => readCalendarScale(projectId))
+  useEffect(() => {
+    setView(readBoardView(projectId))
+    setScale(readCalendarScale(projectId))
+  }, [projectId])
   const changeView = (next: BoardView) => {
     setView(next)
-    saveBoardView(projectId, next)
+    saveBoardView(projectId, next, undefined, scale)
+  }
+  const changeScale = (next: CalendarScale) => {
+    setScale(next)
+    saveBoardView(projectId, 'calendar', undefined, next)
   }
   const project = useQuery(projectQuery(m, projectId))
   const board = useQuery({ ...boardQuery(m, projectId), enabled: project.isSuccess })
   const tasks = board.data?.tasks
   const labels = useMemo(() => labelsOf(tasks ?? []), [tasks])
-  const shown = useMemo(
-    () => (tasks ? filterTasks(tasks, filter, m.today()).length : 0),
-    [tasks, filter, m],
-  )
+  // El mismo reparto que pinta la vista (memorizado igual): aquí solo se cuenta.
+  const shown = useBoardGroups(board.data, filter, m.today()).visible.length
   const openTask = useMatch({
     from: '/_app/proyectos/$projectId/tareas/$taskId',
     shouldThrow: false,
@@ -215,6 +244,9 @@ export function Tablero() {
                 <MenuItem icon={<icons.link />} onSelect={copyLink}>
                   Copiar enlace
                 </MenuItem>
+                <MenuItem icon={<icons.archive />} onSelect={() => setArchivedOpen(true)}>
+                  Tareas archivadas
+                </MenuItem>
                 <MenuItem icon={<icons.archive />} onSelect={archive}>
                   Archivar proyecto
                 </MenuItem>
@@ -265,6 +297,19 @@ export function Tablero() {
           <Suspense fallback={<BoardSkeleton />}>
             <BoardList projectId={p.id} board={board.data} today={m.today()} filter={filter} />
           </Suspense>
+        ) : view === 'calendar' ? (
+          <Suspense fallback={<CalendarSkeleton />}>
+            <BoardCalendar
+              projectId={p.id}
+              board={board.data}
+              today={m.today()}
+              filter={filter}
+              onFilterChange={setFilter}
+              scale={scale}
+              onScaleChange={changeScale}
+              desktop={desktop}
+            />
+          </Suspense>
         ) : desktop ? (
           <BoardDesktop projectId={p.id} board={board.data} today={m.today()} filter={filter} />
         ) : (
@@ -274,6 +319,8 @@ export function Tablero() {
         <EmptyState icon="warning" title="No se pudo cargar el tablero">
           Comprueba tu conexión e inténtalo de nuevo.
         </EmptyState>
+      ) : view === 'calendar' ? (
+        <CalendarSkeleton />
       ) : (
         <BoardSkeleton />
       )}
@@ -283,6 +330,7 @@ export function Tablero() {
         target={newColumn ? 'new' : null}
         onClose={() => setNewColumn(false)}
       />
+      <ArchivedTasks projectId={p.id} open={archivedOpen} onOpenChange={setArchivedOpen} />
       <Outlet />
     </Page>
   )

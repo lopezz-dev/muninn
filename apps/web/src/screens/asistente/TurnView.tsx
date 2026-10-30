@@ -1,7 +1,7 @@
 import type { ChangeTarget, ToolRun } from '@muninn/assistant'
 import { Button, cn, Icon } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import type { Turn } from '../../lib/assistant-history'
 import { isTauri } from '../../lib/auth'
 import { openImage } from '../../lib/external-link'
@@ -134,7 +134,14 @@ function AttachedImage({ src, n }: { src: string; n: number }) {
   )
 }
 
-export function UserBubble({ text, images }: { text: string; images?: string[] }) {
+/** Memo: con la conversación en streaming, los mensajes anteriores no se repintan. */
+export const UserBubble = memo(function UserBubble({
+  text,
+  images,
+}: {
+  text: string
+  images?: string[]
+}) {
   return (
     <div className="flex max-w-[86%] flex-col items-end gap-1.5 self-end md:max-w-[75%]">
       {images?.length ? (
@@ -167,17 +174,19 @@ export function UserBubble({ text, images }: { text: string; images?: string[] }
       ) : null}
     </div>
   )
-}
+})
 
 interface ReplyProps {
   turn: Turn
   running: boolean
   canUndo: boolean
-  onUndo: () => void
+  /** Estable (useCallback) para que el memo sirva: recibe el turno a deshacer. */
+  onUndo: (turnId: string) => void
 }
 
 /** Respuesta del asistente: herramientas usadas, el texto (Markdown) y qué ha cambiado, con «Deshacer». */
-export function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
+/** Memo: solo se repinta la respuesta que cambia (los turnos sin cambios conservan su objeto). */
+export const Reply = memo(function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
   const tools = turn.tools ?? []
   const changes = turn.changes ?? []
   const undone = changes.length > 0 && changes.every((c) => c.undone)
@@ -231,7 +240,7 @@ export function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
             </ul>
             {canUndo && !undone ? (
               <div className="border-t border-border-subtle px-3 py-2">
-                <Button size="sm" onClick={onUndo}>
+                <Button size="sm" onClick={() => onUndo(turn.id)}>
                   <Icon name="sync" size={13} />
                   Deshacer {changes.length === 1 ? 'el cambio' : 'los cambios'}
                 </Button>
@@ -248,4 +257,4 @@ export function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
       </div>
     </div>
   )
-}
+})

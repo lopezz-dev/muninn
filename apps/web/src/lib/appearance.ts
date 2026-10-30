@@ -8,6 +8,7 @@ import {
   prefersReducedTransparency,
 } from '@muninn/ui'
 import { useSyncExternalStore } from 'react'
+import { notifyUndo } from './feedback'
 
 /**
  * Apariencia (cristal y acento). Con sesión, la fuente es `user_settings.preferences.appearance`
@@ -133,9 +134,6 @@ export function connectAppearance(
   }
 }
 
-/** Hay cuenta conectada: los cambios se guardan también allí. */
-export const isAppearanceSynced = () => remote !== null
-
 /** Guarda en la cuenta (si hay); si falla, avisa y se queda en este dispositivo. */
 export function saveAppearanceRemote(appearance: Appearance) {
   remote?.(appearance).catch(() => {
@@ -163,21 +161,19 @@ export function changeAppearance(patch: Partial<Appearance>) {
   const now = appearanceStore.get()
   saveAppearanceRemote(now)
   const isGlass = patch.glass !== undefined
-  notify.success(
+  notifyUndo(
     isGlass
       ? `Cristal ${now.glass ? 'activado' : 'desactivado'}`
       : `Acento ${ACCENT_LABEL[now.accent].toLowerCase()}`,
     {
       icon: isGlass ? 'glass' : 'palette',
       description: remote ? 'Guardado en tu cuenta' : 'Guardado en este dispositivo',
-      action: {
-        label: 'Deshacer',
-        onClick: () => {
-          appearanceStore.set(prev)
-          saveAppearanceRemote(prev)
-          notify.info('Apariencia restaurada', { icon: isGlass ? 'glass' : 'palette' })
-        },
+      // Local al instante; si la cuenta falla, avisa `saveAppearanceRemote`.
+      undo: () => {
+        appearanceStore.set(prev)
+        saveAppearanceRemote(prev)
       },
+      undone: ['Apariencia restaurada', { icon: isGlass ? 'glass' : 'palette' }],
     },
   )
 }

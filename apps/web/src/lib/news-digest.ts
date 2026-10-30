@@ -4,6 +4,7 @@ import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import type { AssistantPrefs } from './assistant-settings'
 import { isHandheld } from './assistant-status'
+import { notifyUndo } from './feedback'
 import { reason } from './mutations'
 import { itemDate, newsKeys, settleNews } from './news'
 
@@ -40,7 +41,7 @@ export function generateTodayDigest(
     }
     const since = Date.now() - DIGEST_WINDOW_HOURS * 3_600_000
     const [items, sources, projects] = await Promise.all([
-      m.news.items.list({ limit: 100 }),
+      m.news.items.list({ limit: 200 }),
       m.news.sources.list(),
       m.projects.list(),
     ])
@@ -81,23 +82,22 @@ export async function generateDigestNow(m: Muninn, qc: QueryClient, prefs: Assis
         description: `${r.detail}. El resumen se hace con el modelo de tu ordenador.`,
       })
     }
-    notify.success('Resumen del día listo', {
+    notifyUndo('Resumen del día listo', {
       icon: 'assistant',
-      action: before
-        ? {
-            label: 'Deshacer',
-            onClick: async () => {
-              const back = await m.news.digests.save({
-                date: before.date,
-                content: before.content,
-                model: before.model,
-                itemIds: before.itemIds,
-              })
-              qc.setQueryData(newsKeys.digest(back.date), back)
-              notify.info('Vuelve el resumen anterior')
-            },
+      // Si es el primero de hoy, no hay a qué volver.
+      undo: before
+        ? async () => {
+            const back = await m.news.digests.save({
+              date: before.date,
+              content: before.content,
+              model: before.model,
+              itemIds: before.itemIds,
+            })
+            qc.setQueryData(newsKeys.digest(back.date), back)
           }
-        : undefined,
+        : null,
+      undone: 'Vuelve el resumen anterior',
+      failTitle: 'No se pudo recuperar el resumen anterior',
     })
   } catch (err) {
     notify.dismiss(id)

@@ -1,8 +1,17 @@
-import { type NewsItem, type NewsSource, type Project, relatedProjects } from '@muninn/core'
+import {
+  balanceBySource,
+  type NewsItem,
+  type NewsSource,
+  type Project,
+  relatedProjects,
+} from '@muninn/core'
 import { spokenDate } from './prompt'
 import type { ChatProvider } from './provider'
 
-/** Artículos que entran en el resumen como mucho: con más, un modelo de 8B se dispersa y tarda. */
+/**
+ * Artículos que entran en el resumen como mucho: con más, un modelo de 8B se dispersa y tarda. Se reparten entre fuentes
+ * (`balanceBySource`, ADR-0069) para que una muy activa no tape a las demás.
+ */
 export const DIGEST_MAX_ITEMS = 25
 
 export interface DigestInput {
@@ -19,7 +28,7 @@ const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…`
 /** Lo que ve el modelo: un artículo por línea, con su fuente y sus proyectos relacionados. */
 export function digestPrompt({ items, sources, projects, today }: Omit<DigestInput, 'provider'>) {
   const source = new Map(sources.map((s) => [s.id, s.title]))
-  const lines = items.slice(0, DIGEST_MAX_ITEMS).map((i, n) => {
+  const lines = balanceBySource(items, DIGEST_MAX_ITEMS).map((i, n) => {
     const related = relatedProjects(i, projects).map((p) => p.name)
     return `${n + 1}. [${source.get(i.sourceId) ?? 'Fuente'}] ${clip(i.title, 160)}${i.summary ? ` — ${clip(i.summary, 220)}` : ''}${related.length ? ` (relacionada con ${related.join(', ')})` : ''}`
   })
@@ -54,7 +63,7 @@ export function cleanDigest(text: string) {
 export async function generateDigest(
   input: DigestInput,
 ): Promise<{ content: string; itemIds: string[] } | null> {
-  const items = input.items.slice(0, DIGEST_MAX_ITEMS)
+  const items = balanceBySource(input.items, DIGEST_MAX_ITEMS)
   if (!items.length) return null
   let text = ''
   for await (const chunk of input.provider.chat({

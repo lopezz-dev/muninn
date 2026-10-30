@@ -22,6 +22,29 @@
 - Solo funcionan si la PWA está **añadida a la pantalla de inicio** (iOS 16.4 o superior) y tras pedir permiso
   con un gesto del usuario (un clic). En Safari, sin instalar, no hay push.
 
+### Una consulta no se vuelve a pedir al montar la pantalla
+
+- **Síntoma:** cambias algo fuera de la app (o en una tabla sin tiempo real, como `activity`), vuelves a la pantalla y sigue lo
+  de antes durante unos segundos.
+- **Causa:** el `queryClient` tiene `staleTime: 30_000` (ADR-0070): durante 30 s lo leído se da por bueno y montar la pantalla no
+  repite la petición. Solo `invalidateQueries` (escrituras propias y tiempo real) o volver a la pestaña con datos caducados refrescan.
+- **Solución:** si una escritura cambia esos datos, termínala con `invalidateQueries` de su clave (no con `refetch` a mano). Si una
+  consulta concreta tiene que pedirse siempre al montar, ponle `staleTime: 0` en sus `queryOptions`.
+
+### «Deshacer» siempre con `notifyUndo`
+
+- **Síntoma:** pulsas «Deshacer», falla (sin conexión, por ejemplo) y no aparece ningún aviso; o sale «Cambio deshecho» aunque no se
+  deshizo nada.
+- **Causa:** cada acción montaba su propio `notify.success({ action: … })` y algunas no capturaban el error de la inversa, o
+  comprobaban mal su resultado (las que devuelven `null` al fallar).
+- **Solución:** usa `notifyUndo(título, { undo, undone?, failTitle? })` de `lib/feedback.ts`. `undo` es la inversa: si lanza, se avisa
+  con `failTitle`; si devuelve `false`, es que ya avisó ella (las acciones que se llaman a sí mismas con `{ undoing: true }`). Las que
+  devuelven el objeto o `null` se adaptan con `async () => (await accion(…)) !== null`. Para el parche inverso, `previousValues(antes,
+  parche)` (`mutations.ts`). La inversa puede ser síncrona (los borrados diferidos de ADR-0065/0067: cancelar la espera) y, si a veces
+  no la hay (mover sin el tablero en caché, el primer resumen del día), pasa `undo: null` y sale el aviso sin «Deshacer». Con
+  `{ undoing: true }`, la acción no avisa de nada al acabar bien: el texto de «deshecho» va en `undone`. Única excepción: el «Deshacer»
+  del asistente (`assistant-chat.ts`), que comparte la inversa con el botón de la respuesta y avisa él mismo.
+
 ### Módulos desactivados: qué mira cada pieza del shell
 
 - **Síntoma:** un módulo desactivado sigue saliendo en la barra de pestañas, el buscador o un atajo; o el menú parpadea al cargar.
@@ -101,6 +124,9 @@
   arriba del todo, delante de la primera visible; en otro sitio, justo debajo de la visible que queda encima; sin visibles, al final.
   Los contadores y el límite de la columna usan el total (`total` en `Column`), no las visibles. Si añades otra forma de mover
   tarjetas, usa `fullIndex`; «Deshacer» ya usa la columna entera y no depende del filtro.
+- **Reparto por columnas:** visibles, `groups` (filtradas) y `totals` (columna entera) salen de `useBoardGroups` (`lib/board-groups.ts`),
+  el mismo para Tablero, móvil, Lista y el contador de la cabecera; no vuelvas a llamar a `filterTasks` + `groupByColumn` en una
+  vista. Sin filtro, `groups` y `totals` son **el mismo objeto**: no los mutes.
 
 ### La vista Lista no tiene arrastre y su vista vive en localStorage
 
@@ -108,7 +134,27 @@
 - **Causa:** es intencionado ([ADR-0030](../adr/0030-vista-lista-del-tablero.md)). `BoardList` pinta la caché del tablero sin dnd-kit, y la
   vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta.
 - **Solución:** si añades una acción a la fila (mover, archivar…), usa las de `task-actions.ts` para que sea optimista y con «Deshacer».
-  Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las dos vistas.
+  Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las tres vistas.
+
+### Calendario: con teclado, el destino no sale de la geometría
+
+- **Síntoma:** con Espacio se recoge una píldora del mes y, sin mover nada, el aviso dice «sobre el miércoles» (el día de al lado). Si
+  se suelta ahí, la tarea cambia de fecha sin quererlo.
+- **Causa:** la tarjeta flotante (`DragOverlay`) mide 240 px y una celda unos 120. Con teclado no hay puntero, y una colisión por
+  centro (`closestCenter`) cae en el día cuyo centro está más cerca del de la tarjeta, que ya no es el suyo.
+- **Solución:** `BoardCalendar` lleva el destino del teclado en una referencia (`keyTarget`), que empieza en el día de la tarea (o en
+  «Sin fecha»), y su `collisionDetection` la devuelve tal cual cuando no hay puntero. Con ratón o dedo se usa `pointerWithin`. Si
+  añades otro destino (otro panel que reciba tareas), dale un id en `lib/calendar.ts` y súmalo a `keyboardTarget` o a la tecla que lo
+  elija.
+- **Ref:** [ADR-0068](../adr/0068-vista-calendario-del-tablero.md)
+
+### Calendario: soltar cambia solo `dueDate`
+
+- **Síntoma:** al soltar en un día se espera que la tarea «se mueva» de columna u orden, o el «Deshacer» devuelve otra columna.
+- **Causa:** es intencionado ([ADR-0068](../adr/0068-vista-calendario-del-tablero.md)): `setDueDate` (`task-actions.ts`) es un `patchTask`
+  de un solo campo. El orden dentro de un día lo calcula `tasksByDay` (pendientes, prioridad, columna, posición) y no se guarda.
+- **Solución:** no llames a `moveTask` desde el calendario. Las fechas son texto `AAAA-MM-DD`: usa las funciones de `lib/calendar.ts` y
+  `lib/dates.ts`, nunca `new Date(dueDate)` en hora local.
 
 ### Tiempo real: una tabla o un dato sincronizable nuevo
 
@@ -203,6 +249,17 @@
   El foco se queda siempre en el campo y la opción activa va por `aria-activedescendant`: no pongas
   `tabIndex={0}` en las opciones ni muevas el foco a la lista.
 
+### Búsquedas: palabra a palabra con `words`/`matchesAll`, no frase entera
+
+- **Síntoma:** una búsqueda de la web encuentra «Café con leche» con «café leche» pero otra no con «leche café».
+- **Causa:** cada pantalla filtraba a su manera; unas por palabras, otras con `normalize(q)` + `includes` (frase entera).
+- **Solución:** todo filtro de texto en el navegador usa `words(query)` y `matchesAll(texto, términos)` de `lib/text.ts`
+  (sin tildes ni mayúsculas, todas las palabras en cualquier orden). Junta en un solo texto los campos donde se busca, con
+  `
+` entre ellos, para que las palabras puedan estar en campos distintos.
+- **Ojo:** lo que busca el core en el servidor (`search` de `tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas)
+  sigue siendo por frase (`ilike`): lo que devuelve ya lo filtra la paleta por palabras, pero no encuentra lo desordenado.
+
 ### Sesión: saber si hay usuario sin descargar supabase-js
 
 - `getAuth()` mira primero si existe la clave `muninn.auth` en localStorage (la `storageKey` del cliente).
@@ -257,7 +314,9 @@
 - **Causa:** `useSortable` pone `role="button"` y `KeyboardSensor` arranca con Espacio **y Enter**.
 - **Solución:** `SortableTaskCard` pasa `attributes: { role: 'link', … }` y el sensor de teclado se configura con
   `keyboardCodes: { start: ['Space'], … }`. El `MouseSensor` lleva `distance: 6` (un clic no es un arrastre) y dnd-kit
-  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta.
+  suprime el clic que sigue a un arrastre. No añadas `onClick` a la tarjeta. Los sensores de todas las vistas con arrastre
+  (escritorio, móvil y calendario) salen de `useBoardSensors(coordinateGetter)` (`screens/tablero/dnd.ts`): solo cambia a dónde
+  llevan las flechas; no montes `useSensors` a mano en una vista nueva.
 - **Ref:** [ADR-0023](../adr/0023-drag-and-drop-con-dnd-kit.md)
 
 ### Tacto: `touch-action` y la capa de «deslizar para completar»
@@ -466,6 +525,17 @@
   actividad conserva quién hizo qué). La demo usa el proveedor guionizado (`lib/assistant-demo.ts`) sobre el store en memoria: lo que hace
   es real dentro de la demo. Para probar el estado «Ollama no responde» basta con una sesión en un ordenador sin Ollama.
 
+### Asistente: el borrador vive en el `Composer` y los turnos van con `memo`
+
+- **Síntoma:** escribir en la caja del asistente va a tirones con conversaciones largas; o, en un test, `useImageAttachments` se queda
+  colgado hasta el *timeout*.
+- **Causa:** si el borrador (o las imágenes) vuelve a la pantalla `Asistente`, cada tecla repinta todas las respuestas y su Markdown.
+  `Reply` y `UserBubble` son `memo`: un `onUndo` creado en línea o un objeto nuevo por render los repinta igual. Y `useImageAttachments`
+  pregunta por la visión cada vez que cambia el `provider`: uno creado en cada render (sin `useMemo`) entra en bucle.
+- **Solución:** el borrador y las imágenes son del `Composer` (`screens/asistente/Composer.tsx`, con `useImageAttachments`). La pantalla
+  le habla con su *handle* (`prefill` para `?q=` sin modelo, `clear`, `submit` de las sugerencias, `focus`). A `Reply` pásale
+  `onUndo(turnId)` estable (`useCallback`) y booleanos, no funciones nuevas. El `provider`, siempre memorizado.
+
 ### Asistente: los módulos desactivados no se ofrecen al modelo
 
 - **Síntoma:** en la demo «He gastado 24,90…» responde «Finanzas está desactivado».
@@ -573,6 +643,8 @@
     - GitHub › la OAuth App de Muninn: *Homepage URL* (el *callback* es de Supabase y no cambia);
     - `OLLAMA_ORIGINS` en cada ordenador que use el Asistente desde la web, y reiniciar Ollama;
     - el secreto `MUNINN_MCP_ALLOWED_ORIGINS` de la función `mcp`, si incluye la URL de la web;
+    - si el MCP ya se sirve desde el dominio de la web (`/mcp`): el secreto con sus URL públicas y los conectores de claude.ai y Claude
+      Code, que hay que quitar y volver a añadir con la URL nueva (ver gotchas/mcp, «El conector sale con el icono de Supabase»);
     - Search Console (cuando esté dado de alta): añadir la propiedad nueva y volver a enviar `sitemap.xml`.
     - Cloudflare › Turnstile: añadir el dominio a los *hostnames* del widget del CAPTCHA (ADR-0060), o el login fallará.
   - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
@@ -618,14 +690,6 @@
   falla (`onError`). No guardes la URL en ningún sitio (ni en la base de datos ni en estado propio): pide siempre
   `projects.imageUrl(path)` a través de la consulta.
 - **Ref:** [ADR-0055](../adr/0055-imagen-de-proyecto-en-storage.md)
-
-### El test del informe de la mañana caduca con Ollama encendido
-
-- **Síntoma:** `test/morning-report.test.ts` › «se guarda como nota…» falla en local con *Test timed out in 5000ms*; en el CI pasa.
-- **Causa:** `generateMorningReport` comprueba Ollama en `localhost:11434` y, si responde con el modelo, pide la entradilla de
-  verdad. Con `qwen3:8b` cargado eso tarda más de 5 s. En el CI no hay Ollama y el informe sale sin entradilla.
-- **Solución:** para `pnpm test`, apaga Ollama (o descarga el modelo de memoria). Pendiente: que el test inyecte un proveedor
-  falso en lugar de depender de lo que haya en el equipo.
 
 ### CAPTCHA de la entrada: Turnstile (pasos manuales)
 

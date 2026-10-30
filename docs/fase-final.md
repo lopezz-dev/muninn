@@ -123,14 +123,15 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 - [ ] Navegador: los mismos enlaces abren otra pestaña (Ctrl-clic, en segundo plano) y una imagen adjunta del Asistente se abre a tamaño real.
 
 **GitHub en escritorio** (28-10, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)).
-- [ ] Supabase › **Authentication › URL Configuration › Redirect URLs**: añade `muninn://auth/callback` (exacta, sin `/**`). Sin ella,
-  Supabase vuelve a la *Site URL* en el navegador y la app se queda «Esperando a GitHub…».
+- [x] Supabase › **Authentication › URL Configuration › Redirect URLs**: añade `muninn://auth/callback` (exacta, sin `/**`). Sin ella,
+  Supabase vuelve a la *Site URL* en el navegador y la app se queda «Esperando a GitHub…». *(30 de octubre. Faltaba: desde la app
+  instalada, tras elegir la cuenta en GitHub, se acababa en la web publicada. Añadida, ya vuelve a la app.)*
 - [ ] Con `pnpm dev:desktop` (Windows registra `muninn://` al arrancar), cierra sesión y pulsa **Continuar con GitHub**: se abre tu navegador
   y sale «Sigue en el navegador». Autoriza; el navegador pregunta si abrir Muninn: acepta. La app pasa al frente, «Sesión iniciada» y entras.
   No se abre una segunda ventana de Muninn.
 - [ ] En GitHub pulsa **Cancel**: «Acceso con GitHub cancelado». Pulsa **Cancelar** en la app mientras espera: el mismo aviso y el botón
   vuelve a estar activo.
-- [ ] Con la app **instalada** (paso 10): lo mismo. Y con Muninn cerrado, abre en el navegador una vuelta pendiente (empieza el login, cierra la
+- [ ] Con la app **instalada** (paso 10): lo mismo. *(30 de octubre: entrar con GitHub funciona; falta lo de cancelar y lo de Muninn cerrado.)* Y con Muninn cerrado, abre en el navegador una vuelta pendiente (empieza el login, cierra la
   app antes de autorizar y autoriza después): Muninn se abre y entra.
 
 ## 4. Publicar la web (≈ 30 min)
@@ -263,6 +264,10 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
 - [ ] Vista **Lista** en un proyecto:
   - la casilla de cada fila se toca bien y completa con «Deshacer»;
   - al cerrar y abrir la app sigue en Lista, y en el ordenador sigue en Tablero.
+- [ ] Vista **Calendario** en un proyecto:
+  - tocar un día enseña sus tareas; mantener pulsada una abre «Cambiar fecha» (no el menú de enlace de Safari) y «Mañana» la mueve con
+    «Deshacer»;
+  - «Otra fecha» abre la rueda de iOS, y deslizar a la izquierda completa.
 - [ ] Finanzas:
   - «Nuevo movimiento» se abre desde abajo;
   - el importe saca el teclado decimal y no hace zoom;

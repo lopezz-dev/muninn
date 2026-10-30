@@ -62,6 +62,8 @@ En esa misma pantalla ves si el módulo **GitHub** está activado y si ya ha lle
 - Todo lo demás es tuyo: la columna, el orden, la prioridad, la fecha, las subtareas, las notas y las etiquetas (las de la issue se copian
   solo al crearse la tarea).
 - Si **archivas** una tarea de GitHub, Muninn no la vuelve a sacar aunque la issue cambie.
+- Si la **eliminas** (desde [Tareas archivadas](04-tareas.md#tareas-archivadas)) y la issue sigue abierta, vuelve como tarea nueva en
+  la próxima sincronización: eliminar no cierra la issue. Para que no vuelva, déjala archivada o cierra la issue.
 - En el tablero puedes quedarte solo con ellas con el filtro **Origen › GitHub**.
 
 ## Para el agente

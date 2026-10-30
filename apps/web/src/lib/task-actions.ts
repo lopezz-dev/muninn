@@ -11,13 +11,16 @@ import { type IconName, notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { AGENT_ONLY_GITHUB, blocksAgentDrop, flushGithubSoon } from './agent'
 import { applyTaskMove, type BoardData, indexInColumn } from './board'
-import { fail, optimistic, rollback, serial, settle } from './mutations'
+import { dueToast } from './calendar'
+import { notifyUndo } from './feedback'
+import { fail, optimistic, previousValues, rollback, serial, settle } from './mutations'
 import { keys } from './queries'
 
 /**
  * Acciones sobre tareas y subtareas, con feedback y «Deshacer» (ADR-0019). Cada una refleja el cambio
- * en la caché al instante y escribe en el core; ver `mutations.ts`. Nada de aquí borra datos:
- * archivar es reversible y el core no ofrece borrado de tareas en la UI.
+ * en la caché al instante y escribe en el core; ver `mutations.ts`. Archivar es reversible; eliminar para
+ * siempre solo se puede con las archivadas, y espera lo que dura el aviso para que «Deshacer» no pierda nada
+ * (`deleteArchivedTasksWithUndo`, ADR-0067).
  */
 
 type TaskRef = Pick<TaskWithColumn, 'id' | 'projectId' | 'columnId' | 'title'>
@@ -79,7 +82,7 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
   const same = fromColumnId === columnId
   const inTarget = prev?.tasks.filter((t) => t.columnId === columnId && t.id !== taskId).length ?? 0
   const over = target?.wipLimit != null && inTarget + 1 > target.wipLimit
-  notify.success(
+  notifyUndo(
     o.verb === 'completed'
       ? `«${title}» completada`
       : o.verb === 'reopened'
@@ -92,23 +95,20 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
       description: over
         ? `${target?.name} supera su límite (${inTarget + 1} de ${target?.wipLimit})`
         : undefined,
-      action: fromColumnId
-        ? {
-            label: 'Deshacer',
-            onClick: async () => {
-              const ok = await moveTask(m, qc, {
-                projectId,
-                taskId,
-                columnId: fromColumnId,
-                index: fromIndex,
-                title,
-                fromColumnId: columnId,
-                undoing: true,
-              })
-              if (ok) notify.info('Movimiento deshecho', { icon: 'move' })
-            },
-          }
-        : undefined,
+      // Sin tablero en caché ni `o.fromColumnId` no se sabe de dónde venía.
+      undo: fromColumnId
+        ? () =>
+            moveTask(m, qc, {
+              projectId,
+              taskId,
+              columnId: fromColumnId,
+              index: fromIndex,
+              title,
+              fromColumnId: columnId,
+              undoing: true,
+            })
+        : null,
+      undone: ['Movimiento deshecho', { icon: 'move' }],
     },
   )
   return true
@@ -182,16 +182,11 @@ export async function createTask(
     return null
   }
   settle(qc, created.projectId, created.id)
-  notify.success(`Tarea «${created.title}» creada`, {
+  notifyUndo(`Tarea «${created.title}» creada`, {
     icon: 'plus',
     description: created.column.name || undefined,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await archiveTask(m, qc, created, { undoing: true })
-        notify.info(`«${created.title}» archivada`, { icon: 'archive' })
-      },
-    },
+    undo: () => archiveTask(m, qc, created, { undoing: true }),
+    undone: [`«${created.title}» archivada`, { icon: 'archive' }],
   })
   return created
 }
@@ -214,9 +209,7 @@ export async function patchTask(
   toast: PatchToast,
   opts: { undoing?: boolean } = {},
 ): Promise<boolean> {
-  const before = Object.fromEntries(
-    Object.keys(patch).map((k) => [k, task[k as keyof TaskWithColumn]]),
-  ) as UpdateTaskInput
+  const before = previousValues(task, patch)
   const prev = await optimistic(qc, task.projectId, (d) => ({
     ...d,
     tasks: d.tasks.map((t) => (t.id === task.id ? ({ ...t, ...patch } as TaskWithColumn) : t)),
@@ -230,20 +223,33 @@ export async function patchTask(
   }
   settle(qc, task.projectId, task.id)
   if (opts.undoing) return true
-  notify.success(toast.message, {
+  notifyUndo(toast.message, {
     icon: toast.icon,
     id: `patch-${task.id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        const ok = await patchTask(m, qc, { ...task, ...patch } as TaskWithColumn, before, toast, {
-          undoing: true,
-        })
-        if (ok) notify.info('Cambio deshecho')
-      },
-    },
+    undo: () =>
+      patchTask(m, qc, { ...task, ...patch } as TaskWithColumn, before, toast, { undoing: true }),
   })
   return true
+}
+
+/**
+ * Cambia (o quita, con `null`) la fecha de vencimiento: lo que hace soltar una tarea en un día del calendario o
+ * en «Sin fecha» (ADR-0068). La columna no cambia. El aviso dice cuándo vence y su «Deshacer» devuelve la de antes.
+ */
+export async function setDueDate(
+  m: Muninn,
+  qc: QueryClient,
+  task: TaskWithColumn,
+  dueDate: string | null,
+): Promise<boolean> {
+  if ((task.dueDate ?? null) === dueDate) return true
+  return patchTask(
+    m,
+    qc,
+    task,
+    { dueDate },
+    { message: dueToast(dueDate, m.today()), icon: 'calendar' },
+  )
 }
 
 /** Archiva (la quita del tablero). «Deshacer» la restaura en su columna y posición. */
@@ -266,22 +272,87 @@ export async function archiveTask(
   }
   settle(qc, task.projectId, task.id)
   if (opts.undoing) return true
-  notify.success(`«${task.title}» archivada`, {
+  notifyUndo(`«${task.title}» archivada`, {
     icon: 'archive',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await serial(task.projectId, () => m.tasks.restore(task.id))
-          settle(qc, task.projectId, task.id)
-          notify.info(`«${task.title}» recuperada`, { icon: 'archive' })
-        } catch (err) {
-          fail('No se pudo recuperar la tarea', err)
-        }
-      },
+    undo: async () => {
+      await serial(task.projectId, () => m.tasks.restore(task.id))
+      settle(qc, task.projectId, task.id)
     },
+    undone: [`«${task.title}» recuperada`, { icon: 'archive' }],
+    failTitle: 'No se pudo recuperar la tarea',
   })
   return true
+}
+
+/** Saca una tarea de «Archivadas» y la devuelve a su columna. «Deshacer» la vuelve a archivar. */
+export async function restoreArchivedTask(
+  m: Muninn,
+  qc: QueryClient,
+  task: Pick<TaskRef, 'id' | 'projectId' | 'title'>,
+): Promise<boolean> {
+  try {
+    await serial(task.projectId, () => m.tasks.restore(task.id))
+  } catch (err) {
+    fail('No se pudo recuperar la tarea', err)
+    return false
+  }
+  settle(qc, task.projectId, task.id)
+  notifyUndo(`«${task.title}» recuperada`, {
+    icon: 'archive',
+    description: 'Vuelve a estar en su columna.',
+    undo: async () => {
+      await serial(task.projectId, () => m.tasks.archive(task.id))
+      settle(qc, task.projectId, task.id)
+    },
+    undone: [`«${task.title}» archivada otra vez`, { icon: 'archive' }],
+    failTitle: 'No se pudo archivar la tarea',
+  })
+  return true
+}
+
+/** Lo que dura el aviso de «Eliminar»: hasta entonces no se borra nada. */
+const DELETE_DELAY = 6000
+
+/**
+ * Elimina para siempre tareas archivadas de un proyecto (ADR-0067, como los proyectos en ADR-0065). No pregunta:
+ * las quita de la vista y espera lo que dura el aviso; «Deshacer» las devuelve sin haber borrado nada. Si se cierra
+ * la app antes, no se borran.
+ */
+export function deleteArchivedTasksWithUndo(
+  m: Muninn,
+  qc: QueryClient,
+  projectId: string,
+  tasks: Pick<TaskWithColumn, 'id' | 'title' | 'source'>[],
+  view: { hide: (ids: string[]) => void; show: (ids: string[]) => void },
+) {
+  const ids = tasks.map((t) => t.id)
+  const one = tasks.length === 1
+  const fromGithub = tasks.some((t) => t.source === 'github')
+  view.hide(ids)
+  const timer = setTimeout(async () => {
+    const failed: string[] = []
+    for (const id of ids)
+      await serial(projectId, () => m.tasks.delete(id)).catch(() => failed.push(id))
+    settle(qc, projectId)
+    view.show(failed)
+    if (failed.length)
+      notify.error('No se pudo eliminar todo', {
+        description: `${failed.length === 1 ? 'Queda 1' : `Quedan ${failed.length}`} en Archivadas.`,
+      })
+  }, DELETE_DELAY)
+  notifyUndo(one ? `«${tasks[0]?.title}» eliminada` : `${tasks.length} tareas eliminadas`, {
+    icon: 'trash',
+    description: fromGithub
+      ? 'Si su issue de GitHub sigue abierta, volverá con la próxima sincronización.'
+      : 'Con sus subtareas. Sus notas se quedan sin tarea.',
+    duration: DELETE_DELAY,
+    // Aún no se ha borrado nada: deshacer es cancelar la espera, no puede fallar.
+    undo: () => {
+      clearTimeout(timer)
+      view.show(ids)
+    },
+    undone: one ? 'Tarea devuelta a Archivadas' : 'Tareas devueltas a Archivadas',
+  })
 }
 
 // ─── Subtareas ──────────────────────────────────────────────────────────────
@@ -305,18 +376,16 @@ export async function addChecklistItem(
     return false
   }
   refreshChecklist(qc, task)
-  notify.success('Subtarea añadida', {
+  notifyUndo('Subtarea añadida', {
     icon: 'plus',
     description: item.title,
     id: `cl-${task.id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await m.checklist.delete(item.id)
-        refreshChecklist(qc, task)
-        notify.info('Subtarea quitada')
-      },
+    undo: async () => {
+      await m.checklist.delete(item.id)
+      refreshChecklist(qc, task)
     },
+    undone: 'Subtarea quitada',
+    failTitle: 'No se pudo quitar la subtarea',
   })
   return true
 }
@@ -343,17 +412,11 @@ export async function setChecklistDone(
   }
   refreshChecklist(qc, task)
   if (opts.undoing) return true
-  notify.success(done ? 'Subtarea hecha' : 'Subtarea pendiente', {
+  notifyUndo(done ? 'Subtarea hecha' : 'Subtarea pendiente', {
     icon: 'check',
     description: item.title,
     id: `cl-${item.id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        const ok = await setChecklistDone(m, qc, task, item, !done, { undoing: true })
-        if (ok) notify.info('Cambio deshecho')
-      },
-    },
+    undo: () => setChecklistDone(m, qc, task, item, !done, { undoing: true }),
   })
   return true
 }
@@ -376,17 +439,15 @@ export async function deleteChecklistItem(
     return false
   }
   refreshChecklist(qc, task)
-  notify.success('Subtarea quitada', {
+  notifyUndo('Subtarea quitada', {
     icon: 'trash',
     description: item.title,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await m.checklist.add(task.id, item.title, { done: item.done, index })
-        refreshChecklist(qc, task)
-        notify.info('Subtarea recuperada')
-      },
+    undo: async () => {
+      await m.checklist.add(task.id, item.title, { done: item.done, index })
+      refreshChecklist(qc, task)
     },
+    undone: 'Subtarea recuperada',
+    failTitle: 'No se pudo recuperar la subtarea',
   })
   return true
 }
