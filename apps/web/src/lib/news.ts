@@ -1,7 +1,8 @@
 import type { Muninn, NewsItem, NewsSource } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
-import { fail, isBusy, serial } from './mutations'
+import { fail, notifyUndo } from './feedback'
+import { isBusy, serial } from './mutations'
 import { normalize as fold } from './text'
 
 /**
@@ -124,15 +125,11 @@ export async function addSource(
   } finally {
     settleNews(qc)
   }
-  notify.success(`Fuente «${source.title}» añadida`, {
+  notifyUndo(`Fuente «${source.title}» añadida`, {
     icon: 'news',
     description: 'Sus artículos llegan en la próxima descarga',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await archiveSource(m, qc, source, { undoing: true })
-      },
-    },
+    undo: () => archiveSource(m, qc, source, { undoing: true }),
+    undone: 'Fuente quitada',
   })
   return source
 }
@@ -142,7 +139,8 @@ export async function setSourceEnabled(
   qc: QueryClient,
   source: NewsSource,
   enabled: boolean,
-) {
+  undoing = false,
+): Promise<boolean> {
   qc.setQueryData<NewsSource[]>(newsKeys.sources, (list) =>
     list?.map((s) => (s.id === source.id ? { ...s, enabled } : s)),
   )
@@ -150,16 +148,18 @@ export async function setSourceEnabled(
     await run(() => m.news.sources.update(source.id, { enabled }))
   } catch (err) {
     fail('No se pudo cambiar la fuente', err)
-    return settleNews(qc)
+    settleNews(qc)
+    return false
   }
   settleNews(qc)
-  notify.success(enabled ? `«${source.title}» activada` : `«${source.title}» en pausa`, {
+  if (undoing) return true
+  const title = (on: boolean) => (on ? `«${source.title}» activada` : `«${source.title}» en pausa`)
+  notifyUndo(title(enabled), {
     icon: 'news',
-    action: {
-      label: 'Deshacer',
-      onClick: () => void setSourceEnabled(m, qc, { ...source, enabled }, !enabled),
-    },
+    undo: () => setSourceEnabled(m, qc, { ...source, enabled }, !enabled, true),
+    undone: title(!enabled),
   })
+  return true
 }
 
 export async function archiveSource(
@@ -167,32 +167,25 @@ export async function archiveSource(
   qc: QueryClient,
   source: NewsSource,
   opts: { undoing?: boolean } = {},
-) {
+): Promise<boolean> {
   qc.setQueryData<NewsSource[]>(newsKeys.sources, (list) => list?.filter((s) => s.id !== source.id))
   try {
     await run(() => m.news.sources.archive(source.id))
   } catch (err) {
     fail('No se pudo quitar la fuente', err)
-    return settleNews(qc)
+    settleNews(qc)
+    return false
   }
   settleNews(qc)
-  if (opts.undoing) return notify.info('Fuente quitada')
-  notify.success(`«${source.title}» quitada`, {
+  if (opts.undoing) return true
+  notifyUndo(`«${source.title}» quitada`, {
     icon: 'archive',
     description: 'Sus artículos guardados se conservan',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await run(() => m.news.sources.restore(source.id))
-          notify.info('Fuente recuperada')
-        } catch (err) {
-          fail('No se pudo recuperar', err)
-        }
-        settleNews(qc)
-      },
-    },
+    undo: () => run(() => m.news.sources.restore(source.id)).finally(() => settleNews(qc)),
+    undone: 'Fuente recuperada',
+    failTitle: 'No se pudo recuperar',
   })
+  return true
 }
 
 export async function setSaved(
@@ -201,7 +194,7 @@ export async function setSaved(
   item: NewsItem,
   saved: boolean,
   undoing = false,
-) {
+): Promise<boolean> {
   const savedAt = saved ? new Date().toISOString() : null
   qc.setQueryData<NewsItem[]>(newsKeys.items, (list) =>
     list?.map((i) => (i.id === item.id ? { ...i, savedAt } : i)),
@@ -210,14 +203,16 @@ export async function setSaved(
     await run(() => m.news.items.setSaved(item.id, saved))
   } catch (err) {
     fail('No se pudo guardar', err)
-    return settleNews(qc)
+    settleNews(qc)
+    return false
   }
   settleNews(qc)
-  if (undoing) return
-  notify.success(saved ? 'Guardada para leer luego' : 'Ya no está guardada', {
+  if (undoing) return true
+  notifyUndo(saved ? 'Guardada para leer luego' : 'Ya no está guardada', {
     icon: 'pin',
-    action: { label: 'Deshacer', onClick: () => void setSaved(m, qc, item, !saved, true) },
+    undo: () => setSaved(m, qc, item, !saved, true),
   })
+  return true
 }
 
 /** Al abrir un artículo: leído, sin aviso (es navegar, no cambiar nada que haya que deshacer). */

@@ -11,7 +11,6 @@ import type {
   UpdateCategoryInput,
   UpdateTransactionInput,
 } from '@muninn/core'
-import { notify } from '@muninn/ui'
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import { notifyUndo } from './feedback'
 import {
@@ -204,25 +203,24 @@ export async function archiveTransaction(
   }
   settleFinance(qc)
   if (opts.undoing) return true
-  notify.success('Movimiento archivado', {
+  notifyUndo('Movimiento archivado', {
     icon: 'archive',
     description: describe(tx),
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        const snap2 = snapshot(qc)
-        cacheTransaction(qc, tx.id, tx)
-        cacheBalances(qc, tx, 1)
-        try {
-          await run(() => m.finance.transactions.restore(tx.id))
-          notify.info('Movimiento recuperado')
-        } catch (err) {
-          restoreSnapshot(qc, snap2)
-          fail('No se pudo recuperar el movimiento', err)
-        }
+    undo: async () => {
+      const snap2 = snapshot(qc)
+      cacheTransaction(qc, tx.id, tx)
+      cacheBalances(qc, tx, 1)
+      try {
+        await run(() => m.finance.transactions.restore(tx.id))
+      } catch (err) {
+        restoreSnapshot(qc, snap2)
+        throw err
+      } finally {
         settleFinance(qc)
-      },
+      }
     },
+    undone: 'Movimiento recuperado',
+    failTitle: 'No se pudo recuperar el movimiento',
   })
   return true
 }
@@ -245,12 +243,10 @@ export async function createAccount(m: Muninn, qc: QueryClient, input: CreateAcc
     const account = await run(() => m.finance.accounts.create(input))
     patchList<AccountWithBalance>(qc, financeKeys.accounts, (l) => [...l, account])
     settleFinance(qc)
-    notify.success(`Cuenta «${account.name}» creada`, {
+    notifyUndo(`Cuenta «${account.name}» creada`, {
       icon: 'plus',
-      action: {
-        label: 'Deshacer',
-        onClick: () => archiveAccount(m, qc, account, { undoing: true }),
-      },
+      undo: () => archiveAccount(m, qc, account, { undoing: true }),
+      undone: [`Cuenta «${account.name}» deshecha`, { icon: 'archive' }],
     })
     return account
   } catch (err) {
@@ -320,10 +316,7 @@ export async function archiveAccount(
     return false
   }
   settleFinance(qc)
-  if (opts.undoing) {
-    notify.info(`Cuenta «${account.name}» deshecha`, { icon: 'archive' })
-    return true
-  }
+  if (opts.undoing) return true
   notifyUndo(`«${account.name}» archivada`, {
     icon: 'archive',
     description: 'sus movimientos se conservan',
@@ -339,12 +332,10 @@ export async function createCategory(m: Muninn, qc: QueryClient, input: CreateCa
     const category = await run(() => m.finance.categories.create(input))
     patchList<FinanceCategory>(qc, financeKeys.categories, (l) => [...l, category])
     settleFinance(qc)
-    notify.success(`Categoría «${category.name}» creada`, {
+    notifyUndo(`Categoría «${category.name}» creada`, {
       icon: 'plus',
-      action: {
-        label: 'Deshacer',
-        onClick: () => archiveCategory(m, qc, category, { undoing: true }),
-      },
+      undo: () => archiveCategory(m, qc, category, { undoing: true }),
+      undone: [`Categoría «${category.name}» deshecha`, { icon: 'archive' }],
     })
     return category
   } catch (err) {
@@ -400,10 +391,7 @@ export async function archiveCategory(
     return false
   }
   settleFinance(qc)
-  if (opts.undoing) {
-    notify.info(`Categoría «${category.name}» deshecha`, { icon: 'archive' })
-    return true
-  }
+  if (opts.undoing) return true
   notifyUndo(`«${category.name}» archivada`, {
     icon: 'archive',
     description: 'sus movimientos la conservan',
@@ -439,18 +427,11 @@ export async function moveCategory(
   }
   settleFinance(qc)
   if (opts.undoing) return true
-  notify.success(`«${category.name}» movida`, {
+  notifyUndo(`«${category.name}» movida`, {
     icon: 'move',
-    action:
-      fromIndex >= 0
-        ? {
-            label: 'Deshacer',
-            onClick: async () => {
-              const ok = await moveCategory(m, qc, category, fromIndex, { undoing: true })
-              if (ok) notify.info('Orden deshecho', { icon: 'move' })
-            },
-          }
-        : undefined,
+    // Sin la lista en caché no se sabe de dónde venía.
+    undo: fromIndex >= 0 ? () => moveCategory(m, qc, category, fromIndex, { undoing: true }) : null,
+    undone: ['Orden deshecho', { icon: 'move' }],
   })
   return true
 }

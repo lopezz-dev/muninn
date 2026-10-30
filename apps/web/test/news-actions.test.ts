@@ -95,6 +95,20 @@ describe('fuentes', () => {
     )
     await clickUndo()
     expect(f.news.sources.update).toHaveBeenLastCalledWith('s1', { enabled: true })
+    // Antes, deshacer sacaba otro aviso con su propio «Deshacer».
+    expect(notify.success).toHaveBeenCalledOnce()
+    expect(infos()).toEqual(['«Blog» activada'])
+  })
+
+  it('pausar: si deshacer falla, solo avisa del fallo', async () => {
+    const f = fake()
+    await setSourceEnabled(asMuninn(f), new QueryClient(), source, false)
+    f.news.sources.update.mockImplementationOnce(sinRed)
+    await clickUndo()
+    expect(notify.info).not.toHaveBeenCalled()
+    expect(notify.error).toHaveBeenCalledWith('No se pudo cambiar la fuente', {
+      description: 'sin red',
+    })
   })
 
   it('quitar: «Deshacer» la recupera', async () => {
@@ -127,6 +141,16 @@ describe('guardar para luego', () => {
     await clickUndo()
     expect(f.news.items.setSaved).toHaveBeenLastCalledWith('i1', false)
     expect(notify.success).toHaveBeenCalledOnce()
+    expect(infos()).toEqual(['Cambio deshecho'])
+  })
+
+  it('si deshacer falla, no dice «deshecho»', async () => {
+    const f = fake()
+    await setSaved(asMuninn(f), new QueryClient(), item, true)
+    f.news.items.setSaved.mockImplementationOnce(sinRed)
+    await clickUndo()
+    expect(notify.info).not.toHaveBeenCalled()
+    expect(notify.error).toHaveBeenCalledWith('No se pudo guardar', { description: 'sin red' })
   })
 })
 
@@ -143,6 +167,17 @@ describe('resumen del día', () => {
     await clickUndo()
     expect(f.news.digests.save).toHaveBeenLastCalledWith(oldDigest)
     expect(infos()).toEqual(['Vuelve el resumen anterior'])
+  })
+
+  it('si devolverlo falla, lo dice (antes se perdía en silencio)', async () => {
+    const f = fake()
+    await generateDigestNow(asMuninn(f), new QueryClient(), prefs)
+    f.news.digests.save.mockImplementationOnce(sinRed)
+    await clickUndo()
+    expect(notify.info).not.toHaveBeenCalled()
+    expect(notify.error).toHaveBeenCalledWith('No se pudo recuperar el resumen anterior', {
+      description: 'sin red',
+    })
   })
 
   it('si no había ninguno, no hay nada que deshacer', async () => {

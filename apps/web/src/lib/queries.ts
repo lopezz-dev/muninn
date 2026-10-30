@@ -210,22 +210,17 @@ export function deleteArchivedWithUndo(
         description: `Quedan ${failed.length} en Archivados.`,
       })
   }, wait)
-  notify.success(title, {
+  notifyUndo(title, {
     icon: 'trash',
     description: 'Con sus tareas. Las notas se quedan sin proyecto.',
     duration: wait,
-    action: {
-      label: 'Deshacer',
-      onClick: () => {
-        clearTimeout(timer)
-        view.show(ids)
-        notify.info(
-          projects.length === 1
-            ? 'Proyecto devuelto a Archivados'
-            : 'Proyectos devueltos a Archivados',
-        )
-      },
+    // Aún no se ha borrado nada: deshacer es cancelar la espera, no puede fallar.
+    undo: () => {
+      clearTimeout(timer)
+      view.show(ids)
     },
+    undone:
+      projects.length === 1 ? 'Proyecto devuelto a Archivados' : 'Proyectos devueltos a Archivados',
   })
 }
 

@@ -1,7 +1,7 @@
 import type { Muninn, UserSettings } from '@muninn/core'
-import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
-import { fail, serial } from './mutations'
+import { fail, notifyUndo } from './feedback'
+import { serial } from './mutations'
 import { keys } from './queries'
 
 /**
@@ -80,15 +80,16 @@ export async function changeReportPrefs(
   qc: QueryClient,
   patch: Partial<Pick<MorningReportPrefs, 'enabled' | 'time'>>,
   undoing = false,
-) {
+): Promise<boolean> {
   let before: MorningReportPrefs
   try {
     before = await savePrefs(m, qc, patch)
   } catch (err) {
-    return fail('No se pudo guardar el ajuste', err)
+    fail('No se pudo guardar el ajuste', err)
+    return false
   }
-  if (undoing) return notify.info('Cambio deshecho')
-  notify.success(
+  if (undoing) return true
+  notifyUndo(
     patch.enabled === false
       ? 'Informe de la mañana desactivado'
       : patch.enabled
@@ -96,11 +97,8 @@ export async function changeReportPrefs(
         : `El informe se hará a las ${patch.time}`,
     {
       icon: 'clock',
-      action: {
-        label: 'Deshacer',
-        onClick: () =>
-          void changeReportPrefs(m, qc, { enabled: before.enabled, time: before.time }, true),
-      },
+      undo: () => changeReportPrefs(m, qc, { enabled: before.enabled, time: before.time }, true),
     },
   )
+  return true
 }

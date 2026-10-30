@@ -1,6 +1,5 @@
 import type { Muninn } from '@muninn/core'
 import type { Appearance } from '@muninn/ui'
-import { notify } from '@muninn/ui'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
 import {
   appearanceStore,
@@ -8,6 +7,7 @@ import {
   saveAppearanceRemote,
   useAppearance,
 } from './appearance'
+import { fail, notifyUndo } from './feedback'
 import {
   DEFAULT_REPORT,
   type MorningReportPrefs,
@@ -15,7 +15,6 @@ import {
   savePrefs,
 } from './morning-report-prefs'
 import { useMuninn } from './muninn'
-import { fail } from './mutations'
 import { settingsQuery } from './queries'
 
 /**
@@ -98,25 +97,15 @@ export async function resetPrefs(
     }
   }
 
-  notify.success(label, {
+  notifyUndo(label, {
     icon: 'sync',
     description: 'Vuelven a su valor de fábrica',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        if (prevLook) {
-          appearanceStore.set(prevLook)
-          saveAppearanceRemote(prevLook)
-        }
-        if (prevReport) {
-          try {
-            await savePrefs(m, qc, { enabled: prevReport.enabled, time: prevReport.time })
-          } catch (err) {
-            return fail('No se pudo deshacer', err)
-          }
-        }
-        notify.info('Cambio deshecho')
-      },
+    undo: async () => {
+      if (prevLook) {
+        appearanceStore.set(prevLook)
+        saveAppearanceRemote(prevLook)
+      }
+      if (prevReport) await savePrefs(m, qc, { enabled: prevReport.enabled, time: prevReport.time })
     },
   })
 }

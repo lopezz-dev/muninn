@@ -24,10 +24,11 @@ export const fail = (title: string, err: unknown) =>
 
 export interface UndoOptions extends Omit<NotifyOptions, 'action'> {
   /**
-   * La inversa del cambio. Si devuelve `false`, ya avisó ella del fallo (las acciones que se llaman a sí mismas con
-   * `{ undoing: true }`) y no se dice nada más; si lanza, se avisa con `failTitle`.
+   * La inversa del cambio (puede ser síncrona). Si devuelve `false`, ya avisó ella del fallo (las acciones que se
+   * llaman a sí mismas con `{ undoing: true }`) y no se dice nada más; si lanza, se avisa con `failTitle`. `null`:
+   * esta vez no hay inversa (no se sabe a dónde volver) y el aviso sale sin «Deshacer».
    */
-  undo: () => Promise<unknown>
+  undo: (() => unknown) | null
   /** Aviso tras deshacer: un título, o título y opciones. Por defecto, «Cambio deshecho». */
   undone?: string | [string, NotifyOptions]
   failTitle?: string
@@ -41,6 +42,10 @@ export function notifyUndo(
   title: string,
   { undo, undone = 'Cambio deshecho', failTitle = 'No se pudo deshacer', ...opts }: UndoOptions,
 ) {
+  if (!undo) {
+    notify.success(title, opts)
+    return
+  }
   notify.success(title, {
     ...opts,
     action: {

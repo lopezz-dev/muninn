@@ -1,6 +1,7 @@
 import type { ModuleName, Muninn, UserSettings } from '@muninn/core'
-import { type IconName, notify } from '@muninn/ui'
+import type { IconName } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { notifyUndo } from './feedback'
 import { withModule } from './modules'
 import { fail, serial } from './mutations'
 import { keys } from './queries'
@@ -32,20 +33,13 @@ export async function setModuleEnabled(
     return false
   }
   if (opts.undoing) return true
-  notify.success(`${toast.label} ${on ? 'activado' : 'desactivado'}`, {
+  notifyUndo(`${toast.label} ${on ? 'activado' : 'desactivado'}`, {
     icon: toast.icon,
     id: `module-${id}`,
     description: on
       ? 'Vuelve a estar en el menú y en el buscador'
       : 'Sale del menú y del buscador; tus datos siguen guardados',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        if (await setModuleEnabled(m, qc, id, !on, toast, { undoing: true })) {
-          notify.info('Cambio deshecho')
-        }
-      },
-    },
+    undo: () => setModuleEnabled(m, qc, id, !on, toast, { undoing: true }),
   })
   return true
 }

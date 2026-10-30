@@ -1,5 +1,4 @@
 import type { BoardColumn, ColumnKind, Muninn, UpdateColumnInput } from '@muninn/core'
-import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import { applyColumnMove, applyTaskMove, type BoardData } from './board'
 import { notifyUndo } from './feedback'
@@ -32,23 +31,17 @@ export async function createColumn(
     d ? { ...d, columns: [...d.columns, column] } : d,
   )
   settle(qc, input.projectId)
-  notify.success(`Columna «${column.name}» creada`, {
+  notifyUndo(`Columna «${column.name}» creada`, {
     icon: 'plus',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await serial(input.projectId, () => m.columns.delete(column.id))
-          qc.setQueryData<BoardData>(keys.board(input.projectId), (d) =>
-            d ? { ...d, columns: d.columns.filter((c) => c.id !== column.id) } : d,
-          )
-          settle(qc, input.projectId)
-          notify.info(`Columna «${column.name}» quitada`)
-        } catch (err) {
-          fail('No se pudo quitar la columna', err)
-        }
-      },
+    undo: async () => {
+      await serial(input.projectId, () => m.columns.delete(column.id))
+      qc.setQueryData<BoardData>(keys.board(input.projectId), (d) =>
+        d ? { ...d, columns: d.columns.filter((c) => c.id !== column.id) } : d,
+      )
+      settle(qc, input.projectId)
     },
+    undone: `Columna «${column.name}» quitada`,
+    failTitle: 'No se pudo quitar la columna',
   })
   return column
 }
@@ -105,18 +98,11 @@ export async function moveColumn(
   }
   settle(qc, column.projectId)
   if (opts.undoing) return true
-  notify.success(`Columna «${column.name}» movida`, {
+  notifyUndo(`Columna «${column.name}» movida`, {
     icon: 'move',
-    action:
-      fromIndex >= 0
-        ? {
-            label: 'Deshacer',
-            onClick: async () => {
-              const ok = await moveColumn(m, qc, column, fromIndex, { undoing: true })
-              if (ok) notify.info('Movimiento deshecho', { icon: 'move' })
-            },
-          }
-        : undefined,
+    // Sin tablero en caché no se sabe de dónde venía.
+    undo: fromIndex >= 0 ? () => moveColumn(m, qc, column, fromIndex, { undoing: true }) : null,
+    undone: ['Movimiento deshecho', { icon: 'move' }],
   })
   return true
 }
@@ -154,37 +140,30 @@ export async function deleteColumn(
     return false
   }
   settle(qc, column.projectId)
-  notify.success(`Columna «${column.name}» borrada`, {
+  notifyUndo(`Columna «${column.name}» borrada`, {
     icon: 'trash',
     description:
       movedTaskIds.length && dest
         ? `${movedTaskIds.length === 1 ? '1 tarea movida' : `${movedTaskIds.length} tareas movidas`} a ${dest.name}`
         : undefined,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          const restored = await serial(column.projectId, async () => {
-            const col = await m.columns.create({
-              projectId: column.projectId,
-              name: column.name,
-              kind: column.kind,
-              color: column.color,
-              wipLimit: column.wipLimit,
-              index: index != null && index >= 0 ? index : undefined,
-            })
-            for (const [i, id] of movedTaskIds.entries()) {
-              await m.tasks.move(id, { columnId: col.id, index: i })
-            }
-            return col
-          })
-          settle(qc, column.projectId)
-          notify.info(`Columna «${restored.name}» recuperada`)
-        } catch (err) {
-          fail('No se pudo recuperar la columna', err)
+    undo: async () => {
+      await serial(column.projectId, async () => {
+        const col = await m.columns.create({
+          projectId: column.projectId,
+          name: column.name,
+          kind: column.kind,
+          color: column.color,
+          wipLimit: column.wipLimit,
+          index: index != null && index >= 0 ? index : undefined,
+        })
+        for (const [i, id] of movedTaskIds.entries()) {
+          await m.tasks.move(id, { columnId: col.id, index: i })
         }
-      },
+      })
+      settle(qc, column.projectId)
     },
+    undone: `Columna «${column.name}» recuperada`,
+    failTitle: 'No se pudo recuperar la columna',
   })
   return true
 }
