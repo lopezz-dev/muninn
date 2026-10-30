@@ -8,6 +8,7 @@ import { DOCS } from './docs/content'
 import { DocIcon, DocTile, GROUP_ICON } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
 import { DocResults, DocSearchField, useDocSearch } from './docs/search'
+import { TreeItem, TreeList } from './docs/tree'
 
 const GROUPS = groupDocs(DOCS)
 
@@ -145,7 +146,7 @@ function Portada() {
   )
 }
 
-/** Índice de la izquierda (escritorio, con una guía abierta): buscador y guías por grupos, con su propio scroll. */
+/** Índice de la izquierda (escritorio, con una guía abierta): buscador y guías colgando de su grupo, con scroll propio. */
 function Indice() {
   const search = useDocSearch()
   return (
@@ -165,27 +166,30 @@ function Indice() {
         <DocResults search={search} dense />
       ) : (
         GROUPS.map((g) => (
-          <div key={g.id} className="flex flex-col gap-0.5">
+          <div key={g.id} className="flex flex-col">
             <GroupTitle id={g.id} label={g.label} className="px-2.5 pt-2 pb-1" />
-            {g.docs.map((d) => (
-              <Link
-                key={d.slug}
-                to="/documentacion/$pagina"
-                params={{ pagina: d.slug }}
-                className={cn(
-                  'group flex h-[30px] items-center gap-2.5 rounded-md px-2.5 text-[13.5px] text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
-                  'data-[status=active]:bg-fg/[0.07] data-[status=active]:text-fg',
-                )}
-              >
-                <DocIcon
-                  name={d.icon}
-                  size={16}
-                  className="shrink-0 text-fg-subtle group-data-[status=active]:text-accent"
-                />
-                <span className="min-w-0 flex-1 truncate">{d.title}</span>
-                <StatusBadge status={d.status} compact />
-              </Link>
-            ))}
+            <TreeList className="ml-4">
+              {g.docs.map((d) => (
+                <TreeItem key={d.slug}>
+                  <Link
+                    to="/documentacion/$pagina"
+                    params={{ pagina: d.slug }}
+                    className={cn(
+                      'group flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13.5px] text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
+                      'data-[status=active]:bg-fg/[0.07] data-[status=active]:text-fg',
+                    )}
+                  >
+                    <DocIcon
+                      name={d.icon}
+                      size={16}
+                      className="shrink-0 text-fg-subtle group-data-[status=active]:text-accent"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{d.title}</span>
+                    <StatusBadge status={d.status} compact />
+                  </Link>
+                </TreeItem>
+              ))}
+            </TreeList>
           </div>
         ))
       )}

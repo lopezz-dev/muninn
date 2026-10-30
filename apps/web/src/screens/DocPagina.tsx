@@ -9,6 +9,7 @@ import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/out
 import { DOCS } from './docs/content'
 import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
+import { TreeItem, TreeList } from './docs/tree'
 
 const route = getRouteApi('/_app/documentacion/$pagina')
 
@@ -83,8 +84,8 @@ function useActiveHeading(ids: string[]) {
 }
 
 /**
- * Índice de la guía: los apartados y, colgando de cada uno con su línea, sus subapartados (como las conversaciones
- * anidadas). `active` es el que se está leyendo; en el móvil (`touch`) no se marca y las filas son más altas.
+ * Índice de la guía: los apartados y, colgando de cada uno en árbol (`TreeList`), sus subapartados. `active` es el
+ * que se está leyendo; en el móvil (`touch`) no se marca y las filas son más altas.
  */
 function Toc({ toc, active, touch }: { toc: OutlineItem[]; active?: string; touch?: boolean }) {
   return (
@@ -109,29 +110,26 @@ function Toc({ toc, active, touch }: { toc: OutlineItem[]; active?: string; touc
               {item.text}
             </a>
             {children.length > 0 ? (
-              <ul
-                className={cn(
-                  'flex flex-col border-l border-border',
-                  touch ? 'mb-1 ml-5' : 'my-0.5 ml-3',
-                )}
-              >
+              <TreeList className={touch ? 'mb-1 ml-5' : 'ml-3'}>
                 {children.map((c) => (
-                  <li key={c.id}>
+                  <TreeItem key={c.id}>
                     <a
                       href={`#${c.id}`}
                       onClick={(e) => jump(e, c.id)}
                       aria-current={active === c.id ? 'location' : undefined}
                       className={cn(
-                        '-ml-px flex items-center border-l text-sm leading-snug transition-colors hover:text-fg',
-                        touch ? 'min-h-9 pl-3.5 text-fg-muted' : 'py-1 pl-3 text-fg-subtle',
-                        active === c.id ? 'border-accent text-fg' : 'border-transparent',
+                        'flex items-center rounded-md text-sm leading-snug transition-colors hover:text-fg',
+                        touch
+                          ? 'min-h-9 px-1.5 text-fg-muted'
+                          : 'px-2 py-1 text-fg-subtle hover:bg-surface-hover',
+                        active === c.id && 'bg-fg/[0.07] text-fg',
                       )}
                     >
                       {c.text}
                     </a>
-                  </li>
+                  </TreeItem>
                 ))}
-              </ul>
+              </TreeList>
             ) : null}
           </li>
         )
