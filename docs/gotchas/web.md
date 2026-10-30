@@ -22,6 +22,17 @@
 - Solo funcionan si la PWA está **añadida a la pantalla de inicio** (iOS 16.4 o superior) y tras pedir permiso
   con un gesto del usuario (un clic). En Safari, sin instalar, no hay push.
 
+### «Deshacer» siempre con `notifyUndo`
+
+- **Síntoma:** pulsas «Deshacer», falla (sin conexión, por ejemplo) y no aparece ningún aviso; o sale «Cambio deshecho» aunque no se
+  deshizo nada.
+- **Causa:** cada acción montaba su propio `notify.success({ action: … })` y algunas no capturaban el error de la inversa, o
+  comprobaban mal su resultado (las que devuelven `null` al fallar).
+- **Solución:** usa `notifyUndo(título, { undo, undone?, failTitle? })` de `lib/feedback.ts`. `undo` es la inversa: si lanza, se avisa
+  con `failTitle`; si devuelve `false`, es que ya avisó ella (las acciones que se llaman a sí mismas con `{ undoing: true }`). Las que
+  devuelven el objeto o `null` se adaptan con `async () => (await accion(…)) !== null`. Para el parche inverso, `previousValues(antes,
+  parche)` (`mutations.ts`).
+
 ### Módulos desactivados: qué mira cada pieza del shell
 
 - **Síntoma:** un módulo desactivado sigue saliendo en la barra de pestañas, el buscador o un atajo; o el menú parpadea al cargar.

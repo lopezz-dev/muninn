@@ -2,6 +2,7 @@ import type { Muninn, NewsItem, NewsSource } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
 import { fail, isBusy, serial } from './mutations'
+import { normalize as fold } from './text'
 
 /**
  * Noticias (ADR-0042): consultas bajo `['news', …]` (el tiempo real refresca ese prefijo entero) y acciones con
@@ -40,12 +41,6 @@ export interface NewsFilter {
 }
 
 export const SAVED_TAB = '__saved'
-
-const fold = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
 
 /** Los artículos que se ven con ese filtro (por tema de su fuente, guardadas y texto). */
 export function filterNews(items: NewsItem[], sources: NewsSource[], f: NewsFilter): NewsItem[] {

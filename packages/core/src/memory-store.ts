@@ -23,6 +23,7 @@ import {
   byPosition,
   type CategoryStoreQuery,
   type Collection,
+  type ColumnStoreQuery,
   type NewRow,
   type NewsItemStoreQuery,
   type NoteStoreQuery,
@@ -515,10 +516,10 @@ export function createMemoryStore(
         },
       },
     ),
-    columns: new MemoryCollection<BoardColumn, { projectId: string }>(
+    columns: new MemoryCollection<BoardColumn, ColumnStoreQuery>(
       'Columna',
       columns,
-      (rows, q) => rows.filter((c) => c.projectId === q.projectId).sort(byPosition),
+      (rows, q) => rows.filter((c) => q.projectIds.includes(c.projectId)).sort(byPosition),
       changed,
       now,
     ),
@@ -530,6 +531,7 @@ export function createMemoryStore(
           rows
             .filter((t) => q.includeArchived || !t.archivedAt)
             .filter((t) => !q.projectId || t.projectId === q.projectId)
+            .filter((t) => !q.projectIds || q.projectIds.includes(t.projectId))
             .filter((t) => !q.columnIds || q.columnIds.includes(t.columnId))
             .filter((t) => !q.priority || q.priority.includes(t.priority))
             .filter((t) => !q.source || t.source === q.source)

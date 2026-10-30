@@ -57,7 +57,18 @@
 
 - **Síntoma:** el tablero de un proyecto con cientos de tareas falla al pedir el progreso de las subtareas.
 - **Causa:** `in (…)` de PostgREST va en la URL: con unos cientos de ids se pasa de largo.
-- **Solución:** el core lo pide de 100 en 100. Úsalo (`m.checklist.counts(ids)`) y no `checklist.list` por tarea.
+- **Solución:** el core lo pide de 100 en 100 (`inChunks`, en `service.ts`). Úsalo (`m.checklist.counts(ids)`) y no `checklist.list`
+  por tarea. Cualquier lectura nueva con una lista de ids (`projectIds`, `taskIds`…) pasa también por `inChunks`.
+
+### Nada de una consulta por proyecto: las lecturas van en lote
+
+- **Síntoma:** Inicio, el MCP (`list_tasks` sin proyecto) o la pantalla GitHub tardan más cuantos más proyectos hay.
+- **Causa:** con Supabase cada lectura del store es un viaje de red. `overview()` y el índice de columnas pedían columnas y tareas
+  proyecto a proyecto (1 + 2·N viajes, uno tras otro).
+- **Solución:** el store acepta varios proyectos a la vez (`columns.list({ projectIds })`, `tasks.list({ projectIds })`) y el servicio
+  reparte en memoria. Desde fuera: `m.columns.listMany(ids)` y, para el tablero, `m.projects.board(id)` (columnas, tareas y subtareas sin
+  pedir las columnas dos veces). Las lecturas independientes van con `Promise.all`. Los tests de `service.test.ts › consultas` cuentan
+  las llamadas al store: si añades un bucle de lecturas, fallan.
 
 ### `overview()` incluye las archivadas para contar lo hecho
 

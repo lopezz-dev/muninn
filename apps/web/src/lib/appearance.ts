@@ -133,9 +133,6 @@ export function connectAppearance(
   }
 }
 
-/** Hay cuenta conectada: los cambios se guardan también allí. */
-export const isAppearanceSynced = () => remote !== null
-
 /** Guarda en la cuenta (si hay); si falla, avisa y se queda en este dispositivo. */
 export function saveAppearanceRemote(appearance: Appearance) {
   remote?.(appearance).catch(() => {

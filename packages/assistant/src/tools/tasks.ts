@@ -10,13 +10,8 @@ import {
   ValidationError,
 } from '@muninn/core'
 import { z } from 'zod'
-import { type AnyTool, defineTool, isExpectedError, UUID } from './define'
-
-const projectRef = z
-  .string()
-  .min(1)
-  .describe('Id del proyecto o su nombre (no distingue mayúsculas)')
-const isoDate = z.iso.date().describe('Fecha AAAA-MM-DD')
+import { type AnyTool, defineTool, isExpectedError, previousOf, UUID } from './define'
+import { isoDate, limit, projectRef } from './shapes'
 
 /**
  * Por id o por nombre (ADR-0009): primero el nombre exacto y, si no hay, los que lo contienen. Entre varios
@@ -44,6 +39,10 @@ export async function resolveProject(app: Muninn, ref: string) {
   }
   return match
 }
+
+/** El id de un proyecto opcional (por id o nombre). */
+const optionalProjectId = async (app: Muninn, ref: string | undefined) =>
+  ref ? (await resolveProject(app, ref)).id : undefined
 
 /** Acepta id de columna, nombre ("En curso") o tipo ("in_progress"). */
 export async function resolveColumn(app: Muninn, projectId: string, ref: string) {
@@ -150,7 +149,7 @@ export const taskTools: AnyTool[] = [
       priority: z.array(taskPriority).optional(),
       dueBefore: isoDate.optional(),
       search: z.string().optional().describe('Texto en título o descripción'),
-      limit: z.number().int().min(1).max(200).optional(),
+      limit: limit(200),
     },
     access: 'read',
     module: 'tasks',
@@ -158,7 +157,7 @@ export const taskTools: AnyTool[] = [
     run: async ({ app }, { project, ...rest }) =>
       app.tasks.list({
         ...rest,
-        projectId: project ? (await resolveProject(app, project)).id : undefined,
+        projectId: await optionalProjectId(app, project),
         limit: rest.limit ?? 100,
       }),
   }),
@@ -169,11 +168,15 @@ export const taskTools: AnyTool[] = [
     input: { taskId: z.uuid() },
     access: 'read',
     module: 'tasks',
-    run: async ({ app }, { taskId }) => ({
-      task: await app.tasks.get(taskId),
-      checklist: await app.checklist.list(taskId),
-      notes: await app.notes.list({ taskId }),
-    }),
+    run: async ({ app }, { taskId }) => {
+      // Tres lecturas independientes, a la vez.
+      const [task, checklist, notes] = await Promise.all([
+        app.tasks.get(taskId),
+        app.checklist.list(taskId),
+        app.notes.list({ taskId }),
+      ])
+      return { task, checklist, notes }
+    },
   }),
   defineTool({
     name: 'list_columns',
@@ -193,16 +196,16 @@ export const taskTools: AnyTool[] = [
     input: {
       project: projectRef.optional(),
       since: z.iso.datetime().optional().describe('Desde (ISO 8601)'),
-      limit: z.number().int().min(1).max(200).optional(),
+      limit: limit(200),
     },
     access: 'read',
     module: null,
     detail: (a) => a.project,
-    run: async ({ app }, { project, since, limit }) =>
+    run: async ({ app }, { project, since, limit: max }) =>
       app.recentActivity({
-        projectId: project ? (await resolveProject(app, project)).id : undefined,
+        projectId: await optionalProjectId(app, project),
         since,
-        limit: limit ?? 30,
+        limit: max ?? 30,
       }),
   }),
 
@@ -351,9 +354,7 @@ export const taskTools: AnyTool[] = [
     run: async ({ app, changed }, { taskId, ...patch }) => {
       const before = await app.tasks.get(taskId)
       const task = await app.tasks.update(taskId, patch)
-      const previous = Object.fromEntries(
-        taskFields.filter((k) => patch[k] !== undefined).map((k) => [k, before[k]]),
-      )
+      const previous = previousOf(before, patch, taskFields)
       changed({
         summary: `Tarea «${task.title}» editada`,
         undo: (m) => m.tasks.update(taskId, previous),

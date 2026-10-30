@@ -4,3 +4,6 @@ export const normalize = (s: string) =>
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
+
+/** Mismo `owner/repo`: GitHub no distingue mayúsculas en los nombres. */
+export const sameRepo = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()

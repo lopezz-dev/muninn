@@ -55,8 +55,11 @@ function useLinkedColumns(projects: Project[]) {
   const ids = projects.map((p) => p.id)
   return useQuery({
     queryKey: ['projects', 'github-columns', ids],
-    queryFn: async () =>
-      new Map(await Promise.all(ids.map(async (id) => [id, await m.columns.list(id)] as const))),
+    queryFn: async () => {
+      // Una consulta para todos los proyectos (no una por proyecto); se reparten aquí, en su orden.
+      const all = await m.columns.listMany(ids)
+      return new Map(ids.map((id) => [id, all.filter((c) => c.projectId === id)]))
+    },
     enabled: ids.length > 0,
   })
 }

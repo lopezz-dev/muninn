@@ -12,7 +12,8 @@ import type { QueryClient } from '@tanstack/react-query'
 import { AGENT_ONLY_GITHUB, blocksAgentDrop, flushGithubSoon } from './agent'
 import { applyTaskMove, type BoardData, indexInColumn } from './board'
 import { dueToast } from './calendar'
-import { fail, optimistic, rollback, serial, settle } from './mutations'
+import { notifyUndo } from './feedback'
+import { fail, optimistic, previousValues, rollback, serial, settle } from './mutations'
 import { keys } from './queries'
 
 /**
@@ -184,16 +185,11 @@ export async function createTask(
     return null
   }
   settle(qc, created.projectId, created.id)
-  notify.success(`Tarea «${created.title}» creada`, {
+  notifyUndo(`Tarea «${created.title}» creada`, {
     icon: 'plus',
     description: created.column.name || undefined,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await archiveTask(m, qc, created, { undoing: true })
-        notify.info(`«${created.title}» archivada`, { icon: 'archive' })
-      },
-    },
+    undo: () => archiveTask(m, qc, created, { undoing: true }),
+    undone: [`«${created.title}» archivada`, { icon: 'archive' }],
   })
   return created
 }
@@ -216,9 +212,7 @@ export async function patchTask(
   toast: PatchToast,
   opts: { undoing?: boolean } = {},
 ): Promise<boolean> {
-  const before = Object.fromEntries(
-    Object.keys(patch).map((k) => [k, task[k as keyof TaskWithColumn]]),
-  ) as UpdateTaskInput
+  const before = previousValues(task, patch)
   const prev = await optimistic(qc, task.projectId, (d) => ({
     ...d,
     tasks: d.tasks.map((t) => (t.id === task.id ? ({ ...t, ...patch } as TaskWithColumn) : t)),
@@ -232,18 +226,11 @@ export async function patchTask(
   }
   settle(qc, task.projectId, task.id)
   if (opts.undoing) return true
-  notify.success(toast.message, {
+  notifyUndo(toast.message, {
     icon: toast.icon,
     id: `patch-${task.id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        const ok = await patchTask(m, qc, { ...task, ...patch } as TaskWithColumn, before, toast, {
-          undoing: true,
-        })
-        if (ok) notify.info('Cambio deshecho')
-      },
-    },
+    undo: () =>
+      patchTask(m, qc, { ...task, ...patch } as TaskWithColumn, before, toast, { undoing: true }),
   })
   return true
 }
@@ -288,20 +275,14 @@ export async function archiveTask(
   }
   settle(qc, task.projectId, task.id)
   if (opts.undoing) return true
-  notify.success(`«${task.title}» archivada`, {
+  notifyUndo(`«${task.title}» archivada`, {
     icon: 'archive',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await serial(task.projectId, () => m.tasks.restore(task.id))
-          settle(qc, task.projectId, task.id)
-          notify.info(`«${task.title}» recuperada`, { icon: 'archive' })
-        } catch (err) {
-          fail('No se pudo recuperar la tarea', err)
-        }
-      },
+    undo: async () => {
+      await serial(task.projectId, () => m.tasks.restore(task.id))
+      settle(qc, task.projectId, task.id)
     },
+    undone: [`«${task.title}» recuperada`, { icon: 'archive' }],
+    failTitle: 'No se pudo recuperar la tarea',
   })
   return true
 }
@@ -319,21 +300,15 @@ export async function restoreArchivedTask(
     return false
   }
   settle(qc, task.projectId, task.id)
-  notify.success(`«${task.title}» recuperada`, {
+  notifyUndo(`«${task.title}» recuperada`, {
     icon: 'archive',
     description: 'Vuelve a estar en su columna.',
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        try {
-          await serial(task.projectId, () => m.tasks.archive(task.id))
-          settle(qc, task.projectId, task.id)
-          notify.info(`«${task.title}» archivada otra vez`, { icon: 'archive' })
-        } catch (err) {
-          fail('No se pudo archivar la tarea', err)
-        }
-      },
+    undo: async () => {
+      await serial(task.projectId, () => m.tasks.archive(task.id))
+      settle(qc, task.projectId, task.id)
     },
+    undone: [`«${task.title}» archivada otra vez`, { icon: 'archive' }],
+    failTitle: 'No se pudo archivar la tarea',
   })
   return true
 }
@@ -406,18 +381,16 @@ export async function addChecklistItem(
     return false
   }
   refreshChecklist(qc, task)
-  notify.success('Subtarea añadida', {
+  notifyUndo('Subtarea añadida', {
     icon: 'plus',
     description: item.title,
     id: `cl-${task.id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await m.checklist.delete(item.id)
-        refreshChecklist(qc, task)
-        notify.info('Subtarea quitada')
-      },
+    undo: async () => {
+      await m.checklist.delete(item.id)
+      refreshChecklist(qc, task)
     },
+    undone: 'Subtarea quitada',
+    failTitle: 'No se pudo quitar la subtarea',
   })
   return true
 }
@@ -444,17 +417,11 @@ export async function setChecklistDone(
   }
   refreshChecklist(qc, task)
   if (opts.undoing) return true
-  notify.success(done ? 'Subtarea hecha' : 'Subtarea pendiente', {
+  notifyUndo(done ? 'Subtarea hecha' : 'Subtarea pendiente', {
     icon: 'check',
     description: item.title,
     id: `cl-${item.id}`,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        const ok = await setChecklistDone(m, qc, task, item, !done, { undoing: true })
-        if (ok) notify.info('Cambio deshecho')
-      },
-    },
+    undo: () => setChecklistDone(m, qc, task, item, !done, { undoing: true }),
   })
   return true
 }
@@ -477,17 +444,15 @@ export async function deleteChecklistItem(
     return false
   }
   refreshChecklist(qc, task)
-  notify.success('Subtarea quitada', {
+  notifyUndo('Subtarea quitada', {
     icon: 'trash',
     description: item.title,
-    action: {
-      label: 'Deshacer',
-      onClick: async () => {
-        await m.checklist.add(task.id, item.title, { done: item.done, index })
-        refreshChecklist(qc, task)
-        notify.info('Subtarea recuperada')
-      },
+    undo: async () => {
+      await m.checklist.add(task.id, item.title, { done: item.done, index })
+      refreshChecklist(qc, task)
     },
+    undone: 'Subtarea recuperada',
+    failTitle: 'No se pudo recuperar la subtarea',
   })
   return true
 }

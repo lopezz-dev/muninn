@@ -1,6 +1,7 @@
 import { relatedProjects } from '@muninn/core'
 import { z } from 'zod'
 import { type AnyTool, defineTool } from './define'
+import { limit } from './shapes'
 
 /** Noticias (ADR-0042): solo lectura. Las fuentes se eligen en la app; el modelo no descarga ni borra nada. */
 export const newsTools: AnyTool[] = [
@@ -20,19 +21,19 @@ export const newsTools: AnyTool[] = [
         .optional()
         .describe('Solo las de las últimas N horas'),
       saved: z.boolean().optional().describe('Solo las guardadas'),
-      limit: z.number().int().min(1).max(50).optional(),
+      limit: limit(50),
     },
     access: 'read',
     module: 'news',
     detail: (a) => a.search ?? a.topic,
-    run: async ({ app }, { sinceHours, limit, ...rest }) => {
+    run: async ({ app }, { sinceHours, limit: max, ...rest }) => {
       const [items, sources, projects] = await Promise.all([
         app.news.items.list({
           ...rest,
           since: sinceHours
             ? new Date(Date.now() - sinceHours * 3_600_000).toISOString()
             : undefined,
-          limit: limit ?? 20,
+          limit: max ?? 20,
         }),
         app.news.sources.list(),
         app.projects.list(),

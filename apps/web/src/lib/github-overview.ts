@@ -6,6 +6,7 @@ import type {
   TaskWithColumn,
 } from '@muninn/core'
 import { issueNumber } from '../components/task-meta'
+import { sameRepo } from './text'
 
 /**
  * Lo que pinta la pantalla GitHub a partir de los datos que ya hay: proyectos con repo, tareas de GitHub,
@@ -28,8 +29,6 @@ export interface RepoRow {
   last: string | null
   private?: boolean
 }
-
-const sameRepo = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 /**
  * Filas de la tabla: primero los repos vinculados (por nombre), luego los que ve el token sin vincular.

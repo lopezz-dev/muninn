@@ -50,9 +50,10 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 - **Rutas** en `src/router.tsx` (TanStack Router, tipadas): ver [ADR-0020](adr/0020-tanstack-router-carga-diferida.md).
 - **Navegación** compartida por barra lateral, barra de pestañas y buscador en `src/shell/nav.ts`: ver [ADR-0021](adr/0021-shell-de-la-app.md)
   y [ADR-0054](adr/0054-shell-responsive-en-tres-tamanos.md) (teléfono, tablet y ordenador).
-- **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Un tablero es una sola entrada de caché (`keys.board`) que las
+- **Datos:** `useMuninn()` + react-query (`src/lib/queries.ts`). Un tablero es una sola entrada de caché (`keys.board`, que llena
+  `m.projects.board`) que las
   acciones (`task-actions.ts`, `column-actions.ts`) actualizan al instante, escriben en el core de una en una por proyecto y
-  deshacen si falla; todas dan feedback con «Deshacer» ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md)).
+  deshacen si falla; todas dan feedback con «Deshacer» vía `notifyUndo` (`lib/feedback.ts`, [ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md)).
 - **Tablero y detalle:** `/proyectos/$projectId` (drag & drop con dnd-kit, [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)) y su hija
   `/proyectos/$projectId/tareas/$taskId` ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)).
 - **Notas:** `/notas` (lista con búsqueda y filtros) y su hija `/notas/$noteId` (editor), como tablero y detalle de tarea. El Markdown

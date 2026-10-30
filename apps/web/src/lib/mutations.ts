@@ -1,4 +1,3 @@
-import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
 import type { BoardData } from './board'
 import { keys } from './queries'
@@ -65,19 +64,10 @@ export function rollback(qc: QueryClient, projectId: string, prev: BoardData | u
   settle(qc, projectId)
 }
 
-/** Errores de supabase-js al llamar a una Edge Function: llegan en inglés y sin nada útil para quien usa la app. */
-const EDGE_ERRORS: Record<string, string> = {
-  FunctionsFetchError: 'No se pudo hablar con el servidor de Muninn.',
-  FunctionsRelayError: 'No se pudo hablar con el servidor de Muninn.',
-  FunctionsHttpError: 'El servidor de Muninn respondió con un error.',
+/** Lo que valían en `current` los campos que cambia `patch`: el parche que lo deja como estaba («Deshacer»). */
+export function previousValues<T extends object, P extends object>(current: T, patch: P): P {
+  return Object.fromEntries(Object.keys(patch).map((k) => [k, current[k as keyof T]])) as P
 }
 
-export const reason = (err: unknown) =>
-  typeof navigator !== 'undefined' && navigator.onLine === false
-    ? 'Sin conexión: vuelve a intentarlo cuando la recuperes.'
-    : err instanceof Error
-      ? (EDGE_ERRORS[err.name] ?? err.message)
-      : undefined
-
-export const fail = (title: string, err: unknown) =>
-  notify.error(title, { description: reason(err) })
+// El feedback vive en `feedback.ts` (sin dependencias); se reexporta para las acciones que ya lo importan de aquí.
+export { fail, reason } from './feedback'
