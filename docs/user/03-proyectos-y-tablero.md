@@ -73,6 +73,8 @@ En el tablero, el menú **⋯** de arriba tiene:
 - **Editar proyecto:** nombre, descripción, color, logo y portada.
 - **Nueva columna:** añade una columna al final.
 - **Copiar enlace:** copia la dirección del tablero, para abrirlo directamente o guardarlo.
+- **Tareas archivadas:** las tareas que archivaste en este proyecto, para recuperarlas o eliminarlas para siempre (ver
+  [Tareas](04-tareas.md#tareas-archivadas)).
 - **Archivar proyecto:** desaparece de las listas, pero no se borra. **Deshacer** en el aviso lo recupera, y también
   **Proyectos › Archivados**. Si estaba vinculado a un repositorio de GitHub, deja de estarlo (el aviso te lo dice): así
   puedes vincular ese repositorio a otro proyecto. **Deshacer** intenta volver a vincularlo; si te pide el segundo factor,

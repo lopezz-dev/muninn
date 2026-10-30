@@ -72,6 +72,26 @@ describe('proyectos', () => {
 })
 
 describe('tareas', () => {
+  it('solo se elimina una tarea archivada, con sus subtareas; sus notas se quedan sin tarea', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't' })
+    const other = await app.tasks.create({ projectId: p.id, title: 'otra' })
+    await app.checklist.add(t.id, 'sub')
+    await app.checklist.add(other.id, 'sub de otra')
+    const note = await app.notes.create({ title: 'n', taskId: t.id })
+    await expect(app.tasks.delete(t.id)).rejects.toThrow(ValidationError)
+    await app.tasks.archive(t.id)
+    await app.tasks.delete(t.id)
+    await expect(app.tasks.get(t.id)).rejects.toThrow()
+    expect(await app.checklist.list(t.id)).toHaveLength(0)
+    expect(await app.checklist.list(other.id)).toHaveLength(1)
+    expect(await app.notes.get(note.id)).toMatchObject({ taskId: null, projectId: p.id })
+    // La actividad se queda: es el historial, y dice que se eliminó.
+    const log = (await app.recentActivity()).filter((a) => a.entityId === t.id)
+    expect(log.map((a) => a.action)).toEqual(expect.arrayContaining(['created', 'deleted']))
+  })
+
   it('se crean en la columna "todo" y al final', async () => {
     const { app } = setup()
     const p = await app.projects.create({ name: 'P' })

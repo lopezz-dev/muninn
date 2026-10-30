@@ -10,7 +10,7 @@ icon: checklist
 # Tareas
 
 > **Estado:** ya puedes crear, editar, mover, completar y archivar tareas desde la app, y también a través de los
-> [asistentes de IA](06-asistentes-ia.md).
+> [asistentes de IA](06-asistentes-ia.md). Las archivadas se pueden recuperar o eliminar para siempre desde la app.
 
 ## Crear una tarea
 
@@ -46,7 +46,21 @@ tipo **Hecho**, Muninn la marca como completada con la fecha. Si la sacas de ah�
 - **Completar:** pulsa la casilla de la tarea (en Inicio, en el panel o con **Completar**) y pasa a la columna "Hecho".
   Pulsa otra vez para **reabrirla**.
 - **Archivar:** la oculta del tablero sin borrarla (menú **⋯** de la tarea). **Deshacer** la recupera.
-- **Borrar:** desde la app aún no se puede; archiva. Los asistentes de IA tampoco pueden borrar.
+- **Eliminar:** solo las archivadas, desde **Tareas archivadas** (abajo). Los asistentes de IA no pueden eliminar tareas.
+
+### Tareas archivadas
+
+En el tablero, el menú **⋯** del proyecto tiene **Tareas archivadas**: las de ese proyecto, la última que archivaste primero, con
+la columna en la que estaban.
+
+- **Recuperar** la devuelve a su columna. **Deshacer** en el aviso la vuelve a archivar.
+- La **papelera** la elimina para siempre, y **Eliminar todas** hace lo mismo con toda la lista. No hay diálogo de confirmación:
+  desaparece de la lista y tienes unos segundos para pulsar **Deshacer** en el aviso. Hasta que el aviso se va no se borra nada (si
+  cierras la app antes, tampoco).
+- Se van con ella sus subtareas. Sus **notas no se borran**: se quedan en el proyecto, sin tarea. Y en el historial queda que la
+  eliminaste.
+- Si viene de **GitHub** y su issue sigue abierta, Muninn la volverá a traer como tarea nueva en la próxima sincronización: eliminar
+  no toca la issue. Si no quieres verla más, ciérrala en GitHub o déjala archivada.
 
 ## De dónde viene cada tarea
 

@@ -22,6 +22,7 @@ const VERBS: Record<string, [string, string]> = {
   reopened: ['reabriste', 'reabrió'],
   archived: ['archivaste', 'archivó'],
   restored: ['recuperaste', 'recuperó'],
+  deleted: ['eliminaste', 'eliminó'],
   updated: ['cambiaste', 'cambió'],
 }
 
@@ -68,6 +69,7 @@ export function describeActivity(a: Pick<Activity, 'action' | 'actor' | 'payload
     case 'reopened':
     case 'archived':
     case 'restored':
+    case 'deleted':
       return `${verb} la tarea`
     default:
       return verb

@@ -181,6 +181,15 @@ export function createMemoryStore(
   const pushDevices = toMap(initial.pushDevices ?? [])
   const pushLog = new Set(initial.pushLog ?? [])
 
+  // Lo que en Supabase hacen las claves ajenas al borrar una tarea: sus subtareas y su cola de GitHub se van con ella;
+  // sus notas se quedan sin tarea. La actividad se queda: es el historial.
+  const dropTask = (id: string) => {
+    for (const c of [...checklist.values()].filter((c) => c.taskId === id)) checklist.delete(c.id)
+    for (let i = outbox.length - 1; i >= 0; i--) if (outbox[i]?.taskId === id) outbox.splice(i, 1)
+    for (const n of notes.values()) if (n.taskId === id) notes.set(n.id, { ...n, taskId: null })
+    tasks.delete(id)
+  }
+
   const snapshot = (): MemorySnapshot =>
     structuredClone({
       projects: [...projects.values()],
@@ -494,11 +503,7 @@ export function createMemoryStore(
         // Lo que en Supabase hacen las claves ajenas: columnas, tareas (con sus subtareas) y actividad se van con el
         // proyecto; las notas se quedan sin él.
         async remove(id: string) {
-          for (const t of [...tasks.values()].filter((t) => t.projectId === id)) {
-            for (const c of [...checklist.values()].filter((c) => c.taskId === t.id))
-              checklist.delete(c.id)
-            tasks.delete(t.id)
-          }
+          for (const t of [...tasks.values()].filter((t) => t.projectId === id)) dropTask(t.id)
           for (const c of [...columns.values()].filter((c) => c.projectId === id))
             columns.delete(c.id)
           for (const n of notes.values())
@@ -517,23 +522,31 @@ export function createMemoryStore(
       changed,
       now,
     ),
-    tasks: new MemoryCollection<Task, TaskStoreQuery>(
-      'Tarea',
-      tasks,
-      (rows, q) =>
-        rows
-          .filter((t) => q.includeArchived || !t.archivedAt)
-          .filter((t) => !q.projectId || t.projectId === q.projectId)
-          .filter((t) => !q.columnIds || q.columnIds.includes(t.columnId))
-          .filter((t) => !q.priority || q.priority.includes(t.priority))
-          .filter((t) => !q.source || t.source === q.source)
-          .filter((t) => !q.externalId || t.externalId === q.externalId)
-          .filter((t) => !q.dueBefore || (t.dueDate !== null && t.dueDate <= q.dueBefore))
-          .filter((t) => !q.search || includesText([t.title, t.description], q.search))
-          .sort(byPosition)
-          .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
-      changed,
-      now,
+    tasks: Object.assign(
+      new MemoryCollection<Task, TaskStoreQuery>(
+        'Tarea',
+        tasks,
+        (rows, q) =>
+          rows
+            .filter((t) => q.includeArchived || !t.archivedAt)
+            .filter((t) => !q.projectId || t.projectId === q.projectId)
+            .filter((t) => !q.columnIds || q.columnIds.includes(t.columnId))
+            .filter((t) => !q.priority || q.priority.includes(t.priority))
+            .filter((t) => !q.source || t.source === q.source)
+            .filter((t) => !q.externalId || t.externalId === q.externalId)
+            .filter((t) => !q.dueBefore || (t.dueDate !== null && t.dueDate <= q.dueBefore))
+            .filter((t) => !q.search || includesText([t.title, t.description], q.search))
+            .sort(byPosition)
+            .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+        changed,
+        now,
+      ),
+      {
+        async remove(id: string) {
+          dropTask(id)
+          changed()
+        },
+      },
     ),
     checklist: new MemoryCollection<ChecklistItem, { taskIds: string[] }>(
       'Elemento de checklist',

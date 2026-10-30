@@ -9,6 +9,9 @@ describe('describeActivity', () => {
     expect(describeActivity({ action: 'completed', actor: 'mcp', payload: {} })).toBe(
       'completó la tarea',
     )
+    expect(describeActivity({ action: 'deleted', actor: 'user', payload: {} })).toBe(
+      'eliminaste la tarea',
+    )
   })
 
   it('un movimiento dice de dónde a dónde', () => {

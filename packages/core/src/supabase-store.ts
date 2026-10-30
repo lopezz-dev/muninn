@@ -677,6 +677,8 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     columns: col('board_columns', 'Columna', (qb, q: { projectId: string }) =>
       qb.eq('project_id', q.projectId).order('position'),
     ),
+    // Borrar una tarea (`remove` de `col`) se lleva en cascada sus subtareas y su cola de GitHub; las notas se quedan
+    // sin tarea (`on delete set null`) y la actividad no tiene clave ajena a la tarea: se conserva (ADR-0067).
     tasks: col('tasks', 'Tarea', (qb, q: TaskStoreQuery) => {
       if (!q.includeArchived) qb = qb.is('archived_at', null)
       if (q.projectId) qb = qb.eq('project_id', q.projectId)

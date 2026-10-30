@@ -755,8 +755,14 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     await log('project', id, 'deleted', null, { name: project.name })
   }
 
+  /**
+   * Borra para siempre una tarea archivada, con sus subtareas y su cola de GitHub; sus notas se quedan sin tarea y la
+   * actividad se conserva (ADR-0067). Solo las archivadas: archivar es el paso que se puede deshacer. No toca la issue
+   * de GitHub: si sigue abierta y el repo vinculado, la sincronización la vuelve a traer como tarea nueva.
+   */
   async function deleteTask(id: string) {
     const task = await getTask(id)
+    if (!task.archivedAt) throw new ValidationError('Solo se puede eliminar una tarea archivada')
     await store.tasks.remove(id)
     await log('task', id, 'deleted', task.projectId, { title: task.title })
   }
@@ -1342,6 +1348,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       reopen: reopenTask,
       archive: archiveTask,
       restore: restoreTask,
+      /** Borrado definitivo, solo de archivadas (ADR-0067). El MCP no lo expone. */
       delete: deleteTask,
     },
     checklist: {
