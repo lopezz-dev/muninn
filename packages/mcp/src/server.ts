@@ -6,7 +6,7 @@ import { MUNINN_ICON } from './icon'
 type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean }
 
 const ok = (data: unknown): ToolResult => ({
-  content: [{ type: 'text', text: JSON.stringify(data) }],
+  content: [{ type: 'text', text: JSON.stringify(data ?? null) }],
 })
 
 /** Errores esperables (validación, no encontrado) vuelven al modelo como texto para que corrija. */

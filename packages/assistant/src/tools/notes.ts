@@ -1,11 +1,11 @@
+import type { Muninn } from '@muninn/core'
 import { z } from 'zod'
-import { type AnyTool, defineTool } from './define'
+import { type AnyTool, defineTool, previousOf } from './define'
+import { limit, projectRef } from './shapes'
 import { resolveProject } from './tasks'
 
-const projectRef = z
-  .string()
-  .min(1)
-  .describe('Id del proyecto o su nombre (no distingue mayúsculas)')
+const optionalProjectId = async (app: Muninn, ref: string | undefined) =>
+  ref ? (await resolveProject(app, ref)).id : undefined
 
 export const noteTools: AnyTool[] = [
   defineTool({
@@ -15,16 +15,16 @@ export const noteTools: AnyTool[] = [
     input: {
       project: projectRef.optional(),
       search: z.string().optional(),
-      limit: z.number().int().min(1).max(100).optional(),
+      limit: limit(100),
     },
     access: 'read',
     module: 'notes',
     detail: (a) => a.search ?? a.project,
-    run: async ({ app }, { project, search, limit }) =>
+    run: async ({ app }, { project, search, limit: max }) =>
       app.notes.list({
-        projectId: project ? (await resolveProject(app, project)).id : undefined,
+        projectId: await optionalProjectId(app, project),
         search,
-        limit: limit ?? 50,
+        limit: max ?? 50,
       }),
   }),
   defineTool({
@@ -44,7 +44,7 @@ export const noteTools: AnyTool[] = [
     run: async ({ app, changed }, { project, ...rest }) => {
       const note = await app.notes.create({
         ...rest,
-        projectId: project ? (await resolveProject(app, project)).id : undefined,
+        projectId: await optionalProjectId(app, project),
       })
       changed({
         summary: `Nota «${note.title || 'Sin título'}» creada`,
@@ -69,11 +69,7 @@ export const noteTools: AnyTool[] = [
     run: async ({ app, changed }, { noteId, ...patch }) => {
       const before = await app.notes.get(noteId)
       const note = await app.notes.update(noteId, patch)
-      const previous = Object.fromEntries(
-        (['title', 'content', 'pinned'] as const)
-          .filter((k) => patch[k] !== undefined)
-          .map((k) => [k, before[k]]),
-      )
+      const previous = previousOf(before, patch, ['title', 'content', 'pinned'] as const)
       changed({
         summary: `Nota «${note.title || 'Sin título'}» editada`,
         undo: (m) => m.notes.update(noteId, previous),

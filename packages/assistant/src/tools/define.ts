@@ -67,8 +67,27 @@ export function byName<T extends { id: string; name: string }>(rows: T[], ref: s
   )
 }
 
-/** Primer argumento de texto, recortado: el detalle por defecto de una herramienta. */
-export function firstText(args: Record<string, unknown>) {
-  const v = Object.values(args).find((x) => typeof x === 'string' && !UUID.test(x))
-  return typeof v === 'string' ? (v.length > 40 ? `${v.slice(0, 39)}…` : v) : undefined
+/**
+ * `byName` o un error de validación que enumera las opciones (`options`), para que el modelo se corrija con el nombre
+ * bueno en vez de inventarse otro.
+ */
+export function pickByName<T extends { id: string; name: string }>(
+  rows: T[],
+  ref: string,
+  notFound: () => string,
+): T {
+  const match = byName(rows, ref)
+  if (!match) throw new ValidationError(notFound())
+  return match
+}
+
+/** Los valores de `before` en los campos que cambia `patch`: lo que necesita «Deshacer» para dejarlo como estaba. */
+export function previousOf<T extends object, K extends keyof T>(
+  before: T,
+  patch: Partial<Record<K, unknown>>,
+  keys: readonly K[],
+): Partial<Pick<T, K>> {
+  return Object.fromEntries(
+    keys.filter((k) => patch[k] !== undefined).map((k) => [k, before[k]]),
+  ) as Partial<Pick<T, K>>
 }

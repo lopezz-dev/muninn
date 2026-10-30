@@ -1,8 +1,10 @@
 import {
   type AccountWithBalance,
   accountKind,
+  type CategoryKind,
   categoryKind,
   centsFromEuros,
+  type FinanceCategory,
   financeColor,
   formatEuros,
   type Muninn,
@@ -14,7 +16,8 @@ import {
   ValidationError,
 } from '@muninn/core'
 import { z } from 'zod'
-import { type AnyTool, byName, defineTool } from './define'
+import { type AnyTool, defineTool, pickByName } from './define'
+import { isoDate, limit } from './shapes'
 
 const euros = z
   .union([z.string().min(1), z.number()])
@@ -32,7 +35,6 @@ const month = z
   .string()
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
   .describe('Mes AAAA-MM')
-const isoDate = z.iso.date().describe('Fecha AAAA-MM-DD')
 
 const finance = { kind: 'finance' as const }
 
@@ -46,49 +48,79 @@ function signedCents(value: string | number) {
   return negative ? -cents : cents
 }
 
-async function resolveAccount(app: Muninn, ref: string) {
-  const all = await app.finance.accounts.list({ includeArchived: true })
-  const match = byName(all, ref)
-  if (!match) {
-    throw new ValidationError(
-      `No hay ninguna cuenta "${ref}". Cuentas: ${all.map((a) => `${a.name} (${a.kind})`).join(', ') || '(ninguna: créala con create_finance_account)'}`,
+/**
+ * Cuentas y categorías de una llamada, leídas como mucho una vez cada una: resolver la cuenta, la de destino y la
+ * categoría y luego nombrarlas en la salida eran hasta cinco lecturas seguidas (cada una, un viaje de red con Supabase).
+ * Se crea uno por llamada a una herramienta, justo antes de escribir: no guarda nada entre llamadas.
+ */
+function financeLookup(app: Muninn) {
+  let accounts: Promise<AccountWithBalance[]> | undefined
+  let categories: Promise<FinanceCategory[]> | undefined
+  const allAccounts = () => {
+    if (!accounts) accounts = app.finance.accounts.list({ includeArchived: true })
+    return accounts
+  }
+  const allCategories = () => {
+    if (!categories) categories = app.finance.categories.list({ includeArchived: true })
+    return categories
+  }
+
+  async function account(ref: string) {
+    const all = await allAccounts()
+    return pickByName(
+      all,
+      ref,
+      () =>
+        `No hay ninguna cuenta "${ref}". Cuentas: ${all.map((a) => `${a.name} (${a.kind})`).join(', ') || '(ninguna: créala con create_finance_account)'}`,
     )
   }
-  return match
-}
 
-/** La cuenta por defecto de un gasto o ingreso: la primera corriente, o la primera sin archivar. */
-async function defaultAccount(app: Muninn) {
-  const all = await app.finance.accounts.list()
-  const account = all.find((a) => a.kind === 'checking') ?? all[0]
-  if (!account) throw new ValidationError('No hay cuentas: crea una con create_finance_account')
-  return account
-}
-
-async function resolveCategory(app: Muninn, ref: string, kind?: 'expense' | 'income') {
-  const all = await app.finance.categories.list({ includeArchived: true })
-  const match = byName(
-    kind ? [...all.filter((c) => c.kind === kind), ...all.filter((c) => c.kind !== kind)] : all,
-    ref,
-  )
-  if (!match) {
-    const options = all.filter((c) => !c.archivedAt && (!kind || c.kind === kind))
-    throw new ValidationError(
-      `No hay ninguna categoría "${ref}". Categorías: ${options.map((c) => c.name).join(', ')}`,
-    )
+  /** La cuenta indicada o, sin ella, la de por defecto de un gasto o ingreso: la primera corriente sin archivar. */
+  async function accountOrDefault(ref: string | undefined) {
+    if (ref) return account(ref)
+    const open = (await allAccounts()).filter((a) => !a.archivedAt)
+    const found = open.find((a) => a.kind === 'checking') ?? open[0]
+    if (!found) throw new ValidationError('No hay cuentas: crea una con create_finance_account')
+    return found
   }
-  return match
+
+  /** Con `kind`, gana una categoría de ese tipo si hay dos con el mismo nombre. */
+  async function category(ref: string, kind?: CategoryKind) {
+    const all = await allCategories()
+    const ordered = kind
+      ? [...all.filter((c) => c.kind === kind), ...all.filter((c) => c.kind !== kind)]
+      : all
+    return pickByName(ordered, ref, () => {
+      const options = all.filter((c) => !c.archivedAt && (!kind || c.kind === kind))
+      return `No hay ninguna categoría "${ref}". Categorías: ${options.map((c) => c.name).join(', ')}`
+    })
+  }
+
+  /** Movimientos con los nombres de cuenta y categoría, para que el modelo no tenga que cruzarlos. */
+  async function out(rows: Transaction[]) {
+    const [accountRows, categoryRows] = await Promise.all([allAccounts(), allCategories()])
+    const accountName = new Map(accountRows.map((a) => [a.id, a.name]))
+    const categoryName = new Map(categoryRows.map((c) => [c.id, c.name]))
+    return rows.map((t) => ({
+      ...t,
+      amountText: formatEuros(t.amount),
+      account: accountName.get(t.accountId) ?? null,
+      toAccount: t.toAccountId ? (accountName.get(t.toAccountId) ?? null) : null,
+      category: t.categoryId ? (categoryName.get(t.categoryId) ?? null) : null,
+    }))
+  }
+
+  return { account, accountOrDefault, category, out }
 }
 
 async function resolveSubscription(app: Muninn, ref: string) {
   const all = await app.finance.subscriptions.list({ includeArchived: true })
-  const match = byName(all, ref)
-  if (!match) {
-    throw new ValidationError(
+  return pickByName(
+    all,
+    ref,
+    () =>
       `No hay ninguna suscripción "${ref}". Suscripciones: ${all.map((x) => x.name).join(', ') || '(ninguna)'}`,
-    )
-  }
-  return match
+  )
 }
 
 const accountOut = (a: AccountWithBalance) => ({
@@ -102,23 +134,6 @@ const subscriptionOut = (x: Subscription) => ({
   amountText: formatEuros(x.amount),
   monthlyCostText: formatEuros(monthlyCost(x)),
 })
-
-/** Movimientos con los nombres de cuenta y categoría, para que el modelo no tenga que cruzarlos. */
-async function transactionsOut(app: Muninn, rows: Transaction[]) {
-  const [accounts, categories] = await Promise.all([
-    app.finance.accounts.list({ includeArchived: true }),
-    app.finance.categories.list({ includeArchived: true }),
-  ])
-  const account = new Map(accounts.map((a) => [a.id, a.name]))
-  const category = new Map(categories.map((c) => [c.id, c.name]))
-  return rows.map((t) => ({
-    ...t,
-    amountText: formatEuros(t.amount),
-    account: account.get(t.accountId) ?? null,
-    toAccount: t.toAccountId ? (account.get(t.toAccountId) ?? null) : null,
-    category: t.categoryId ? (category.get(t.categoryId) ?? null) : null,
-  }))
-}
 
 const kindName = { expense: 'Gasto', income: 'Ingreso', transfer: 'Traspaso' } as const
 
@@ -163,21 +178,26 @@ export const financeTools: AnyTool[] = [
       from: isoDate.optional(),
       to: isoDate.optional(),
       search: z.string().optional().describe('Texto en el concepto'),
-      limit: z.number().int().min(1).max(500).optional(),
+      limit: limit(500),
     },
     access: 'read',
     module: 'finance',
     detail: (a) => a.category ?? a.month ?? a.search,
-    run: async ({ app }, { account, category, ...rest }) =>
-      transactionsOut(
-        app,
+    run: async ({ app }, { account, category, ...rest }) => {
+      const lookup = financeLookup(app)
+      const [from, cat] = await Promise.all([
+        account ? lookup.account(account) : undefined,
+        category ? lookup.category(category) : undefined,
+      ])
+      return lookup.out(
         await app.finance.transactions.list({
           ...rest,
-          accountId: account ? (await resolveAccount(app, account)).id : undefined,
-          categoryId: category ? (await resolveCategory(app, category)).id : undefined,
+          accountId: from?.id,
+          categoryId: cat?.id,
           limit: rest.limit ?? 100,
         }),
-      ),
+      )
+    },
   }),
   defineTool({
     name: 'finance_month_report',
@@ -231,19 +251,21 @@ export const financeTools: AnyTool[] = [
     module: 'finance',
     detail: (a) => `${a.amount} €${a.concept ? ` · ${a.concept}` : ''}`,
     run: async ({ app, changed }, { kind, amount, account, toAccount, category, ...rest }) => {
-      const from = account ? await resolveAccount(app, account) : await defaultAccount(app)
+      const lookup = financeLookup(app)
+      const [from, to, cat] = await Promise.all([
+        lookup.accountOrDefault(account),
+        toAccount ? lookup.account(toAccount) : undefined,
+        category && kind !== 'transfer' ? lookup.category(category, kind) : undefined,
+      ])
       const tx = await app.finance.transactions.create({
         ...rest,
         kind,
         amount: centsFromEuros(amount),
         accountId: from.id,
-        toAccountId: toAccount ? (await resolveAccount(app, toAccount)).id : undefined,
-        categoryId:
-          category && kind !== 'transfer'
-            ? (await resolveCategory(app, category, kind)).id
-            : undefined,
+        toAccountId: to?.id,
+        categoryId: cat?.id,
       })
-      const [out] = await transactionsOut(app, [tx])
+      const [out] = await lookup.out([tx])
       changed({
         summary: `${kindName[kind]} de ${formatEuros(tx.amount)} apuntado${tx.concept ? ` («${tx.concept}»)` : ''} en ${from.name}`,
         undo: (m) => m.finance.transactions.archive(tx.id),
@@ -274,19 +296,20 @@ export const financeTools: AnyTool[] = [
       { app, changed },
       { transactionId, amount, account, toAccount, category, ...rest },
     ) => {
+      const lookup = financeLookup(app)
       const before = await app.finance.transactions.get(transactionId)
       const kind = rest.kind ?? before.kind
+      const [from, to, cat] = await Promise.all([
+        account ? lookup.account(account) : undefined,
+        toAccount ? lookup.account(toAccount) : undefined,
+        category && kind !== 'transfer' ? lookup.category(category, kind) : undefined,
+      ])
       const tx = await app.finance.transactions.update(transactionId, {
         ...rest,
         amount: amount === undefined ? undefined : centsFromEuros(amount),
-        accountId: account ? (await resolveAccount(app, account)).id : undefined,
-        toAccountId: toAccount ? (await resolveAccount(app, toAccount)).id : undefined,
-        categoryId:
-          category === null
-            ? null
-            : category && kind !== 'transfer'
-              ? (await resolveCategory(app, category, kind)).id
-              : undefined,
+        accountId: from?.id,
+        toAccountId: to?.id,
+        categoryId: category === null ? null : cat?.id,
       })
       changed({
         summary: `Movimiento de ${formatEuros(tx.amount)} editado`,
@@ -303,7 +326,7 @@ export const financeTools: AnyTool[] = [
           }),
         target: finance,
       })
-      return (await transactionsOut(app, [tx]))[0]
+      return (await lookup.out([tx]))[0]
     },
   }),
   defineTool({
@@ -370,7 +393,7 @@ export const financeTools: AnyTool[] = [
     module: 'finance',
     detail: (a) => a.account,
     run: async ({ app, changed }, { account, initialBalance, goal, ...rest }) => {
-      const before = await resolveAccount(app, account)
+      const before = await financeLookup(app).account(account)
       const a = await app.finance.accounts.update(before.id, {
         ...rest,
         initialBalance: initialBalance === undefined ? undefined : signedCents(initialBalance),
@@ -402,7 +425,7 @@ export const financeTools: AnyTool[] = [
     module: 'finance',
     detail: (a) => a.account,
     run: async ({ app, changed }, { account }) => {
-      const a = await app.finance.accounts.archive((await resolveAccount(app, account)).id)
+      const a = await app.finance.accounts.archive((await financeLookup(app).account(account)).id)
       changed({
         summary: `Cuenta «${a.name}» archivada`,
         undo: (m) => m.finance.accounts.restore(a.id),
@@ -477,12 +500,15 @@ export const financeTools: AnyTool[] = [
     module: 'finance',
     detail: (a) => a.name,
     run: async ({ app, changed }, { amount, account, category, ...rest }) => {
-      const from = account ? await resolveAccount(app, account) : await defaultAccount(app)
-      const categoryId = category
-        ? (await resolveCategory(app, category, 'expense')).id
-        : (await app.finance.categories.list({ kind: 'expense' })).find(
-            (c) => c.key === 'subscriptions',
-          )?.id
+      const lookup = financeLookup(app)
+      const [from, categoryId] = await Promise.all([
+        lookup.accountOrDefault(account),
+        category
+          ? lookup.category(category, 'expense').then((c) => c.id)
+          : app.finance.categories
+              .list({ kind: 'expense' })
+              .then((all) => all.find((c) => c.key === 'subscriptions')?.id),
+      ])
       const sub = await app.finance.subscriptions.create({
         ...rest,
         amount: centsFromEuros(amount),
@@ -525,7 +551,7 @@ export const financeTools: AnyTool[] = [
         target: finance,
       })
       return {
-        transaction: (await transactionsOut(app, [res.transaction]))[0],
+        transaction: (await financeLookup(app).out([res.transaction]))[0],
         subscription: subscriptionOut(res.subscription),
       }
     },
