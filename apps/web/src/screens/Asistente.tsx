@@ -1,13 +1,12 @@
 import { createOllamaProvider } from '@muninn/assistant'
-import { Button, cn, Dialog, Icon, IconButton, icons, notify, SheetContent } from '@muninn/ui'
+import { Button, Dialog, Icon, IconButton, icons, SheetContent } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Page, PageHeader } from '../components/Page'
 import { useAssistantChat } from '../lib/assistant-chat'
 import { DEMO_EXAMPLES, demoProvider } from '../lib/assistant-demo'
 import { type Conversation, groupOf } from '../lib/assistant-history'
-import { imageToDataUrl, MAX_IMAGES } from '../lib/assistant-images'
 import { useAssistantPrefs } from '../lib/assistant-settings'
 import { isHandheld, useProviderStatus } from '../lib/assistant-status'
 import { timeAgo } from '../lib/dates'
@@ -17,6 +16,7 @@ import { useAuth, useMuninn } from '../lib/muninn'
 import { settingsQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
 import { Logo } from '../shell/Logo'
+import { Composer, type ComposerHandle } from './asistente/Composer'
 import { BrainChip, ModelState } from './asistente/ModelState'
 import { Reply, UserBubble } from './asistente/TurnView'
 
@@ -140,23 +140,23 @@ export function Asistente() {
     modules,
   })
 
-  const [draft, setDraft] = useState('')
   const [historyOpen, setHistoryOpen] = useState(false)
-  const input = useRef<HTMLTextAreaElement>(null)
+  const composer = useRef<ComposerHandle>(null)
   const end = useRef<HTMLDivElement>(null)
 
-  // La pregunta que llega del buscador ⌘K («Preguntar a Muninn»): se envía una vez y sale de la URL.
+  // La pregunta que llega del buscador ⌘K («Preguntar a Muninn»): se envía una vez y sale de la URL. El borrador vive
+  // en el Composer: aquí solo se le pide que la ponga (sin modelo aún) o que se vacíe.
   const asked = useRef<string | null>(null)
   useEffect(() => {
     if (!q || asked.current === q) return
     if (!ready) {
-      setDraft((d) => d || q)
+      composer.current?.prefill(q)
       return
     }
     asked.current = q
     chat.startNew()
     void chat.send(q)
-    setDraft('')
+    composer.current?.clear()
     void navigate({ search: {}, replace: true })
   }, [q, ready, chat.send, chat.startNew, navigate])
 
@@ -167,67 +167,21 @@ export function Asistente() {
     end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [turns.length, lastText])
 
-  // Imágenes adjuntas (ADR-0051): reducidas en el navegador; solo si el modelo tiene visión se pueden mandar.
-  const [images, setImages] = useState<string[]>([])
-  const [dragging, setDragging] = useState(false)
-  const [vision, setVision] = useState<boolean | null>(null)
-  const fileInput = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    setVision(null)
-    if (!ready || !provider) return
-    let live = true
-    void (provider.vision?.() ?? Promise.resolve(false)).then((v) => {
-      if (live) setVision(v)
-    })
-    return () => {
-      live = false
-    }
-  }, [ready, provider])
+  // Estable para que `Reply` (memo) no se repinte con cada trozo de otra respuesta.
+  const currentId = chat.current?.id ?? null
+  const { send, undo } = chat
+  const onUndo = useCallback(
+    (turnId: string) => {
+      if (currentId) void undo(currentId, turnId)
+    },
+    [currentId, undo],
+  )
+  const onSend = useCallback((text: string, images: string[]) => void send(text, images), [send])
 
-  const attach = async (files: FileList | File[]) => {
-    const list = [...files].filter((f) => f.type.startsWith('image/'))
-    if (!list.length) return
-    const room = MAX_IMAGES - images.length
-    if (list.length > room)
-      notify.info(`Como mucho ${MAX_IMAGES} imágenes por mensaje`, { icon: 'image' })
-    const added: string[] = []
-    for (const f of list.slice(0, Math.max(0, room))) {
-      try {
-        added.push(await imageToDataUrl(f))
-      } catch (err) {
-        notify.error(err instanceof Error ? err.message : 'No se pudo adjuntar la imagen')
-      }
-    }
-    if (added.length) setImages((l) => [...l, ...added].slice(0, MAX_IMAGES))
-    input.current?.focus()
-  }
-
-  const canSend =
-    ready &&
-    !chat.running &&
-    (draft.trim() !== '' || images.length > 0) &&
-    !(images.length > 0 && !vision)
-  const submit = (text = draft) => {
-    if (!ready || chat.running) return
-    // Las sugerencias se mandan sin imágenes; lo escrito, con las adjuntas (si el modelo las ve).
-    const withImages = text === draft && images.length > 0
-    if (withImages && !vision) return
-    if (!text.trim() && !withImages) return
-    void chat.send(text, withImages ? images : [])
-    setDraft('')
-    if (withImages) setImages([])
-    input.current?.focus()
-  }
-  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault()
-      submit()
-    }
-  }
   const startNew = () => {
     chat.startNew()
     setHistoryOpen(false)
-    input.current?.focus()
+    composer.current?.focus()
   }
 
   const list = (
@@ -238,7 +192,7 @@ export function Asistente() {
           : null
       }
       conversations={chat.conversations}
-      currentId={chat.current?.id ?? null}
+      currentId={currentId}
       disabled={chat.running}
       onNew={startNew}
       onSelect={(id) => {
@@ -312,7 +266,7 @@ export function Asistente() {
                       turn={t}
                       running={chat.running && i === turns.length - 1}
                       canUndo={chat.canUndo(t.id)}
-                      onUndo={() => chat.current && void chat.undo(chat.current.id, t.id)}
+                      onUndo={onUndo}
                     />
                   ),
                 )}
@@ -332,7 +286,7 @@ export function Asistente() {
                     <button
                       key={sug}
                       type="button"
-                      onClick={() => submit(sug)}
+                      onClick={() => composer.current?.submit(sug)}
                       className="cursor-pointer rounded-lg border border-border bg-surface px-3.5 py-3 text-left text-sm text-fg-muted transition-[background-color,color,border-color,scale] duration-150 ease-out hover:border-border-strong hover:bg-surface-hover hover:text-fg active:scale-[0.98]"
                     >
                       {sug}
@@ -343,127 +297,19 @@ export function Asistente() {
             ) : null}
             <div ref={end} />
 
-            <div
-              className={cn(
-                // mt-auto: con pocos mensajes, la caja de escribir baja al pie de la pantalla.
-                'glass sticky z-10 -mx-2 mt-auto flex flex-col gap-2 rounded-xl px-2 pt-2 pb-2',
-                'bottom-[calc(env(safe-area-inset-bottom)+96px)] md:bottom-4',
-              )}
-            >
-              {/* biome-ignore lint/a11y/noStaticElementInteractions: soltar imágenes es un atajo; el clip hace lo mismo */}
-              <div
-                onDragOver={(e) => {
-                  if (!ready || !e.dataTransfer.types.includes('Files')) return
-                  e.preventDefault()
-                  setDragging(true)
-                }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setDragging(false)
-                  void attach(e.dataTransfer.files)
-                }}
-                className={cn(
-                  'flex flex-col gap-2 rounded-xl border bg-surface-sunken p-2 transition-colors focus-within:border-accent',
-                  dragging ? 'border-accent bg-accent-soft' : 'border-border-strong',
-                )}
-              >
-                {images.length ? (
-                  <ul aria-label="Imágenes adjuntas" className="flex flex-wrap gap-2 px-1 pt-1">
-                    {images.map((src, i) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: se quitan por posición
-                      <li key={i} className="relative">
-                        <img
-                          src={src}
-                          alt={`Imagen ${i + 1}`}
-                          className="size-16 rounded-lg border border-border object-cover"
-                        />
-                        <button
-                          type="button"
-                          aria-label={`Quitar la imagen ${i + 1}`}
-                          onClick={() => setImages((l) => l.filter((_, j) => j !== i))}
-                          className="absolute -top-1.5 -right-1.5 grid size-5 cursor-pointer place-items-center rounded-full border border-border-strong bg-surface-raised text-fg-muted hover:text-fg"
-                        >
-                          <icons.close size={11} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                <div className="flex items-end gap-1.5">
-                  <input
-                    ref={fileInput}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    hidden
-                    onChange={(e) => {
-                      if (e.target.files) void attach(e.target.files)
-                      e.target.value = ''
-                    }}
-                  />
-                  <IconButton
-                    aria-label="Adjuntar imágenes"
-                    icon={<Icon name="attach" size={18} />}
-                    size="lg"
-                    disabled={!ready || chat.running || images.length >= MAX_IMAGES}
-                    onClick={() => fileInput.current?.click()}
-                    className="text-fg-subtle"
-                  />
-                  <label htmlFor="asistente-mensaje" className="sr-only">
-                    Mensaje
-                  </label>
-                  <textarea
-                    id="asistente-mensaje"
-                    ref={input}
-                    rows={1}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={onKey}
-                    onPaste={(e) => {
-                      if (e.clipboardData.files.length) {
-                        e.preventDefault()
-                        void attach(e.clipboardData.files)
-                      }
-                    }}
-                    disabled={!ready}
-                    placeholder={ready ? 'Pregunta o pide algo…' : 'Aquí no está disponible'}
-                    className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-base leading-normal text-fg outline-none [field-sizing:content] placeholder:text-fg-faint disabled:cursor-not-allowed"
-                  />
-                  {chat.running ? (
-                    <IconButton
-                      aria-label="Detener"
-                      icon={<Icon name="close" size={17} />}
-                      variant="secondary"
-                      size="lg"
-                      onClick={chat.stop}
-                    />
-                  ) : (
-                    <IconButton
-                      aria-label="Enviar"
-                      icon={<Icon name="send" size={17} />}
-                      variant="primary"
-                      size="lg"
-                      disabled={!canSend}
-                      onClick={() => submit()}
-                    />
-                  )}
-                </div>
-              </div>
-              {images.length && vision === false ? (
-                <p role="status" className="flex items-start gap-2 px-1 text-xs text-fg-muted">
-                  <Icon name="warning" size={14} className="mt-px shrink-0 text-accent" />
-                  {demo
-                    ? 'La demo no ve imágenes: no hay modelo detrás.'
-                    : `«${prefs.model}» no ve imágenes. Elige un modelo con visión (gemma3, qwen2.5vl, llama3.2-vision) en Ajustes › Asistente e IA.`}
-                </p>
-              ) : (
-                <span className="hidden text-center text-xs text-fg-faint md:block">
-                  Muninn puede crear, mover y archivar, pero nunca borra. Todo queda en la
-                  actividad.
-                </span>
-              )}
-            </div>
+            <Composer
+              ref={composer}
+              ready={ready}
+              running={chat.running}
+              provider={provider}
+              noVisionMessage={
+                demo
+                  ? 'La demo no ve imágenes: no hay modelo detrás.'
+                  : `«${prefs.model}» no ve imágenes. Elige un modelo con visión (gemma3, qwen2.5vl, llama3.2-vision) en Ajustes › Asistente e IA.`
+              }
+              onSend={onSend}
+              onStop={chat.stop}
+            />
           </div>
         </section>
       </div>
