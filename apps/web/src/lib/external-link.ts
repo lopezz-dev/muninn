@@ -1,6 +1,7 @@
 import { notify } from '@muninn/ui'
 import type { MouseEvent } from 'react'
 import { isTauri } from './auth'
+import { askLink, type LinkAsk } from './link-menu'
 
 /** Cómo se abre una URL fuera de la app. Se inyecta en los tests. */
 export interface OpenerDeps {
@@ -10,6 +11,10 @@ export interface OpenerDeps {
   openUrl(url: string): Promise<void>
   /** `window.open` del navegador o la PWA. */
   open(url: string): void
+  /** ¿Pantalla táctil? Ahí un toque abre el menú «Abrir · Copiar» en vez del enlace (ADR-0073). */
+  coarse(): boolean
+  /** Pide ese menú; `false` si no hay quien lo pinte. */
+  ask(ask: LinkAsk): boolean
 }
 
 // El plugin solo existe dentro de Tauri: se carga al primer clic y no viaja con el arranque.
@@ -19,6 +24,8 @@ const defaultDeps: OpenerDeps = {
   open: (url) => {
     window.open(url, '_blank', 'noopener')
   },
+  coarse: () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
+  ask: askLink,
 }
 
 /**
@@ -37,11 +44,26 @@ export async function openExternal(url: string, deps: OpenerDeps = defaultDeps):
   }
 }
 
+export interface ExternalLinkOptions {
+  /** Corre antes de abrir (p. ej., marcar la noticia como leída). */
+  onOpen?: () => void
+  /**
+   * Abre sin el menú también en táctil: para un botón cuyo texto ya dice que abre fuera («Abrir»), no para un
+   * enlace dentro de un texto o de una fila, que es donde se toca sin querer.
+   */
+  direct?: boolean
+}
+
 /**
  * Props de un `<a>` externo: conserva `href` (copiar enlace, accesibilidad) pero el clic pasa por
- * `openExternal`. `onOpen` corre antes de abrir (p. ej., marcar la noticia como leída).
+ * `openExternal`. En pantallas táctiles, un toque abre antes el menú «Abrir enlace · Copiar enlace» (ADR-0073):
+ * sin diálogo de confirmación, pero un toque sin querer ya no saca de Muninn.
  */
-export function externalLink(url: string, onOpen?: () => void, deps: OpenerDeps = defaultDeps) {
+export function externalLink(
+  url: string,
+  { onOpen, direct }: ExternalLinkOptions = {},
+  deps: OpenerDeps = defaultDeps,
+) {
   return {
     href: url,
     target: '_blank',
@@ -53,6 +75,12 @@ export function externalLink(url: string, onOpen?: () => void, deps: OpenerDeps 
         return
       }
       e.preventDefault()
+      // Con el teclado (Enter da `detail` 0) se abre: llegar al enlace con Tab ya es intención.
+      if (!direct && e.detail !== 0 && deps.coarse()) {
+        const r = e.currentTarget.getBoundingClientRect()
+        const rect = { left: r.left, top: r.top, width: r.width, height: r.height }
+        if (deps.ask({ url, rect, onOpen })) return
+      }
       onOpen?.()
       void openExternal(url, deps)
     },

@@ -121,6 +121,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
 - [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 - [ADR-0068](0068-vista-calendario-del-tablero.md) — Vista Calendario del tablero: arrastrar cambia solo la fecha, bandeja «Sin fecha» y móvil sin arrastre
+- [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -170,6 +171,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0068](0068-vista-calendario-del-tablero.md) — Vista Calendario del tablero: arrastrar cambia solo la fecha, bandeja «Sin fecha» y móvil sin arrastre
 - [ADR-0069](0069-noticias-equilibradas-por-fuente.md) — Noticias equilibradas por fuente: rachas plegadas en «Todas» y resumen repartido
 - [ADR-0070](0070-staletime-global-de-30-segundos.md) — Lo leído vale 30 s (`staleTime` global): el tiempo real invalida y volver a la pestaña refresca lo caducado
+- [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

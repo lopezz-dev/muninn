@@ -731,3 +731,14 @@
 - **Solución:** para revisar los diálogos en la demo, en local y sin commitear, haz que esa rama devuelva `<SegundoFactor />`
   y navega con el router (recargar borra la demo). La demo no genera QR (`qrCode: ''`): el diálogo enseña un hueco que
   manda a la clave. Para ver el QR, envuelve `m.account.mfa.enroll` desde la consola y devuelve un `data:image/svg+xml`.
+
+### Enlaces externos: siempre con `externalLink`, y en táctil piden el menú
+
+- **Síntoma:** en el móvil, un enlace a otra web abre Safari al primer toque (sin el menú «Abrir enlace · Copiar enlace»), o un botón
+  «Abrir» pide el menú cuando no hace falta.
+- **Causa:** el menú de [ADR-0073](../adr/0073-menu-de-enlace-externo-en-tactil.md) lo pide `externalLink` (`lib/external-link.ts`) con
+  `(pointer: coarse)`. Un `<a href target="_blank">` a mano se lo salta. El estado está en `lib/link-menu.ts` y lo pinta el shell
+  (`shell/LinkMenu.tsx`): fuera del shell (la entrada) se abre directo.
+- **Solución:** todo enlace externo con `{...externalLink(url)}`; `onOpen` para lo que hace al abrirse y `direct: true` solo si el
+  texto del control ya dice que abre fuera («Abrir»). Para probarlo en el navegador integrado, el preset `mobile` de
+  `resize_window` emula `pointer: coarse`.
