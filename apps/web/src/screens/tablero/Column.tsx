@@ -1,7 +1,7 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { BoardColumn, TaskWithColumn } from '@muninn/core'
-import { cn, IconButton, icons, Tooltip } from '@muninn/ui'
+import { cn, IconButton, icons, projectColor, Tooltip } from '@muninn/ui'
 import { useAgentColumn } from '../../lib/agent'
 import { colKey } from '../../lib/board'
 import { useShell } from '../../shell/shell-context'
@@ -16,6 +16,26 @@ export const KIND_DOT = {
   review: 'bg-kind-review',
   done: 'bg-kind-done',
 } as const
+
+type DotColumn = Pick<BoardColumn, 'kind'> & { color?: string | null }
+
+/** Clase y estilo del punto de una columna: su color propio (de la paleta) o, si no tiene, el de su tipo. */
+export const columnDot = (column: DotColumn) =>
+  column.color
+    ? { className: '', style: { background: projectColor(column.color) } }
+    : { className: KIND_DOT[column.kind], style: undefined }
+
+/** Punto de color de una columna (tablero, pestañas del móvil, Lista y calendario). */
+export function ColumnDot({ column, className }: { column: DotColumn; className?: string }) {
+  const dot = columnDot(column)
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('size-2 shrink-0 rounded-xs', dot.className, className)}
+      style={dot.style}
+    />
+  )
+}
 
 /**
  * «3» o «3 / 3» si hay límite. Al alcanzarlo se pinta en ámbar y al superarlo en rojo (sin chip: la
@@ -117,10 +137,7 @@ export function Column({
             <icons.grip size={14} />
           </button>
         </Tooltip>
-        <span
-          aria-hidden="true"
-          className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[column.kind])}
-        />
+        <ColumnDot column={column} />
         <h2 className="min-w-0 truncate" title={column.name}>
           {column.name}
         </h2>
@@ -174,7 +191,7 @@ export function Column({
 export function ColumnOverlay({ column, count }: { column: BoardColumn; count: number }) {
   return (
     <div className="flex h-12 w-[280px] rotate-[-1.5deg] items-center gap-2 rounded-lg border border-accent bg-surface-raised px-3 text-sm font-semibold shadow-drag">
-      <span aria-hidden="true" className={cn('size-2 rounded-xs', KIND_DOT[column.kind])} />
+      <ColumnDot column={column} />
       {column.name}
       <ColumnCount count={count} limit={column.wipLimit} />
     </div>

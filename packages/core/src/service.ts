@@ -161,7 +161,10 @@ export interface MuninnOptions {
 
 export { ValidationError }
 
-export type TaskWithColumn = Task & { column: Pick<BoardColumn, 'id' | 'name' | 'kind'> }
+/** Tarea con lo justo de su columna para pintarla: nombre, tipo y su color propio (si lo tiene). */
+export type TaskWithColumn = Task & {
+  column: Pick<BoardColumn, 'id' | 'name' | 'kind'> & { color?: string | null }
+}
 
 /** Resultado de cada tarea de `tasks.createMany`, en el orden de la entrada. */
 export type CreateManyResult =
@@ -500,7 +503,15 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   const withColumn = (t: Task, cols: Map<string, BoardColumn>): TaskWithColumn => {
     const c = cols.get(t.columnId)
-    return { ...t, column: { id: t.columnId, name: c?.name ?? '?', kind: c?.kind ?? 'todo' } }
+    return {
+      ...t,
+      column: {
+        id: t.columnId,
+        name: c?.name ?? '?',
+        kind: c?.kind ?? 'todo',
+        color: c?.color ?? null,
+      },
+    }
   }
 
   async function listTasks(query: TaskQuery = {}): Promise<TaskWithColumn[]> {
@@ -1109,6 +1120,13 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return store.checklist.update(id, patch)
   }
 
+  /** Mueve una subtarea dentro de su tarea. `index` cuenta las demás subtareas (0 = la primera). */
+  async function moveChecklistItem(id: string, index: number) {
+    const item = await must(store.checklist.get(id), 'Elemento de checklist', id)
+    const siblings = (await listChecklist(item.taskId)).filter((i) => i.id !== id)
+    return store.checklist.update(id, { position: await place('checklist', siblings, index) })
+  }
+
   async function deleteChecklistItem(id: string) {
     await store.checklist.remove(id)
   }
@@ -1427,6 +1445,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       counts: checklistCounts,
       add: addChecklistItem,
       update: updateChecklistItem,
+      move: moveChecklistItem,
       delete: deleteChecklistItem,
     },
     notes: {

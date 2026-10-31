@@ -10,8 +10,8 @@ icon: projects
 # Proyectos y tablero
 
 > **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color, logo y portada), mover tareas arrastrándolas,
-> personalizar las columnas y ver el tablero como lista o como calendario. El color de las columnas llegará más
-> adelante. En modo demo, sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
+> personalizar las columnas (también su color) y ver el tablero como lista o como calendario. En modo demo, sin
+> cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
 
@@ -93,7 +93,7 @@ Cada proyecto tiene su propio tablero Kanban. Al crearlo empieza con cinco colum
 
 ### Personalizar las columnas
 
-Desde el menú **⋯** de cada columna puedes **editarla** (nombre, tipo y límite), **moverla** a la izquierda o a la
+Desde el menú **⋯** de cada columna puedes **editarla** (nombre, tipo, color y límite), **moverla** a la izquierda o a la
 derecha y **borrarla**. Con **Columna**, arriba junto a **Nueva tarea** (o en el menú **⋯** del proyecto), creas una nueva
 al final. También puedes reordenarlas arrastrándolas por el asa de su cabecera.
 
@@ -116,6 +116,9 @@ Cada columna tiene además un **tipo**, que le dice a Muninn qué significa, la 
 
 Gracias al tipo, si llamas a tu última columna "Publicado", Muninn sabe que lo que hay ahí está terminado
 y lo cuenta así en los resúmenes.
+
+El punto de color de cada columna es el de su tipo, salvo que le elijas otro en **Color** (la primera muestra,
+**Automático**, vuelve al del tipo). Ese color lo ves en el tablero, en las pestañas del móvil, en la Lista y en el calendario.
 
 ### Borrar una columna
 
