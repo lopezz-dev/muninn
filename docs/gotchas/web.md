@@ -781,3 +781,14 @@
   tacto, el asa espera 200 ms pulsada (`TouchSensor`) para no pelear con el scroll.
 - **Solución:** no la metas en un grupo de `codeSplitting`: se pide al abrir una tarea, no al arrancar. El orden lo calcula el core
   (`checklist.move`, índice entre las demás) y la acción optimista con «Deshacer» es `moveChecklistItem` (`lib/task-actions.ts`).
+
+### Enlaces externos: siempre con `externalLink`, y en táctil piden el menú
+
+- **Síntoma:** en el móvil, un enlace a otra web abre Safari al primer toque (sin el menú «Abrir enlace · Copiar enlace»), o un botón
+  «Abrir» pide el menú cuando no hace falta.
+- **Causa:** el menú de [ADR-0073](../adr/0073-menu-de-enlace-externo-en-tactil.md) lo pide `externalLink` (`lib/external-link.ts`) con
+  `(pointer: coarse)`. Un `<a href target="_blank">` a mano se lo salta. El estado está en `lib/link-menu.ts` y lo pinta el shell
+  (`shell/LinkMenu.tsx`): fuera del shell (la entrada) se abre directo.
+- **Solución:** todo enlace externo con `{...externalLink(url)}`; `onOpen` para lo que hace al abrirse y `direct: true` solo si el
+  texto del control ya dice que abre fuera («Abrir»). Para probarlo en el navegador integrado, el preset `mobile` de
+  `resize_window` emula `pointer: coarse`.

@@ -292,8 +292,9 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - lo apuntado en el iPhone aparece en el ordenador sin recargar.
 - [ ] El Asistente dice que usa el modelo del ordenador y no intenta conectar.
 - [ ] Noticias muestra el mismo resumen de hoy que el ordenador.
-- [ ] En Noticias, «Abrir» y el título abren el artículo en Safari sin cerrar Muninn, y al volver sale leída. Igual con un enlace de una
-  nota y con una imagen adjunta del Asistente.
+- [ ] En Noticias, «Abrir» abre el artículo en Safari sin cerrar Muninn, y al volver sale leída. Tocar el título (o un enlace de una
+  nota o de una descripción) saca el menú «Abrir enlace · Copiar enlace» junto al enlace, sin abrir nada; «Abrir enlace» lo abre y
+  «Copiar enlace» lo copia. Tocar fuera lo cierra. Una imagen adjunta del Asistente se abre directa.
 - [ ] El informe de la mañana se lee en Notas y en el Asistente, y el iPhone no genera ninguno.
 - [ ] **Avisos push** (necesita el paso 4b):
   - antes de instalar, en Safari, Ajustes › Notificaciones dice «Añade Muninn a tu pantalla de inicio»;
