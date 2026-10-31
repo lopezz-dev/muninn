@@ -1,8 +1,18 @@
 import type { BoardColumn, ColumnKind } from '@muninn/core'
-import { Button, columnKinds, Dialog, DialogClose, DialogContent, TextField } from '@muninn/ui'
+import {
+  Button,
+  columnKinds,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  type PaletteColor,
+  palette,
+  TextField,
+} from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { SelectMenu } from '../../components/SelectMenu'
+import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
 import { KIND_LABEL } from '../../lib/board'
 import { createColumn, updateColumn } from '../../lib/column-actions'
 import { useMuninn } from '../../lib/muninn'
@@ -13,6 +23,31 @@ const KIND_OPTIONS = (Object.keys(KIND_LABEL) as ColumnKind[]).map((k) => ({
   dot: columnKinds[k],
 }))
 
+/** «Automático» = sin color propio (`null`): el punto usa el del tipo. */
+type ColumnColor = 'auto' | PaletteColor
+
+const COLOR_LABEL: Record<PaletteColor, string> = {
+  blue: 'Azul',
+  violet: 'Violeta',
+  teal: 'Verde azulado',
+  pink: 'Rosa',
+  green: 'Verde',
+  amber: 'Ámbar',
+  gray: 'Gris',
+}
+
+const colorOptions = (kind: ColumnKind): Swatch<ColumnColor>[] => [
+  { value: 'auto', label: 'Automático (el del tipo)', color: columnKinds[kind] },
+  ...(Object.keys(COLOR_LABEL) as PaletteColor[]).map((c) => ({
+    value: c,
+    label: COLOR_LABEL[c],
+    color: palette[c],
+  })),
+]
+
+const asColor = (c: string | null | undefined): ColumnColor =>
+  c && c in COLOR_LABEL ? (c as PaletteColor) : 'auto'
+
 interface ColumnDialogProps {
   projectId: string
   /** `null` = cerrado; `'new'` = crear; una columna = editarla. */
@@ -20,7 +55,7 @@ interface ColumnDialogProps {
   onClose: () => void
 }
 
-/** Crear o editar una columna: nombre, tipo (qué significa «hecho») y límite de trabajo en curso. */
+/** Crear o editar una columna: nombre, tipo (qué significa «hecho»), color y límite de trabajo en curso. */
 export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) {
   const m = useMuninn()
   const qc = useQueryClient()
@@ -28,6 +63,7 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
   const [name, setName] = useState('')
   const [kind, setKind] = useState<ColumnKind>('todo')
   const [wip, setWip] = useState('')
+  const [color, setColor] = useState<ColumnColor>('auto')
   const [error, setError] = useState<string>()
   const [saving, setSaving] = useState(false)
 
@@ -37,6 +73,7 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
     setName(editing?.name ?? '')
     setKind(editing?.kind ?? 'todo')
     setWip(editing?.wipLimit ? String(editing.wipLimit) : '')
+    setColor(asColor(editing?.color))
     setError(undefined)
   }, [target, editing])
 
@@ -50,12 +87,14 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
         'El límite es un número entero de 1 en adelante, o vacío para no tener límite',
       )
     }
+    const newColor = color === 'auto' ? null : color
     setSaving(true)
     if (editing) {
       const patch = {
         ...(clean !== editing.name ? { name: clean } : {}),
         ...(kind !== editing.kind ? { kind } : {}),
         ...(limit !== editing.wipLimit ? { wipLimit: limit } : {}),
+        ...(newColor !== (editing.color ?? null) ? { color: newColor } : {}),
       }
       const renamedOnly = Object.keys(patch).length === 1 && 'name' in patch
       const ok =
@@ -70,7 +109,13 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
       setSaving(false)
       if (ok) onClose()
     } else {
-      const column = await createColumn(m, qc, { projectId, name: clean, kind, wipLimit: limit })
+      const column = await createColumn(m, qc, {
+        projectId,
+        name: clean,
+        kind,
+        wipLimit: limit,
+        color: newColor,
+      })
       setSaving(false)
       if (column) onClose()
     }
@@ -98,6 +143,13 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
             <span className="text-xs font-medium text-fg-muted">Tipo</span>
             <SelectMenu label="Tipo" value={kind} options={KIND_OPTIONS} onChange={setKind} />
           </div>
+          <SwatchPicker
+            legend="Color"
+            name="column-color"
+            value={color}
+            options={colorOptions(kind)}
+            onChange={setColor}
+          />
           <TextField
             label="Límite de tareas"
             hint="Vacío = sin límite. Al superarlo te avisamos, pero no te lo impedimos."

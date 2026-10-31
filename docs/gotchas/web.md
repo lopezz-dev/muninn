@@ -762,3 +762,22 @@
 - **Solución:** para revisar los diálogos en la demo, en local y sin commitear, haz que esa rama devuelva `<SegundoFactor />`
   y navega con el router (recargar borra la demo). La demo no genera QR (`qrCode: ''`): el diálogo enseña un hueco que
   manda a la clave. Para ver el QR, envuelve `m.account.mfa.enroll` desde la consola y devuelve un `data:image/svg+xml`.
+
+### Color de columna: el punto sale de `ColumnDot`, y las tareas llevan una copia
+
+- **Síntoma:** cambias el color de una columna y en la Lista o en el calendario las tareas siguen con el punto de antes, o una
+  vista nueva pinta el color del tipo aunque la columna tenga uno propio.
+- **Causa:** las tareas del tablero llevan una copia de su columna (`TaskWithColumn.column`: nombre, tipo y `color`), y el color
+  propio (`board_columns.color`, un nombre de la paleta como `violet`) tiene prioridad sobre el del tipo (`KIND_DOT`).
+- **Solución:** pinta el punto con `ColumnDot` (o `columnDot`, si necesitas la clase y el estilo por separado) de
+  `screens/tablero/Column.tsx`, nunca con `KIND_DOT[column.kind]` a pelo. `updateColumn` (`lib/column-actions.ts`) actualiza a la vez
+  la columna y la copia de cada tarea; si añades otra forma de cambiar una columna, haz lo mismo.
+
+### Subtareas: dnd-kit también en el detalle de la tarea
+
+- **Síntoma:** el chunk del detalle de tarea pesa más que antes, o en el móvil el asa de una subtarea no responde al primer toque.
+- **Causa:** `screens/tarea/Checklist.tsx` reordena con dnd-kit (como las categorías de Finanzas), así que la librería ya no vive
+  solo en el chunk del tablero ([ADR-0023](../adr/0023-drag-and-drop-con-dnd-kit.md)); Vite la saca a un chunk compartido. En
+  tacto, el asa espera 200 ms pulsada (`TouchSensor`) para no pelear con el scroll.
+- **Solución:** no la metas en un grupo de `codeSplitting`: se pide al abrir una tarea, no al arrancar. El orden lo calcula el core
+  (`checklist.move`, índice entre las demás) y la acción optimista con «Deshacer» es `moveChecklistItem` (`lib/task-actions.ts`).

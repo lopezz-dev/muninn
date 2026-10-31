@@ -277,6 +277,10 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - la casilla de cada fila se toca bien y completa con «Deshacer»;
   - al cerrar y abrir la app sigue en Lista, y en el ordenador sigue en Tablero;
   - la cabecera ocupa dos filas y los tres iconos de vista (junto a «‹ Proyectos») se tocan sin fallar.
+- [ ] Subtareas y color de columna:
+  - en una tarea con varias subtareas, mantener pulsada el asa ⠿ y arrastrar cambia el orden (sin que la página haga scroll), con
+    «Deshacer»;
+  - una columna con color propio (⋯ › Editar columna › Color) enseña ese color en las pestañas de columnas y en el calendario.
 - [ ] Vista **Calendario** en un proyecto:
   - tocar un día enseña sus tareas; mantener pulsada una abre «Cambiar fecha» (no el menú de enlace de Safari) y «Mañana» la mueve con
     «Deshacer»;
