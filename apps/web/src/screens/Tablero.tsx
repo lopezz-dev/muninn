@@ -21,7 +21,13 @@ import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { ProjectAvatar } from '../components/ProjectAvatar'
 import { activeGroups, type BoardFilter, labelsOf, NO_FILTER } from '../lib/board-filter'
 import { useBoardGroups } from '../lib/board-groups'
-import { type BoardView, readBoardView, readCalendarScale, saveBoardView } from '../lib/board-view'
+import {
+  type BoardView,
+  readBoardView,
+  readCalendarFolded,
+  readCalendarScale,
+  saveBoardView,
+} from '../lib/board-view'
 import type { CalendarScale } from '../lib/calendar'
 import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, boardQuery, projectQuery } from '../lib/queries'
@@ -100,20 +106,27 @@ export function Tablero() {
   const [sheet, setSheet] = useState(false)
   const [newColumn, setNewColumn] = useState(false)
   const [archivedOpen, setArchivedOpen] = useState(false)
-  // Tablero, Lista o Calendario (y su escala), recordado por proyecto en este dispositivo (`lib/board-view.ts`).
+  // Tablero, Lista o Calendario (con su escala y, en el móvil, el mes plegado o no), recordado por proyecto en
+  // este dispositivo (`lib/board-view.ts`).
   const [view, setView] = useState<BoardView>(() => readBoardView(projectId))
   const [scale, setScale] = useState<CalendarScale>(() => readCalendarScale(projectId))
+  const [folded, setFolded] = useState(() => readCalendarFolded(projectId))
   useEffect(() => {
     setView(readBoardView(projectId))
     setScale(readCalendarScale(projectId))
+    setFolded(readCalendarFolded(projectId))
   }, [projectId])
   const changeView = (next: BoardView) => {
     setView(next)
-    saveBoardView(projectId, next, undefined, scale)
+    saveBoardView(projectId, next, undefined, scale, folded)
   }
   const changeScale = (next: CalendarScale) => {
     setScale(next)
-    saveBoardView(projectId, 'calendar', undefined, next)
+    saveBoardView(projectId, 'calendar', undefined, next, folded)
+  }
+  const changeFolded = (next: boolean) => {
+    setFolded(next)
+    saveBoardView(projectId, 'calendar', undefined, scale, next)
   }
   const project = useQuery(projectQuery(m, projectId))
   const board = useQuery({ ...boardQuery(m, projectId), enabled: project.isSuccess })
@@ -307,6 +320,8 @@ export function Tablero() {
               onFilterChange={setFilter}
               scale={scale}
               onScaleChange={changeScale}
+              folded={folded}
+              onFoldedChange={changeFolded}
               desktop={desktop}
             />
           </Suspense>

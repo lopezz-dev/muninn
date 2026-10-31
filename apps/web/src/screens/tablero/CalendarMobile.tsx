@@ -196,15 +196,23 @@ function DateSheet({
  * Calendario del móvil (ADR-0068): mes compacto con puntos y, debajo, las tareas del día elegido. Sin arrastre:
  * la fecha se cambia con la hoja «Cambiar fecha» (mantener pulsado o el botón del calendario).
  */
-export function CalendarMobile({ projectId, board, today, filter, onFilterChange }: CalendarProps) {
+export function CalendarMobile({
+  projectId,
+  board,
+  today,
+  filter,
+  onFilterChange,
+  folded,
+  onFoldedChange,
+}: CalendarProps) {
   const shell = useShell()
   const canWrite = useOnline()
   const [month, setMonth] = useState(today.slice(0, 7))
   const [sel, setSel] = useState(today)
   const [dateTask, setDateTask] = useState<TaskWithColumn | null>(null)
   const [undatedOpen, setUndatedOpen] = useState(false)
-  // Abre plegado: la semana del día elegido arriba y su lista a la vista. «Ver el mes» lo despliega.
-  const [folded, setFolded] = useState(true)
+  // Plegado (lo normal): la semana del día elegido arriba y su lista a la vista. «Ver el mes» lo despliega, y
+  // se recuerda con la vista (`folded`, de `lib/board-view.ts`).
 
   const visible = useMemo(
     () => filterTasks(board.tasks, filter, today),
@@ -315,7 +323,7 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
         <button
           type="button"
           aria-expanded={!folded}
-          onClick={() => setFolded((f) => !f)}
+          onClick={() => onFoldedChange(!folded)}
           className="mx-auto flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-medium text-fg-subtle hover:text-fg"
         >
           <icons.chevronDown

@@ -1,6 +1,7 @@
 import type { TaskWithColumn } from '@muninn/core'
 import { describe, expect, it } from 'vitest'
 import {
+  anchorFor,
   cellSlots,
   dayLong,
   dayShort,
@@ -168,5 +169,11 @@ describe('celdas y teclado', () => {
     expect(keyboardTarget('ArrowUp', '2026-10-30', 'x')).toBe('2026-10-23')
     expect(keyboardTarget('ArrowUp', null, '2026-10-30')).toBe('2026-10-30')
     expect(keyboardTarget('KeyA', '2026-10-30', 'x')).toBeNull()
+  })
+
+  it('el ancla para enseñar un día: el 1 de su mes o el propio día', () => {
+    expect(anchorFor('2026-12-09', 'month')).toBe('2026-12-01')
+    expect(anchorFor('2026-12-09', 'week')).toBe('2026-12-09')
+    expect(monthGrid(anchorFor('2027-01-04', 'month').slice(0, 7))).toContain('2027-01-04')
   })
 })
