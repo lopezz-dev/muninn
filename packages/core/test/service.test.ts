@@ -159,6 +159,27 @@ describe('tareas', () => {
     ])
   })
 
+  it('busca por palabras en cualquier orden y en cualquier campo', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    await app.tasks.create({
+      projectId: p.id,
+      title: 'Login con GitHub',
+      description: 'falla en móvil',
+    })
+    await app.tasks.create({ projectId: p.id, title: 'Login con correo' })
+    const titles = async (search: string) =>
+      (await app.tasks.list({ search })).map((x) => x.title).sort()
+    expect(await titles('github login')).toEqual(['Login con GitHub'])
+    expect(await titles('  móvil   LOGIN ')).toEqual(['Login con GitHub'])
+    expect(await titles('login')).toEqual(['Login con GitHub', 'Login con correo'])
+    expect(await titles('login slack')).toEqual([])
+    await app.notes.create({ title: 'Viaje', content: 'Hotel en Madrid' })
+    expect((await app.notes.list({ search: 'madrid viaje' })).map((n) => n.title)).toEqual([
+      'Viaje',
+    ])
+  })
+
   it('borrar una columna con tareas exige destino', async () => {
     const { app } = setup()
     const p = await app.projects.create({ name: 'P' })

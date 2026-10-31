@@ -108,8 +108,8 @@ Pulsa **⌘K** en Mac o **Ctrl K** en Windows y Linux (o el botón **Buscar o pr
 lateral) y escribe:
 
 - El nombre de una sección o de un proyecto, para ir directamente. Da igual que pongas tildes o mayúsculas.
-- Parte del título o del texto de una **tarea** (sale con su proyecto) o de una **nota**, para abrirla. Busca a partir
-  de dos letras.
+- Palabras del título o del texto de una **tarea** (sale con su proyecto) o de una **nota**, en cualquier orden, para
+  abrirla. Busca a partir de dos letras.
 - Una acción, como «nuevo proyecto», «nueva nota», «cristal» o «cerrar sesión».
 - Cualquier otra cosa, para preguntársela a Muninn: se abre el [Asistente](11-asistente.md) con tu pregunta ya enviada
   (si el modelo de tu ordenador está listo; si no, la deja escrita).

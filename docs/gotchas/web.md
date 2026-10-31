@@ -272,8 +272,8 @@
   (sin tildes ni mayúsculas, todas las palabras en cualquier orden). Junta en un solo texto los campos donde se busca, con
   `
 ` entre ellos, para que las palabras puedan estar en campos distintos.
-- **Ojo:** lo que busca el core en el servidor (`search` de `tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas)
-  sigue siendo por frase (`ilike`): lo que devuelve ya lo filtra la paleta por palabras, pero no encuentra lo desordenado.
+- **Ojo:** el `search` del core en el servidor (`tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas) también busca
+  por palabras en cualquier orden, pero distingue tildes (`ilike`): «documentacion» no encuentra «Documentación» en el servidor.
 
 ### Sesión: saber si hay usuario sin descargar supabase-js
 

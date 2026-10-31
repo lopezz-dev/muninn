@@ -80,9 +80,14 @@ export const DEFAULT_SETTINGS: Omit<UserSettings, 'updatedAt'> = {
   preferences: {},
 }
 
+/** Cada palabra de la búsqueda en alguno de los textos, en cualquier orden (como `allWordsFilter` en Supabase). */
 const includesText = (haystack: string[], needle: string) => {
-  const n = needle.toLowerCase()
-  return haystack.some((h) => h.toLowerCase().includes(n))
+  const hay = haystack.map((h) => h.toLowerCase())
+  return needle
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((w) => hay.some((h) => h.includes(w)))
 }
 
 class MemoryCollection<T extends { id: string; createdAt: string; updatedAt: string }, Q>

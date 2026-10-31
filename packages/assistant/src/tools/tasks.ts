@@ -148,7 +148,10 @@ export const taskTools: AnyTool[] = [
         .describe('Tipos de columna: backlog, todo, in_progress, review, done'),
       priority: z.array(taskPriority).optional(),
       dueBefore: isoDate.optional(),
-      search: z.string().optional().describe('Texto en título o descripción'),
+      search: z
+        .string()
+        .optional()
+        .describe('Palabras en el título o la descripción, en cualquier orden'),
       limit: limit(200),
     },
     access: 'read',

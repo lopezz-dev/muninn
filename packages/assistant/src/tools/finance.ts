@@ -177,7 +177,7 @@ export const financeTools: AnyTool[] = [
       month: month.optional(),
       from: isoDate.optional(),
       to: isoDate.optional(),
-      search: z.string().optional().describe('Texto en el concepto'),
+      search: z.string().optional().describe('Palabras en el concepto, en cualquier orden'),
       limit: limit(500),
     },
     access: 'read',
