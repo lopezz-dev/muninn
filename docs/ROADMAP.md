@@ -287,6 +287,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     `20261028120000_project_images` aplicada el 28 de octubre. Logo y portada por separado, con el color del logo como color del proyecto
     ([ADR-0056](adr/0056-logo-y-portada-de-proyecto-con-color-del-logo.md), migración `20261028150000_project_cover`)
   - [ ] Fase 2b: tablero en el teléfono (cabecera con «‹ Proyectos», columnas como chips, «Añadir» dentro de la columna)
+    - [x] Cabecera del proyecto en dos filas: «‹ Proyectos» con el selector de vista en iconos, y el título con filtro, + y ⋯
+      (31 de octubre)
   - [ ] Fase 3: detalle de tarea con las acciones abajo, al alcance del pulgar; nueva tarea y nuevo movimiento como hojas
   - [x] Barra de abajo configurable (1–4 pestañas, en tu cuenta) con tu avatar en lugar del botón del Asistente, hoja «Tu cuenta»
     en lugar de «Más» y de la pantalla de Ajustes en el móvil, y menú de usuario (⌘⇧U) y «Plegar barra» en el ordenador

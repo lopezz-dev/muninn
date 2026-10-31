@@ -124,7 +124,7 @@ al menos una columna. No hay diálogo de confirmación: pulsa **Deshacer** en el
 
 ## Tablero, lista o calendario
 
-Arriba del tablero tienes **Tablero · Lista · Calendario**. La lista enseña las mismas tareas, agrupadas por columna, una por fila:
+Arriba del tablero tienes **Tablero · Lista · Calendario** (en el móvil, sus tres iconos junto a «‹ Proyectos»). La lista enseña las mismas tareas, agrupadas por columna, una por fila:
 
 - La **casilla** de cada fila la completa (o la reabre si ya está hecha), con su aviso y **Deshacer**.
 - Un clic en el título abre la tarea, igual que en el tablero. Para cambiarla de columna, hazlo desde la tarea.
