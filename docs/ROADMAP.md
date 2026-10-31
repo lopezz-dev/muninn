@@ -51,6 +51,7 @@
 - [x] Servidor MCP (stdio) con herramientas de lectura y escritura
 - [x] Tablero: vista **Lista** (selector Tablero · Lista recordado por proyecto y dispositivo, agrupada por columna, con los filtros y
   sin arrastre; ADR-0030, [#15](https://github.com/lopezz-dev/muninn/pull/15))
+  - [x] Móvil (31 de octubre): cabecera del proyecto en dos filas, con el selector de vista en iconos junto a «‹ Proyectos»
 - [x] Tablero: vista **Calendario** (mes y semana, arrastrar cambia la fecha con «Deshacer», bandeja «Sin fecha», crear en un día;
   en el móvil, mes compacto y hoja «Cambiar fecha» sin arrastre; ADR-0068, diseño en el lienzo
   [«Muninn — Calendario»](https://claude.ai/artifact/5a4s3wiHqsZVG88jZKwAMB))
