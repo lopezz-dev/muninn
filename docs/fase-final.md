@@ -272,7 +272,8 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
 - [ ] Vista **Calendario** en un proyecto:
   - tocar un día enseña sus tareas; mantener pulsada una abre «Cambiar fecha» (no el menú de enlace de Safari) y «Mañana» la mueve con
     «Deshacer»;
-  - «Otra fecha» abre la rueda de iOS, y deslizar a la izquierda completa.
+  - «Otra fecha» abre la rueda de iOS, y deslizar a la izquierda completa;
+  - «Ver el mes», cerrar la app y volver a abrir el proyecto: sigue con el mes desplegado.
 - [ ] Finanzas:
   - «Nuevo movimiento» se abre desde abajo;
   - el importe saca el teclado decimal y no hace zoom;

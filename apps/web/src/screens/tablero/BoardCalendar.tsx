@@ -27,6 +27,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { BoardData } from '../../lib/board'
 import { type BoardFilter, filterTasks, isFiltering } from '../../lib/board-filter'
 import {
+  anchorFor,
   type CalendarScale,
   cellSlots,
   dayKey,
@@ -42,6 +43,7 @@ import {
   NAV_NEXT,
   NAV_PREV,
   nextDueAfter,
+  SETTLE_CODE,
   shiftMonth,
   tasksByDay,
   UNDATED,
@@ -68,6 +70,9 @@ export interface CalendarProps {
   onFilterChange: (next: BoardFilter) => void
   scale: CalendarScale
   onScaleChange: (next: CalendarScale) => void
+  /** Móvil: la semana plegada (por defecto) o el mes desplegado. */
+  folded: boolean
+  onFoldedChange: (next: boolean) => void
 }
 
 const SCALES: { value: CalendarScale; label: string }[] = [
@@ -508,7 +513,7 @@ function GridNotice({ title, children }: { title: string; children: ReactNode })
 
 const instructions: ScreenReaderInstructions = {
   draggable:
-    'Para cambiar la fecha, pulsa Espacio, muévete con las flechas (izquierda y derecha, un día; arriba y abajo, una semana) o pulsa S para «Sin fecha», y vuelve a pulsar Espacio para soltar. Escape cancela. Enter abre la tarea.',
+    'Para cambiar la fecha, pulsa Espacio, muévete con las flechas (izquierda y derecha, un día; arriba y abajo, una semana; al salir de lo que se ve, pasa al mes o la semana de al lado) o pulsa S para «Sin fecha», y vuelve a pulsar Espacio para soltar. Escape cancela. Enter abre la tarea.',
 }
 
 /** Calendario de escritorio: mes o semana, bandeja «Sin fecha» y arrastre con ratón, tacto o teclado. */
@@ -591,28 +596,43 @@ function CalendarDesktop({
   const fallback = useRef(today)
   fallback.current = days.includes(today) ? today : (range[0] ?? today)
   const keyTarget = useRef<string | null>(null)
+  const scaleRef = useRef(scale)
+  scaleRef.current = scale
+  // Día fuera de lo que se ve: se cambia de mes (o de semana) y, cuando su celda existe, se recoloca la tarjeta.
+  const [settling, setSettling] = useState<string | null>(null)
   const keyboard = useMemo<KeyboardCoordinateGetter>(
     () =>
       (event, { context, currentCoordinates }) => {
         const over = keyTarget.current
         const target =
-          event.code === 'KeyS'
-            ? UNDATED
-            : (() => {
-                const d = keyboardTarget(
-                  event.code,
-                  isDayKey(over) ? dayOf(over) : null,
-                  fallback.current,
-                )
-                return d ? dayKey(d) : null
-              })()
+          event.code === SETTLE_CODE
+            ? over
+            : event.code === 'KeyS'
+              ? UNDATED
+              : (() => {
+                  const d = keyboardTarget(
+                    event.code,
+                    isDayKey(over) ? dayOf(over) : null,
+                    fallback.current,
+                  )
+                  return d ? dayKey(d) : null
+                })()
         if (!target) return undefined
         event.preventDefault()
         const rect = context.droppableRects.get(target)
         const self = context.collisionRect
-        // Fuera de lo que se ve (o bandeja cerrada): se queda donde está.
-        if (!rect || !self) return currentCoordinates
+        if (!rect || !self) {
+          // Un día que no se ve: el destino ya es ese día, y se pasa al mes (o la semana) que lo contiene.
+          if (isDayKey(target) && event.code !== SETTLE_CODE) {
+            keyTarget.current = target
+            setAnchor(anchorFor(dayOf(target), scaleRef.current))
+            setSettling(target)
+          }
+          // La bandeja cerrada (o la celda que aún no se ha medido): se queda donde está.
+          return currentCoordinates
+        }
         keyTarget.current = target
+        if (event.code === SETTLE_CODE) setSettling(null)
         return {
           x: rect.left + rect.width / 2 - self.width / 2,
           y: rect.top + Math.min(rect.height / 2, 60) - self.height / 2,
@@ -620,6 +640,21 @@ function CalendarDesktop({
       },
     [],
   )
+
+  // El `KeyboardSensor` solo mueve en un `keydown` y escucha en el documento: tras pintar el mes nuevo, una tecla
+  // falsa (`SETTLE_CODE`) le pide que lleve la tarjeta al día destino. Se reintenta unos fotogramas hasta que
+  // dnd-kit mide la celda; si no llega, la tarea sigue apuntando al día (el aviso lo dice) y la siguiente flecha la coloca.
+  useEffect(() => {
+    if (!settling) return
+    let frame = 0
+    let tries = 0
+    const tick = () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { code: SETTLE_CODE }))
+      if (++tries < 10) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [settling])
 
   const sensors = useBoardSensors(keyboard)
 
@@ -673,6 +708,7 @@ function CalendarDesktop({
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     clearNav()
     setDragId(null)
+    setSettling(null)
     keyTarget.current = null
     const task = taskById.get(String(active.id))
     if (!task || !over) return
@@ -735,6 +771,7 @@ function CalendarDesktop({
       onDragCancel={() => {
         clearNav()
         setDragId(null)
+        setSettling(null)
         keyTarget.current = null
       }}
     >

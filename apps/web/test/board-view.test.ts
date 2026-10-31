@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   BOARD_VIEW_KEY,
   readBoardView,
+  readCalendarFolded,
   readCalendarScale,
   saveBoardView,
   type ViewStorage,
@@ -37,6 +38,22 @@ describe('vista del tablero', () => {
     expect(readCalendarScale('p1', s)).toBe('week')
     saveBoardView('p1', 'list', s)
     expect(readCalendarScale('p1', s)).toBe('month')
+  })
+
+  it('en el móvil recuerda si el mes se dejó desplegado, sin tocar la escala', () => {
+    const s = memory()
+    saveBoardView('p1', 'calendar', s)
+    expect(readCalendarFolded('p1', s)).toBe(true)
+    saveBoardView('p1', 'calendar', s, 'week', false)
+    expect(readBoardView('p1', s)).toBe('calendar')
+    expect(readCalendarScale('p1', s)).toBe('week')
+    expect(readCalendarFolded('p1', s)).toBe(false)
+    saveBoardView('p1', 'calendar', s, 'month', false)
+    expect(readCalendarScale('p1', s)).toBe('month')
+    expect(readCalendarFolded('p1', s)).toBe(false)
+    saveBoardView('p1', 'list', s, 'month', false)
+    expect(readCalendarFolded('p1', s)).toBe(true)
+    expect(readCalendarFolded('p2', s)).toBe(true)
   })
 
   it('volver a «Tablero» quita la entrada', () => {

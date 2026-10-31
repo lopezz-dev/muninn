@@ -176,3 +176,13 @@ export function keyboardTarget(code: string, current: string | null, fallback: s
   if (step === undefined) return null
   return current ? addDays(current, step) : fallback
 }
+
+/** Día que manda en lo que se ve para enseñar `day`: el día 1 de su mes en el mes, el propio día en la semana. */
+export const anchorFor = (day: string, scale: CalendarScale) =>
+  scale === 'month' ? `${day.slice(0, 7)}-01` : day
+
+/**
+ * Código de la tecla falsa con la que el calendario recoloca la tarjeta flotante tras cambiar de mes con el
+ * teclado: el `KeyboardSensor` solo mueve en un `keydown`, y el día destino aún no existía al pulsar la flecha.
+ */
+export const SETTLE_CODE = 'MuninnSettle'
