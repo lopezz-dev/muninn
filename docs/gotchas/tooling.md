@@ -51,3 +51,12 @@
   sirviendo la transformación anterior, aunque recargues.
 - **Solución:** `curl -s http://localhost:<puerto>/src/<ruta>.ts | grep …` para ver lo que sirve; `touch <fichero>` lo fuerza a releerlo. Mejor
   editar con el editor o con un script de Node (`fs.writeFileSync`), que escribe en el mismo fichero.
+
+### `pnpm lint` falla con «Found a nested root configuration» (worktrees de Claude Code)
+
+- **Síntoma:** `pnpm lint` (`biome check .`) falla una vez por cada `.claude/worktrees/<id>/biome.json`, `pnpm format` no formatea
+  y `git status` lista `.claude/worktrees/` como sin seguimiento.
+- **Causa:** Claude Code crea copias completas del repo en `.claude/worktrees/<id>/`. Cada una trae su `biome.json` raíz, y Biome
+  rechaza raíces anidadas. Ignorarlo solo en `.gitignore` no basta: Biome sigue descubriendo esas configuraciones.
+- **Solución:** `.claude/worktrees/` en `.gitignore` y `"!!.claude/worktrees"` en `files.includes` de `biome.json`. El doble `!!`
+  (Biome 2.2+) excluye la carpeta entera, sin entrar en ella; un `!` simple la sigue recorriendo.

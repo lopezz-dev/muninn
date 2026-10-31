@@ -9,7 +9,8 @@
       "!**/src-tauri/gen",
       "!**/routeTree.gen.ts",
       "!packages/ui/src/tokens.css",
-      "!packages/ui/src/*.generated.ts"
+      "!packages/ui/src/*.generated.ts",
+      "!!.claude/worktrees"
     ]
   },
   "formatter": {
