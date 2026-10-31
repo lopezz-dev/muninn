@@ -291,8 +291,15 @@ export function createMemoryStore(
   }
 
   // Seguridad de la cuenta (ADR-0061), simulada: no es parte de la instantánea (es Auth, no datos). Sin sesiones de
-  // partida, solo está la de este dispositivo.
-  const accountState = createMemoryAccount(options.account, now)
+  // partida, solo está la de este dispositivo. Cerrar una sesión quita los avisos que se activaron con ella (ADR-0074).
+  const accountState = createMemoryAccount(options.account, now, (closed) => {
+    let removed = false
+    for (const d of pushDevices.values())
+      if (d.sessionId && closed.includes(d.sessionId)) removed = pushDevices.delete(d.id)
+    if (removed) changed()
+  })
+  const currentSessionId = async () =>
+    (await accountState.sessions()).find((s) => s.current)?.id ?? null
 
   return {
     snapshot,
@@ -355,9 +362,11 @@ export function createMemoryStore(
       async upsert(row) {
         const current = [...pushDevices.values()].find((d) => d.endpoint === row.endpoint)
         const ts = now()
+        // Como el trigger de Supabase: la sesión es la de quien escribe.
+        const sessionId = await currentSessionId()
         const full: PushDevice = current
-          ? { ...current, ...row, updatedAt: ts }
-          : { ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }
+          ? { ...current, ...row, sessionId, updatedAt: ts }
+          : { ...row, sessionId, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }
         pushDevices.set(full.id, full)
         changed()
         return structuredClone(full)

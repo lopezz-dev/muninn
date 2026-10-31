@@ -53,7 +53,7 @@ export async function endSession(kind: 'user' | 'demo', everywhere = false): Pro
         kind === 'demo'
           ? undefined
           : everywhere
-            ? 'Los demás saldrán en menos de una hora. Tus datos siguen guardados en tu cuenta'
+            ? 'Los demás saldrán en menos de una hora y ya no les llegan tus avisos. Tus datos siguen guardados en tu cuenta'
             : 'Tus datos siguen guardados en tu cuenta',
     },
   )

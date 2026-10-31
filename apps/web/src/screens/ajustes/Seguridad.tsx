@@ -14,7 +14,8 @@ import { PrefGroup, PrefRow } from './ui'
  * entrar en ese dispositivo): en lugar de «Deshacer», el aviso dice qué pasa.
  */
 
-const LEAVES_SOON = 'Saldrá en menos de una hora. Para volver, tendrá que entrar de nuevo.'
+const LEAVES_SOON =
+  'Saldrá en menos de una hora y ya no le llegan tus avisos. Para volver, tendrá que entrar de nuevo.'
 
 function SessionRow({ session }: { session: AccountSession }) {
   const m = useMuninn()
@@ -83,7 +84,8 @@ export function Sesiones() {
       await m.account.sessions.signOut('others')
       notify.success('Sesión cerrada en los demás dispositivos', {
         icon: 'user',
-        description: 'Saldrán en menos de una hora. En este sigues dentro y tus datos no cambian.',
+        description:
+          'Saldrán en menos de una hora y ya no les llegan tus avisos. En este sigues dentro y tus datos no cambian.',
       })
     } catch (err) {
       fail('No se pudo cerrar la sesión en los demás dispositivos', err)
