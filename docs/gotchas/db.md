@@ -51,7 +51,9 @@
 
 - **Síntoma:** una búsqueda con comas, paréntesis o comillas rompe la consulta.
 - **Causa:** esos caracteres forman parte de la sintaxis del filtro `or=(…)`.
-- **Solución:** `likeTerm()` en `supabase-store.ts` los elimina. Reutilízala en las búsquedas nuevas.
+- **Solución:** `likeWords()` en `supabase-store.ts` los elimina y parte la búsqueda en palabras; `allWordsFilter()` monta el
+  `and(or(…),or(…))` para que cada palabra esté en alguna columna. Reutilízalas en las búsquedas nuevas (una columna: un `ilike`
+  por palabra). El `memory-store` busca con el mismo criterio.
 
 ### `apply_migration` (MCP de Supabase) pone su propia versión
 

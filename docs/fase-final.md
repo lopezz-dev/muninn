@@ -64,6 +64,11 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   - [ ] «En el proyecto Prueba final, crea 5 tareas, cada una con 2 subtareas, y una más en la columna "No existe"». Una sola llamada a
     `create_tasks`: 5 creadas con sus subtareas en orden, 1 con el error de la columna, y no repite las buenas. Archívalas al acabar.
   - [ ] «¿Qué tareas tiene Muninn?» lista las del proyecto activo, no las del archivado con el mismo nombre.
+- [ ] **Redesplegar `mcp`, `news`, `github` y `push`** (31-10): llevan el core empaquetado, que desde la PR #91 lee en lote (`overview` en tres
+  consultas en paralelo, #94) y ahora busca por palabras en cualquier orden. `pnpm --filter @muninn/core build:edge`,
+  `pnpm --filter @muninn/mcp build:edge` y desplegar las cuatro como arriba. Después, en claude.ai:
+  - [ ] «¿Cómo voy hoy?» contesta igual que antes con todos tus proyectos.
+  - [ ] «Busca tareas de github login» encuentra «Login con GitHub» aunque las palabras estén al revés.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 

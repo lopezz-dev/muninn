@@ -75,8 +75,26 @@ function fromRow<T>(row: Row): T {
 /** Un valor literal para `ilike`: `_` y `%` no hacen de comodín (`mi_repo` no casa con `miXrepo`). */
 export const ilikeExact = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
-/** Quita los caracteres con significado en los filtros `or()` de PostgREST y en LIKE. */
-const likeTerm = (s: string) => `%${s.replace(/[,()*"\\%_]/g, ' ').trim()}%`
+/**
+ * Las palabras de una búsqueda como patrones `ilike`, sin los caracteres con significado en los filtros `or()` de
+ * PostgREST y en LIKE: «Café, (Madrid)» → `['%Café%', '%Madrid%']`.
+ */
+export const likeWords = (s: string) =>
+  s
+    .replace(/[,()*"\\%_]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => `%${w}%`)
+
+/**
+ * Filtro para `or()`: cada palabra en alguna de las columnas, en cualquier orden (un `or` por palabra, todos con `and`).
+ * Sin palabras (solo signos), `undefined`: no se filtra.
+ */
+export const allWordsFilter = (search: string, columns: string[]) => {
+  const words = likeWords(search)
+  if (!words.length) return undefined
+  return `and(${words.map((w) => `or(${columns.map((c) => `${c}.ilike.${w}`).join(',')})`).join(',')})`
+}
 
 /** Bucket de Storage de las imágenes de proyecto (migración 20261028120000_project_images). */
 const PROJECT_IMAGES_BUCKET = 'project-images'
@@ -342,8 +360,8 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     if (q.since)
       qb = qb.or(`published_at.gte.${q.since},and(published_at.is.null,fetched_at.gte.${q.since})`)
     if (q.search) {
-      const term = likeTerm(q.search)
-      qb = qb.or(`title.ilike.${term},summary.ilike.${term}`)
+      const filter = allWordsFilter(q.search, ['title', 'summary'])
+      if (filter) qb = qb.or(filter)
     }
     qb = qb
       .order('published_at', { ascending: false, nullsFirst: false })
@@ -666,7 +684,7 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         if (q.kinds) qb = qb.in('kind', q.kinds)
         if (q.from) qb = qb.gte('date', q.from)
         if (q.to) qb = qb.lte('date', q.to)
-        if (q.search) qb = qb.ilike('concept', likeTerm(q.search))
+        for (const w of q.search ? likeWords(q.search) : []) qb = qb.ilike('concept', w)
         // Orden total (con el id): las páginas no se solapan ni se saltan filas.
         qb = qb
           .order('date', { ascending: false })
@@ -716,8 +734,8 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       if (q.externalId) qb = qb.eq('external_id', q.externalId)
       if (q.dueBefore) qb = qb.lte('due_date', q.dueBefore)
       if (q.search) {
-        const term = likeTerm(q.search)
-        qb = qb.or(`title.ilike.${term},description.ilike.${term}`)
+        const filter = allWordsFilter(q.search, ['title', 'description'])
+        if (filter) qb = qb.or(filter)
       }
       qb = qb.order('position')
       return q.limit ? qb.limit(q.limit) : qb
@@ -732,8 +750,8 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       if (q.projectId) qb = qb.eq('project_id', q.projectId)
       if (q.taskId) qb = qb.eq('task_id', q.taskId)
       if (q.search) {
-        const term = likeTerm(q.search)
-        qb = qb.or(`title.ilike.${term},content.ilike.${term}`)
+        const filter = allWordsFilter(q.search, ['title', 'content'])
+        if (filter) qb = qb.or(filter)
       }
       qb = qb.order('pinned', { ascending: false }).order('updated_at', { ascending: false })
       return q.limit ? qb.limit(q.limit) : qb
