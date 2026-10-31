@@ -76,7 +76,7 @@ de códigos (TOTP). [ADR-0036](0036-pantalla-de-autorizacion-oauth.md) dejó en 
 - Cerrar una sesión no es inmediato: su token de acceso vale hasta que caduca (una hora como mucho). La interfaz lo dice.
 - La migración es un paso manual de la fase final, como las demás ([gotchas/db](../gotchas/db.md), «Sesiones de la cuenta»).
 - Al cerrar en todos los dispositivos, los avisos push de los demás no se quitan: siguen suscritos hasta que se borren en Ajustes ›
-  Notificaciones (tarea en el tablero).
+  Notificaciones (tarea en el tablero). *(Resuelto en [ADR-0074](0074-avisos-push-atados-a-la-sesion.md).)*
 - Relacionado: `packages/core/src/account.ts`, `memory-account.ts`, `supabase-store.ts` (`account`),
   `apps/web/src/screens/ajustes/Seguridad.tsx`, `SegundoFactor.tsx`, `apps/web/src/lib/session.ts`, `lib/second-factor.ts`,
   `screens/login/Entrada.tsx`, `docs/user/14-cuenta-y-seguridad.md`.

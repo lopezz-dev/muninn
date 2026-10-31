@@ -173,6 +173,9 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 - [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
   Justo después, `20261029180000_require_mfa_push` (la política del segundo factor en sus dos tablas) y comprobar que hay
   tantas políticas `require_mfa` como tablas de `public` con RLS más una (hoy, 19 = 18 + 1, con `oauth_mfa_grants`).
+- [ ] Después, `20261031120000_push_por_sesion` ([ADR-0074](adr/0074-avisos-push-atados-a-la-sesion.md)): `push_subscriptions.session_id`
+  con borrado en cascada desde `auth.sessions` y el trigger que lo rellena. Comprobar en el editor SQL que la columna existe y que
+  `push_subscriptions_set_session` no tiene `execute` para `authenticated` ni `anon`.
 - [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
 - [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
 - [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
@@ -304,6 +307,9 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - crea una suscripción «Prueba final» que se cobre **mañana** y lanza el cron a mano (el `curl` del paso 4b): llega «Mañana te cobran
     Prueba final · …» y al tocarlo abre Finanzas › Suscripciones. Lanzarlo otra vez no lo repite. Archiva la suscripción al acabar;
   - en el ordenador, quita el iPhone de la lista y pulsa **Deshacer**: vuelve, y «Enviar prueba» sigue llegando.
+  - con los avisos activados en el iPhone, en el ordenador pulsa **Cerrar** en la sesión del iPhone (o **En los demás**): el iPhone
+    desaparece de Dispositivos en Ajustes › Notificaciones y «Enviar prueba» ya no le llega (ADR-0074). Entra otra vez en el iPhone y
+    vuelve a activar los avisos.
 
 ## 6. OAuth del MCP remoto con Claude Code (≈ 10 min)
 

@@ -326,6 +326,18 @@
   que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual).
 - **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
 
+### Avisos push: la sesión la pone un trigger y cerrarla borra la fila
+
+- **Síntoma:** un dispositivo desaparece de Ajustes › Notificaciones sin que nadie lo quite, o activar los avisos falla con
+  «La sesión de este dispositivo está cerrada» (`hint` `session_closed`).
+- **Causa:** `push_subscriptions.session_id` referencia `auth.sessions (id) on delete cascade` (migración `20261031120000_push_por_sesion`,
+  [ADR-0074](../adr/0074-avisos-push-atados-a-la-sesion.md)). Cerrar esa sesión, por cualquier camino (fila, «En los demás», «En todos»,
+  quitar una app, caducidad), borra la fila. El trigger `push_subscriptions_session` copia el `session_id` del JWT en cada escritura y
+  rechaza la de un token cuya sesión ya no existe (vale hasta una hora tras cerrarla).
+- **Solución:** es intencionado. No mandes `session_id` desde el cliente ni lo pongas en el `upsert` del store: lo pone el trigger. Con la
+  service role (sin `session_id` en el JWT) el trigger no toca la columna. Las filas de antes de la migración quedan con `null` y no se
+  borran en cascada.
+
 ### Con el segundo factor activado, el MCP remoto no ve nada
 
 - **Síntoma:** al activar el segundo factor, claude.ai (o cualquier cliente del MCP remoto por OAuth) responde vacío o «Proyecto … no
