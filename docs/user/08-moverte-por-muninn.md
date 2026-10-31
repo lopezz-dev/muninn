@@ -68,6 +68,14 @@ En **Ajustes › Barra de abajo** (en la hoja de tu cuenta) eliges qué pestaña
 Cada cambio se aplica al momento y se puede deshacer desde el aviso. Con cuenta, se guarda en ella: tu barra te sigue a todos
 tus dispositivos. Si desactivas un módulo, su pestaña se esconde, y vuelve al activarlo.
 
+### Enlaces que salen de Muninn
+
+En el móvil (y en cualquier pantalla táctil), al tocar un enlace a otra web, por ejemplo en una descripción, una nota o el
+título de una noticia, no te vas de Muninn al momento: sale un menú pequeño junto al enlace que dice adónde lleva, con
+**Abrir enlace** y **Copiar enlace**. Toca fuera para cerrarlo. Así, un toque sin querer no te saca de la app. Los botones
+que ya dicen que abren fuera, como **Abrir** en una noticia, abren directamente. En el ordenador, el clic abre el enlace
+como siempre.
+
 ## Inicio
 
 La primera pantalla te resume el día: arriba, la fecha y una línea con lo importante («Nada vence hoy · 4 en curso»),
