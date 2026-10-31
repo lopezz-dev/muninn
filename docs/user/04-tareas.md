@@ -30,7 +30,9 @@ enlace propio, así que puedes copiarlo o recargar la página. Desde ahí cambia
   el texto o **Editar** para volver a escribir. Las casillas de una lista de tareas (`- [ ] algo`) se marcan sin entrar a editar.
 - **Estado** (la columna), **prioridad** (ninguna, baja, media, alta o urgente) y **fecha límite**.
 - **Etiquetas** libres: escribe y pulsa **Intro**.
-- **Subtareas** (checklist): márcalas, quítalas o añade más; la tarjeta muestra el progreso, por ejemplo 2/3.
+- **Subtareas** (checklist): márcalas, quítalas o añade más; la tarjeta muestra el progreso, por ejemplo 2/3. Para
+  cambiarlas de orden, arrástralas por el asa ⠿ de su izquierda (en el ordenador aparece al pasar el ratón; en el móvil,
+  mantén pulsada el asa). Con el teclado: Tab hasta el asa, Espacio, flechas y Espacio. Siempre con **Deshacer**.
 - **Notas vinculadas:** las notas de esa tarea, y **Añadir nota** para crear otra ya vinculada (ver [Notas](05-notas.md)).
 - Ves la **actividad** de la tarea: quién la creó, movió o cambió, y cuándo.
 

@@ -23,7 +23,7 @@ import { useOnline } from '../../lib/use-online'
 import { useShell } from '../../shell/shell-context'
 import type { CalendarProps } from './BoardCalendar'
 import { CompactBody, OverdueToggle } from './CalendarParts'
-import { KIND_DOT } from './Column'
+import { ColumnDot, columnDot } from './Column'
 import { SwipeToComplete } from './SwipeToComplete'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -294,19 +294,25 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
               >
                 {Number(iso.slice(8))}
                 <span className="flex h-[5px] gap-[3px]">
-                  {tasks.slice(0, 3).map((t) => (
-                    <span
-                      key={t.id}
-                      className={cn(
-                        'size-[5px] rounded-full',
-                        selected && isToday
-                          ? 'bg-accent-fg'
-                          : isOverdue(t, today)
-                            ? 'bg-danger'
-                            : KIND_DOT[t.column.kind],
-                      )}
-                    />
-                  ))}
+                  {tasks.slice(0, 3).map((t) => {
+                    // Hoy elegido y vencidas mandan sobre el color de la columna.
+                    const plain = !(selected && isToday) && !isOverdue(t, today)
+                    const dot = columnDot(t.column)
+                    return (
+                      <span
+                        key={t.id}
+                        className={cn(
+                          'size-[5px] rounded-full',
+                          selected && isToday
+                            ? 'bg-accent-fg'
+                            : isOverdue(t, today)
+                              ? 'bg-danger'
+                              : dot.className,
+                        )}
+                        style={plain ? dot.style : undefined}
+                      />
+                    )
+                  })}
                 </span>
               </button>
             )
@@ -414,10 +420,7 @@ export function CalendarMobile({ projectId, board, today, filter, onFilterChange
                 key={t.id}
                 className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-raised py-2 pr-2 pl-3.5"
               >
-                <span
-                  aria-hidden="true"
-                  className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[t.column.kind])}
-                />
+                <ColumnDot column={t.column} />
                 <Link
                   to="/proyectos/$projectId/tareas/$taskId"
                   params={{ projectId, taskId: t.id }}
