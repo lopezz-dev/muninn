@@ -26,3 +26,6 @@ supabase/functions/push/_core/
 
 # Capturas y registros de Playwright MCP (pruebas en el navegador)
 .playwright-mcp/
+
+# Copias del repo que crea Claude Code (worktrees de sesiones)
+.claude/worktrees/

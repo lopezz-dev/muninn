@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.0](https://github.com/lopezz-dev/muninn/compare/v0.7.0...v0.8.0) (2026-10-30)
+
+
+### Features
+
+* **web:** árbol con una curva por elemento en el menú y en «En esta página» ([#106](https://github.com/lopezz-dev/muninn/issues/106)) ([d33bafe](https://github.com/lopezz-dev/muninn/commit/d33bafe004d3afcc050b2c44036340db54d0aed7))
+* **web:** dock configurable con tu cuenta y menú de usuario en escritorio ([#107](https://github.com/lopezz-dev/muninn/issues/107)) ([8da48a0](https://github.com/lopezz-dev/muninn/commit/8da48a07de5f275503f5bde0f0ea65800d2d5522))
+* **web:** la guía de Documentación cabe en la ventana, con Anterior/Siguiente fijo ([#105](https://github.com/lopezz-dev/muninn/issues/105)) ([ecc0cf0](https://github.com/lopezz-dev/muninn/commit/ecc0cf055ba691889ba0345dde2cbc2309ad4412))
+
+
+### Bug Fixes
+
+* **desktop:** OLLAMA_ORIGINS sin tauri://localhost, que tumba a Ollama ([e9260bd](https://github.com/lopezz-dev/muninn/commit/e9260bd8e1b355b7c77d4c03c60826c40adbf9d1))
+* **desktop:** OLLAMA_ORIGINS sin tauri://localhost, que tumba a Ollama ([37e635f](https://github.com/lopezz-dev/muninn/commit/37e635f84beab0da087924ea749d413ac2c8c965))
+
 ## [0.7.0](https://github.com/lopezz-dev/muninn/compare/v0.6.0...v0.7.0) (2026-10-30)
 
 
