@@ -296,12 +296,36 @@
 ### Estado `mfa`: sesión abierta, pero falta el código de la app
 
 - **Síntoma:** tras entrar con el código del correo, la app vuelve a /login y enseña «Falta un paso» en lugar de entrar.
-- **Causa:** la cuenta tiene segundo factor y la sesión aún es `aal1`. `getAuth()` devuelve `{ kind: 'mfa', account }` (lo mira con
-  `getAuthenticatorAssuranceLevel`, sin red), `/_app` manda a /login y `screens/login/Entrada.tsx` enseña el paso del código.
+- **Causa:** la cuenta tiene segundo factor y la sesión aún es `aal1`. `getAuth()` devuelve `{ kind: 'mfa', account }` (lo mira
+  `secondFactorStep` en `lib/auth.ts`), `/_app` manda a /login y `screens/login/Entrada.tsx` enseña el paso del código.
 - **Solución:** es lo esperado ([ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)). Dentro de la app, `useAuth()` nunca ve `mfa`
   (`AppAuthState`). Una ruta nueva que necesite una cuenta completa compara con `kind === 'user'`, no con `!== 'anonymous'`.
-- **Ojo:** el estado se calcula al resolver `getAuth()`. Un dispositivo con la sesión abierta antes de activar el segundo factor lo
-  pide al volver a abrir la app, cuando la sesión guardada ya trae el factor (al renovarse el token, como mucho en una hora).
+- **Ojo:** el estado se calcula al resolver `getAuth()`, una vez por arranque o cambio de usuario.
+
+### Volver de GitHub con el segundo factor: la sesión llega sin factores
+
+- **Síntoma:** con un factor TOTP verificado, entrar con GitHub iba directo a la app, sin «Falta un paso». En el registro de Supabase:
+  `authorize?provider=github` → `token?grant_type=pkce` y ninguna llamada a `factors/…/challenge`. El servidor seguía protegido
+  (`require_mfa`, ADR-0062), pero la app trataba la sesión `aal1` como cuenta completa.
+- **Causa:** `mfa.getAuthenticatorAssuranceLevel()` sin argumentos no va a la red: saca `nextLevel` de `session.user.factors`, y el usuario
+  que guarda el canje PKCE llega sin `factors`. Sale `aal1` → `aal1`, como una cuenta sin segundo factor. Lo mismo pasa con una sesión
+  abierta antes de activarlo.
+- **Solución:** `secondFactorStep` (`lib/auth.ts`): con `aal2` o con el factor ya en la sesión, decide sin red; con `aal1` y sin factores,
+  pregunta al servidor con `mfa.listFactors()` (hace `getUser()`; `totp` solo trae los verificados). Cuesta una petición al arrancar
+  a las cuentas sin segundo factor. Sin red, `getAuth()` se queda con lo guardado; `/oauth/consent` no (ver abajo).
+
+### `/oauth/consent` y el segundo factor
+
+- **Síntoma:** «Claude ya puede usar tu Muninn» sin aviso, pero con el factor activado la app no ve nada.
+- **Causa:** la aprobación solo vale si queda apuntada con `approve_oauth_client_mfa` desde una sesión `aal2` (ADR-0066). La RPC devuelve
+  `false` (sin lanzar) si la sesión es `aal1` o la autorización ya no está pendiente.
+- **Solución:** la pantalla pregunta antes con `consentSecondFactor()` (al servidor, sin fiarse de la sesión guardada): con el factor sin
+  pasar enseña «Falta un paso» y manda a /login con `resetAuth()`, que pide el código y vuelve; nunca enseña «Permitir acceso». Con el
+  factor pasado, `false` o un error de la RPC es fallo: aprueba igual y avisa de quitarle el acceso y reconectar. Sin segundo factor en
+  la cuenta no llama a la RPC.
+- **Ojo:** el 30 de octubre a las 08:03 UTC no hubo ni la llamada ni su *preflight*, cuando a las 08:39 y después sí: lo más probable es
+  que la pestaña corriera el bundle anterior (la versión con la RPC salió a las ~07:22 UTC y la PWA es `autoUpdate`: la primera carga
+  tras publicar sirve lo que tenía el service worker). Al probar algo recién publicado, recarga dos veces.
 
 ### `/login` no tiene shell ni datos
 

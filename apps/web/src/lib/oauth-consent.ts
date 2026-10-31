@@ -1,5 +1,5 @@
 import type { OAuthAuthorizationDetails } from '@supabase/supabase-js'
-import { loadSupabase } from './auth'
+import { loadSupabase, type SecondFactorStep, secondFactorStep } from './auth'
 
 /**
  * Pantalla de autorización del servidor OAuth de Supabase (ADR-0036): cuando un cliente como claude.ai pide
@@ -43,6 +43,14 @@ export async function getConsentRequest(authorizationId: string): Promise<Consen
   return 'authorization_id' in data
     ? { kind: 'ask', details: data }
     : { kind: 'redirect', url: data.redirect_url }
+}
+
+/**
+ * Si la sesión ya pasó el segundo factor, si le falta o si la cuenta no lo tiene. Pregunta al servidor: la sesión que guarda la
+ * vuelta de GitHub llega sin factores. Sin red, lanza: aquí no se da acceso a ciegas.
+ */
+export async function consentSecondFactor(): Promise<SecondFactorStep> {
+  return secondFactorStep(await loadSupabase())
 }
 
 /**
