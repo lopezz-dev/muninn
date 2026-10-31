@@ -234,6 +234,13 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   el conector de claude.ai también quedó invalidado y hubo que reconectarlo.)*
 - [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código. *(Pendiente: la
   *Site URL* sirve `main`, que aún no lo tiene. Repetir cuando `develop` pase a `main`.)*
+- [ ] **Entrar con GitHub pide el código** (arreglo del 31 de octubre, tras publicarlo y recargar dos veces): con el factor activado,
+  cierra sesión y entra con GitHub: sale **Falta un paso**, no la app. En el registro de Supabase, tras `token?grant_type=pkce` hay
+  un `GET /user` y, al escribir el código, `factors/…/challenge` y `verify`. *(30 de octubre: entró directo, con la sesión en `aal1`.)*
+- [ ] **`/oauth/consent` con GitHub y el segundo factor:** desde claude.ai, quita el acceso a Claude y reconecta entrando con GitHub.
+  Antes de **Permitir acceso** sale **Falta un paso** («Escribir el código» lleva al código y vuelve a la solicitud). Al permitir, el
+  aviso es solo «Volviendo a claude.ai…» y en el registro hay `rpc/approve_oauth_client_mfa` antes de `…/consent`. Si saliera «quítale
+  el acceso y vuelve a conectarla», la aprobación no quedó apuntada: mira la respuesta de la RPC.
 - [x] **Servidor (ADR-0062), con el segundo factor activado:** en claude.ai, «¿Qué tareas tiene Muninn?» sigue respondiendo. Si
   responde vacío o con error de permisos, sus tokens son `aal1`: quita el acceso en **Apps con acceso**, vuelve a conectar el conector
   (el consentimiento pide el código) y repite. Si aun así falla, apúntalo como tarea: el MCP remoto necesita otra salida.

@@ -130,12 +130,29 @@ async function resolve(): Promise<AuthState> {
   if (data.session) {
     writeFlag(DEMO_KEY, null)
     const account = toAccount(data.session)
-    // Sin red: lo lee del token y de los factores de la sesión guardada.
-    const { data: aal } = await c.auth.mfa.getAuthenticatorAssuranceLevel()
-    const pending = aal?.currentLevel === 'aal1' && aal.nextLevel === 'aal2'
-    return pending ? { kind: 'mfa', account } : { kind: 'user', account }
+    // Sin red, entra con lo que diga la sesión guardada: el servidor exige `aal2` igualmente (ADR-0062).
+    const step = await secondFactorStep(c).catch(() => 'none' as const)
+    return step === 'pending' ? { kind: 'mfa', account } : { kind: 'user', account }
   }
   return demo ? { kind: 'demo' } : { kind: 'anonymous' }
+}
+
+/** En qué punto está el segundo factor de la sesión abierta (ADR-0061): sin él, por escribir o ya escrito. */
+export type SecondFactorStep = 'none' | 'pending' | 'passed'
+
+/**
+ * `getAuthenticatorAssuranceLevel()` lo lee del token y de `session.user.factors`, sin red; pero el usuario que guarda el canje
+ * PKCE (volver de GitHub) llega sin factores y saldría `aal1` → `aal1`. Así que, con `aal1` y sin factores, pregunta al
+ * servidor (`listFactors` hace `getUser()`). Si falla, lanza: cada llamador decide qué hacer sin red.
+ */
+export async function secondFactorStep(c: SupabaseClient): Promise<SecondFactorStep> {
+  const { data: aal } = await c.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (aal?.currentLevel === 'aal2') return 'passed'
+  if (aal?.nextLevel === 'aal2') return 'pending'
+  const { data, error } = await c.auth.mfa.listFactors()
+  if (error) throw error
+  // `totp` solo trae los verificados: uno a medio activar no cuenta.
+  return data.totp.length > 0 ? 'pending' : 'none'
 }
 
 /** Estado de la sesión, memorizado: el `beforeLoad` raíz lo pide en cada navegación. */
