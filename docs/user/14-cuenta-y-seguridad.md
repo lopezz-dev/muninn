@@ -40,6 +40,10 @@ listo. Si te equivocas de cuenta, pulsa **Usar otra cuenta**.
 
 Cada vez que entras en un dispositivo nuevo te lo pide; mientras la sesión siga abierta en ese dispositivo, no.
 
+Si una app como claude.ai te trae a **Permitir acceso** y aún no has escrito el código en esa sesión, Muninn te lo pide
+antes: pulsa **Escribir el código** y vuelves a la pantalla de permiso. Si al dar acceso te avisa de que la app no verá
+tus datos, quítale el acceso en **Apps con acceso** y vuelve a conectarla.
+
 ## Desactivar el segundo factor
 
 Pulsa **Desactivar**: se abre una ventana que te pide el código que sale en ese momento en tu app. Escríbelo y pulsa
