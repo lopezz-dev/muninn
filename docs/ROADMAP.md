@@ -34,6 +34,8 @@
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
   personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
   y «Deshacer» en cada acción ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md))
+  - [x] Color propio de columna (paleta del proyecto, o «Automático» con el del tipo) y reordenar las subtareas arrastrando su asa
+    (`checklist.move` en el core; 31 de octubre, sale del backlog)
 - [x] Tareas archivadas (menú **⋯** del tablero): recuperarlas o eliminarlas para siempre, con «Deshacer» diferido como los
   proyectos archivados ([ADR-0067](adr/0067-eliminar-tareas-archivadas.md); sale del backlog)
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
@@ -361,7 +363,6 @@ más o menos en este orden:
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
-- Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice

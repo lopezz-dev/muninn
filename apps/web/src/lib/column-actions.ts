@@ -12,6 +12,8 @@ export interface NewColumn {
   name: string
   kind: ColumnKind
   wipLimit?: number | null
+  /** Color propio de la paleta (`blue`, `violet`…); `null` o sin poner, el del tipo. */
+  color?: string | null
 }
 
 /** Crea una columna al final. «Deshacer» la quita (sigue vacía, así que no pierde nada). */
@@ -56,9 +58,16 @@ export async function updateColumn(
   opts: { undoing?: boolean } = {},
 ): Promise<boolean> {
   const before = previousValues(column, patch)
+  const next = { ...column, ...patch } as BoardColumn
   const prev = await optimistic(qc, column.projectId, (d) => ({
     ...d,
-    columns: d.columns.map((c) => (c.id === column.id ? ({ ...c, ...patch } as BoardColumn) : c)),
+    columns: d.columns.map((c) => (c.id === column.id ? next : c)),
+    // Las tareas llevan una copia de su columna (nombre, tipo, color): que cambie a la vez en todas las vistas.
+    tasks: d.tasks.map((t) =>
+      t.columnId === column.id
+        ? { ...t, column: { id: next.id, name: next.name, kind: next.kind, color: next.color } }
+        : t,
+    ),
   }))
   try {
     await serial(column.projectId, () => m.columns.update(column.id, patch))

@@ -200,6 +200,21 @@ describe('tareas', () => {
     expect((await app.tasks.get(t.id)).completedAt).not.toBeNull()
   })
 
+  it('las subtareas se reordenan contando las demás', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't', checklist: ['a', 'b', 'c'] })
+    const titles = async () => (await app.checklist.list(t.id)).map((i) => i.title)
+    const [a, , c] = await app.checklist.list(t.id)
+    await app.checklist.move(c?.id ?? '', 0)
+    expect(await titles()).toEqual(['c', 'a', 'b'])
+    await app.checklist.move(c?.id ?? '', 2)
+    expect(await titles()).toEqual(['a', 'b', 'c'])
+    await app.checklist.move(a?.id ?? '', 1)
+    expect(await titles()).toEqual(['b', 'a', 'c'])
+    await expect(app.checklist.move('no-existe', 0)).rejects.toThrow()
+  })
+
   it('create acepta un checklist', async () => {
     const { app } = setup()
     const p = await app.projects.create({ name: 'P' })
@@ -556,6 +571,20 @@ describe('consultas', () => {
     expect(board.columns.map((c) => c.kind)).toEqual(DEFAULT_COLUMNS.map((c) => c.kind))
     expect(board.tasks.map((x) => [x.title, x.column.kind])).toEqual([['con subtareas', 'todo']])
     expect(board.counts).toEqual({ [t.id]: { done: 1, total: 2 } })
+  })
+
+  it('el color propio de una columna se guarda, se quita y viaja con sus tareas', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 'pintada' })
+    expect((await app.projects.board(p.id)).tasks[0]?.column.color).toBeNull()
+    await app.columns.update(t.columnId, { color: 'violet' })
+    const board = await app.projects.board(p.id)
+    expect(board.columns.find((c) => c.id === t.columnId)?.color).toBe('violet')
+    expect(board.tasks[0]?.column.color).toBe('violet')
+    await app.columns.update(t.columnId, { color: null })
+    expect((await app.projects.board(p.id)).tasks[0]?.column.color).toBeNull()
+    await expect(app.columns.update(t.columnId, { color: 'x'.repeat(33) })).rejects.toThrow()
   })
 
   it('las columnas de varios proyectos, en una consulta y en su orden', async () => {
