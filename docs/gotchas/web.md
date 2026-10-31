@@ -145,7 +145,9 @@
 
 - **Síntoma:** en la lista no se puede reordenar; o en otro dispositivo el proyecto se abre en «Tablero» aunque elegiste «Lista».
 - **Causa:** es intencionado ([ADR-0030](../adr/0030-vista-lista-del-tablero.md)). `BoardList` pinta la caché del tablero sin dnd-kit, y la
-  vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta.
+  vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta. El calendario guarda ahí
+  su escala (`calendar` / `calendar-week`) y, con el sufijo `:open`, que en el móvil se dejó el mes desplegado. Si añades otra
+  preferencia de la vista, súmala a `STORED` o `readAll` la tirará como valor desconocido.
 - **Solución:** si añades una acción a la fila (mover, archivar…), usa las de `task-actions.ts` para que sea optimista y con «Deshacer».
   Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las tres vistas.
 
@@ -159,6 +161,11 @@
   «Sin fecha»), y su `collisionDetection` la devuelve tal cual cuando no hay puntero. Con ratón o dedo se usa `pointerWithin`. Si
   añades otro destino (otro panel que reciba tareas), dale un id en `lib/calendar.ts` y súmalo a `keyboardTarget` o a la tecla que lo
   elija.
+- **Cruzar de mes (o de semana):** si el día destino no se ve, su celda aún no existe y el `coordinateGetter` no tiene dónde llevar la
+  tarjeta. Entonces apunta `keyTarget` a ese día, cambia `anchor` (`anchorFor`) y deja la tarjeta donde está. Como el `KeyboardSensor`
+  solo mueve en un `keydown` (y lo escucha en el documento), un efecto despacha una tecla falsa `SETTLE_CODE` en los fotogramas
+  siguientes hasta que dnd-kit ha medido la celda nueva, y el getter la coloca ahí. No quites `SETTLE_CODE` del getter ni le pongas un
+  código que otro atajo de la app escuche. ADR-0068 lo daba como coste aceptado: ya no lo es.
 - **Ref:** [ADR-0068](../adr/0068-vista-calendario-del-tablero.md)
 
 ### Calendario: soltar cambia solo `dueDate`

@@ -54,6 +54,7 @@
 - [x] Tablero: vista **Calendario** (mes y semana, arrastrar cambia la fecha con «Deshacer», bandeja «Sin fecha», crear en un día;
   en el móvil, mes compacto y hoja «Cambiar fecha» sin arrastre; ADR-0068, diseño en el lienzo
   [«Muninn — Calendario»](https://claude.ai/artifact/5a4s3wiHqsZVG88jZKwAMB))
+  - [x] Pulido (31 de octubre): con el teclado cruza de mes o de semana, y el móvil recuerda el mes plegado o desplegado
 - [ ] Sync GitHub: issues → tareas, cerrar issue ↔ completar (ADR-0031, [#16](https://github.com/lopezz-dev/muninn/pull/16))
   - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
