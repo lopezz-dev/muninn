@@ -391,8 +391,7 @@ Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (AD
 - Logo definitivo (lo diseña Alex; el actual es provisional). Al cambiarlo, regenerar el favicon y los iconos de la web
   (`pnpm --filter @muninn/web icons` y la imagen social), los de escritorio (`pnpm --filter @muninn/desktop icons`) y el del
   conector MCP (`packages/mcp/src/icon.ts`)
-- Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*). Se hará
-  junto con la landing page; entonces, añadirlas a `sitemap.xml` y dar de alta Search Console
+- Dar de alta Search Console con el dominio propio y enviar `sitemap.xml` (las guías ya son públicas y prerenderizadas, ADR-0076)
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")
 - Migración a servidor propio (Supabase self-hosted)

@@ -77,8 +77,11 @@ export function resetMuninn() {
   stopBackground()
 }
 
-/** Acceso a la API de dominio desde cualquier componente. Toda lectura y escritura pasa por aquí. */
-export const useMuninn = (): Muninn => useLoaderData({ from: '/_app' })
+/**
+ * Acceso a la API de dominio desde cualquier componente. Toda lectura y escritura pasa por aquí. Solo es `null` en la
+ * documentación pública (sin sesión, ADR-0076), cuyas pantallas no lo llaman.
+ */
+export const useMuninn = (): Muninn => useLoaderData({ from: '/_app' }) as Muninn
 
 /** Quién está usando la app (o el modo demo), desde el contexto de la ruta raíz. */
 export const useAuth = () =>

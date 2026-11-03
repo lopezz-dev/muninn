@@ -149,7 +149,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0042](0042-noticias-rss-con-descarga-en-servidor.md) — Noticias: fuentes RSS por usuario, descarga en una Edge Function con cron y resumen diario en local
 - [ADR-0043](0043-informe-de-la-manana-en-local.md) — Informe de la mañana generado en el ordenador y guardado como nota fijada
 - [ADR-0044](0044-voz-local-whisper-y-piper.md) — Voz en local: whisper.cpp para dictar y Piper para hablar, como procesos aparte en el escritorio *(propuesto)*
-- [ADR-0045](0045-seo-de-la-web-sin-ssr.md) — SEO sin SSR: metas en `index.html` y por página, iconos desde el logo *(guías públicas y prerenderizadas, propuesto)*
+- [ADR-0045](0045-seo-de-la-web-sin-ssr.md) — SEO sin SSR: metas en `index.html` y por página, iconos desde el logo *(guías públicas: ADR-0076)*
 - [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
 - [ADR-0049](0049-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
 - [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
@@ -177,6 +177,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
+- [ADR-0076](0076-guias-publicas-prerenderizadas-y-url-unica.md) — Guías públicas y prerenderizadas en el build, y la URL pública en un solo sitio (`SITE_URL`)
 - [ADR-0077](0077-i18n-ingles-por-defecto-con-i18next.md) — La app en varios idiomas con i18next: inglés por defecto, español con prefijo `/es` y rutas en inglés
 
 ### desktop

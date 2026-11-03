@@ -1,5 +1,5 @@
 import { Button, Icon, type IconName, icons, notify, TextField } from '@muninn/ui'
-import { getRouteApi, useRouter } from '@tanstack/react-router'
+import { getRouteApi, Link, useRouter } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
 import { enterDemo, hasSupabase, isTauri, loadSupabase, safeRedirect } from '../lib/auth'
 import { captchaSiteKey, useCaptcha } from '../lib/captcha'
@@ -397,6 +397,14 @@ export function Login() {
               Modo demo
             </button>
             : los datos viven en memoria y se pierden al recargar.
+          </p>
+          {/* Pública (ADR-0076): también es por donde los buscadores llegan a las guías. */}
+          <p className="text-[12.5px] leading-normal text-fg-faint">
+            ¿Quieres saber qué hace antes de entrar? Lee las{' '}
+            <Link to="/documentacion" className="text-accent hover:text-accent-hover">
+              guías de ayuda
+            </Link>
+            .
           </p>
         </div>
       </section>
