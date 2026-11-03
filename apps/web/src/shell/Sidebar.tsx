@@ -2,6 +2,7 @@ import { cn, Icon, icons, Kbd, Tooltip } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { lazy, type ReactNode, Suspense, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProjectAvatar } from '../components/ProjectAvatar'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
@@ -72,6 +73,7 @@ export function Sidebar({ className }: { className?: string }) {
   const m = useMuninn()
   const shell = useShell()
   const modules = useEnabledModules()
+  const { t } = useTranslation()
   const projects = useQuery(projectsQuery(m)).data ?? []
   const overview = useQuery(overviewQuery(m)).data
   const openCount = new Map(overview?.projects.map((p) => [p.id, p.open]))
@@ -111,12 +113,12 @@ export function Sidebar({ className }: { className?: string }) {
         )}
         {wide ? (
           <Tooltip
-            content={folded ? 'Desplegar barra' : 'Plegar barra'}
+            content={folded ? t('shell.expandSidebar') : t('shell.collapseSidebar')}
             side={rail ? 'right' : 'bottom'}
           >
             <button
               type="button"
-              aria-label={folded ? 'Desplegar barra' : 'Plegar barra'}
+              aria-label={folded ? t('shell.expandSidebar') : t('shell.collapseSidebar')}
               aria-pressed={folded}
               onClick={toggleFold}
               className="grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
@@ -127,7 +129,7 @@ export function Sidebar({ className }: { className?: string }) {
         ) : null}
       </div>
 
-      <RailTip label="Buscar o preguntar" rail={rail}>
+      <RailTip label={t('shell.searchOrAsk')} rail={rail}>
         <button
           type="button"
           onClick={() => shell.openPalette()}
@@ -138,12 +140,12 @@ export function Sidebar({ className }: { className?: string }) {
           )}
         >
           <Icon name="search" size={rail ? 20 : undefined} />
-          <span className={rail ? 'sr-only' : undefined}>Buscar o preguntar…</span>
+          <span className={rail ? 'sr-only' : undefined}>{t('shell.searchOrAskEllipsis')}</span>
           {rail ? null : <Kbd className="ml-auto">{PALETTE_SHORTCUT}</Kbd>}
         </button>
       </RailTip>
 
-      <nav aria-label="Principal" className="flex flex-col gap-0.5">
+      <nav aria-label={t('shell.mainNav')} className="flex flex-col gap-0.5">
         {SIDEBAR_MAIN.filter((id) => sectionEnabled(id, modules)).map((id) => (
           <NavItem
             key={id}
@@ -162,12 +164,12 @@ export function Sidebar({ className }: { className?: string }) {
               id="sidebar-projects"
               className="text-[11.5px] font-medium tracking-wider text-fg-faint uppercase"
             >
-              Proyectos
+              {t('nav.projects')}
             </h2>
-            <Tooltip content="Nuevo proyecto">
+            <Tooltip content={t('shell.newProject')}>
               <button
                 type="button"
-                aria-label="Nuevo proyecto"
+                aria-label={t('shell.newProject')}
                 onClick={shell.openNewProject}
                 className="ml-auto grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
               >
@@ -177,13 +179,13 @@ export function Sidebar({ className }: { className?: string }) {
           </div>
           {projects.length === 0 ? (
             <p className="px-2.5 text-xs text-fg-faint">
-              Aún no hay proyectos.{' '}
+              {t('shell.noProjects')}{' '}
               <button
                 type="button"
                 onClick={shell.openNewProject}
                 className="cursor-pointer text-accent hover:text-accent-hover"
               >
-                Crea el primero
+                {t('shell.createFirst')}
               </button>
             </p>
           ) : (

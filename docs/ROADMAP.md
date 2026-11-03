@@ -372,8 +372,9 @@ más o menos en este orden:
 
 Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (ADR-0077). Antes del lanzamiento público.
 
-- [ ] Fase 1: i18next con claves tipadas y carga diferida por pantalla, idioma de la cuenta en Ajustes › Apariencia y el shell
-  en los dos idiomas
+- [x] Fase 1: i18next con claves tipadas y carga diferida por pantalla, idioma de la cuenta en Ajustes › Apariencia y el shell
+  en los dos idiomas (barra lateral, dock, menú y hoja de tu cuenta, avisos y «Deshacer»). El buscador ⌘K y los diálogos de
+  nuevo proyecto y nueva tarea pasan a la fase 2
 - [ ] Fase 2: el resto de pantallas en inglés y en español, por grupos
 - [ ] Fase 3: rutas en inglés (`/projects`, `/notes`, `/docs`…) con redirecciones de las antiguas
 - [ ] Fase 4: guías en los dos idiomas, prerender por idioma con `hreflang` y sitemap, y el aviso «Esta página también está en

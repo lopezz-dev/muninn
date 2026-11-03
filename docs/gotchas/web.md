@@ -826,3 +826,26 @@
 - **Solución:** todo enlace externo con `{...externalLink(url)}`; `onOpen` para lo que hace al abrirse y `direct: true` solo si el
   texto del control ya dice que abre fuera («Abrir»). Para probarlo en el navegador integrado, el preset `mobile` de
   `resize_window` emula `pointer: coarse`.
+
+### Idioma (i18n): textos con `t()`, y la app se vuelve a montar al cambiarlo
+
+- **Síntoma:** una etiqueta se queda en el idioma anterior tras cambiarlo; un test que buscaba un texto en español lo encuentra
+  en inglés; o una clave nueva no compila.
+- **Causa:**
+  - Al cambiar de idioma, `LanguageRoot` (`main.tsx`) vuelve a montar la app entera (`key` con el idioma). Por eso lo que lee
+    `t()` fuera de un componente (las etiquetas de `nav.ts` son *getters*) sale bien. Lo que esté fuera de ese árbol no se
+    rehace: el `<Toaster />` está fuera a propósito, para que el aviso «Idioma: …» sobreviva al cambio.
+  - Un texto calculado y guardado *antes* del cambio (en una constante de módulo o en `undone` de `notifyUndo`) queda en el
+    idioma de entonces. Por eso el «Deshacer» del idioma avisa él mismo y devuelve `false`.
+  - Las claves se tipan con `CustomTypeOptions` (`src/i18n/i18next.d.ts`) desde los diccionarios en inglés; `Messages<…>` obliga
+    a que el español tenga las mismas. `test/i18n.test.ts` comprueba además las variables `{{…}}`.
+  - En los tests, jsdom dice `en-US`: `test/setup.ts` fija el español para que los tests de siempre sigan valiendo.
+- **Solución:**
+  - Texto nuevo: clave en `src/i18n/locales/en/<ns>.ts` y su traducción en `es/<ns>.ts`. En componentes, `useTranslation()`;
+    fuera, `t` de `src/i18n`. Nunca un texto calculado en una constante de módulo: un *getter* o una función.
+  - Un namespace de pantalla nuevo: su fichero en `en/` y `es/` con un `export const <ns>`, y añadirlo a `resources` de
+    `i18next.d.ts`. Se pide solo al usarlo (`useTranslation('<ns>')`, que suspende hasta tenerlo).
+  - Un test que quiera el inglés hace `await i18n.changeLanguage('en')` y lo devuelve al acabar.
+  - La preferencia vive en `preferences.locale` de la cuenta (`auto`, `en` o `es`) y en `localStorage['muninn.locale']`
+    para el primer pintado (`lib/locale-pref.ts`, como la apariencia).
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

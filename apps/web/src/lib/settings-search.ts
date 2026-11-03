@@ -61,6 +61,13 @@ export const SETTINGS_INDEX: SettingEntry[] = [
     keywords: 'oauth permisos claude conectores mcp revocar',
   },
   {
+    id: 'idioma',
+    section: 'apariencia',
+    label: 'Idioma',
+    description: 'El idioma de la app. Por defecto, el de tu navegador.',
+    keywords: 'language english inglés español traducción',
+  },
+  {
     id: 'tema',
     section: 'apariencia',
     label: 'Tema',

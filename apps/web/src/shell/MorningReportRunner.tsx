@@ -2,6 +2,7 @@ import { notify } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
+import { t } from '../i18n'
 import { isHandheld } from '../lib/assistant-status'
 import { useEnabledModules } from '../lib/modules'
 import { generateMorningReport } from '../lib/morning-report'
@@ -34,12 +35,12 @@ export function MorningReportRunner() {
       try {
         const note = await generateMorningReport(m, qc, { modules })
         if (note) {
-          notify.success('Tu informe de la mañana está listo', {
+          notify.success(t('shell.reportReady'), {
             icon: 'assistant',
             // El mismo id que «Hacer ahora»: si coinciden, un solo aviso.
             id: `morning-report-${note.id}`,
             action: {
-              label: 'Abrir',
+              label: t('shell.open'),
               onClick: () => void navigate({ to: '/notas/$noteId', params: { noteId: note.id } }),
             },
           })

@@ -30,6 +30,8 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
 - UI: solo tokens de `@muninn/ui` (clases `bg-surface`, `text-fg-muted`, `rounded-lg`…; la paleta de Tailwind
   está desactivada). Iconos siempre vía `icons` / `<Icon name>` de `@muninn/ui`. Superficies con `glass*`
   para respetar el modo cristal. Diseño de referencia: lienzo «Muninn — Pantallas» (enlace en docs/ROADMAP.md).
+- Textos de la interfaz siempre con i18next (ADR-0077): `useTranslation()` en componentes, `t` de `src/i18n` fuera de ellos;
+  clave en inglés en `locales/en/<namespace>.ts` y traducción en `locales/es/`. Nada de texto suelto en un componente.
 - UX: toda acción del usuario da feedback con `notify` de `@muninn/ui`. Lo que cambia o destruye datos ofrece
   «Deshacer» (no diálogos de confirmación). Dinero siempre en céntimos (`AmountField`).
 

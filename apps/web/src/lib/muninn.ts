@@ -3,6 +3,7 @@ import { useLoaderData, useRouteContext } from '@tanstack/react-router'
 import { connectAppearance } from './appearance'
 import type { AppAuthState } from './auth'
 import { loadSupabase } from './auth'
+import { connectLocale } from './locale-pref'
 import { keys } from './queries'
 import { queryClient } from './query-client'
 
@@ -21,6 +22,7 @@ async function create(auth: AppAuthState): Promise<Muninn> {
   if (auth.kind === 'demo') {
     const { createMemoryStore, createMuninn } = await import('@muninn/core')
     connectAppearance(null)
+    connectLocale(null)
     const demo = createMuninn(createMemoryStore(), { timeZone })
     queryClient.setQueryData(keys.settings, await demo.settings.get())
     return demo
@@ -42,6 +44,11 @@ async function create(auth: AppAuthState): Promise<Muninn> {
   connectAppearance(
     (appearance) => m.settings.update({ preferences: { appearance: { ...appearance } } }),
     settings?.preferences.appearance,
+  )
+  // El idioma de la cuenta manda (ADR-0077); si no hay, se sube el de este dispositivo.
+  connectLocale(
+    (locale) => m.settings.update({ preferences: { locale } }),
+    settings?.preferences.locale,
   )
   // Cambios de otros dispositivos al momento.
   teardown.push(sync.startSync(client, auth.account.id, queryClient))

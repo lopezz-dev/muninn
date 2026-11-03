@@ -1,6 +1,7 @@
 import { Avatar, cn, Icon } from '@muninn/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { accountSheet, useAccountSheet } from '../lib/account-sheet'
 import { useDockTabs } from '../lib/dock'
 import { useAuth } from '../lib/muninn'
@@ -87,6 +88,7 @@ export function TabBar({ className }: { className?: string }) {
   const shell = useShell()
   const auth = useAuth()
   const sheet = useAccountSheet()
+  const { t } = useTranslation()
   // Con un módulo desactivado, su pestaña desaparece y las demás se reparten el ancho.
   const tabs = useDockTabs()
   const active = tabIndexOf(sectionOf(pathname), tabs)
@@ -107,7 +109,7 @@ export function TabBar({ className }: { className?: string }) {
       />
       <div className="relative mx-4 mb-[calc(14px+env(safe-area-inset-bottom))] flex h-[62px] items-stretch gap-2">
         <nav
-          aria-label="Navegación principal"
+          aria-label={t('shell.dockNav')}
           className={cn(
             'glass-raised pointer-events-auto flex min-w-0 items-center gap-0.5 overflow-hidden rounded-dock border border-white/[0.09] bg-surface-raised p-[5px] shadow-popover',
             'transition-[flex-basis] duration-[400ms] ease-(--mn-motion-ease-out) motion-reduce:transition-none',
@@ -143,7 +145,7 @@ export function TabBar({ className }: { className?: string }) {
                 <button
                   key={id}
                   type="button"
-                  aria-label="Buscar o preguntar"
+                  aria-label={t('shell.searchOrAsk')}
                   tabIndex={hidden ? -1 : undefined}
                   aria-hidden={hidden || undefined}
                   onClick={() => (shrunk ? setCompact(false) : shell.openPalette())}
@@ -178,7 +180,7 @@ export function TabBar({ className }: { className?: string }) {
         <span className="flex-1" />
         <button
           type="button"
-          aria-label="Tu cuenta y más"
+          aria-label={t('shell.accountAndMore')}
           aria-haspopup="dialog"
           aria-expanded={sheet.open}
           onClick={() => (sheet.open ? accountSheet.close() : accountSheet.open())}
