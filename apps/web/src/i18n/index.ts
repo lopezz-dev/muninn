@@ -48,6 +48,17 @@ export const NAMESPACES = [
   'settings',
   'security',
   'integrations',
+  'board',
+  'task',
+  'home',
+  'projects',
+  'notes',
+  'docs',
+  'finance',
+  'assistant',
+  'news',
+  'github',
+  'auth',
 ] as const
 
 /** Traduce fuera de un componente (avisos, etiquetas de datos). Dentro, mejor `useTranslation()`. */
