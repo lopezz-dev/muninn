@@ -26,6 +26,7 @@ import {
   FunnelSimple,
   GitBranch,
   GithubLogo,
+  Globe,
   House,
   ImageSquare,
   Info,
@@ -115,6 +116,8 @@ export const icons = {
   image: ImageSquare,
   attach: Paperclip,
   edit: PencilSimple,
+  /** Idioma (ADR-0077). */
+  globe: Globe,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons

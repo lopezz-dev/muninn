@@ -1,17 +1,75 @@
 import type { ModuleName } from '@muninn/core'
 import type { IconName } from '@muninn/ui'
+import { t } from '../i18n'
 
-/** Secciones de la app. El orden de `SIDEBAR_MAIN` y `DOCK_OPTIONS` sigue el diseño. */
+/**
+ * Secciones de la app. El orden de `SIDEBAR_MAIN` y `DOCK_OPTIONS` sigue el diseño. `label` se lee al pintar, en el idioma
+ * activo (ADR-0077): al cambiar de idioma se vuelve a montar la app.
+ */
 export const SECTIONS = {
-  home: { label: 'Inicio', icon: 'home', to: '/' },
-  projects: { label: 'Proyectos', icon: 'projects', to: '/proyectos' },
-  notes: { label: 'Notas', icon: 'notes', to: '/notas' },
-  finance: { label: 'Finanzas', icon: 'finance', to: '/finanzas' },
-  assistant: { label: 'Asistente', icon: 'assistant', to: '/asistente' },
-  news: { label: 'Noticias', icon: 'news', to: '/noticias' },
-  github: { label: 'GitHub', icon: 'github', to: '/github' },
-  docs: { label: 'Documentación', icon: 'docs', to: '/documentacion' },
-  settings: { label: 'Ajustes', icon: 'settings', to: '/ajustes' },
+  home: {
+    get label() {
+      return t('nav.home')
+    },
+    icon: 'home',
+    to: '/',
+  },
+  projects: {
+    get label() {
+      return t('nav.projects')
+    },
+    icon: 'projects',
+    to: '/proyectos',
+  },
+  notes: {
+    get label() {
+      return t('nav.notes')
+    },
+    icon: 'notes',
+    to: '/notas',
+  },
+  finance: {
+    get label() {
+      return t('nav.finance')
+    },
+    icon: 'finance',
+    to: '/finanzas',
+  },
+  assistant: {
+    get label() {
+      return t('nav.assistant')
+    },
+    icon: 'assistant',
+    to: '/asistente',
+  },
+  news: {
+    get label() {
+      return t('nav.news')
+    },
+    icon: 'news',
+    to: '/noticias',
+  },
+  github: {
+    get label() {
+      return t('nav.github')
+    },
+    icon: 'github',
+    to: '/github',
+  },
+  docs: {
+    get label() {
+      return t('nav.docsLong')
+    },
+    icon: 'docs',
+    to: '/documentacion',
+  },
+  settings: {
+    get label() {
+      return t('nav.settings')
+    },
+    icon: 'settings',
+    to: '/ajustes',
+  },
 } as const satisfies Record<string, { label: string; icon: IconName; to: string }>
 
 export type SectionId = keyof typeof SECTIONS
@@ -71,9 +129,20 @@ export const DOCK_OPTIONS = [
 export type DockTab = (typeof DOCK_OPTIONS)[number]
 
 /** Lo que se ve de cada pestaña. «Buscar» no es una sección: no tiene ruta. */
-export const DOCK_TAB: Record<DockTab, { label: string; icon: IconName }> = {
-  ...SECTIONS,
-  search: { label: 'Buscar', icon: 'search' },
+export const DOCK_TAB: Record<DockTab, { readonly label: string; icon: IconName }> = {
+  home: SECTIONS.home,
+  projects: SECTIONS.projects,
+  notes: SECTIONS.notes,
+  finance: SECTIONS.finance,
+  news: SECTIONS.news,
+  github: SECTIONS.github,
+  docs: SECTIONS.docs,
+  search: {
+    get label() {
+      return t('nav.search')
+    },
+    icon: 'search',
+  },
 }
 
 /** Caben de 1 a 4 pestañas, más el avatar. */

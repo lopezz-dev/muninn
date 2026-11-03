@@ -147,6 +147,8 @@ borra. Pulsa **Deshacer** en el aviso para recuperarlo.
 
 En **Ajustes › Apariencia**:
 
+- **Idioma:** español o inglés. En **Automático**, Muninn usa el idioma de tu navegador (y, si no es ninguno de
+  los dos, el inglés).
 - **Cristal:** activa o desactiva el desenfoque translúcido de paneles y menús. Si tu sistema tiene
   activado «Reducir transparencia», Muninn empieza sin cristal.
 - **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y la
@@ -154,6 +156,9 @@ En **Ajustes › Apariencia**:
 
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
+
+> **Estado:** la traducción al inglés llega por partes. Hoy están en inglés el menú, la barra de abajo, tu cuenta y
+> los avisos; el resto de pantallas y estas guías siguen en español mientras se traducen.
 
 > **Próximamente:** tema claro.
 
@@ -166,7 +171,7 @@ lo más útil sin abrirla: con qué entras, cuántos módulos tienes activos o a
 | Grupo | Sección | Qué hay |
 |---|---|---|
 | Tú | **Cuenta** | Tu nombre y correo, cómo entras (código o GitHub) y **Cerrar sesión**. En modo demo, **Salir del modo demo** |
-| Tú | **Apariencia** | Cristal y color de acento (ver arriba) |
+| Tú | **Apariencia** | Idioma, cristal y color de acento (ver arriba) |
 | Tú | **Barra de abajo** | Las pestañas del móvil y su orden (ver [Elegir las pestañas de abajo](#elegir-las-pestañas-de-abajo)) |
 | Tú | **Atajos de teclado** | Los atajos del buscador, del tablero y de toda la app |
 | Espacio de trabajo | **Módulos** | Activar y desactivar módulos (ver arriba) |

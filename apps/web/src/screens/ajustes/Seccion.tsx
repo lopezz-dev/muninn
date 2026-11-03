@@ -1,12 +1,24 @@
-import { ACCENTS, type AccentName, Avatar, Button, icons, Kbd, Switch } from '@muninn/ui'
+import {
+  ACCENTS,
+  type AccentName,
+  Avatar,
+  Button,
+  icons,
+  Kbd,
+  SegmentedControl,
+  Switch,
+} from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../../components/Page'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
+import { browserLocale, type LocalePref } from '../../i18n/locale'
 import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appearance'
 import { isTauri } from '../../lib/auth'
 import { externalLink } from '../../lib/external-link'
+import { changeLocale, useLocalePref } from '../../lib/locale-pref'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { useEndSession } from '../../lib/session'
 import { bySection, type PrefKey, resetPrefs, useChangedPrefs } from '../../lib/settings-changes'
@@ -170,12 +182,49 @@ function Datos() {
   )
 }
 
+/** Idioma de la app (ADR-0077): seguir al navegador o fijar uno. */
+function IdiomaRow({ changed, onReset }: { changed: boolean; onReset: () => void }) {
+  const { t } = useTranslation()
+  const pref = useLocalePref()
+  return (
+    <PrefRow
+      id="idioma"
+      icon="globe"
+      title={t('language.title')}
+      description={t('language.description')}
+      changed={changed}
+      onReset={onReset}
+    >
+      <SegmentedControl<LocalePref>
+        aria-label={t('language.title')}
+        value={pref}
+        onValueChange={(next) => void changeLocale(next)}
+        options={[
+          {
+            value: 'auto',
+            label: t('language.auto', { language: t(`language.${browserLocale()}`) }),
+          },
+          { value: 'en', label: t('language.en') },
+          { value: 'es', label: t('language.es') },
+        ]}
+      />
+    </PrefRow>
+  )
+}
+
 function Apariencia() {
   const auth = useAuth()
   const appearance = useAppearance()
   const { changed, reset } = useReset('apariencia')
+  const { t } = useTranslation()
   return (
     <>
+      <PrefGroup title={t('language.title')} icon="globe">
+        <IdiomaRow
+          changed={changed.includes('locale')}
+          onReset={() => reset(['locale'], t('language.restored'))}
+        />
+      </PrefGroup>
       <PrefGroup title="Tema" icon="glass">
         <PrefRow
           id="tema"

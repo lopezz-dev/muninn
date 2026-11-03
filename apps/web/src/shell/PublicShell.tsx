@@ -1,5 +1,6 @@
 import { Button, icons } from '@muninn/ui'
 import { Link, Outlet, useRouterState } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { Logo } from './Logo'
 
 /**
@@ -8,18 +9,19 @@ import { Logo } from './Logo'
  */
 export function PublicShell() {
   const href = useRouterState({ select: (s) => s.location.href })
+  const { t } = useTranslation()
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-fg md:h-dvh">
       <header className="glass flex shrink-0 items-center gap-3 border-b border-border-subtle px-5 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 md:px-7 md:py-3 lg:px-8">
         <Link to="/documentacion" className="flex items-center gap-2.5 text-fg">
           <Logo />
           <span className="text-md font-semibold tracking-tight">Muninn</span>
-          <span className="hidden text-md text-fg-subtle sm:inline">· Documentación</span>
+          <span className="hidden text-md text-fg-subtle sm:inline">· {t('publicShell.docs')}</span>
         </Link>
         <Button asChild variant="primary" className="ml-auto">
           <Link to="/login" search={{ redirect: href }}>
             <icons.user size={16} aria-hidden="true" />
-            Entrar
+            {t('publicShell.signIn')}
           </Link>
         </Button>
       </header>

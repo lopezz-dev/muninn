@@ -81,6 +81,8 @@ la otra versión.
   - Las guías se mantienen en los dos idiomas: una guía nueva o un cambio visible para el usuario actualiza ambas en el mismo PR.
   - Cambiar las rutas toca `robots` y el sitemap (`vite/seo.ts`), `vercel.json`, el `globIgnores` del PWA, `isPublicPath`, los
     enlaces de las guías, los deep links de escritorio y los atajos del buscador.
+- **Medido en la fase 1:** el JS inicial pasa de 175,6 a 199,3 kB comprimidos (+23,7 kB: i18next 26, `react-i18next`, el backend
+  diferido y los dos diccionarios de `common`), más que los ~16 kB estimados arriba.
 - Al implementar la fase 1, actualizar `CLAUDE.md` (regla de textos con `t()`) y añadir los gotchas de i18n en `docs/gotchas/web.md`.
 - Relacionado: [ADR-0019](0019-feedback-con-notificaciones.md), [ADR-0020](0020-tanstack-router-carga-diferida.md),
   [ADR-0027](0027-documentacion-en-la-app-desde-docs-user.md), [ADR-0045](0045-seo-de-la-web-sin-ssr.md),

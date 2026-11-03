@@ -10,14 +10,12 @@ import {
 } from '@muninn/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../lib/muninn'
 import { useEndSession } from '../lib/session'
 import { UserButton } from './UserButton'
 
-const PROVIDER: Record<string, string> = {
-  github: 'Entras con GitHub',
-  email: 'Entras con un código',
-}
+const PROVIDER = { github: 'account.viaGithub', email: 'account.viaEmail' } as const
 
 /**
  * Menú de tu cuenta al pie de la barra lateral (ADR-0072): hacia arriba con la barra ancha y a la derecha con el raíl.
@@ -29,6 +27,7 @@ export function UserMenu({ rail }: { rail: boolean }) {
   const navigate = useNavigate()
   const endSession = useEndSession()
   const [open, setOpen] = useState(false)
+  const { t } = useTranslation()
   const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -66,37 +65,39 @@ export function UserMenu({ rail }: { rail: boolean }) {
           )}
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-sm font-semibold">
-              {auth.kind === 'user' ? auth.account.name : 'Modo demo'}
+              {auth.kind === 'user' ? auth.account.name : t('account.demo')}
             </span>
             <span className="truncate text-xs text-fg-subtle">
               {auth.kind === 'user'
-                ? (PROVIDER[auth.account.provider] ?? auth.account.email)
-                : 'Tus datos no se guardan'}
+                ? auth.account.provider in PROVIDER
+                  ? t(PROVIDER[auth.account.provider as keyof typeof PROVIDER])
+                  : auth.account.email
+                : t('account.demoNotSaved')}
             </span>
           </span>
         </div>
         <MenuItem icon={<icons.user />} onSelect={() => go('cuenta')}>
-          Cuenta
+          {t('account.account')}
         </MenuItem>
         <MenuItem icon={<icons.settings />} onSelect={() => void navigate({ to: '/ajustes' })}>
-          Ajustes
+          {t('nav.settings')}
         </MenuItem>
         <MenuItem icon={<icons.keyboard />} onSelect={() => go('atajos')}>
-          Atajos de teclado
+          {t('account.shortcuts')}
         </MenuItem>
         <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: '/documentacion' })}>
-          Documentación
+          {t('nav.docsLong')}
         </MenuItem>
         <MenuSeparator />
         <MenuItem icon={<icons.info />} onSelect={() => go('acerca')}>
           <span className="flex items-center">
-            Acerca de Muninn
+            {t('account.about')}
             <span className="ml-auto font-mono text-xs text-fg-faint">v{__APP_VERSION__}</span>
           </span>
         </MenuItem>
         <MenuSeparator />
         <MenuItem danger icon={<icons.signOut />} onSelect={() => void endSession(auth.kind)}>
-          {auth.kind === 'user' ? 'Cerrar sesión' : 'Salir del modo demo'}
+          {auth.kind === 'user' ? t('account.signOut') : t('account.leaveDemo')}
         </MenuItem>
       </MenuContent>
     </Menu>
