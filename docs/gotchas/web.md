@@ -262,6 +262,9 @@
   pantalla (`scrollToTopSelectors`) y recuerda su posición (`data-scroll-restoration-id`). Para que una lista haga scroll
   dentro, la cadena entera necesita `min-h-0` (desde `Page fit` hasta la lista con `overflow-y-auto`): un solo eslabón
   sin él y crece en lugar de hacer scroll.
+- **Columna con altura máxima:** no pongas el `overflow-y-auto` en la misma columna `flex-col` que lleva la cabecera. Sus hijos
+  encogen (`flex-shrink` por defecto: en Notas el buscador bajaba de 32 a 22 px) y se van con el scroll. Cabecera, buscador y
+  filtros con `shrink-0`, y el scroll solo en la lista (`min-h-0 flex-1 overflow-y-auto`), como en `screens/Notas.tsx`.
 - **En una guía de Documentación** el texto tiene su propio scroll, `#guia` ([ADR-0071](../adr/0071-guia-de-documentacion-a-la-altura-de-la-ventana.md)):
   ahí `#contenido` tampoco se mueve. El router lo vuelve arriba al cambiar de guía.
 

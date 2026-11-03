@@ -122,12 +122,15 @@ export function Notas() {
     </Button>
   )
 
+  // En escritorio la columna mide como mucho el alto de la ventana: cabecera, buscador y filtros se quedan
+  // fijos arriba (`shrink-0`) y solo hace scroll la lista. En el móvil hace scroll la ventana y el buscador
+  // se queda pegado arriba (`sticky`, como la barra del editor).
   const list = (
     <section
       aria-label="Lista de notas"
-      className="flex min-w-0 flex-col gap-3 md:sticky md:top-7 md:max-h-[calc(100dvh-3.5rem)] md:self-start md:overflow-y-auto md:pr-3"
+      className="flex min-w-0 flex-col gap-3 md:sticky md:top-7 md:max-h-[calc(100dvh-3.5rem)] md:self-start md:pr-3"
     >
-      <header className="flex items-center gap-3">
+      <header className="flex shrink-0 items-center gap-3">
         <h1 className="flex-1 text-2xl font-semibold tracking-tight md:text-xl">Notas</h1>
         <IconButton
           aria-label="Nueva nota"
@@ -138,19 +141,21 @@ export function Notas() {
         />
       </header>
 
-      <label className="flex h-11 items-center gap-2.5 rounded-lg border border-border bg-surface px-3.5 text-fg-subtle focus-within:border-accent md:h-8 md:rounded-md md:bg-transparent md:px-2.5">
-        <icons.search size={16} aria-hidden="true" />
-        <input
-          type="search"
-          aria-label="Buscar en notas"
-          placeholder="Buscar en notas"
-          value={filter.query}
-          onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
-          className="min-w-0 flex-1 bg-transparent text-md text-fg outline-none placeholder:text-fg-faint md:text-sm"
-        />
-      </label>
+      <div className="glass sticky top-0 z-10 -mx-5 shrink-0 px-5 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-filter-none">
+        <label className="flex h-11 items-center gap-2.5 rounded-lg border border-border bg-surface px-3.5 text-fg-subtle focus-within:border-accent md:h-8 md:rounded-md md:bg-transparent md:px-2.5">
+          <icons.search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="Buscar en notas"
+            placeholder="Buscar en notas"
+            value={filter.query}
+            onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
+            className="min-w-0 flex-1 bg-transparent text-md text-fg outline-none placeholder:text-fg-faint md:text-sm"
+          />
+        </label>
+      </div>
 
-      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 md:mx-0 md:flex-wrap md:gap-1.5 md:overflow-visible md:px-0">
+      <div className="-mx-5 flex shrink-0 gap-2 overflow-x-auto px-5 md:mx-0 md:flex-wrap md:gap-1.5 md:overflow-visible md:px-0">
         <FilterChip
           touch={!desktop}
           pressed={!filter.pinned && !filter.projectId}
@@ -182,57 +187,61 @@ export function Notas() {
           ))}
       </div>
 
-      {!all ? (
-        <div className="flex flex-col gap-2" aria-hidden="true">
-          <Ghost className="h-16" />
-          <Ghost className="h-16 opacity-60" />
-          <Ghost className="h-16 opacity-30" />
-        </div>
-      ) : all.length === 0 ? (
-        <EmptyState icon="notes" title="Todavía no hay notas" actions={newButton}>
-          Escribe en Markdown, fija las importantes y vincula cada nota a un proyecto o a una tarea.
-        </EmptyState>
-      ) : shown.length === 0 ? (
-        <p className="px-1 py-6 text-center text-sm text-fg-subtle text-pretty">
-          {filter.query.trim()
-            ? `Nada coincide con «${filter.query.trim()}».`
-            : 'No hay notas con este filtro.'}{' '}
-          {filtering ? (
-            <button
-              type="button"
-              onClick={() => setFilter(NO_FILTER)}
-              className="cursor-pointer text-accent hover:underline"
-            >
-              Quitar filtros
-            </button>
-          ) : null}
-        </p>
-      ) : (
-        <div className="flex flex-col gap-1">
-          {pinned.length ? (
-            <Group label="Fijadas">
-              {pinned.map((n) => (
-                <NoteItem
-                  key={n.id}
-                  note={n}
-                  project={n.projectId ? projectOf.get(n.projectId) : undefined}
-                />
-              ))}
-            </Group>
-          ) : null}
-          {recent.length ? (
-            <Group label={pinned.length ? 'Recientes' : filtering ? 'Resultados' : 'Recientes'}>
-              {recent.map((n) => (
-                <NoteItem
-                  key={n.id}
-                  note={n}
-                  project={n.projectId ? projectOf.get(n.projectId) : undefined}
-                />
-              ))}
-            </Group>
-          ) : null}
-        </div>
-      )}
+      {/* La única parte con scroll en escritorio; el margen negativo deja la barra en el hueco de la derecha. */}
+      <div className="md:-mr-3 md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-3">
+        {!all ? (
+          <div className="flex flex-col gap-2" aria-hidden="true">
+            <Ghost className="h-16" />
+            <Ghost className="h-16 opacity-60" />
+            <Ghost className="h-16 opacity-30" />
+          </div>
+        ) : all.length === 0 ? (
+          <EmptyState icon="notes" title="Todavía no hay notas" actions={newButton}>
+            Escribe en Markdown, fija las importantes y vincula cada nota a un proyecto o a una
+            tarea.
+          </EmptyState>
+        ) : shown.length === 0 ? (
+          <p className="px-1 py-6 text-center text-sm text-fg-subtle text-pretty">
+            {filter.query.trim()
+              ? `Nada coincide con «${filter.query.trim()}».`
+              : 'No hay notas con este filtro.'}{' '}
+            {filtering ? (
+              <button
+                type="button"
+                onClick={() => setFilter(NO_FILTER)}
+                className="cursor-pointer text-accent hover:underline"
+              >
+                Quitar filtros
+              </button>
+            ) : null}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {pinned.length ? (
+              <Group label="Fijadas">
+                {pinned.map((n) => (
+                  <NoteItem
+                    key={n.id}
+                    note={n}
+                    project={n.projectId ? projectOf.get(n.projectId) : undefined}
+                  />
+                ))}
+              </Group>
+            ) : null}
+            {recent.length ? (
+              <Group label={pinned.length ? 'Recientes' : filtering ? 'Resultados' : 'Recientes'}>
+                {recent.map((n) => (
+                  <NoteItem
+                    key={n.id}
+                    note={n}
+                    project={n.projectId ? projectOf.get(n.projectId) : undefined}
+                  />
+                ))}
+              </Group>
+            ) : null}
+          </div>
+        )}
+      </div>
     </section>
   )
 
