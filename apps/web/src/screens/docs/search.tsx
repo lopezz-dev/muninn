@@ -1,7 +1,8 @@
 import { cn, icons, Kbd } from '@muninn/ui'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react'
-import { type DocHit, groupLabel, searchDocs } from '../../lib/docs'
+import { useTranslation } from 'react-i18next'
+import { type DocHit, searchDocs } from '../../lib/docs'
 import { typingIn } from '../../lib/keyboard'
 import { DOCS } from './content'
 import { DocTile } from './look'
@@ -78,6 +79,7 @@ export function DocSearchField({
   size?: 'sm' | 'lg'
   className?: string
 }) {
+  const { t } = useTranslation('docs')
   const lg = size === 'lg'
   return (
     <label
@@ -95,8 +97,8 @@ export function DocSearchField({
         aria-expanded={search.searching}
         aria-controls="resultados-ayuda"
         aria-activedescendant={search.searching ? `resultado-ayuda-${search.active}` : undefined}
-        aria-label="Buscar en la ayuda"
-        placeholder={lg ? 'Busca una guía, un apartado o una palabra' : 'Buscar en la ayuda'}
+        aria-label={t('search.label')}
+        placeholder={lg ? t('search.placeholder') : t('search.label')}
         value={search.query}
         onChange={(e) => search.change(e.target.value)}
         onKeyDown={search.onKeyDown}
@@ -112,22 +114,22 @@ export function DocSearchField({
 
 /** Los resultados: guía, apartado donde aparece y un trozo del texto. */
 export function DocResults({ search, dense }: { search: DocSearch; dense?: boolean }) {
+  const { t } = useTranslation('docs')
   if (search.hits.length === 0) {
     return (
       <p className="px-1 py-4 text-sm text-fg-subtle">
-        Ninguna guía menciona «{search.query.trim()}».
+        {t('search.noResults', { query: search.query.trim() })}
       </p>
     )
   }
   return (
     <div className="flex flex-col gap-2">
       <p className="px-1 text-xs text-fg-subtle" aria-live="polite">
-        {search.hits.length === 1 ? '1 guía' : `${search.hits.length} guías`} · ↑ ↓ para elegir, ↵
-        para abrir
+        {t('search.count', { count: search.hits.length })} · {t('search.keys')}
       </p>
       <ul
         id="resultados-ayuda"
-        aria-label="Resultados"
+        aria-label={t('search.results')}
         className="glass flex flex-col divide-y divide-border-subtle overflow-hidden rounded-lg border border-border"
       >
         {search.hits.map((hit, i) => (
@@ -170,7 +172,7 @@ export function DocResults({ search, dense }: { search: DocSearch; dense?: boole
                   </span>
                 ) : null}
                 {dense ? null : (
-                  <span className="text-2xs text-fg-faint">{groupLabel(hit.doc.group)}</span>
+                  <span className="text-2xs text-fg-faint">{t(`groups.${hit.doc.group}`)}</span>
                 )}
               </span>
             </Link>

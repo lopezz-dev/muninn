@@ -10,6 +10,7 @@ import type { ModuleName, Muninn } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { t } from '../i18n'
 import {
   type Conversation,
   loadHistory,
@@ -123,12 +124,12 @@ export function useAssistantChat({ app, provider, userKey, modules }: Options) {
           true,
         )
         void qc.invalidateQueries()
-        notify.success(list.length === 1 ? 'Cambio deshecho' : 'Cambios deshechos', {
+        notify.success(t('feedback.undone', { ns: 'assistant', count: list.length }), {
           icon: 'sync',
         })
       } catch (err) {
         undos.current.set(turnId, list)
-        notify.error('No se pudo deshacer', { description: reason(err) })
+        notify.error(t('feedback.undoFailed'), { description: reason(err) })
       }
     },
     [app, patchTurn, qc],
@@ -194,15 +195,18 @@ export function useAssistantChat({ app, provider, userKey, modules }: Options) {
         patchTurn(
           conv.id,
           reply.id,
-          (t) => ({
-            ...t,
+          (turn) => ({
+            ...turn,
             stopped: stopped || undefined,
-            error: stopped ? undefined : (reason(err) ?? 'Algo ha fallado'),
+            error: stopped ? undefined : (reason(err) ?? t('feedback.failed', { ns: 'assistant' })),
           }),
           true,
         )
-        if (stopped) notify.info('Respuesta detenida', { icon: 'close' })
-        else notify.error('El asistente no ha podido terminar', { description: reason(err) })
+        if (stopped) notify.info(t('feedback.stopped', { ns: 'assistant' }), { icon: 'close' })
+        else
+          notify.error(t('feedback.couldntFinish', { ns: 'assistant' }), {
+            description: reason(err),
+          })
       } finally {
         abort.current = null
         setRunning(false)
@@ -213,11 +217,11 @@ export function useAssistantChat({ app, provider, userKey, modules }: Options) {
         void qc.invalidateQueries()
         notify.success(
           changes.length === 1
-            ? (changes[0]?.summary ?? 'Hecho')
-            : `${changes.length} cambios hechos`,
+            ? (changes[0]?.summary ?? t('feedback.done', { ns: 'assistant' }))
+            : t('feedback.changesDone', { ns: 'assistant', count: changes.length }),
           {
             icon: 'assistant',
-            action: { label: 'Deshacer', onClick: () => void undo(conv.id, reply.id) },
+            action: { label: t('feedback.undo'), onClick: () => void undo(conv.id, reply.id) },
           },
         )
       }

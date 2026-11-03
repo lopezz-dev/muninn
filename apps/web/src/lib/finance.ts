@@ -5,7 +5,7 @@ import type {
   Transaction,
   TransactionKind,
 } from '@muninn/core'
-import { formatAmount } from '@muninn/ui'
+import { currentLocale, t as tr } from '../i18n'
 import { addDays, asDate, capitalize, dueLabel } from './dates'
 import { matchesAll, words } from './text'
 
@@ -20,21 +20,12 @@ import { matchesAll, words } from './text'
  */
 export type EntryKind = 'expense' | 'income' | 'saving' | 'investment' | 'transfer'
 
-export const ENTRY_LABEL: Record<EntryKind, string> = {
-  expense: 'Gasto',
-  income: 'Ingreso',
-  saving: 'Ahorro',
-  investment: 'Inversión',
-  transfer: 'Traspaso',
-}
+/** Etiquetas en el idioma activo (ADR-0077): se leen al pintar, nunca en una constante de módulo. */
+export const entryLabel = (k: EntryKind) => tr(`entry.${k}`, { ns: 'finance' })
 
-export const ACCOUNT_KIND_LABEL: Record<AccountKind, string> = {
-  checking: 'Corriente',
-  savings: 'Ahorro',
-  investment: 'Inversión',
-  cash: 'Efectivo',
-  other: 'Otra',
-}
+export const ACCOUNT_KINDS: AccountKind[] = ['checking', 'savings', 'investment', 'cash', 'other']
+
+export const accountKindLabel = (k: AccountKind) => tr(`accountKind.${k}`, { ns: 'finance' })
 
 export const txKindOf = (entry: EntryKind): TransactionKind =>
   entry === 'expense' || entry === 'income' ? entry : 'transfer'
@@ -64,9 +55,38 @@ export function signedAmount(t: Transaction, accountId?: string | null) {
   return t.toAccountId === accountId ? t.amount : t.accountId === accountId ? -t.amount : 0
 }
 
-/** «−18,45 €», «+850,00 €» o, sin signo, «600,00 €». */
+/** Etiqueta de Intl del idioma activo: `es-ES` en español y `en` en inglés (como `lib/dates.ts`). */
+const tag = () => (currentLocale() === 'es' ? 'es-ES' : 'en')
+
+/** Formateadores por idioma, creados una vez: `Intl` es caro de construir. */
+const formatters = new Map<string, Intl.NumberFormat | Intl.DateTimeFormat>()
+function cached<T extends Intl.NumberFormat | Intl.DateTimeFormat>(
+  key: string,
+  make: (locale: string) => T,
+): T {
+  const id = `${tag()}|${key}`
+  if (!formatters.has(id)) formatters.set(id, make(tag()))
+  return formatters.get(id) as T
+}
+
+// Euros (ADR-0018: la moneda es EUR) con dos decimales; agrupa siempre los miles (en es-ES Intl no agrupa 4 cifras).
+const MONEY = () =>
+  cached(
+    'money',
+    (l) => new Intl.NumberFormat(l, { style: 'currency', currency: 'EUR', useGrouping: 'always' }),
+  )
+const PERCENT = () =>
+  cached('pct', (l) => new Intl.NumberFormat(l, { style: 'percent', maximumFractionDigits: 0 }))
+
+/** Intl separa con un espacio duro (`es-ES`: «18,45 €», «20 %»); la app siempre ha usado uno normal. */
+const plainSpaces = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ')
+
+/** Un porcentaje (0–1) en el idioma activo: «20 %» en español, «20%» en inglés. */
+export const percentText = (ratio: number) => plainSpaces(PERCENT().format(ratio))
+
+/** «−18,45 €», «+850,00 €» o, sin signo, «600,00 €» (en inglés, «−€18.45»). */
 export function amountText(cents: number, sign: 'auto' | 'none' = 'auto') {
-  const abs = `${formatAmount(Math.abs(cents))} €`
+  const abs = plainSpaces(MONEY().format(Math.abs(cents) / 100))
   if (sign === 'none' || cents === 0) return abs
   return cents < 0 ? `−${abs}` : `+${abs}`
 }
@@ -124,25 +144,45 @@ export function groupByDay(list: Transaction[], accountId?: string | null): DayG
   return groups
 }
 
-const WEEKDAY_DAY = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric' })
-const MONTH_YEAR = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
-const SHORT_MONTH = new Intl.DateTimeFormat('es-ES', { month: 'short' })
+const WEEKDAY = () => cached('weekday', (l) => new Intl.DateTimeFormat(l, { weekday: 'long' }))
+const MONTH_YEAR = () =>
+  cached('monthYear', (l) => new Intl.DateTimeFormat(l, { month: 'long', year: 'numeric' }))
+const SHORT_MONTH = () =>
+  cached('shortMonth', (l) => new Intl.DateTimeFormat(l, { month: 'short' }))
+const MONTH_NAME = () => cached('monthName', (l) => new Intl.DateTimeFormat(l, { month: 'long' }))
+const NUMERIC_DATE = () =>
+  cached(
+    'numericDate',
+    (l) => new Intl.DateTimeFormat(l, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+  )
 
 /** «Hoy · lunes 19», «Ayer · domingo 18», «Sábado 17». */
 export function dayLabel(date: string, today: string) {
-  const day = WEEKDAY_DAY.format(asDate(date))
-  if (date === today) return `Hoy · ${day}`
-  if (date === addDays(today, -1)) return `Ayer · ${day}`
+  // El día de la semana y el número por separado: en inglés, Intl daría «19 Monday».
+  const day = `${WEEKDAY().format(asDate(date))} ${Number(date.slice(8, 10))}`
+  if (date === today) return `${tr('dates.today')} · ${day}`
+  if (date === addDays(today, -1)) return `${tr('dates.yesterday')} · ${day}`
   return capitalize(day)
 }
 
 /** «Octubre 2026». */
 export const monthLabel = (month: string) =>
-  capitalize(MONTH_YEAR.format(asDate(`${month}-15`)).replace(' de ', ' '))
+  capitalize(
+    MONTH_YEAR()
+      .format(asDate(`${month}-15`))
+      .replace(' de ', ' '),
+  )
 
 /** «Oct». */
 export const monthShort = (month: string) =>
-  capitalize(SHORT_MONTH.format(asDate(`${month}-15`)).replace('.', ''))
+  capitalize(
+    SHORT_MONTH()
+      .format(asDate(`${month}-15`))
+      .replace('.', ''),
+  )
+
+/** «19/10/2026» en español, «10/19/2026» en inglés. */
+export const numericDate = (iso: string) => NUMERIC_DATE().format(asDate(iso))
 
 export function shiftMonth(month: string, delta: number) {
   const [y, m] = month.split('-').map(Number) as [number, number]
@@ -180,25 +220,21 @@ export function applyToBalances(
 export const categoriesFor = (categories: FinanceCategory[], kind: TransactionKind) =>
   kind === 'transfer' ? [] : categories.filter((c) => c.kind === kind && !c.archivedAt)
 
-const FREQUENCY_SHORT = { weekly: 'Semanal', monthly: 'Mensual', yearly: 'Anual' } as const
-export const FREQUENCY_LABEL = FREQUENCY_SHORT
+type Frequency = 'weekly' | 'monthly' | 'yearly'
+
+export const frequencyLabel = (f: Frequency) => tr(`frequency.${f}`, { ns: 'finance' })
 
 /**
  * Cuándo se cobra, como en el diseño: «Hoy», «Mañana», «24 oct», y «Vencida · 18 oct» si ya pasó. Las no mensuales
  * llevan delante su frecuencia («Anual · 12 mar»).
  */
-export function chargeLabel(
-  s: { nextDate: string; frequency: keyof typeof FREQUENCY_SHORT },
-  today: string,
-) {
+export function chargeLabel(s: { nextDate: string; frequency: Frequency }, today: string) {
   const when = dueLabel(s.nextDate, today)
-  if (s.nextDate < today) return `Vencida · ${when}`
+  if (s.nextDate < today) return tr('format.overdue', { ns: 'finance', when })
   return s.frequency === 'monthly' || s.nextDate <= addDays(today, 1)
     ? when
-    : `${FREQUENCY_SHORT[s.frequency]} · ${when}`
+    : tr('format.withFrequency', { ns: 'finance', frequency: frequencyLabel(s.frequency), when })
 }
-
-const MONTH_NAME = new Intl.DateTimeFormat('es-ES', { month: 'long' })
 
 /** Por encima de esto (más del triple), un porcentaje ya no dice nada: «+15559 %». */
 const MAX_DELTA_PCT = 200
@@ -211,15 +247,17 @@ const MAX_DELTA_PCT = 200
 export function deltaText(current: number, previous: number, previousMonth: string) {
   if (previous === 0) return null
   const pct = Math.round(((current - previous) / previous) * 100)
-  const name = MONTH_NAME.format(asDate(`${previousMonth}-15`))
-  if (pct > MAX_DELTA_PCT) return `En ${name}: ${amountText(previous, 'none')}`
-  if (pct === 0) return `Igual que en ${name}`
-  return `${pct > 0 ? '+' : '−'}${Math.abs(pct)} % que en ${name}`
+  const month = MONTH_NAME().format(asDate(`${previousMonth}-15`))
+  if (pct > MAX_DELTA_PCT)
+    return tr('format.deltaOver', { ns: 'finance', month, amount: amountText(previous, 'none') })
+  if (pct === 0) return tr('format.deltaSame', { ns: 'finance', month })
+  const signed = `${pct > 0 ? '+' : '−'}${percentText(Math.abs(pct) / 100)}`
+  return tr('format.delta', { ns: 'finance', pct: signed, month })
 }
 
 /** Tasa de ahorro (0–1) como «20 %»; «—» sin ingresos. */
 export const rateText = (rate: number | null) =>
-  rate === null ? '—' : `${Math.round(rate * 100)} %`
+  rate === null ? '—' : percentText(Math.round(rate * 100) / 100)
 
 /**
  * Reordena en la caché: `category` pasa al puesto `index` de las activas de su tipo; las demás (el otro

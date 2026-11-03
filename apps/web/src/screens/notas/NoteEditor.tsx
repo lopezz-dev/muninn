@@ -15,6 +15,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SelectMenu, type SelectOption } from '../../components/SelectMenu'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
@@ -24,42 +25,33 @@ import { projectsQuery } from '../../lib/queries'
 import { applyEdit } from '../../markdown/edit'
 import { applyFormat, continueList, type FormatCommand } from '../../markdown/format'
 import { Markdown } from '../../markdown/Markdown'
-import { type SaveStatus, useNoteDraft } from './use-note-draft'
+import { useNoteDraft } from './use-note-draft'
 
 type Mode = 'edit' | 'preview'
 
-const STATUS: Record<SaveStatus, string> = {
-  saved: 'Guardado',
-  saving: 'Guardando…',
-  dirty: 'Sin guardar',
-  error: 'No se pudo guardar',
-}
-
+/** Botones de la barra de formato; su nombre sale de `tools.<command>`, en el idioma activo. */
 interface Tool {
   command: FormatCommand
-  label: string
   shortcut?: string
   content: ReactNode
 }
 
 const TOOLS: Tool[] = [
-  { command: 'heading', label: 'Título', content: <span className="font-semibold">H</span> },
+  { command: 'heading', content: <span className="font-semibold">H</span> },
   {
     command: 'bold',
-    label: 'Negrita',
     shortcut: 'Ctrl B',
     content: <span className="font-bold">B</span>,
   },
   {
     command: 'italic',
-    label: 'Cursiva',
     shortcut: 'Ctrl I',
     content: <span className="italic">I</span>,
   },
-  { command: 'bullet', label: 'Lista', content: <screenIcons.list size={15} /> },
-  { command: 'task', label: 'Lista de tareas', content: <screenIcons.checklist size={15} /> },
-  { command: 'code', label: 'Código', content: <span className="font-mono text-xs">{'</>'}</span> },
-  { command: 'link', label: 'Enlace', content: <icons.link size={15} /> },
+  { command: 'bullet', content: <screenIcons.list size={15} /> },
+  { command: 'task', content: <screenIcons.checklist size={15} /> },
+  { command: 'code', content: <span className="font-mono text-xs">{'</>'}</span> },
+  { command: 'link', content: <icons.link size={15} /> },
 ]
 
 interface EditorProps {
@@ -74,6 +66,7 @@ interface EditorProps {
  * en iOS el teclado no avisa a la página de su altura y una barra inferior quedaría tapada.
  */
 export function NoteEditor({ note, desktop }: EditorProps) {
+  const { t } = useTranslation(['notes', 'common'])
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -125,29 +118,29 @@ export function NoteEditor({ note, desktop }: EditorProps) {
   const projects = useQuery(projectsQuery(m)).data ?? []
   const projectOptions = useMemo<SelectOption<string>[]>(() => {
     const opts: SelectOption<string>[] = [
-      { value: '', label: 'Sin proyecto' },
+      { value: '', label: t('editor.noProject') },
       ...projects.map((p) => ({ value: p.id, label: p.name, dot: p.color })),
     ]
     // Un proyecto archivado sigue siendo el de la nota.
     if (note.projectId && !projects.some((p) => p.id === note.projectId)) {
-      opts.push({ value: note.projectId, label: 'Proyecto archivado' })
+      opts.push({ value: note.projectId, label: t('editor.archivedProject') })
     }
     return opts
-  }, [projects, note.projectId])
+  }, [projects, note.projectId, t])
   const tasks = useQuery({
     ...projectTasksQuery(m, note.projectId ?? ''),
     enabled: Boolean(note.projectId),
   }).data
   const taskOptions = useMemo<SelectOption<string>[]>(() => {
     const opts: SelectOption<string>[] = [
-      { value: '', label: 'Sin tarea' },
-      ...(tasks ?? []).map((t) => ({ value: t.id, label: t.title })),
+      { value: '', label: t('editor.noTask') },
+      ...(tasks ?? []).map((task) => ({ value: task.id, label: task.title })),
     ]
     if (note.taskId && !opts.some((o) => o.value === note.taskId)) {
-      opts.push({ value: note.taskId, label: 'Tarea' })
+      opts.push({ value: note.taskId, label: t('editor.task') })
     }
     return opts
-  }, [tasks, note.taskId])
+  }, [tasks, note.taskId, t])
 
   const setProject = (projectId: string) => {
     const p = projects.find((x) => x.id === projectId)
@@ -156,17 +149,23 @@ export function NoteEditor({ note, desktop }: EditorProps) {
       qc,
       note.id,
       { projectId: projectId || null },
-      { message: p ? `Nota en «${p.name}»` : 'Nota sin proyecto', icon: 'link' },
+      {
+        message: p ? t('toast.inProject', { name: p.name }) : t('toast.noProject'),
+        icon: 'link',
+      },
     )
   }
   const setTask = (taskId: string) => {
-    const t = tasks?.find((x) => x.id === taskId)
+    const task = tasks?.find((x) => x.id === taskId)
     void patchNote(
       m,
       qc,
       note.id,
       { taskId: taskId || null },
-      { message: t ? `Vinculada a «${t.title}»` : 'Tarea desvinculada', icon: 'link' },
+      {
+        message: task ? t('toast.linked', { title: task.title }) : t('toast.unlinked'),
+        icon: 'link',
+      },
     )
   }
   const togglePin = () =>
@@ -175,7 +174,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
       qc,
       note.id,
       { pinned: !note.pinned },
-      { message: note.pinned ? 'Nota desfijada' : 'Nota fijada', icon: 'pin' },
+      { message: note.pinned ? t('toast.unpinned') : t('toast.pinned'), icon: 'pin' },
     )
 
   const archive = async () => {
@@ -192,13 +191,14 @@ export function NoteEditor({ note, desktop }: EditorProps) {
   }
 
   const copyLink = async () => {
-    if (await copyText(location.href)) notify.success('Enlace copiado', { icon: 'link' })
-    else notify.error('No se pudo copiar el enlace')
+    if (await copyText(location.href))
+      notify.success(t('link.copied', { ns: 'common' }), { icon: 'link' })
+    else notify.error(t('link.copyFailed', { ns: 'common' }))
   }
   const copyMarkdown = async () => {
     const md = draft.title.trim() ? `# ${draft.title.trim()}\n\n${draft.content}` : draft.content
-    if (await copyText(md)) notify.success('Markdown copiado', { icon: 'link' })
-    else notify.error('No se pudo copiar el texto')
+    if (await copyText(md)) notify.success(t('editor.markdownCopied'), { icon: 'link' })
+    else notify.error(t('editor.textCopyFailed'))
   }
 
   const touch = !desktop
@@ -208,37 +208,40 @@ export function NoteEditor({ note, desktop }: EditorProps) {
   )
 
   return (
-    <article aria-label="Nota" className="flex min-w-0 flex-col">
+    <article aria-label={t('editor.label')} className="flex min-w-0 flex-col">
       <div className="glass sticky top-0 z-10 -mx-5 flex flex-wrap items-center gap-x-1 gap-y-1 border-b border-border-subtle px-5 pt-[env(safe-area-inset-top)] pb-1.5 md:mx-0 md:rounded-lg md:border md:px-2 md:pt-0 md:pb-0">
         <Link
           to="/notas"
-          aria-label="Volver a la lista"
+          aria-label={t('editor.back')}
           className="grid size-11 place-items-center rounded-md text-fg md:hidden"
         >
           <icons.chevronLeft size={18} />
         </Link>
         <div
           role="toolbar"
-          aria-label="Formato"
+          aria-label={t('editor.format')}
           className={cn(
             'order-last -mx-1 flex w-full gap-0.5 overflow-x-auto px-1 md:order-none md:mx-0 md:w-auto md:px-0',
             mode === 'preview' && 'hidden',
           )}
         >
-          {TOOLS.map((t) => (
-            <button
-              key={t.command}
-              type="button"
-              aria-label={t.label}
-              title={t.shortcut ? `${t.label} (${t.shortcut})` : t.label}
-              // No quitar el foco ni la selección del texto (en iOS, tampoco cerrar el teclado).
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => format(t.command)}
-              className={toolBtn}
-            >
-              {t.content}
-            </button>
-          ))}
+          {TOOLS.map((tool) => {
+            const label = t(`tools.${tool.command}`)
+            return (
+              <button
+                key={tool.command}
+                type="button"
+                aria-label={label}
+                title={tool.shortcut ? `${label} (${tool.shortcut})` : label}
+                // No quitar el foco ni la selección del texto (en iOS, tampoco cerrar el teclado).
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => format(tool.command)}
+                className={toolBtn}
+              >
+                {tool.content}
+              </button>
+            )
+          })}
         </div>
         <div className="ml-auto flex items-center gap-1.5 md:h-12">
           <span
@@ -249,20 +252,20 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               status === 'saved' && 'max-md:sr-only',
             )}
           >
-            {STATUS[status]}
+            {t(`status.${status}`)}
           </span>
           <SegmentedControl<Mode>
-            aria-label="Modo"
+            aria-label={t('editor.mode')}
             size={touch ? 'lg' : 'md'}
             value={mode}
             onValueChange={(v) => (v === 'edit' ? edit() : setMode('preview'))}
             options={[
-              { value: 'edit', label: 'Editar' },
-              { value: 'preview', label: 'Vista previa' },
+              { value: 'edit', label: t('editor.edit') },
+              { value: 'preview', label: t('editor.preview') },
             ]}
           />
           <IconButton
-            aria-label={note.pinned ? 'Desfijar' : 'Fijar'}
+            aria-label={note.pinned ? t('editor.unpin') : t('editor.pin')}
             aria-pressed={note.pinned}
             icon={<icons.pin weight={note.pinned ? 'fill' : 'regular'} />}
             onClick={togglePin}
@@ -271,16 +274,16 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           <Menu>
             <MenuTrigger asChild>
               <IconButton
-                aria-label="Más acciones"
+                aria-label={t('editor.more')}
                 icon={<icons.dots />}
                 className={cn(touch && 'size-11')}
               />
             </MenuTrigger>
             <MenuContent align="end">
-              <MenuItem onSelect={copyLink}>Copiar enlace</MenuItem>
-              <MenuItem onSelect={copyMarkdown}>Copiar Markdown</MenuItem>
+              <MenuItem onSelect={copyLink}>{t('link.copy', { ns: 'common' })}</MenuItem>
+              <MenuItem onSelect={copyMarkdown}>{t('editor.copyMarkdown')}</MenuItem>
               <MenuItem danger onSelect={archive}>
-                Archivar nota
+                {t('editor.archive')}
               </MenuItem>
             </MenuContent>
           </Menu>
@@ -290,8 +293,8 @@ export function NoteEditor({ note, desktop }: EditorProps) {
       <div className="flex flex-col gap-4 pt-6 md:px-2 md:pt-9">
         <input
           ref={titleRef}
-          aria-label="Título de la nota"
-          placeholder="Sin título"
+          aria-label={t('editor.titleLabel')}
+          placeholder={t('untitled')}
           value={draft.title}
           maxLength={300}
           onChange={(e) => change({ title: e.target.value })}
@@ -306,7 +309,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
 
         <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5 text-sm">
           <SelectMenu
-            label="Proyecto"
+            label={t('editor.project')}
             variant={touch ? 'field' : 'inline'}
             large={touch}
             value={note.projectId ?? ''}
@@ -316,7 +319,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           {note.projectId ? (
             <>
               <SelectMenu
-                label="Tarea vinculada"
+                label={t('editor.linkedTask')}
                 variant={touch ? 'field' : 'inline'}
                 large={touch}
                 value={note.taskId ?? ''}
@@ -328,8 +331,8 @@ export function NoteEditor({ note, desktop }: EditorProps) {
                 <Link
                   to="/proyectos/$projectId/tareas/$taskId"
                   params={{ projectId: note.projectId, taskId: note.taskId }}
-                  aria-label="Abrir la tarea"
-                  title="Abrir la tarea"
+                  aria-label={t('editor.openTask')}
+                  title={t('editor.openTask')}
                   className="grid size-7 place-items-center rounded-sm text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg"
                 >
                   <icons.external size={14} />
@@ -337,14 +340,16 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               ) : null}
             </>
           ) : null}
-          <span className="px-2 text-xs text-fg-subtle">Editada {timeAgo(note.updatedAt)}</span>
+          <span className="px-2 text-xs text-fg-subtle">
+            {t('editor.edited', { when: timeAgo(note.updatedAt) })}
+          </span>
         </div>
 
         {mode === 'edit' ? (
           <textarea
             ref={bodyRef}
-            aria-label="Texto de la nota, en Markdown"
-            placeholder="Escribe en Markdown…"
+            aria-label={t('editor.bodyLabel')}
+            placeholder={t('editor.bodyPlaceholder')}
             value={draft.content}
             maxLength={200000}
             spellCheck
@@ -372,7 +377,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
             onClick={edit}
             className="min-h-[30dvh] cursor-text text-left text-md text-fg-faint"
           >
-            Esta nota está vacía. Pulsa para escribir.
+            {t('editor.empty')}
           </button>
         )}
       </div>

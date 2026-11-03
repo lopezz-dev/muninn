@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  formatAmount,
   Icon,
   IconButton,
   icons,
@@ -23,9 +24,11 @@ import {
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Ghost } from '../../components/Page'
 import { SelectMenu } from '../../components/SelectMenu'
-import { amountText, chargeLabel, FREQUENCY_LABEL } from '../../lib/finance'
+import { intlLocale } from '../../i18n'
+import { amountText, chargeLabel, frequencyLabel } from '../../lib/finance'
 import { subscriptionsQuery } from '../../lib/finance-queries'
 import { useMuninn } from '../../lib/muninn'
 import {
@@ -47,21 +50,24 @@ const perMonth = (s: Pick<Subscription, 'amount' | 'frequency'>) =>
 
 /** Tarjeta «Suscripciones» del Resumen: todas, por próximo cobro, con el total al mes. */
 export function SubscriptionsCard({ today, onManage }: { today: string; onManage: () => void }) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const subs = useQuery(subscriptionsQuery(m)).data
   const total = (subs ?? []).reduce((sum, s) => sum + perMonth(s), 0)
   return (
     <Card className="flex flex-col">
       <CardHeader
-        title="Suscripciones"
-        description={subs?.length ? `${amountText(total, 'none')}/mes` : undefined}
+        title={t('subs.title')}
+        description={
+          subs?.length ? t('subs.perMonth', { amount: amountText(total, 'none') }) : undefined
+        }
         action={
           <button
             type="button"
             onClick={onManage}
             className="cursor-pointer text-sm text-accent hover:text-accent-hover"
           >
-            Gestionar
+            {t('manage')}
           </button>
         }
       />
@@ -69,7 +75,7 @@ export function SubscriptionsCard({ today, onManage }: { today: string; onManage
         <Ghost className="mx-4 mb-4 h-10" />
       ) : subs.length === 0 ? (
         <p className="border-t border-border-subtle px-4 py-5 text-sm text-fg-subtle">
-          Apunta tus suscripciones y Muninn te avisará antes de cada cobro.
+          {t('subs.emptyCard')}
         </p>
       ) : (
         <ul className="flex flex-col pb-1.5">
@@ -111,11 +117,12 @@ export function SubscriptionDialog({
   categories: FinanceCategory[]
   today: string
 }) {
+  const { t } = useTranslation('finance')
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        title={editing ? `Editar «${editing.name}»` : 'Nueva suscripción'}
-        description="Muninn te avisa antes de cada cobro; tú lo confirmas con un toque."
+        title={editing ? t('editQuoted', { name: editing.name }) : t('subs.dialogNew')}
+        description={t('subs.dialogDesc')}
       >
         {open ? (
           <SubscriptionForm
@@ -145,6 +152,7 @@ function SubscriptionForm({
   today: string
   onDone: () => void
 }) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const open = accounts.filter((a) => !a.archivedAt || a.id === editing?.accountId)
@@ -166,10 +174,10 @@ function SubscriptionForm({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return setError('Ponle un nombre')
-    if (!amount) return setError('Escribe el importe')
-    if (!accountId) return setError('Elige una cuenta')
-    if (!nextDate) return setError('Elige el próximo cobro')
+    if (!name.trim()) return setError(t('nameIt'))
+    if (!amount) return setError(t('form.amountRequired'))
+    if (!accountId) return setError(t('form.accountRequired'))
+    if (!nextDate) return setError(t('subs.nextRequired'))
     const fields = {
       name: name.trim(),
       amount,
@@ -188,7 +196,7 @@ function SubscriptionForm({
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <TextField
-        label="Nombre"
+        label={t('name')}
         value={name}
         maxLength={80}
         onChange={(e) => {
@@ -202,71 +210,72 @@ function SubscriptionForm({
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <AmountField
-          label="Importe por cobro"
+          locale={intlLocale()}
+          label={t('subs.amount')}
           valueCents={amount}
           onValueChange={(v) => {
             setAmount(v)
             setError(undefined)
           }}
-          placeholder="0,00"
+          placeholder={formatAmount(0, intlLocale())}
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-fg-muted">Cada</span>
+          <span className="text-xs font-medium text-fg-muted">{t('subs.every')}</span>
           <SegmentedControl
-            aria-label="Frecuencia"
+            aria-label={t('subs.frequency')}
             fill
             value={frequency}
             onValueChange={setFrequency}
-            options={FREQUENCIES.map((f) => ({ value: f, label: FREQUENCY_LABEL[f] }))}
+            options={FREQUENCIES.map((f) => ({ value: f, label: frequencyLabel(f) }))}
             className="h-9 [&>button]:h-full"
           />
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-xs font-medium text-fg-muted">Cuenta</span>
+          <span className="text-xs font-medium text-fg-muted">{t('account')}</span>
           <SelectMenu
-            label="Cuenta"
+            label={t('account')}
             value={accountId}
             onChange={setAccountId}
             options={open.map((a) => ({ value: a.id, label: a.name, dot: projectColor(a.color) }))}
           />
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-xs font-medium text-fg-muted">Categoría</span>
+          <span className="text-xs font-medium text-fg-muted">{t('category')}</span>
           <SelectMenu
-            label="Categoría"
+            label={t('category')}
             value={categoryId}
             onChange={setCategoryId}
             options={[
-              { value: '', label: 'Sin categoría' },
+              { value: '', label: t('noCategory') },
               ...cats.map((c) => ({ value: c.id, label: c.name, dot: projectColor(c.color) })),
             ]}
           />
         </div>
         <DateField
-          label="Próximo cobro"
+          label={t('subs.nextCharge')}
           value={nextDate}
           onChange={setNextDate}
           today={m.today()}
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-fg-muted">Avisar</span>
+          <span className="text-xs font-medium text-fg-muted">{t('subs.remind')}</span>
           <SelectMenu
-            label="Avisar"
+            label={t('subs.remind')}
             value={String(remindDays)}
             onChange={(v) => setRemindDays(Number(v))}
             options={REMIND.map((d) => ({
               value: String(d),
-              label: d === 0 ? 'El mismo día' : d === 1 ? '1 día antes' : `${d} días antes`,
+              label: d === 0 ? t('subs.sameDay') : t('subs.daysBefore', { count: d }),
             }))}
           />
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-1">
         <DialogClose asChild>
-          <Button variant="ghost">Cancelar</Button>
+          <Button variant="ghost">{t('cancel')}</Button>
         </DialogClose>
         <Button type="submit" variant="primary">
-          {editing ? 'Guardar' : 'Crear suscripción'}
+          {editing ? t('save') : t('subs.create')}
         </Button>
       </div>
     </form>
@@ -283,6 +292,7 @@ export function SubscriptionsView({
   categories: FinanceCategory[]
   today: string
 }) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const subs = useQuery(subscriptionsQuery(m)).data
@@ -294,16 +304,19 @@ export function SubscriptionsView({
       <UpcomingCharges today={today} />
       <Card className="flex flex-col">
         <CardHeader
-          title="Suscripciones"
+          title={t('subs.title')}
           description={
             subs?.length
-              ? `${amountText(total, 'none')} al mes · ${amountText(total * 12, 'none')} al año`
-              : 'Pagos que se repiten: Muninn te avisa antes de cada cobro.'
+              ? t('subs.perMonthYear', {
+                  month: amountText(total, 'none'),
+                  year: amountText(total * 12, 'none'),
+                })
+              : t('subs.emptyView')
           }
           action={
             <Button size="sm" variant="primary" onClick={() => setDialog({ open: true })}>
               <Icon name="plus" />
-              Nueva
+              {t('new')}
             </Button>
           }
         />
@@ -319,7 +332,7 @@ export function SubscriptionsView({
                 <button
                   type="button"
                   onClick={() => setDialog({ open: true, editing: s })}
-                  aria-label={`Editar ${s.name}`}
+                  aria-label={t('edit', { name: s.name })}
                   className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 text-left outline-none focus-visible:underline"
                 >
                   <Logo name={s.name} />
@@ -328,9 +341,9 @@ export function SubscriptionsView({
                     <span className="truncate text-xs text-fg-subtle">
                       <span className={tone(s, today)}>{chargeLabel(s, today)}</span>
                       {/* `chargeLabel` ya dice «Anual · …» si no es mensual y falta más de un día. */}
-                      {chargeLabel(s, today).startsWith(FREQUENCY_LABEL[s.frequency])
+                      {chargeLabel(s, today).startsWith(frequencyLabel(s.frequency))
                         ? ''
-                        : ` · ${FREQUENCY_LABEL[s.frequency]}`}
+                        : ` · ${frequencyLabel(s.frequency)}`}
                       {` · ${accountName.get(s.accountId) ?? '?'}`}
                     </span>
                   </span>
@@ -340,13 +353,13 @@ export function SubscriptionsView({
                     </span>
                     {s.frequency !== 'monthly' ? (
                       <span className="font-mono text-xs text-fg-subtle tabular">
-                        {amountText(perMonth(s), 'none')}/mes
+                        {t('subs.perMonth', { amount: amountText(perMonth(s), 'none') })}
                       </span>
                     ) : null}
                   </span>
                 </button>
                 <IconButton
-                  aria-label={`Archivar ${s.name}`}
+                  aria-label={t('archive', { name: s.name })}
                   icon={<icons.archive />}
                   onClick={() => archiveSubscription(m, qc, s)}
                   className="size-11 md:size-8"

@@ -3,10 +3,11 @@ import { Button, Dialog, Icon, IconButton, icons, SheetContent } from '@muninn/u
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Page, PageHeader } from '../components/Page'
 import { useAssistantChat } from '../lib/assistant-chat'
-import { DEMO_EXAMPLES, demoProvider } from '../lib/assistant-demo'
-import { type Conversation, groupOf } from '../lib/assistant-history'
+import { demoExamples, demoProvider } from '../lib/assistant-demo'
+import { type Conversation, type ConversationGroup, groupOf } from '../lib/assistant-history'
 import { useAssistantPrefs } from '../lib/assistant-settings'
 import { isHandheld, useProviderStatus } from '../lib/assistant-status'
 import { timeAgo } from '../lib/dates'
@@ -21,12 +22,6 @@ import { BrainChip, ModelState } from './asistente/ModelState'
 import { Reply, UserBubble } from './asistente/TurnView'
 
 const route = getRouteApi('/_app/asistente')
-
-const SUGGESTIONS = [
-  '¿Cómo voy hoy?',
-  '¿Qué tengo para mañana?',
-  '¿Qué suscripciones me cobran esta semana?',
-]
 
 /** Conversaciones del dispositivo, agrupadas como en el diseño (Hoy, Esta semana, Antes). */
 function ConversationList({
@@ -45,8 +40,9 @@ function ConversationList({
   /** El último informe de la mañana (ADR-0043): arriba, como «automático». */
   report: { noteId: string; date: string } | null
 }) {
+  const { t } = useTranslation('assistant')
   const groups = useMemo(() => {
-    const out = new Map<string, Conversation[]>()
+    const out = new Map<ConversationGroup, Conversation[]>()
     for (const c of conversations) {
       const g = groupOf(c.updatedAt)
       out.set(g, [...(out.get(g) ?? []), c])
@@ -54,10 +50,10 @@ function ConversationList({
     return [...out]
   }, [conversations])
   return (
-    <nav aria-label="Conversaciones" className="flex flex-col gap-1">
+    <nav aria-label={t('conversations')} className="flex flex-col gap-1">
       <Button className="mb-2 justify-start" onClick={onNew} disabled={disabled}>
         <icons.plus size={15} />
-        Nueva conversación
+        {t('newConversation')}
       </Button>
       {report ? (
         <Link
@@ -67,23 +63,21 @@ function ConversationList({
         >
           <span className="flex items-center gap-1.5 truncate">
             <Icon name="clock" size={13} className="text-accent" />
-            Informe de la mañana
+            {t('morningReport')}
           </span>
-          <span className="text-xs text-fg-subtle">{report.date} · automático</span>
+          <span className="text-xs text-fg-subtle">{t('automatic', { date: report.date })}</span>
         </Link>
       ) : null}
       {groups.length === 0 ? (
-        <p className="px-3 py-2 text-sm text-fg-subtle">
-          Aquí quedarán tus conversaciones, solo en este dispositivo.
-        </p>
+        <p className="px-3 py-2 text-sm text-fg-subtle">{t('emptyHistory')}</p>
       ) : null}
-      {groups.map(([label, list]) => (
-        <div key={label} className="flex flex-col gap-0.5">
+      {groups.map(([group, list]) => (
+        <div key={group} className="flex flex-col gap-0.5">
           <span className="px-3 pt-2.5 pb-1 text-xs font-semibold tracking-wider text-fg-faint uppercase">
-            {label}
+            {t(`groups.${group}`)}
           </span>
           {list.map((c) => {
-            const actions = c.turns.reduce((n, t) => n + (t.changes?.length ?? 0), 0)
+            const actions = c.turns.reduce((n, turn) => n + (turn.changes?.length ?? 0), 0)
             return (
               <button
                 key={c.id}
@@ -96,7 +90,7 @@ function ConversationList({
                 <span className="truncate">{c.title}</span>
                 <span className="text-xs text-fg-subtle">
                   {timeAgo(c.updatedAt)}
-                  {actions ? ` · ${actions} ${actions === 1 ? 'acción' : 'acciones'}` : ''}
+                  {actions ? ` · ${t('actions', { count: actions })}` : ''}
                 </span>
               </button>
             )
@@ -112,6 +106,7 @@ function ConversationList({
  * herramientas que ha usado, qué ha cambiado con «Deshacer» y un estado claro cuando no hay modelo.
  */
 export function Asistente() {
+  const { t } = useTranslation(['assistant', 'common'])
   const m = useMuninn()
   const auth = useAuth()
   const prefs = useAssistantPrefs()
@@ -201,7 +196,9 @@ export function Asistente() {
       }}
     />
   )
-  const suggestions = demo ? DEMO_EXAMPLES : SUGGESTIONS
+  const suggestions = demo
+    ? demoExamples()
+    : [t('suggestions.today'), t('suggestions.tomorrow'), t('suggestions.subscriptions')]
 
   return (
     <Page>
@@ -214,17 +211,15 @@ export function Asistente() {
           </aside>
         ) : null}
 
-        <section aria-label="Chat" className="flex min-w-0 flex-1 flex-col gap-5">
+        <section aria-label={t('chat')} className="flex min-w-0 flex-1 flex-col gap-5">
           <PageHeader
-            title={chat.current?.title ?? 'Asistente'}
-            description={
-              chat.current ? undefined : 'Pregunta o pide algo sobre tus tareas, notas y finanzas.'
-            }
+            title={chat.current?.title ?? t('nav.assistant', { ns: 'common' })}
+            description={chat.current ? undefined : t('description')}
             actions={
               <>
                 <BrainChip status={status} label={provider?.label ?? ''} />
                 <IconButton
-                  aria-label="Conversaciones"
+                  aria-label={t('conversations')}
                   icon={<Icon name="clock" />}
                   variant="secondary"
                   className="lg:hidden"
@@ -232,7 +227,7 @@ export function Asistente() {
                 />
                 {chat.current ? (
                   <IconButton
-                    aria-label="Nueva conversación"
+                    aria-label={t('newConversation')}
                     icon={<icons.plus size={16} />}
                     variant="secondary"
                     onClick={startNew}
@@ -246,8 +241,7 @@ export function Asistente() {
           {demo ? (
             <p className="flex items-start gap-2 rounded-md border border-border-subtle px-3 py-2 text-sm text-fg-muted">
               <Icon name="info" size={15} className="mt-0.5 shrink-0" />
-              Estás en la demo: no hay modelo, respondo con un guion a unas pocas frases, pero lo
-              que cambio es de verdad (en la memoria de la demo).
+              {t('demoNotice')}
             </p>
           ) : null}
 
@@ -257,15 +251,15 @@ export function Asistente() {
           <div className="mx-auto flex w-full max-w-[780px] flex-1 flex-col gap-5">
             {turns.length ? (
               <div className="flex flex-col gap-7" aria-live="polite" aria-busy={chat.running}>
-                {turns.map((t, i) =>
-                  t.role === 'user' ? (
-                    <UserBubble key={t.id} text={t.text} images={t.images} />
+                {turns.map((turn, i) =>
+                  turn.role === 'user' ? (
+                    <UserBubble key={turn.id} text={turn.text} images={turn.images} />
                   ) : (
                     <Reply
-                      key={t.id}
-                      turn={t}
+                      key={turn.id}
+                      turn={turn}
                       running={chat.running && i === turns.length - 1}
-                      canUndo={chat.canUndo(t.id)}
+                      canUndo={chat.canUndo(turn.id)}
                       onUndo={onUndo}
                     />
                   ),
@@ -275,10 +269,9 @@ export function Asistente() {
               <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
                 <Logo className="size-14 drop-shadow-[0_8px_24px_var(--mn-color-accent-soft)]" />
                 <div className="flex flex-col gap-1.5">
-                  <h2 className="text-2xl font-semibold tracking-tight">¿En qué te ayudo?</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">{t('welcome.title')}</h2>
                   <p className="max-w-md text-[15px] text-fg-muted text-pretty">
-                    Consulto y cambio tus proyectos, tareas, notas y finanzas: crear, mover,
-                    completar y archivar. Nunca borro nada.
+                    {t('welcome.body')}
                   </p>
                 </div>
                 <div className="mt-2 grid w-full max-w-xl gap-2 sm:grid-cols-2">
@@ -303,9 +296,7 @@ export function Asistente() {
               running={chat.running}
               provider={provider}
               noVisionMessage={
-                demo
-                  ? 'La demo no ve imágenes: no hay modelo detrás.'
-                  : `«${prefs.model}» no ve imágenes. Elige un modelo con visión (gemma3, qwen2.5vl, llama3.2-vision) en Ajustes › Asistente e IA.`
+                demo ? t('noVision.demo') : t('noVision.model', { model: prefs.model })
               }
               onSend={onSend}
               onStop={chat.stop}
@@ -315,7 +306,7 @@ export function Asistente() {
       </div>
 
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <SheetContent title="Conversaciones" side={desktop ? 'right' : 'bottom'}>
+        <SheetContent title={t('conversations')} side={desktop ? 'right' : 'bottom'}>
           <div className="p-3">{list}</div>
         </SheetContent>
       </Dialog>

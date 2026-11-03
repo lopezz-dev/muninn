@@ -1,5 +1,6 @@
 import type { BoardColumn, ColumnKind, Muninn, UpdateColumnInput } from '@muninn/core'
 import type { QueryClient } from '@tanstack/react-query'
+import { t } from '../i18n'
 import { applyColumnMove, applyTaskMove, type BoardData } from './board'
 import { notifyUndo } from './feedback'
 import { fail, optimistic, previousValues, rollback, serial, settle } from './mutations'
@@ -26,14 +27,14 @@ export async function createColumn(
   try {
     column = await serial(input.projectId, () => m.columns.create(input))
   } catch (err) {
-    fail('No se pudo crear la columna', err)
+    fail(t('columnActions.createFailed', { ns: 'board' }), err)
     return null
   }
   qc.setQueryData<BoardData>(keys.board(input.projectId), (d) =>
     d ? { ...d, columns: [...d.columns, column] } : d,
   )
   settle(qc, input.projectId)
-  notifyUndo(`Columna «${column.name}» creada`, {
+  notifyUndo(t('columnActions.created', { ns: 'board', name: column.name }), {
     icon: 'plus',
     undo: async () => {
       await serial(input.projectId, () => m.columns.delete(column.id))
@@ -42,8 +43,8 @@ export async function createColumn(
       )
       settle(qc, input.projectId)
     },
-    undone: `Columna «${column.name}» quitada`,
-    failTitle: 'No se pudo quitar la columna',
+    undone: t('columnActions.removed', { ns: 'board', name: column.name }),
+    failTitle: t('columnActions.removeFailed', { ns: 'board' }),
   })
   return column
 }
@@ -73,7 +74,7 @@ export async function updateColumn(
     await serial(column.projectId, () => m.columns.update(column.id, patch))
   } catch (err) {
     rollback(qc, column.projectId, prev)
-    fail('No se pudo guardar la columna', err)
+    fail(t('columnActions.saveFailed', { ns: 'board' }), err)
     return false
   }
   settle(qc, column.projectId)
@@ -102,16 +103,16 @@ export async function moveColumn(
     await serial(column.projectId, () => m.columns.move(column.id, index))
   } catch (err) {
     rollback(qc, column.projectId, prev)
-    fail('No se pudo mover la columna', err)
+    fail(t('columnActions.moveFailed', { ns: 'board' }), err)
     return false
   }
   settle(qc, column.projectId)
   if (opts.undoing) return true
-  notifyUndo(`Columna «${column.name}» movida`, {
+  notifyUndo(t('columnActions.moved', { ns: 'board', name: column.name }), {
     icon: 'move',
     // Sin tablero en caché no se sabe de dónde venía.
     undo: fromIndex >= 0 ? () => moveColumn(m, qc, column, fromIndex, { undoing: true }) : null,
-    undone: ['Movimiento deshecho', { icon: 'move' }],
+    undone: [t('columnActions.moveUndone', { ns: 'board' }), { icon: 'move' }],
   })
   return true
 }
@@ -145,15 +146,19 @@ export async function deleteColumn(
     ))
   } catch (err) {
     rollback(qc, column.projectId, prev)
-    fail('No se pudo borrar la columna', err)
+    fail(t('columnActions.deleteFailed', { ns: 'board' }), err)
     return false
   }
   settle(qc, column.projectId)
-  notifyUndo(`Columna «${column.name}» borrada`, {
+  notifyUndo(t('columnActions.deleted', { ns: 'board', name: column.name }), {
     icon: 'trash',
     description:
       movedTaskIds.length && dest
-        ? `${movedTaskIds.length === 1 ? '1 tarea movida' : `${movedTaskIds.length} tareas movidas`} a ${dest.name}`
+        ? t('columnActions.tasksMoved', {
+            ns: 'board',
+            count: movedTaskIds.length,
+            name: dest.name,
+          })
         : undefined,
     undo: async () => {
       await serial(column.projectId, async () => {
@@ -171,8 +176,8 @@ export async function deleteColumn(
       })
       settle(qc, column.projectId)
     },
-    undone: `Columna «${column.name}» recuperada`,
-    failTitle: 'No se pudo recuperar la columna',
+    undone: t('columnActions.restored', { ns: 'board', name: column.name }),
+    failTitle: t('columnActions.restoreFailed', { ns: 'board' }),
   })
   return true
 }

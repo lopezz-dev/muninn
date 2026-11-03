@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 /**
  * Edición de Markdown sobre un `<textarea>`: la barra de formato y el Enter dentro de una lista.
  * Todo son funciones puras: reciben el texto y la selección y devuelven el cambio (`Edit`), que
@@ -150,7 +152,7 @@ function link(text: string, start: number, end: number): Edit {
   const inner = text.slice(start, end)
   if (/^https?:\/\/\S+$/i.test(inner)) {
     // Un enlace pegado o seleccionado: falta el texto.
-    const label = 'texto'
+    const label = t('markdown.linkText', { ns: 'notes' })
     return {
       from: start,
       to: end,
@@ -159,7 +161,7 @@ function link(text: string, start: number, end: number): Edit {
       selEnd: start + 1 + label.length,
     }
   }
-  const label = inner || 'texto'
+  const label = inner || t('markdown.linkText', { ns: 'notes' })
   const url = 'https://'
   const urlStart = start + label.length + 3
   return {

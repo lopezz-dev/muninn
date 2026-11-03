@@ -375,11 +375,15 @@ Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (AD
 - [x] Fase 1: i18next con claves tipadas y carga diferida por pantalla, idioma de la cuenta en Ajustes › Apariencia y el shell
   en los dos idiomas (barra lateral, dock, menú y hoja de tu cuenta, avisos y «Deshacer»). El buscador ⌘K y los diálogos de
   nuevo proyecto y nueva tarea pasan a la fase 2
-- [ ] Fase 2: el resto de pantallas en inglés y en español, por grupos
+- [x] Fase 2: el resto de pantallas en inglés y en español, por grupos
   - [x] Buscador ⌘K, diálogos de nuevo proyecto y nueva tarea, Ajustes entero y los textos compartidos de `lib/` (sesión,
     segundo factor, avisos push, GitHub, permisos OAuth, prioridades, fechas)
-  - [ ] Inicio, Proyectos y tablero (filtros, columnas, detalle de tarea), Notas, Finanzas, Asistente, Noticias, GitHub,
-    Documentación, login y `/oauth/consent`
+  - [x] Inicio, Proyectos, tablero (filtros, columnas, Lista y Calendario), detalle de tarea, Notas, Finanzas (importes con
+    el formato de cada idioma), Asistente, Noticias, GitHub, Documentación (la interfaz; las guías, en la fase 4), login,
+    `/oauth/consent` y las pantallas de error
+  - [ ] Decidir: los datos que se crean por defecto (columnas del tablero, categorías de Finanzas, temas del catálogo de
+    Noticias) se guardan en español; en inglés se ven «Pendiente», «Supermercado» o «Tecnología». Propuesta: crearlos en
+    el idioma de quien los crea
 - [ ] Fase 3: rutas en inglés (`/projects`, `/notes`, `/docs`…) con redirecciones de las antiguas
 - [ ] Fase 4: guías en los dos idiomas, prerender por idioma con `hreflang` y sitemap, y el aviso «Esta página también está en
   español» (abajo a la derecha; en el móvil, encima del dock)

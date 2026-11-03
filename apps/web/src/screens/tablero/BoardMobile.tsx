@@ -17,6 +17,7 @@ import type { BoardColumn } from '@muninn/core'
 import { cn, IconButton, icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAgentColumn } from '../../lib/agent'
 import { type BoardData, isColKey, isTabKey, tabId, tabKey } from '../../lib/board'
 import { type BoardFilter, fullIndex } from '../../lib/board-filter'
@@ -92,6 +93,7 @@ export function BoardMobile({
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const agentColumnId = useAgentColumn(projectId).columnId
   // Con un filtro puesto solo se ven las tareas que lo cumplen; el índice que se manda al servidor sigue
   // siendo el de la columna entera (`fullIndex`).
@@ -102,7 +104,7 @@ export function BoardMobile({
   const tasks = column ? (groups[column.id] ?? []) : []
   const [activeId, setActiveId] = useState<string | null>(null)
   const [editing, setEditing] = useState<BoardColumn | 'new' | null>(null)
-  const taskById = useMemo(() => new Map(board.tasks.map((t) => [t.id, t])), [board.tasks])
+  const taskById = useMemo(() => new Map(board.tasks.map((x) => [x.id, x])), [board.tasks])
 
   const sensors = useBoardSensors(sortableKeyboardCoordinates)
 
@@ -129,14 +131,14 @@ export function BoardMobile({
       return
     }
     if (isColKey(overId)) return
-    const ids = tasks.map((t) => t.id)
+    const ids = tasks.map((x) => x.id)
     const [from, to] = [ids.indexOf(id), ids.indexOf(overId)]
     if (from < 0 || to < 0 || from === to) return
     // `to` es el índice final entre las visibles; `fullIndex` lo lleva a la columna entera.
     const moved = [...ids]
     moved.splice(from, 1)
     moved.splice(to, 0, id)
-    const all = (totals[column.id] ?? []).map((t) => t.id)
+    const all = (totals[column.id] ?? []).map((x) => x.id)
     void moveTask(m, qc, {
       projectId,
       taskId: id,
@@ -148,11 +150,16 @@ export function BoardMobile({
   const a11y = {
     screenReaderInstructions,
     announcements: announcements({
-      name: (id) => `«${taskById.get(String(id))?.title ?? ''}»`,
+      name: (id) => t('dnd.theTask', { title: taskById.get(String(id))?.title ?? '' }),
       where: (id) =>
         isTabKey(id)
-          ? `sobre la pestaña ${board.columns.find((c) => c.id === tabId(String(id)))?.name ?? ''}`
-          : `posición ${tasks.findIndex((t) => t.id === String(id)) + 1} de ${tasks.length}`,
+          ? t('dnd.overTab', {
+              name: board.columns.find((c) => c.id === tabId(String(id)))?.name ?? '',
+            })
+          : t('dnd.place', {
+              position: tasks.findIndex((x) => x.id === String(id)) + 1,
+              total: tasks.length,
+            }),
     }),
   }
 
@@ -172,7 +179,7 @@ export function BoardMobile({
       >
         <div
           role="tablist"
-          aria-label="Columnas"
+          aria-label={t('columns')}
           className="-mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1"
         >
           {board.columns.map((c) => (
@@ -185,7 +192,7 @@ export function BoardMobile({
             />
           ))}
           <IconButton
-            aria-label="Añadir columna"
+            aria-label={t('mobile.addColumn')}
             icon={<icons.plus size={16} />}
             size="lg"
             className="h-9 w-9 shrink-0"
@@ -204,14 +211,15 @@ export function BoardMobile({
                       total > (column?.wipLimit ?? 0) ? 'text-danger' : 'text-accent',
                     )}
                   >
-                    {total > (column?.wipLimit ?? 0) ? 'Límite superado' : 'Límite alcanzado'}
+                    {total > (column?.wipLimit ?? 0) ? t('column.overLimit') : t('column.atLimit')}
                   </b>{' '}
-                  · termina algo antes de empezar otra
+                  {t('mobile.finishFirst')}
                 </span>
               ) : (
                 <span>
-                  {tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`}
-                  {tasks.length !== total ? ` de ${total}` : ''} en {column.name}
+                  {tasks.length !== total
+                    ? t('mobile.countOf', { count: tasks.length, total, column: column.name })
+                    : t('mobile.count', { count: tasks.length, column: column.name })}
                 </span>
               )}
               {column.id === agentColumnId ? <AgentMark /> : null}
@@ -226,18 +234,18 @@ export function BoardMobile({
               </span>
             </div>
 
-            <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={tasks.map((x) => x.id)} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-3">
-                {tasks.map((t) => (
+                {tasks.map((task) => (
                   <SwipeToComplete
-                    key={t.id}
+                    key={task.id}
                     onComplete={() => {
-                      if (t.column.kind !== 'done') void completeTask(m, qc, t)
+                      if (task.column.kind !== 'done') void completeTask(m, qc, task)
                     }}
                   >
                     <SortableTaskCard
-                      task={t}
-                      progress={board.counts[t.id]}
+                      task={task}
+                      progress={board.counts[task.id]}
                       today={today}
                       projectId={projectId}
                       large
@@ -249,12 +257,11 @@ export function BoardMobile({
 
             {tasks.length === 0 ? (
               <p className="rounded-md border border-dashed border-border-strong px-4 py-8 text-center text-sm text-fg-faint">
-                {total > 0 ? 'Ninguna tarea cumple el filtro.' : `Sin tareas en ${column.name}.`}
+                {total > 0 ? t('column.noMatch') : t('column.emptyIn', { column: column.name })}
               </p>
             ) : (
               <p className="px-2 text-center text-xs leading-relaxed text-fg-faint">
-                Desliza a la izquierda para completar · mantén pulsado y suelta sobre otra pestaña
-                para cambiar de columna
+                {t('mobile.hint')}
               </p>
             )}
             {column.kind === 'done' || column.id === agentColumnId ? null : (

@@ -67,5 +67,8 @@ export const t = i18n.t.bind(i18n)
 /** El idioma activo. */
 export const currentLocale = () => i18n.language as Locale
 
+/** Etiqueta de `Intl` del idioma activo: `es-ES` en español y `en` en inglés. */
+export const intlLocale = () => (currentLocale() === 'es' ? 'es-ES' : 'en')
+
 /** Aplica una preferencia (`auto` resuelve con el navegador). */
 export const applyLocalePref = (pref: LocalePref) => i18n.changeLanguage(resolveLocale(pref))

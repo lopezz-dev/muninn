@@ -1,6 +1,7 @@
 import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/core'
 import { Chip, cn, Icon, projectColor } from '@muninn/ui'
-import { amountText, ENTRY_LABEL, entryKindOf, signedAmount } from '../../lib/finance'
+import { useTranslation } from 'react-i18next'
+import { amountText, entryKindOf, entryLabel, signedAmount } from '../../lib/finance'
 
 interface RowProps {
   tx: Transaction
@@ -36,19 +37,23 @@ export function TransactionRow({
   compact,
   onOpen,
 }: RowProps) {
+  const { t } = useTranslation('finance')
   const entry = entryKindOf(tx, accountById)
   const category = tx.categoryId ? categoryById.get(tx.categoryId) : undefined
   const from = accountById.get(tx.accountId)?.name ?? '?'
   const to = tx.toAccountId ? (accountById.get(tx.toAccountId)?.name ?? '?') : null
   const signed = signedAmount(tx, accountId)
-  const concept = tx.concept.trim() || category?.name || ENTRY_LABEL[entry]
+  const concept = tx.concept.trim() || category?.name || entryLabel(entry)
   const pending = tx.id.startsWith('tmp-')
   return (
     <button
       type="button"
       onClick={() => onOpen(tx)}
       disabled={pending}
-      aria-label={`${concept}, ${amountText(signed || tx.amount, signed ? 'auto' : 'none')}. Editar`}
+      aria-label={t('row.edit', {
+        concept,
+        amount: amountText(signed || tx.amount, signed ? 'auto' : 'none'),
+      })}
       className={cn(
         'grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 border-t border-border-subtle px-4 py-2.5 text-left outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
         !compact && 'md:grid-cols-[minmax(0,1fr)_150px_140px_120px] md:py-2',
@@ -61,14 +66,14 @@ export function TransactionRow({
           {tx.subscriptionId ? (
             <Icon
               name="recurring"
-              aria-label="Suscripción"
+              aria-label={t('row.subscription')}
               size={13}
               className="shrink-0 text-fg-subtle"
             />
           ) : null}
         </span>
         <span className={cn('truncate text-xs text-fg-subtle', !compact && 'md:hidden')}>
-          {sub ?? [category?.name ?? ENTRY_LABEL[entry], to ? `${from} → ${to}` : from].join(' · ')}
+          {sub ?? [category?.name ?? entryLabel(entry), to ? `${from} → ${to}` : from].join(' · ')}
         </span>
       </span>
       <span className={cn('hidden', !compact && 'md:flex')}>
@@ -78,16 +83,16 @@ export function TransactionRow({
               {category.name}
             </Chip>
           ) : entry === 'income' ? (
-            <Chip className={ENTRY_TONE.income}>Ingreso</Chip>
+            <Chip className={ENTRY_TONE.income}>{entryLabel('income')}</Chip>
           ) : (
-            <span className="text-xs text-fg-faint">Sin categoría</span>
+            <span className="text-xs text-fg-faint">{t('noCategory')}</span>
           )
         ) : (
           <Chip
             className={ENTRY_TONE[entry]}
             icon={entry === 'transfer' ? <Icon name="move" /> : undefined}
           >
-            {ENTRY_LABEL[entry]}
+            {entryLabel(entry)}
           </Chip>
         )}
       </span>

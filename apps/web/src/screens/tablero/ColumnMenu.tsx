@@ -12,6 +12,7 @@ import {
   MenuTrigger,
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { canBeAgentColumn, setAgentColumn, useAgentColumn } from '../../lib/agent'
 import { deleteColumn, moveColumn } from '../../lib/column-actions'
 import { useMuninn } from '../../lib/muninn'
@@ -34,6 +35,7 @@ interface ColumnMenuProps {
 export function ColumnMenu({ column, columns, taskCount, onEdit, size = 'md' }: ColumnMenuProps) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const index = columns.findIndex((c) => c.id === column.id)
   const others = columns.filter((c) => c.id !== column.id)
   const last = columns.length <= 1
@@ -44,35 +46,35 @@ export function ColumnMenu({ column, columns, taskCount, onEdit, size = 'md' }: 
     <Menu>
       <MenuTrigger asChild>
         <IconButton
-          aria-label={`Opciones de la columna ${column.name}`}
+          aria-label={t('columnMenu.options', { name: column.name })}
           icon={<icons.dots size={16} />}
           size={size === 'lg' ? 'lg' : 'sm'}
         />
       </MenuTrigger>
       <MenuContent>
         <MenuItem icon={<icons.settings />} onSelect={() => onEdit(column)}>
-          Editar columna
+          {t('columnDialog.editTitle')}
         </MenuItem>
         <MenuItem
           icon={<icons.chevronLeft />}
           disabled={index <= 0}
           onSelect={() => moveColumn(m, qc, column, index - 1)}
         >
-          Mover a la izquierda
+          {t('columnMenu.moveLeft')}
         </MenuItem>
         <MenuItem
           icon={<icons.chevronRight />}
           disabled={index >= columns.length - 1}
           onSelect={() => moveColumn(m, qc, column, index + 1)}
         >
-          Mover a la derecha
+          {t('columnMenu.moveRight')}
         </MenuItem>
         {project && canBeAgentColumn(project, githubOn, column) ? (
           <MenuItem
             icon={<icons.agent />}
             onSelect={() => setAgentColumn(m, qc, project, columns, isAgent ? null : column.id)}
           >
-            {isAgent ? 'Dejar de usarla para el agente' : 'Usar para el agente'}
+            {isAgent ? t('columnMenu.agentOff') : t('columnMenu.agentOn')}
           </MenuItem>
         ) : null}
         <MenuSeparator />
@@ -83,12 +85,12 @@ export function ColumnMenu({ column, columns, taskCount, onEdit, size = 'md' }: 
             disabled={last}
             onSelect={() => deleteColumn(m, qc, column)}
           >
-            Borrar columna
+            {t('columnMenu.delete')}
           </MenuItem>
         ) : (
           <MenuSub>
             <MenuSubTrigger danger icon={<icons.trash />}>
-              Borrar y mover {taskCount === 1 ? 'su tarea' : `sus ${taskCount} tareas`} a
+              {t('columnMenu.deleteAndMove', { count: taskCount })}
             </MenuSubTrigger>
             <MenuSubContent>
               {others.map((c) => (

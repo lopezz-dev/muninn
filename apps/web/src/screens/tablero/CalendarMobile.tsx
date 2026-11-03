@@ -3,6 +3,7 @@ import { Button, cn, DateField, Dialog, IconButton, icons, SheetContent } from '
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { filterTasks } from '../../lib/board-filter'
 import {
   dayLong,
@@ -26,7 +27,6 @@ import { CompactBody, OverdueToggle } from './CalendarParts'
 import { ColumnDot, columnDot } from './Column'
 import { SwipeToComplete } from './SwipeToComplete'
 
-const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const LONG_PRESS_MS = 500
 
 /**
@@ -88,6 +88,7 @@ function DayTask({
   const m = useMuninn()
   const qc = useQueryClient()
   const press = useLongPress(onDate, !canWrite)
+  const { t } = useTranslation('board')
   return (
     <SwipeToComplete
       disabled={!canWrite}
@@ -109,7 +110,7 @@ function DayTask({
         </Link>
         {canWrite ? (
           <IconButton
-            aria-label={`Cambiar la fecha de «${task.title}»`}
+            aria-label={t('calendar.changeDateOf', { title: task.title })}
             icon={<icons.calendar size={18} />}
             size="lg"
             className="m-1 self-center text-fg-subtle"
@@ -133,18 +134,21 @@ function DateSheet({
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const pick = (date: string | null) => {
     if (task) void setDueDate(m, qc, task, date)
     onClose()
   }
   return (
     <Dialog open={task !== null} onOpenChange={(o) => (o ? null : onClose())}>
-      <SheetContent side="bottom" title="Cambiar fecha">
+      <SheetContent side="bottom" title={t('calendar.changeDate')}>
         {task ? (
           <div className="flex flex-col gap-1 pb-2">
             <p className="mb-2 text-md text-fg-muted">
               {task.title}
-              {task.dueDate ? ` · vence el ${dayShort(task.dueDate)}` : ' · sin fecha'}
+              {task.dueDate
+                ? ` · ${t('calendar.dueOnLower', { date: dayShort(task.dueDate) })}`
+                : ` · ${t('calendar.noDateLower')}`}
             </p>
             {quickDates(today).map((q) => {
               const current = task.dueDate === q.date
@@ -168,12 +172,14 @@ function DateSheet({
                   <span className="ml-auto text-sm font-normal text-fg-subtle">
                     {dayShort(q.date)}
                   </span>
-                  {current ? <icons.check size={18} aria-label="Fecha actual" /> : null}
+                  {current ? (
+                    <icons.check size={18} aria-label={t('calendar.currentDate')} />
+                  ) : null}
                 </button>
               )
             })}
             <DateField
-              label="Otra fecha"
+              label={t('calendar.otherDate')}
               size="lg"
               value={task.dueDate ?? ''}
               today={today}
@@ -182,7 +188,7 @@ function DateSheet({
             />
             {task.dueDate ? (
               <Button size="lg" className="mt-3" onClick={() => pick(null)}>
-                Quitar fecha
+                {t('calendar.removeDate')}
               </Button>
             ) : null}
           </div>
@@ -206,6 +212,7 @@ export function CalendarMobile({
   onFoldedChange,
 }: CalendarProps) {
   const shell = useShell()
+  const { t } = useTranslation(['board', 'common'])
   const canWrite = useOnline()
   const [month, setMonth] = useState(today.slice(0, 7))
   const [sel, setSel] = useState(today)
@@ -225,7 +232,7 @@ export function CalendarMobile({
   )
   const undated = useMemo(() => undatedTasks(visible), [visible])
   const overdue = useMemo(
-    () => board.tasks.filter((t) => isOverdue(t, today)).length,
+    () => board.tasks.filter((x) => isOverdue(x, today)).length,
     [board.tasks, today],
   )
   const week = weekDays(sel)
@@ -252,16 +259,16 @@ export function CalendarMobile({
             {title}
           </h2>
           <Button size="sm" className="h-9 rounded-full px-3.5" onClick={() => choose(today)}>
-            Hoy
+            {t('dates.today', { ns: 'common' })}
           </Button>
           <IconButton
-            aria-label={folded ? 'Semana anterior' : 'Mes anterior'}
+            aria-label={folded ? t('calendar.prevWeek') : t('calendar.prevMonth')}
             icon={<icons.chevronLeft size={18} />}
             size="lg"
             onClick={() => shift(-1)}
           />
           <IconButton
-            aria-label={folded ? 'Semana siguiente' : 'Mes siguiente'}
+            aria-label={folded ? t('calendar.nextWeek') : t('calendar.nextMonth')}
             icon={<icons.chevronRight size={18} />}
             size="lg"
             onClick={() => shift(1)}
@@ -271,9 +278,12 @@ export function CalendarMobile({
           aria-hidden="true"
           className="grid grid-cols-7 text-center text-[11.5px] font-semibold tracking-wider text-fg-subtle"
         >
-          {WEEKDAYS.map((w) => (
-            <span key={w}>{w}</span>
-          ))}
+          {t('calendar.weekdaysNarrow')
+            .split('')
+            .map((w, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: las siete letras fijas de la semana (en inglés se repiten)
+              <span key={i}>{w}</span>
+            ))}
         </div>
         <div className="grid grid-cols-7">
           {days.map((iso) => {
@@ -285,7 +295,11 @@ export function CalendarMobile({
                 key={iso}
                 type="button"
                 aria-pressed={selected}
-                aria-label={`${dayLong(iso)}${tasks.length ? `, ${tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`}` : ''}`}
+                aria-label={
+                  tasks.length
+                    ? t('calendar.dayWithTasks', { day: dayLong(iso), count: tasks.length })
+                    : dayLong(iso)
+                }
                 onClick={() => choose(iso)}
                 className={cn(
                   'flex h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg text-sm tabular transition-colors',
@@ -302,18 +316,18 @@ export function CalendarMobile({
               >
                 {Number(iso.slice(8))}
                 <span className="flex h-[5px] gap-[3px]">
-                  {tasks.slice(0, 3).map((t) => {
+                  {tasks.slice(0, 3).map((task) => {
                     // Hoy elegido y vencidas mandan sobre el color de la columna.
-                    const plain = !(selected && isToday) && !isOverdue(t, today)
-                    const dot = columnDot(t.column)
+                    const plain = !(selected && isToday) && !isOverdue(task, today)
+                    const dot = columnDot(task.column)
                     return (
                       <span
-                        key={t.id}
+                        key={task.id}
                         className={cn(
                           'size-[5px] rounded-full',
                           selected && isToday
                             ? 'bg-accent-fg'
-                            : isOverdue(t, today)
+                            : isOverdue(task, today)
                               ? 'bg-danger'
                               : dot.className,
                         )}
@@ -337,7 +351,7 @@ export function CalendarMobile({
             aria-hidden="true"
             className={cn('transition-transform', !folded && 'rotate-180')}
           />
-          {folded ? 'Ver el mes' : 'Solo esta semana'}
+          {folded ? t('calendar.showMonth') : t('calendar.onlyThisWeek')}
         </button>
       </section>
 
@@ -350,7 +364,7 @@ export function CalendarMobile({
               className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 text-sm font-medium whitespace-nowrap text-fg-muted"
             >
               <icons.calendar size={15} aria-hidden="true" />
-              Sin fecha · {undated.length}
+              {t('calendar.undatedCount', { count: undated.length })}
             </button>
           ) : null}
           <OverdueToggle count={overdue} filter={filter} onFilterChange={onFilterChange} touch />
@@ -360,29 +374,29 @@ export function CalendarMobile({
       <section aria-label={dayLong(sel)} className="flex flex-col gap-3">
         <h3 className="flex items-baseline gap-2 text-md font-semibold">
           {dayLong(sel)}
-          {sel === today ? ' · Hoy' : ''}
+          {sel === today ? ` · ${t('dates.today', { ns: 'common' })}` : ''}
           <span className="text-sm font-normal text-fg-subtle">
-            {list.length === 0 ? '' : list.length === 1 ? '1 tarea' : `${list.length} tareas`}
+            {list.length === 0 ? '' : t('calendar.tasks', { count: list.length })}
           </span>
         </h3>
-        {list.map((t) => (
+        {list.map((task) => (
           <DayTask
-            key={t.id}
-            task={t}
+            key={task.id}
+            task={task}
             today={today}
             projectId={projectId}
-            progress={board.counts[t.id]}
+            progress={board.counts[task.id]}
             canWrite={canWrite}
-            onDate={() => setDateTask(t)}
+            onDate={() => setDateTask(task)}
           />
         ))}
         {list.length === 0 ? (
           <p className="text-sm text-fg-faint">
             {board.tasks.length === 0
-              ? 'Este proyecto aún no tiene tareas. Crea la primera con fecha desde aquí.'
+              ? t('calendar.noTasksYet')
               : total > 0
-                ? 'Ninguna tarea de este día cumple el filtro.'
-                : 'Nada para este día.'}
+                ? t('calendar.dayNoMatch')
+                : t('calendar.dayEmpty')}
           </p>
         ) : null}
         {canWrite ? (
@@ -392,20 +406,18 @@ export function CalendarMobile({
             className="flex h-13 cursor-pointer items-center gap-2.5 rounded-md border border-dashed border-border-strong px-4 text-md font-medium text-fg-muted"
           >
             <icons.plus size={18} aria-hidden="true" />
-            Añadir el {dayShort(sel)}
+            {t('calendar.addOn', { date: dayShort(sel) })}
           </button>
         ) : null}
         {list.length > 0 && canWrite ? (
-          <p className="text-center text-xs text-fg-subtle">
-            Mantén pulsado para cambiar la fecha · desliza a la izquierda para completar
-          </p>
+          <p className="text-center text-xs text-fg-subtle">{t('calendar.mobileHint')}</p>
         ) : null}
       </section>
 
       <Dialog open={undatedOpen} onOpenChange={setUndatedOpen}>
         <SheetContent
           side="bottom"
-          title={`Sin fecha · ${undated.length}`}
+          title={t('calendar.undatedCount', { count: undated.length })}
           footer={
             canWrite ? (
               <Button
@@ -417,44 +429,44 @@ export function CalendarMobile({
                 }}
               >
                 <icons.plus size={16} aria-hidden="true" />
-                Añadir sin fecha
+                {t('calendar.addUndated')}
               </Button>
             ) : undefined
           }
         >
           <ul className="flex flex-col gap-2 pb-2">
-            {undated.map((t) => (
+            {undated.map((task) => (
               <li
-                key={t.id}
+                key={task.id}
                 className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-raised py-2 pr-2 pl-3.5"
               >
-                <ColumnDot column={t.column} />
+                <ColumnDot column={task.column} />
                 <Link
                   to="/proyectos/$projectId/tareas/$taskId"
-                  params={{ projectId, taskId: t.id }}
+                  params={{ projectId, taskId: task.id }}
                   onClick={() => setUndatedOpen(false)}
                   className="min-w-0 flex-1 text-md text-fg no-underline"
                 >
-                  {t.title}
+                  {task.title}
                 </Link>
                 {canWrite ? (
                   <Button
                     size="lg"
-                    aria-label={`Poner fecha a «${t.title}»`}
+                    aria-label={t('calendar.setDateOf', { title: task.title })}
                     onClick={() => {
                       setUndatedOpen(false)
-                      setDateTask(t)
+                      setDateTask(task)
                     }}
                   >
                     <icons.calendar size={16} aria-hidden="true" />
-                    Fecha
+                    {t('calendar.date')}
                   </Button>
                 ) : null}
               </li>
             ))}
           </ul>
           {undated.length === 0 ? (
-            <p className="text-sm text-fg-faint">Todas las tareas tienen fecha.</p>
+            <p className="text-sm text-fg-faint">{t('calendar.allDated')}</p>
           ) : null}
         </SheetContent>
       </Dialog>

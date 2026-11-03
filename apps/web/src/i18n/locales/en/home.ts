@@ -1,2 +1,116 @@
 /** Textos de `home`, en inglés (la fuente de las claves). Namespace diferido: se pide con `useTranslation('home')`. */
-export const home = {} as const
+export const home = {
+  greeting: {
+    morning: 'Good morning',
+    afternoon: 'Good afternoon',
+    night: 'Good evening',
+  },
+  greetingNamed: {
+    morning: 'Good morning, {{name}}',
+    afternoon: 'Good afternoon, {{name}}',
+    night: 'Good evening, {{name}}',
+  },
+  summary: {
+    overdue_one: '{{count}} overdue',
+    overdue_other: '{{count}} overdue',
+    dueToday_one: '{{count}} task due today',
+    dueToday_other: '{{count}} tasks due today',
+    nothingDue: 'Nothing due today',
+    inProgress: '{{count}} in progress',
+  },
+  newTask: 'New task',
+  askMuninn: 'Ask Muninn',
+  row: {
+    complete: 'Complete: {{title}}',
+    reopen: 'Reopen: {{title}}',
+    doneAt: 'Done {{time}}',
+  },
+  clear: {
+    title: 'All clear',
+    description: 'Nothing is due today or overdue.',
+    next: 'Up next',
+    noDates: 'Once your tasks have due dates, they’ll show up here by urgency.',
+  },
+  empty: {
+    projectsTitle: 'Start with a project',
+    projects:
+      'Each project comes with its own Kanban board. Here you’ll see what’s due today, what you have in progress and what you’ve finished this week.',
+    tasksTitle: 'You don’t have any tasks yet',
+    tasks: 'Create the first one and it’ll show up here when it’s due today, in progress or done.',
+  },
+  stats: {
+    label: 'Summary',
+    dueToday: 'Due today',
+    inProgress: 'In progress',
+    overdue: 'Overdue',
+    doneWeek: 'Done · 7 days',
+  },
+  myTasks: {
+    title: 'My tasks',
+    description: 'Overdue, due today and the ones you’ve done today',
+    boards: 'See boards',
+  },
+  inProgress: {
+    title: 'In progress',
+    description: 'What you’re working on',
+    empty: 'No tasks in progress. Move one to “In progress” on its board.',
+  },
+  upcoming: {
+    title: 'Coming up',
+    description: 'What’s due this week and isn’t in progress',
+    allInProgress: 'Everything due this week is already in progress.',
+    empty: 'Nothing is due in the next 7 days.',
+  },
+  projects: {
+    title: 'Projects',
+    all: 'All',
+    progress: '{{done}} of {{total}}',
+    noTasks: 'No tasks',
+    progressLabel: '{{name}} progress',
+  },
+  week: {
+    title: 'Last 7 days',
+    done_one: '{{count}} task done',
+    done_other: '{{count}} tasks done',
+    chart: 'Tasks done per day: {{days}}',
+    bar_one: '{{count}} done',
+    bar_other: '{{count}} done',
+  },
+  /** El historial de una tarea (`lib/activity.ts`), sin el nombre de quien lo hizo, que va delante. */
+  activity: {
+    actor: {
+      user: 'You',
+      assistant: 'The assistant',
+      agent: 'An agent',
+    },
+    /** Cada verbo dicho a ti (`you`) y de otro (`other`). */
+    verb: {
+      created: { you: 'created', other: 'created' },
+      moved: { you: 'moved', other: 'moved' },
+      completed: { you: 'completed', other: 'completed' },
+      reopened: { you: 'reopened', other: 'reopened' },
+      archived: { you: 'archived', other: 'archived' },
+      restored: { you: 'restored', other: 'restored' },
+      deleted: { you: 'deleted', other: 'deleted' },
+      updated: { you: 'changed', other: 'changed' },
+    },
+    field: {
+      title: 'the title',
+      description: 'the description',
+      priority: 'the priority',
+      labels: 'the labels',
+      dueDate: 'the due date',
+    },
+    list: '{{items}} and {{last}}',
+    task: '{{verb}} the task',
+    moved: '{{verb}} the task from {{from}} to {{to}}',
+    movedColumn: '{{verb}} the task to another column',
+    fields: '{{verb}} {{fields}}',
+    pr: 'PR #{{number}}',
+    prUnknown: 'the PR',
+    agentPrOpened: 'opened {{pr}} and moved the task to review',
+    agentPrMerged: 'completed the task when {{pr}} was merged',
+    agentPrClosed: 'returned the task: {{pr}} was closed without merging',
+    agentStopped: 'took the task away from the agent: it finished without opening a PR',
+  },
+} as const

@@ -1,7 +1,15 @@
 import type { MonthReport } from '@muninn/core'
 import { Card, CardHeader, cn, Icon, projectColor } from '@muninn/ui'
 import { type ReactNode, useState } from 'react'
-import { amountText, deltaText, monthLabel, monthShort, rateText } from '../../lib/finance'
+import { useTranslation } from 'react-i18next'
+import {
+  amountText,
+  deltaText,
+  monthLabel,
+  monthShort,
+  percentText,
+  rateText,
+} from '../../lib/finance'
 
 /*
  * Panel mensual (Finanzas.dc.html; bloque D de la F3). Todo lo calcula el core (`m.finance.report.month`): aquí solo
@@ -46,27 +54,28 @@ function Kpi({
 
 /** Ingresos, gastos, ahorro e inversión del mes, comparados con el anterior. */
 export function MonthKpis({ report }: { report: MonthReport }) {
+  const { t } = useTranslation('finance')
   const prev = report.previous
   return (
-    <section aria-label="Resumen del mes" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <section aria-label={t('panel.monthSummary')} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Kpi
-        label="Ingresos"
+        label={t('panel.income')}
         icon="income"
         value={euros(report.income)}
-        note={deltaText(report.income, prev.income, prev.month) ?? 'Sin datos del mes anterior'}
+        note={deltaText(report.income, prev.income, prev.month) ?? t('panel.noPrevious')}
       />
       <Kpi
-        label="Gastos"
+        label={t('panel.expenses')}
         icon="expense"
         value={euros(report.expenses)}
-        note={deltaText(report.expenses, prev.expenses, prev.month) ?? 'Sin datos del mes anterior'}
+        note={deltaText(report.expenses, prev.expenses, prev.month) ?? t('panel.noPrevious')}
       />
       <Kpi
-        label="Ahorro"
+        label={t('panel.savings')}
         value={report.savings < 0 ? amountText(report.savings) : euros(report.savings)}
         note={
           <>
-            Tasa de ahorro{' '}
+            {t('panel.savingsRate')}{' '}
             <strong
               className={cn(
                 'font-semibold',
@@ -79,9 +88,11 @@ export function MonthKpis({ report }: { report: MonthReport }) {
         }
       />
       <Kpi
-        label="Inversión"
+        label={t('panel.investment')}
         value={report.investment < 0 ? amountText(report.investment) : euros(report.investment)}
-        note={`Libre: ${report.free < 0 ? amountText(report.free) : euros(report.free)}`}
+        note={t('panel.free', {
+          amount: report.free < 0 ? amountText(report.free) : euros(report.free),
+        })}
       />
     </section>
   )
@@ -89,17 +100,18 @@ export function MonthKpis({ report }: { report: MonthReport }) {
 
 /** «En qué se va el dinero»: gasto por categoría, barras horizontales a escala de la mayor. */
 export function CategoryBars({ report }: { report: MonthReport }) {
+  const { t } = useTranslation('finance')
   const rows = report.byCategory.filter((c) => c.amount > 0)
   const max = Math.max(1, ...rows.map((c) => c.amount))
   return (
     <Card className="flex flex-col">
       <CardHeader
-        title="En qué se va el dinero"
+        title={t('panel.whereMoneyGoes')}
         description={`${monthLabel(report.month)} · ${euros(report.expenses)}`}
       />
       {rows.length === 0 ? (
         <p className="border-t border-border-subtle px-4 py-6 text-sm text-fg-subtle">
-          Ningún gasto este mes.
+          {t('panel.noExpenses')}
         </p>
       ) : (
         <ul className="flex flex-col gap-3 px-4 pt-1 pb-4">
@@ -117,7 +129,9 @@ export function CategoryBars({ report }: { report: MonthReport }) {
                     className="size-2 shrink-0 rounded-xs"
                     style={{ background: projectColor(c.color) }}
                   />
-                  <span className="truncate">{c.name}</span>
+                  <span className="truncate">
+                    {c.categoryId === null ? t('noCategory') : c.name}
+                  </span>
                 </span>
                 <span aria-hidden="true" className="h-2 rounded-xs bg-border">
                   <span
@@ -131,7 +145,7 @@ export function CategoryBars({ report }: { report: MonthReport }) {
                 <span className="text-right font-mono tabular">
                   {euros(c.amount)}
                   <span className="sr-only">
-                    {`, ${Math.round(c.share * 100)} % del gasto${delta ? `, ${delta}` : ''}`}
+                    {`${t('panel.share', { pct: percentText(c.share) })}${delta ? `, ${delta}` : ''}`}
                   </span>
                 </span>
               </li>
@@ -145,22 +159,23 @@ export function CategoryBars({ report }: { report: MonthReport }) {
 
 /** Ingresos frente a gastos de los últimos meses (el pedido, a la derecha y resaltado). */
 export function HistoryChart({ report }: { report: MonthReport }) {
+  const { t } = useTranslation('finance')
   const [hover, setHover] = useState<string | null>(null)
   const max = Math.max(1, ...report.history.flatMap((h) => [h.income, h.expenses]))
   const shown = report.history.find((h) => h.month === hover)
   return (
     <Card className="flex flex-col">
       <CardHeader
-        title={`Últimos ${report.history.length} meses`}
+        title={t('panel.lastMonths', { count: report.history.length })}
         action={
           <span className="flex items-center gap-3 text-xs text-fg-subtle">
             <span className="flex items-center gap-1.5">
               <span aria-hidden="true" className="size-2 rounded-xs bg-chart-income" />
-              Ingresos
+              {t('panel.income')}
             </span>
             <span className="flex items-center gap-1.5">
               <span aria-hidden="true" className="size-2 rounded-xs bg-chart-expense" />
-              Gastos
+              {t('panel.expenses')}
             </span>
           </span>
         }
@@ -174,7 +189,11 @@ export function HistoryChart({ report }: { report: MonthReport }) {
           )}
         >
           {shown
-            ? `${monthLabel(shown.month)}: ingresos ${euros(shown.income)} · gastos ${euros(shown.expenses)}`
+            ? t('panel.hover', {
+                month: monthLabel(shown.month),
+                income: euros(shown.income),
+                expenses: euros(shown.expenses),
+              })
             : ' '}
         </p>
         <div
@@ -220,12 +239,12 @@ export function HistoryChart({ report }: { report: MonthReport }) {
           ))}
         </div>
         <table className="sr-only">
-          <caption>Ingresos y gastos por mes</caption>
+          <caption>{t('panel.tableCaption')}</caption>
           <thead>
             <tr>
-              <th scope="col">Mes</th>
-              <th scope="col">Ingresos</th>
-              <th scope="col">Gastos</th>
+              <th scope="col">{t('panel.monthCol')}</th>
+              <th scope="col">{t('panel.income')}</th>
+              <th scope="col">{t('panel.expenses')}</th>
             </tr>
           </thead>
           <tbody>

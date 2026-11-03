@@ -1,2 +1,77 @@
 /** Textos de `projects`, en inglés (la fuente de las claves). Namespace diferido: se pide con `useTranslation('projects')`. */
-export const projects = {} as const
+export const projects = {
+  title: 'Projects',
+  summary: {
+    active_one: '{{count}} active',
+    active_other: '{{count}} active',
+    openTasks_one: '{{count}} open task',
+    openTasks_other: '{{count}} open tasks',
+  },
+  /** Tareas por tipo de columna y hechas. */
+  kind: {
+    backlog_one: '{{count}} in backlog',
+    backlog_other: '{{count}} in backlog',
+    todo_one: '{{count}} to do',
+    todo_other: '{{count}} to do',
+    in_progress_one: '{{count}} in progress',
+    in_progress_other: '{{count}} in progress',
+    review_one: '{{count}} in review',
+    review_other: '{{count}} in review',
+  },
+  open_one: '{{count}} open',
+  open_other: '{{count}} open',
+  done_one: '{{count}} done',
+  done_other: '{{count}} done',
+  overdue_one: '{{count}} overdue',
+  overdue_other: '{{count}} overdue',
+  stateBar: '{{open}} and {{done}}',
+  chip: {
+    inProgress: '{{count}} in progress',
+    agent: '{{count}} with the agent',
+    upToDate: 'Up to date',
+  },
+  card: {
+    noTasksYet: 'No tasks yet',
+    addDescription: '+ Add a description',
+    edit: 'Edit {{name}}',
+    next: 'Up next',
+    noDate: 'No date',
+    activity: 'Activity {{when}}',
+    task: 'Task',
+    editShort: 'Edit',
+  },
+  archived: {
+    title: 'Archived',
+    deleteAll: 'Delete all',
+    stillLinked: 'Still linked to {{repo}}',
+    restore: 'Restore',
+    delete: 'Delete “{{name}}”',
+    deleteForever: 'Delete forever',
+  },
+  search: 'Search projects',
+  empty: {
+    title: 'No projects yet',
+    body: 'A project groups tasks on a Kanban board. Give it an image and a description to recognize it at a glance, and link it to a GitHub repository if you like.',
+  },
+  filter: {
+    label: 'Filter projects',
+    all: 'All · {{n}}',
+    overdue: 'With overdue · {{n}}',
+    github: 'With GitHub · {{n}}',
+  },
+  sort: {
+    label: 'Sort',
+    urgency: 'Urgency',
+    activity: 'Recent activity',
+    name: 'Name',
+  },
+  noMatch: 'No project is called “{{query}}”.',
+  noneInFilter: 'No projects match this filter.',
+  /** Errores al preparar el logo o la portada (`lib/project-image.ts`). */
+  image: {
+    notImage: '“{{name}}” isn’t an image',
+    cantOpen: 'Can’t open “{{name}}”',
+    noCanvas: 'The browser won’t let images be processed',
+    failed: 'Couldn’t prepare the image',
+  },
+} as const

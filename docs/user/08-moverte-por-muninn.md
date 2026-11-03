@@ -157,9 +157,9 @@ En **Ajustes › Apariencia**:
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
 
-> **Estado:** la traducción al inglés llega por partes. Hoy están en inglés el menú, la barra de abajo, tu cuenta, los
-> avisos, el buscador, Ajustes y los diálogos de nuevo proyecto y nueva tarea; el resto de pantallas y estas guías siguen
-> en español mientras se traducen.
+> **Estado:** toda la app está en inglés y en español. Estas guías siguen solo en español mientras se traducen, y lo
+> que Muninn crea por ti al empezar (las columnas del tablero, las categorías de Finanzas) sale en español aunque uses
+> el inglés: puedes renombrarlo.
 
 > **Próximamente:** tema claro.
 

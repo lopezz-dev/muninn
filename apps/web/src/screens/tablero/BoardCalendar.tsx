@@ -24,6 +24,8 @@ import {
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { currentLocale, t as tr } from '../../i18n'
 import type { BoardData } from '../../lib/board'
 import { type BoardFilter, filterTasks, isFiltering } from '../../lib/board-filter'
 import {
@@ -75,12 +77,7 @@ export interface CalendarProps {
   onFoldedChange: (next: boolean) => void
 }
 
-const SCALES: { value: CalendarScale; label: string }[] = [
-  { value: 'month', label: 'Mes' },
-  { value: 'week', label: 'Semana' },
-]
-
-const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const SCALES: readonly CalendarScale[] = ['month', 'week']
 
 /** Lo que tarda en cambiar de mes (o de semana) una tarea arrastrada que se queda sobre ‹ o ›. */
 const NAV_HOVER_MS = 600
@@ -145,8 +142,11 @@ function MonthCell({
 }: DayProps) {
   const { setNodeRef, isOver } = useDroppable({ id: dayKey(iso), disabled: !canWrite })
   const isToday = iso === today
+  const { t } = useTranslation(['board', 'common'])
   const { shown, more: hidden } = visibleInCell(tasks, slots)
-  const label = `${dayLong(iso)}${tasks.length ? `, ${tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`}` : ''}`
+  const label = tasks.length
+    ? t('calendar.dayWithTasks', { day: dayLong(iso), count: tasks.length })
+    : dayLong(iso)
   return (
     <li
       ref={setNodeRef}
@@ -171,7 +171,11 @@ function MonthCell({
         >
           {Number(iso.slice(8))}
         </span>
-        {isToday ? <span className="text-[11px] font-semibold text-accent">Hoy</span> : null}
+        {isToday ? (
+          <span className="text-[11px] font-semibold text-accent">
+            {t('dates.today', { ns: 'common' })}
+          </span>
+        ) : null}
         {canWrite ? (
           <AddTaskPopover
             projectId={projectId}
@@ -182,7 +186,7 @@ function MonthCell({
             onOpenChange={onAdding}
           >
             <IconButton
-              aria-label={`Añadir tarea el ${dayShort(iso)}`}
+              aria-label={t('calendar.addTaskOn', { date: dayShort(iso) })}
               icon={<icons.plus size={13} />}
               size="sm"
               className="ml-auto size-5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
@@ -190,13 +194,13 @@ function MonthCell({
           </AddTaskPopover>
         ) : null}
       </div>
-      {shown.map((t) => (
+      {shown.map((task) => (
         <TaskPill
-          key={t.id}
-          task={t}
+          key={task.id}
+          task={task}
           today={today}
           projectId={projectId}
-          progress={board.counts[t.id]}
+          progress={board.counts[task.id]}
           disabled={!canWrite}
         />
       ))}
@@ -207,7 +211,7 @@ function MonthCell({
               type="button"
               className="h-5 shrink-0 cursor-pointer rounded-xs px-1.5 text-left text-[11.5px] font-medium text-fg-muted hover:bg-surface-hover hover:text-fg data-[state=open]:bg-surface-hover"
             >
-              +{hidden} más
+              {t('calendar.more', { count: hidden })}
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -217,12 +221,14 @@ function MonthCell({
           >
             <p className="flex items-baseline gap-2 border-b border-border-subtle px-2 pt-1 pb-2 text-sm font-semibold">
               {dayLong(iso)}
-              <span className="text-xs font-normal text-fg-subtle">{tasks.length} tareas</span>
+              <span className="text-xs font-normal text-fg-subtle">
+                {t('calendar.tasks', { count: tasks.length })}
+              </span>
             </p>
-            {tasks.map((t) => (
+            {tasks.map((task) => (
               <TaskPill
-                key={t.id}
-                task={t}
+                key={task.id}
+                task={task}
                 today={today}
                 projectId={projectId}
                 disabled={!canWrite}
@@ -239,7 +245,7 @@ function MonthCell({
                 className="mt-1 flex h-8 cursor-pointer items-center gap-1.5 rounded-md border-t border-border-subtle px-2 text-sm font-medium text-fg-subtle hover:bg-surface-hover hover:text-fg"
               >
                 <icons.plus size={14} aria-hidden="true" />
-                Añadir tarea el {dayShort(iso)}
+                {t('calendar.addTaskOn', { date: dayShort(iso) })}
               </button>
             ) : null}
           </PopoverContent>
@@ -259,14 +265,17 @@ function MonthCell({
   )
 }
 
+/** El día dentro de una frase: en español, en minúscula («sobre el miércoles 4 de noviembre»); en inglés, tal cual. */
+const inSentence = (day: string) => (currentLocale() === 'es' ? day.toLowerCase() : day)
+
 /** «Hoy», «Mañana» o «Ayer» junto al número del día en la semana. */
 const relative = (iso: string, today: string) =>
   iso === today
-    ? 'Hoy'
+    ? tr('dates.today')
     : iso === addDays(today, 1)
-      ? 'Mañana'
+      ? tr('dates.tomorrow')
       : iso === addDays(today, -1)
-        ? 'Ayer'
+        ? tr('dates.yesterday')
         : ''
 
 /**
@@ -287,11 +296,14 @@ function WeekColumn({
 }: Omit<DayProps, 'inMonth' | 'more' | 'onMore'> & { total: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: dayKey(iso), disabled: !canWrite })
   const isToday = iso === today
+  const { t } = useTranslation('board')
   const rel = relative(iso, today)
   return (
     <section
       ref={setNodeRef}
-      aria-label={`${dayLong(iso)}${total ? `, ${total === 1 ? '1 tarea' : `${total} tareas`}` : ''}`}
+      aria-label={
+        total ? t('calendar.dayWithTasks', { day: dayLong(iso), count: total }) : dayLong(iso)
+      }
       className={cn(
         'group flex min-h-0 min-w-0 flex-col rounded-lg border transition-colors',
         isToday ? 'border-accent/35 bg-accent-soft/40' : 'border-border-subtle',
@@ -306,7 +318,11 @@ function WeekColumn({
             isToday ? 'text-accent' : 'text-fg-subtle',
           )}
         >
-          {WEEKDAYS[(new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7]}
+          {
+            t('calendar.weekdaysShort').split(',')[
+              (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7
+            ]
+          }
         </span>
         <span className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
           <span
@@ -329,24 +345,24 @@ function WeekColumn({
           ) : null}
           {total > 0 ? (
             <span className="ml-auto text-xs text-fg-subtle tabular">
-              {tasks.length === total ? total : `${tasks.length} de ${total}`}
+              {tasks.length === total ? total : t('list.countOf', { shown: tasks.length, total })}
             </span>
           ) : null}
         </span>
       </h3>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1.5">
-        {tasks.map((t) => (
+        {tasks.map((task) => (
           <CompactCard
-            key={t.id}
-            task={t}
+            key={task.id}
+            task={task}
             today={today}
             projectId={projectId}
-            progress={board.counts[t.id]}
+            progress={board.counts[task.id]}
             disabled={!canWrite}
           />
         ))}
         {tasks.length === 0 && total > 0 ? (
-          <p className="px-1 py-1 text-xs text-fg-faint">Ninguna cumple el filtro.</p>
+          <p className="px-1 py-1 text-xs text-fg-faint">{t('calendar.noneMatch')}</p>
         ) : null}
         {canWrite ? (
           <AddTaskPopover
@@ -360,7 +376,7 @@ function WeekColumn({
             <Button
               variant="ghost"
               size="sm"
-              aria-label={`Añadir tarea el ${dayShort(iso)}`}
+              aria-label={t('calendar.addTaskOn', { date: dayShort(iso) })}
               className={cn(
                 'shrink-0 justify-start px-1.5 text-fg-subtle',
                 // En un día con tareas aparece al pasar por la columna; en uno vacío está siempre.
@@ -369,7 +385,7 @@ function WeekColumn({
               )}
             >
               <icons.plus size={14} aria-hidden="true" />
-              Añadir
+              {t('calendar.add')}
             </Button>
           </AddTaskPopover>
         ) : null}
@@ -391,12 +407,13 @@ function UndatedRail({
   onOpen: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: UNDATED, disabled: !canWrite })
+  const { t } = useTranslation('board')
   return (
     <button
       ref={setNodeRef}
       type="button"
       onClick={onOpen}
-      aria-label={`Abrir «Sin fecha» (${count})`}
+      aria-label={t('calendar.openUndated', { count })}
       className={cn(
         'flex w-10 shrink-0 cursor-pointer flex-col items-center gap-2 rounded-lg border bg-surface-sunken py-3 text-fg-subtle transition-colors hover:text-fg',
         isOver
@@ -409,7 +426,7 @@ function UndatedRail({
       <icons.calendar size={15} aria-hidden="true" />
       <span className="text-xs font-semibold tabular">{count}</span>
       <span className="text-xs font-medium [writing-mode:vertical-rl]">
-        {dragging ? 'Soltar para quitar la fecha' : 'Sin fecha'}
+        {dragging ? t('calendar.dropToClear') : t('calendar.noDate')}
       </span>
     </button>
   )
@@ -438,20 +455,21 @@ function UndatedTray({
   onClose: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: UNDATED, disabled: !canWrite })
+  const { t } = useTranslation('board')
   return (
     <aside
       ref={setNodeRef}
-      aria-label="Sin fecha"
+      aria-label={t('calendar.noDate')}
       className={cn(
         'flex min-h-0 w-[248px] shrink-0 flex-col gap-2 rounded-lg border bg-surface-sunken p-2',
         isOver ? 'border-dashed border-accent bg-accent-soft' : 'border-border-subtle',
       )}
     >
       <h2 className="flex items-center gap-2 px-1.5 pt-1 text-[13px] font-semibold">
-        Sin fecha
+        {t('calendar.noDate')}
         <span className="text-xs font-normal text-fg-subtle tabular">{tasks.length}</span>
         <IconButton
-          aria-label="Ocultar «Sin fecha»"
+          aria-label={t('calendar.hideUndated')}
           icon={<icons.chevronRight size={14} />}
           size="sm"
           className="ml-auto"
@@ -460,19 +478,19 @@ function UndatedTray({
       </h2>
       <p className="px-1.5 text-xs text-fg-subtle">
         {!canWrite
-          ? 'Sin conexión no se pueden cambiar las fechas.'
+          ? t('calendar.offline')
           : dragging
-            ? 'Suelta aquí para quitarle la fecha.'
-            : 'Arrastra una tarea a un día para ponerle fecha.'}
+            ? t('calendar.dropHere')
+            : t('calendar.dragHint')}
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {tasks.map((t) => (
+        {tasks.map((task) => (
           <CompactCard
-            key={t.id}
-            task={t}
+            key={task.id}
+            task={task}
             today={today}
             projectId={projectId}
-            progress={board.counts[t.id]}
+            progress={board.counts[task.id]}
             disabled={!canWrite}
           />
         ))}
@@ -488,7 +506,7 @@ function UndatedTray({
         >
           <Button variant="ghost" size="sm" className="justify-start">
             <icons.plus size={14} aria-hidden="true" />
-            Añadir sin fecha
+            {t('calendar.addUndated')}
           </Button>
         </AddTaskPopover>
       ) : null}
@@ -511,9 +529,11 @@ function GridNotice({ title, children }: { title: string; children: ReactNode })
   )
 }
 
+/** Instrucciones para el lector de pantalla: *getter*, para leerlas en el idioma activo (ADR-0077). */
 const instructions: ScreenReaderInstructions = {
-  draggable:
-    'Para cambiar la fecha, pulsa Espacio, muévete con las flechas (izquierda y derecha, un día; arriba y abajo, una semana; al salir de lo que se ve, pasa al mes o la semana de al lado) o pulsa S para «Sin fecha», y vuelve a pulsar Espacio para soltar. Escape cancela. Enter abre la tarea.',
+  get draggable() {
+    return tr('calendar.instructions', { ns: 'board' })
+  },
 }
 
 /** Calendario de escritorio: mes o semana, bandeja «Sin fecha» y arrastre con ratón, tacto o teclado. */
@@ -529,6 +549,7 @@ function CalendarDesktop({
   const m = useMuninn()
   const qc = useQueryClient()
   const shell = useShell()
+  const { t } = useTranslation(['board', 'common'])
   const canWrite = useOnline()
   // El día que manda en lo que se ve: su mes o su semana. Siempre abre en hoy.
   const [anchor, setAnchor] = useState(today)
@@ -553,13 +574,13 @@ function CalendarDesktop({
   )
   const undated = useMemo(() => undatedTasks(visible), [visible])
   const overdue = useMemo(
-    () => board.tasks.filter((t) => isOverdue(t, today)).length,
+    () => board.tasks.filter((x) => isOverdue(x, today)).length,
     [board.tasks, today],
   )
-  const taskById = useMemo(() => new Map(board.tasks.map((t) => [t.id, t])), [board.tasks])
+  const taskById = useMemo(() => new Map(board.tasks.map((x) => [x.id, x])), [board.tasks])
   const trayOpen = trayByScale[scale] ?? undated.length > 0
   const setTrayOpen = (open: boolean | ((o: boolean) => boolean)) =>
-    setTrayByScale((t) => ({ ...t, [scale]: typeof open === 'function' ? open(trayOpen) : open }))
+    setTrayByScale((s) => ({ ...s, [scale]: typeof open === 'function' ? open(trayOpen) : open }))
 
   // Cuántas píldoras caben en una celda del mes: se mide el alto de las filas, no se supone.
   const [slots, setSlots] = useState(3)
@@ -671,21 +692,23 @@ function CalendarDesktop({
     [],
   )
 
-  const name = (id: string | number) => `«${taskById.get(String(id))?.title ?? ''}»`
+  const name = (id: string | number) =>
+    t('dnd.theTask', { title: taskById.get(String(id))?.title ?? '' })
   const where = (id: string | number | undefined) =>
     id === UNDATED
-      ? 'sobre «Sin fecha»'
+      ? t('calendar.a11y.overUndated')
       : isDayKey(id)
-        ? `sobre el ${dayLong(dayOf(id)).toLowerCase()}`
-        : 'fuera del calendario'
+        ? t('calendar.a11y.overDay', { day: inSentence(dayLong(dayOf(id))) })
+        : t('calendar.a11y.outside')
   const announcements: Announcements = {
-    onDragStart: ({ active }) => `Has cogido ${name(active.id)}.`,
-    onDragOver: ({ active, over }) => `${name(active.id)} ${where(over?.id)}.`,
+    onDragStart: ({ active }) => t('calendar.a11y.picked', { name: name(active.id) }),
+    onDragOver: ({ active, over }) =>
+      t('calendar.a11y.over', { name: name(active.id), where: where(over?.id) }),
     onDragEnd: ({ active, over }) =>
       over && over.id !== NAV_PREV && over.id !== NAV_NEXT
-        ? `${name(active.id)} soltada ${where(over.id)}.`
-        : `${name(active.id)} no se ha movido.`,
-    onDragCancel: ({ active }) => `Cancelado: ${name(active.id)} no se ha movido.`,
+        ? t('calendar.a11y.dropped', { name: name(active.id), where: where(over.id) })
+        : t('calendar.a11y.notMoved', { name: name(active.id) }),
+    onDragCancel: ({ active }) => t('calendar.a11y.cancelled', { name: name(active.id) }),
   }
 
   const onDragStart = ({ active, activatorEvent }: DragStartEvent) => {
@@ -724,36 +747,37 @@ function CalendarDesktop({
 
   const notice =
     board.tasks.length === 0 ? (
-      <GridNotice title="Este proyecto aún no tiene tareas">
-        <p className="text-sm text-fg-muted">
-          Crea una con fecha para verla aquí. También puedes pulsar en cualquier día para crearla ya
-          con esa fecha.
-        </p>
+      <GridNotice title={t('calendar.emptyTitle')}>
+        <p className="text-sm text-fg-muted">{t('calendar.emptyBody')}</p>
         <Button variant="primary" onClick={() => shell.openNewTask({ projectId })}>
           <icons.plus size={14} aria-hidden="true" />
-          Nueva tarea
+          {t('header.newTask')}
         </Button>
       </GridNotice>
     ) : inRange === 0 && !dragTask ? (
       <GridNotice
         title={
           filtering
-            ? `Ninguna tarea ${scale === 'month' ? `de ${monthName(month)}` : 'de esta semana'} cumple el filtro`
-            : `Nada vence ${scale === 'month' ? `en ${monthName(month)}` : 'esta semana'}`
+            ? scale === 'month'
+              ? t('calendar.noMatchMonth', { month: monthName(month) })
+              : t('calendar.noMatchWeek')
+            : scale === 'month'
+              ? t('calendar.nothingDueMonth', { month: monthName(month) })
+              : t('calendar.nothingDueWeek')
         }
       >
         {next ? (
-          <p className="text-sm text-fg-muted">La siguiente es el {dayShort(next)}.</p>
+          <p className="text-sm text-fg-muted">{t('calendar.nextIs', { date: dayShort(next) })}</p>
         ) : null}
         <div className="flex flex-wrap justify-center gap-2">
           {next ? (
             <Button size="sm" onClick={() => setAnchor(next)}>
-              Ir al {dayShort(next)}
+              {t('calendar.goTo', { date: dayShort(next) })}
             </Button>
           ) : null}
           {undated.length > 0 && !trayOpen ? (
             <Button size="sm" onClick={() => setTrayOpen(true)}>
-              Ver {undated.length} sin fecha
+              {t('calendar.showUndated', { count: undated.length })}
             </Button>
           ) : null}
         </div>
@@ -778,27 +802,27 @@ function CalendarDesktop({
       <div className="flex flex-wrap items-center gap-2">
         <NavArrow
           id={NAV_PREV}
-          label={scale === 'month' ? 'Mes anterior' : 'Semana anterior'}
+          label={scale === 'month' ? t('calendar.prevMonth') : t('calendar.prevWeek')}
           onClick={() => shift(-1)}
         />
         <NavArrow
           id={NAV_NEXT}
-          label={scale === 'month' ? 'Mes siguiente' : 'Semana siguiente'}
+          label={scale === 'month' ? t('calendar.nextMonth') : t('calendar.nextWeek')}
           onClick={() => shift(1)}
         />
         <h2 aria-live="polite" className="mr-1.5 ml-1 text-[17px] font-semibold tracking-tight">
           {label}
         </h2>
         <Button size="sm" onClick={goToday}>
-          Hoy
+          {t('dates.today', { ns: 'common' })}
         </Button>
         <OverdueToggle count={overdue} filter={filter} onFilterChange={onFilterChange} />
         <div className="ml-auto flex items-center gap-2">
           <SegmentedControl
-            aria-label="Escala del calendario"
+            aria-label={t('calendar.scale')}
             value={scale}
             onValueChange={changeScale}
-            options={SCALES}
+            options={SCALES.map((value) => ({ value, label: t(`calendar.scales.${value}`) }))}
           />
           <button
             type="button"
@@ -812,7 +836,7 @@ function CalendarDesktop({
             )}
           >
             <icons.calendar size={14} aria-hidden="true" />
-            Sin fecha · {undated.length}
+            {t('calendar.undatedCount', { count: undated.length })}
           </button>
         </div>
       </div>
@@ -823,14 +847,16 @@ function CalendarDesktop({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle">
               {/* Cada día ya dice su nombre («Miércoles 4 de noviembre»): la cabecera es solo visual. */}
               <div aria-hidden="true" className="grid h-7 shrink-0 grid-cols-7 bg-surface">
-                {WEEKDAYS.map((w) => (
-                  <span
-                    key={w}
-                    className="flex items-center px-2.5 text-[11.5px] font-semibold tracking-wider text-fg-subtle uppercase"
-                  >
-                    {w}
-                  </span>
-                ))}
+                {t('calendar.weekdaysShort')
+                  .split(',')
+                  .map((w) => (
+                    <span
+                      key={w}
+                      className="flex items-center px-2.5 text-[11.5px] font-semibold tracking-wider text-fg-subtle uppercase"
+                    >
+                      {w}
+                    </span>
+                  ))}
               </div>
               <ol
                 ref={gridRef}

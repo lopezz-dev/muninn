@@ -1,4 +1,5 @@
 import { notify } from '@muninn/ui'
+import { i18n, t } from '../i18n'
 
 /** Lo que usamos de `Update` (@tauri-apps/plugin-updater). */
 export interface PendingUpdate {
@@ -34,12 +35,17 @@ export async function checkForUpdate(deps?: UpdaterDeps): Promise<void> {
     const update = await check()
     if (!update) return
     await update.download()
-    notify.info('Hay una versión nueva', {
+    // Se avisa al arrancar, sin pantalla que haya pedido `auth`: se carga aquí.
+    await i18n.loadNamespaces('auth')
+    notify.info(t('update.available', { ns: 'auth' }), {
       id: UPDATE_ID,
       icon: 'download',
       description: `Muninn ${update.version}`,
       duration: Number.POSITIVE_INFINITY,
-      action: { label: 'Reiniciar', onClick: () => void install(update, relaunch) },
+      action: {
+        label: t('update.restart', { ns: 'auth' }),
+        onClick: () => void install(update, relaunch),
+      },
     })
   } catch (err) {
     console.warn('[actualizaciones]', err)
@@ -49,16 +55,16 @@ export async function checkForUpdate(deps?: UpdaterDeps): Promise<void> {
 async function install(update: PendingUpdate, relaunch: () => Promise<void>) {
   // Otro id: la píldora de «Reiniciar» se cierra justo después del clic.
   const id = `${UPDATE_ID}-install`
-  notify.loading('Instalando la versión nueva…', { id })
+  notify.loading(t('update.installing', { ns: 'auth' }), { id })
   try {
     // En Windows el instalador cierra Muninn y lo vuelve a abrir: `relaunch` solo llega en macOS y Linux.
     await update.install()
     await relaunch()
   } catch (err) {
     console.warn('[actualizaciones]', err)
-    notify.error('No se ha podido instalar la versión nueva', {
+    notify.error(t('update.installFailed', { ns: 'auth' }), {
       id,
-      description: 'Lo volverá a intentar la próxima vez que abras Muninn.',
+      description: t('update.installFailedHint', { ns: 'auth' }),
     })
   }
 }

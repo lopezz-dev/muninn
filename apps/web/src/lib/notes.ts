@@ -1,4 +1,5 @@
 import type { Note } from '@muninn/core'
+import { i18n, t } from '../i18n'
 import { plainText } from '../markdown/plain'
 import { matchesAll, words } from './text'
 
@@ -40,6 +41,10 @@ export function countByProject(notes: Note[]): Map<string, number> {
   return out
 }
 
+// «Sin título» sale también en el buscador global, que puede pintar una nota antes de abrir la pantalla de Notas.
+void i18n.loadNamespaces('notes')
+
 /** Lo que se ve en la lista: el título, o «Sin título», y dos líneas de texto sin las marcas. */
-export const noteTitle = (n: Pick<Note, 'title'>) => n.title.trim() || 'Sin título'
+export const noteTitle = (n: Pick<Note, 'title'>) =>
+  n.title.trim() || t('untitled', { ns: 'notes' })
 export const notePreview = (n: Pick<Note, 'content'>) => plainText(n.content, 180)

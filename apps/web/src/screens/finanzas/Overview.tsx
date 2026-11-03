@@ -2,9 +2,10 @@ import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/c
 import { Card, CardHeader, projectColor } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Ghost } from '../../components/Page'
 import { dueLabel } from '../../lib/dates'
-import { amountText, ENTRY_LABEL, entryKindOf } from '../../lib/finance'
+import { amountText, entryKindOf, entryLabel } from '../../lib/finance'
 import { monthReportQuery, recentTransactionsQuery } from '../../lib/finance-queries'
 import { useMuninn } from '../../lib/muninn'
 import { accountDetail } from './Accounts'
@@ -42,6 +43,7 @@ export function Overview({
   children,
   aside,
 }: Props) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const recent = useQuery(recentTransactionsQuery(m))
   const report = useQuery(monthReportQuery(m, month))
@@ -75,11 +77,13 @@ export function Overview({
         </div>
         <Card className="flex flex-col">
           <CardHeader
-            title="Cuentas"
-            description={`Total ${total < 0 ? amountText(total) : amountText(total, 'none')}`}
+            title={t('accounts.title')}
+            description={t('accounts.total', {
+              amount: total < 0 ? amountText(total) : amountText(total, 'none'),
+            })}
             action={
               <button type="button" className={link} onClick={onAccounts}>
-                Gestionar
+                {t('manage')}
               </button>
             }
           />
@@ -113,10 +117,10 @@ export function Overview({
 
       <Card className="flex flex-col overflow-hidden">
         <CardHeader
-          title="Últimos movimientos"
+          title={t('overview.recent')}
           action={
             <button type="button" className={link} onClick={onAllMovements}>
-              Ver todos
+              {t('overview.seeAll')}
             </button>
           }
         />
@@ -127,15 +131,15 @@ export function Overview({
           </div>
         ) : recent.data?.length ? (
           <div className="flex flex-col pb-1">
-            {recent.data.map((t) => {
-              const cat = t.categoryId ? categoryById.get(t.categoryId) : undefined
+            {recent.data.map((tx) => {
+              const cat = tx.categoryId ? categoryById.get(tx.categoryId) : undefined
               return (
                 <TransactionRow
-                  key={t.id}
-                  tx={t}
+                  key={tx.id}
+                  tx={tx}
                   accountById={accountById}
                   categoryById={categoryById}
-                  sub={`${dueLabel(t.date, today)} · ${cat?.name ?? ENTRY_LABEL[entryKindOf(t, accountById)]}`}
+                  sub={`${dueLabel(tx.date, today)} · ${cat?.name ?? entryLabel(entryKindOf(tx, accountById))}`}
                   onOpen={onOpen}
                 />
               )
@@ -143,7 +147,7 @@ export function Overview({
           </div>
         ) : (
           <p className="border-t border-border-subtle px-4 py-6 text-sm text-fg-subtle">
-            Aún no hay movimientos. Apunta el primero con «Movimiento».
+            {t('overview.noRecent')}
           </p>
         )}
       </Card>

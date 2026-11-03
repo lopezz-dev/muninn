@@ -2,13 +2,14 @@ import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/c
 import { Card, cn, IconButton, icons, projectColor } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Ghost } from '../../components/Page'
 import { SelectMenu } from '../../components/SelectMenu'
 import {
   amountText,
   dayLabel,
-  ENTRY_LABEL,
   type EntryKind,
+  entryLabel,
   filterTransactions,
   groupByDay,
   isFilteringTx,
@@ -41,6 +42,7 @@ export function Movements({
   categoryById,
   onOpen,
 }: Props) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const list = useQuery(monthTransactionsQuery(m, month))
   const [filter, setFilter] = useState<TxFilter>(NO_TX_FILTER)
@@ -53,15 +55,15 @@ export function Movements({
   const desktop = useIsDesktop()
   const [sheet, setSheet] = useState(false)
 
-  const count = list.data ? `${shown.length} movimiento${shown.length === 1 ? '' : 's'}` : ''
+  const count = list.data ? t('movements.count', { count: shown.length }) : ''
   const lists = activeTxFilters(filter)
   const search = (
     <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-border px-2.5 text-fg-subtle focus-within:border-accent md:h-8 md:w-56 md:flex-none">
       <icons.search size={14} aria-hidden="true" />
       <input
         type="search"
-        aria-label="Buscar concepto"
-        placeholder="Buscar concepto"
+        aria-label={t('movements.search')}
+        placeholder={t('movements.search')}
         value={filter.query}
         onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
         className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-faint"
@@ -72,7 +74,7 @@ export function Movements({
   return (
     // lg: la tarjeta llena el alto de la rejilla y solo la lista de días hace scroll (ADR-0050).
     <Card
-      aria-label="Movimientos"
+      aria-label={t('movements.label')}
       className="flex min-w-0 flex-col overflow-hidden lg:max-h-full lg:self-stretch"
     >
       {desktop ? null : (
@@ -81,7 +83,9 @@ export function Movements({
           <div className="flex items-center gap-2">
             {search}
             <IconButton
-              aria-label={lists ? `Filtrar (${lists} activos)` : 'Filtrar'}
+              aria-label={
+                lists ? t('movements.filterActive', { count: lists }) : t('movements.filter')
+              }
               icon={<icons.filter />}
               variant="secondary"
               onClick={() => setSheet(true)}
@@ -96,7 +100,7 @@ export function Movements({
                 onClick={() => setFilter((f) => ({ ...NO_TX_FILTER, query: f.query }))}
                 className="ml-auto h-7 cursor-pointer px-1 text-sm font-medium text-accent"
               >
-                Quitar filtros
+                {t('movements.clearFilters')}
               </button>
             ) : null}
           </p>
@@ -119,38 +123,38 @@ export function Movements({
       >
         {search}
         <SelectMenu
-          label="Tipo"
+          label={t('type')}
           value={filter.kind ?? ''}
           onChange={(v) => setFilter((f) => ({ ...f, kind: (v || null) as EntryKind | null }))}
           options={[
-            { value: '', label: 'Todos los tipos' },
-            ...TX_KINDS.map((k) => ({ value: k, label: ENTRY_LABEL[k] })),
+            { value: '', label: t('movements.allTypes') },
+            ...TX_KINDS.map((k) => ({ value: k, label: entryLabel(k) })),
           ]}
           className="h-8 text-[12.5px]"
         />
         <SelectMenu
-          label="Categoría"
+          label={t('category')}
           value={filter.categoryId ?? ''}
           onChange={(v) => setFilter((f) => ({ ...f, categoryId: v || null }))}
           options={[
-            { value: '', label: 'Todas las categorías' },
+            { value: '', label: t('movements.allCategories') },
             ...categories
               .filter((c) => !c.archivedAt)
               .map((c) => ({
                 value: c.id,
                 label: c.name,
                 dot: projectColor(c.color),
-                hint: c.kind === 'income' ? 'ingreso' : undefined,
+                hint: c.kind === 'income' ? t('movements.incomeHint') : undefined,
               })),
           ]}
           className="h-8 text-[12.5px]"
         />
         <SelectMenu
-          label="Cuenta"
+          label={t('account')}
           value={filter.accountId ?? ''}
           onChange={(v) => setFilter((f) => ({ ...f, accountId: v || null }))}
           options={[
-            { value: '', label: 'Todas las cuentas' },
+            { value: '', label: t('movements.allAccounts') },
             ...accounts
               .filter((a) => !a.archivedAt)
               .map((a) => ({ value: a.id, label: a.name, dot: projectColor(a.color) })),
@@ -167,19 +171,17 @@ export function Movements({
           <Ghost className="h-10 opacity-30" />
         </div>
       ) : list.isError ? (
-        <p className="px-4 py-8 text-center text-sm text-danger">
-          No se pudieron cargar los movimientos.
-        </p>
+        <p className="px-4 py-8 text-center text-sm text-danger">{t('movements.loadFailed')}</p>
       ) : groups.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-fg-subtle text-pretty">
-          {filtering ? 'Nada coincide con estos filtros. ' : 'No hay movimientos este mes.'}
+          {filtering ? t('movements.noMatch') : t('movements.none')}
           {filtering ? (
             <button
               type="button"
               onClick={() => setFilter(NO_TX_FILTER)}
               className="cursor-pointer text-accent hover:underline"
             >
-              Quitar filtros
+              {t('movements.clearFilters')}
             </button>
           ) : null}
         </p>
@@ -193,7 +195,7 @@ export function Movements({
                   {g.total !== 0
                     ? amountText(g.total)
                     : g.moved
-                      ? `${amountText(g.moved, 'none')} movidos`
+                      ? t('movements.moved', { amount: amountText(g.moved, 'none') })
                       : ''}
                 </span>
               </h3>

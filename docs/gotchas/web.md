@@ -852,6 +852,13 @@
   - Un texto de `lib/` que sale en varias pantallas (avisos de sesión, errores del segundo factor, prioridades…) va en
     `common`, que siempre está cargado. Si una función de `lib/` usa un namespace diferido (`setModuleEnabled` con
     `settings`), lo carga antes con `i18n.loadNamespaces`: si no, el aviso sale con la clave en crudo.
+  - Fechas, números y dinero: `Intl` con `intlLocale()` (`src/i18n`), nunca `'es-ES'` fijo. Los formateadores se guardan
+    por idioma (`lib/dates.ts`, `lib/calendar.ts`, `lib/finance.ts`): crearlos en cada llamada es caro. `AmountField` recibe
+    `locale={intlLocale()}`; sin él, enseña el importe a la española.
+  - Una pantalla que pinta piezas de otra (las tarjetas usan `SourceBadge` de `task`; Inicio, `UpcomingCharges` de
+    `finance`) pide los dos namespaces en su `useTranslation([...])`: así suspende una sola vez y no a trozos.
+  - En Git Bash, un *heredoc* con comillas tipográficas (’ “ ») corta el comando («unexpected EOF»). Para scripts de
+    traducción, escríbelos en un fichero y ejecútalo.
   - Al traducir, cuidado con el género en español: «{{name}} activado» falla con «Notas». Pon el nombre aparte
     («Módulo activado: Notas»).
   - La preferencia vive en `preferences.locale` de la cuenta (`auto`, `en` o `es`) y en `localStorage['muninn.locale']`

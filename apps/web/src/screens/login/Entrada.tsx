@@ -1,6 +1,7 @@
 import { Button, icons, notify, TextField } from '@muninn/ui'
 import { getRouteApi, useRouter } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { type Account, safeRedirect } from '../../lib/auth'
 import {
   abandonSecondFactor,
@@ -23,6 +24,7 @@ export function Entrada() {
 }
 
 function SecondFactor({ account }: { account: Account }) {
+  const { t } = useTranslation('auth')
   const router = useRouter()
   const search = route.useSearch()
   const [code, setCode] = useState('')
@@ -31,17 +33,16 @@ function SecondFactor({ account }: { account: Account }) {
   // Sin el móvil: un código de recuperación en lugar del de la app (ADR-0075).
   const [recovery, setRecovery] = useState(false)
 
-  usePageMeta({ title: 'Segundo factor', description: 'Escribe el código de tu app de códigos.' })
+  usePageMeta({
+    title: t('secondFactor.metaTitle'),
+    description: t('secondFactor.metaDescription'),
+  })
 
   const verify = async (e: FormEvent) => {
     e.preventDefault()
     const token = recovery ? code.trim() : code.replace(/\D/g, '')
     if (recovery ? token.length < 6 : token.length !== 6) {
-      setError(
-        recovery
-          ? 'Escribe uno de los códigos de recuperación que guardaste.'
-          : 'Escribe las 6 cifras que salen ahora en tu app.',
-      )
+      setError(recovery ? t('secondFactor.recoveryRequired') : t('secondFactor.digitsRequired'))
       return
     }
     setError(null)
@@ -49,11 +50,9 @@ function SecondFactor({ account }: { account: Account }) {
     try {
       if (recovery) await verifyRecoveryCode(token)
       else await verifySecondFactor(token)
-      notify.success('Sesión iniciada', {
+      notify.success(t('secondFactor.signedIn'), {
         icon: 'user',
-        description: recovery
-          ? 'Ese código ya no vale. En Ajustes › Cuenta puedes ver cuántos te quedan.'
-          : account.name,
+        description: recovery ? t('secondFactor.recoveryUsed') : account.name,
       })
       forgetUserData()
       await router.invalidate()
@@ -61,7 +60,7 @@ function SecondFactor({ account }: { account: Account }) {
     } catch (err) {
       const message = recovery ? recoveryCodeErrorMessage(err) : secondFactorErrorMessage(err)
       setError(message)
-      notify.error('No se pudo comprobar el código', { description: message })
+      notify.error(t('secondFactor.checkFailed'), { description: message })
       setCode('')
       setBusy(null)
     }
@@ -73,7 +72,7 @@ function SecondFactor({ account }: { account: Account }) {
       await abandonSecondFactor()
       await router.invalidate()
     } catch (err) {
-      notify.error('No se pudo salir', { description: secondFactorErrorMessage(err) })
+      notify.error(t('secondFactor.leaveFailed'), { description: secondFactorErrorMessage(err) })
     }
     setBusy(null)
   }
@@ -81,7 +80,7 @@ function SecondFactor({ account }: { account: Account }) {
   return (
     <div className="grid min-h-dvh place-items-center bg-bg px-5 pt-[calc(env(safe-area-inset-top)+40px)] pb-14 text-fg md:px-8">
       <form
-        aria-label="Segundo factor"
+        aria-label={t('secondFactor.formLabel')}
         noValidate
         onSubmit={verify}
         className="flex w-full max-w-[380px] flex-col gap-[18px]"
@@ -91,30 +90,34 @@ function SecondFactor({ account }: { account: Account }) {
           <span className="text-md font-semibold tracking-tight">Muninn</span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-[26px] font-semibold tracking-[-0.02em]">Falta un paso</h1>
+          <h1 className="text-[26px] font-semibold tracking-[-0.02em]">
+            {t('secondFactor.title')}
+          </h1>
           {recovery ? (
-            <p className="text-base text-fg-subtle">
-              Escribe uno de los códigos de recuperación que guardaste al activar el segundo factor.
-              Cada uno vale una sola vez.
-            </p>
+            <p className="text-base text-fg-subtle">{t('secondFactor.recoveryIntro')}</p>
           ) : (
             <p className="text-base text-fg-subtle">
-              Tu cuenta tiene segundo factor. Abre tu app de códigos y escribe el de{' '}
-              <span className="font-medium text-fg">Muninn</span>
               {account.email ? (
-                <>
-                  {' '}
-                  para <span className="font-medium text-fg">{account.email}</span>
-                </>
-              ) : null}
-              .
+                <Trans
+                  t={t}
+                  i18nKey="secondFactor.appIntroFor"
+                  values={{ email: account.email }}
+                  components={{ b: <span className="font-medium text-fg" /> }}
+                />
+              ) : (
+                <Trans
+                  t={t}
+                  i18nKey="secondFactor.appIntro"
+                  components={{ b: <span className="font-medium text-fg" /> }}
+                />
+              )}
             </p>
           )}
         </div>
         {recovery ? (
           <TextField
             key="recuperacion"
-            label="Código de recuperación"
+            label={t('secondFactor.recoveryCode')}
             autoFocus
             autoComplete="off"
             autoCapitalize="none"
@@ -134,7 +137,7 @@ function SecondFactor({ account }: { account: Account }) {
         ) : (
           <TextField
             key="app"
-            label="Código de la app"
+            label={t('secondFactor.appCode')}
             autoFocus
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -158,7 +161,7 @@ function SecondFactor({ account }: { account: Account }) {
           className="font-semibold"
           disabled={busy !== null}
         >
-          {busy === 'verify' ? 'Comprobando…' : 'Entrar'}
+          {busy === 'verify' ? t('secondFactor.checking') : t('secondFactor.signIn')}
         </Button>
         <button
           type="button"
@@ -167,12 +170,12 @@ function SecondFactor({ account }: { account: Account }) {
           disabled={busy !== null}
         >
           <icons.chevronLeft aria-hidden="true" className="mr-1 inline align-[-3px]" />
-          Usar otra cuenta
+          {t('secondFactor.otherAccount')}
         </button>
         <p className="text-[12.5px] leading-normal text-fg-faint">
           {recovery ? (
             <>
-              ¿Tienes el móvil?{' '}
+              {t('secondFactor.havePhone')}
               <button
                 type="button"
                 className="cursor-pointer font-medium text-accent hover:underline"
@@ -183,12 +186,12 @@ function SecondFactor({ account }: { account: Account }) {
                 }}
                 disabled={busy !== null}
               >
-                Usar el código de la app
+                {t('secondFactor.useAppCode')}
               </button>
             </>
           ) : (
             <>
-              ¿Sin el móvil de la app?{' '}
+              {t('secondFactor.noPhone')}
               <button
                 type="button"
                 className="cursor-pointer font-medium text-accent hover:underline"
@@ -199,9 +202,9 @@ function SecondFactor({ account }: { account: Account }) {
                 }}
                 disabled={busy !== null}
               >
-                Usa un código de recuperación
-              </button>{' '}
-              o añade Muninn a otra app con la clave de configuración que guardaste.
+                {t('secondFactor.useRecovery')}
+              </button>
+              {t('secondFactor.orSetupKey')}
             </>
           )}
         </p>
