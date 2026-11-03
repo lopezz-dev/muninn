@@ -1,0 +1,86 @@
+import type { Messages } from '../../types'
+import type { github as en } from '../en/github'
+
+/** Textos de `github` en español. Mismas claves que `en/github.ts`: si falta una, no compila. */
+export const github: Messages<typeof en> = {
+  page: {
+    tagline: 'Issues como tareas y un agente que abre PRs.',
+    noneLinked: 'Ningún repositorio vinculado',
+    linked_one: '{{count}} repositorio vinculado',
+    linked_other: '{{count}} repositorios vinculados',
+    emptyTitle: 'Vincula un repositorio',
+    linkRepos: 'Vincular repositorios',
+    searching: 'Buscando los repositorios a los que llega el token…',
+    emptyHint:
+      'Las issues de un repositorio llegan como tareas de su proyecto, y al cerrar una se completa la otra. Vincúlalo a un proyecto en Ajustes › Integraciones.',
+    reposError: 'No se pudo pedir la lista de repositorios del token: solo salen los vinculados.',
+    retry: 'Reintentar',
+  },
+  sync: {
+    now: 'Sincronizar ahora',
+    syncing: 'Sincronizando…',
+    demo: 'En modo demo no hay nada que sincronizar',
+    demoHint: 'La sincronización con GitHub necesita una cuenta.',
+    failedRepo: 'No se pudo sincronizar {{repo}}',
+    failedMany: 'No se pudieron sincronizar {{n}} repositorios',
+    done: 'Sincronizado con GitHub',
+    failed: 'No se pudo sincronizar con GitHub',
+    created_one: '{{count}} issue nueva',
+    created_other: '{{count}} issues nuevas',
+    updated_one: '{{count}} cambiada',
+    updated_other: '{{count}} cambiadas',
+    archived_one: '{{count}} archivada',
+    archived_other: '{{count}} archivadas',
+    upToDate: 'Todo estaba al día',
+  },
+  repos: {
+    label: 'Repositorios',
+    repo: 'Repositorio',
+    project: 'Proyecto en Muninn',
+    issues: 'Issues',
+    sync: 'Sincronización',
+    last: 'Último cambio',
+    projectOf: 'Proyecto de {{repo}}',
+    checking: 'Comprobando…',
+    unlinked: 'Sin vincular',
+    withRepo: 'con {{repo}}',
+    open_one: '{{count}} abierta',
+    open_other: '{{count}} abiertas',
+    failed: 'Falló: {{error}}',
+    rule: 'Issues → tareas · cerrar ↔ completar',
+    noIssuesYet: 'sin issues aún',
+    showMore_one: 'Ver {{count}} repositorio más sin vincular',
+    showMore_other: 'Ver {{count}} repositorios más sin vincular',
+  },
+  agent: {
+    title: 'Columna «Para el agente»',
+    steps: {
+      dragTitle: '1 · Arrastras',
+      drag: 'una tarea de GitHub a la columna del agente',
+      labelTitle: '2 · Se etiqueta',
+      label: 'la issue con muninn:agent y arranca el agente',
+      prTitle: '3 · Abre un PR',
+      pr: 'y la tarea pasa a Revisión; al fusionarlo, se completa',
+    },
+    noLinked: 'Vincula un repositorio a un proyecto para elegir su columna del agente.',
+    noColumn: 'Sin columna del agente',
+    columnOf: 'Columna del agente de {{project}}',
+    loading: 'Cargando…',
+    about:
+      'El agente es la Claude Code GitHub Action de cada repositorio: necesita la GitHub App de Claude, un secreto y el workflow, y abre el PR contra la rama que diga ese workflow. Nunca fusiona: el PR lo revisas tú.',
+    setup: 'Cómo ponerlo en marcha',
+  },
+  runs: {
+    title: 'Ejecuciones recientes',
+    empty:
+      'Aún no has mandado nada al agente. Mueve una tarea de GitHub a su columna y aquí verás cómo va: trabajando, PR abierto, fusionado o sin PR.',
+    pr: 'PR #{{number}}',
+    state: {
+      working: 'Trabajando',
+      review: 'PR abierto',
+      merged: 'Fusionado',
+      closed: 'PR cerrado',
+      stopped: 'Sin PR',
+    },
+  },
+}

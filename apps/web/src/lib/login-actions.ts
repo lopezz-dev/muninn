@@ -1,4 +1,5 @@
 import type { AuthError } from '@supabase/supabase-js'
+import { i18n, t } from '../i18n'
 import { loadSupabase, resetAuth, safeRedirect, toAccount } from './auth'
 import { captchaOptions } from './captcha'
 import { openExternal } from './external-link'
@@ -19,32 +20,36 @@ import {
  * pantalla de login (chunk diferido) y no el arranque de la app.
  */
 
-/** Mensajes en español para los errores de Supabase Auth que puede ver el usuario. */
+// `authErrorMessage` es síncrona y también la usa `second-factor.ts` (Ajustes): el namespace se pide al cargar el módulo,
+// mucho antes de que haya un error que enseñar.
+void i18n.loadNamespaces('auth')
+
+/** Mensajes, en el idioma activo, para los errores de Supabase Auth que puede ver el usuario. */
 export function authErrorMessage(err: unknown): string {
   const e = err as Partial<AuthError> & { message?: string }
   switch (e.code) {
     case 'over_email_send_rate_limit':
     case 'over_request_rate_limit':
-      return 'Has pedido demasiados códigos. Espera un minuto y vuelve a intentarlo.'
+      return t('errors.tooManyCodes', { ns: 'auth' })
     case 'otp_expired':
-      return 'El código ha caducado o no es correcto. Pide uno nuevo.'
+      return t('errors.otpExpired', { ns: 'auth' })
     case 'email_address_invalid':
     case 'validation_failed':
-      return 'Revisa el correo: no parece válido.'
+      return t('errors.invalidEmail', { ns: 'auth' })
     case 'email_address_not_authorized':
       // SMTP de serie de Supabase: solo envía a los miembros del equipo del proyecto.
-      return 'Este servidor aún no puede enviar correos a esa dirección.'
+      return t('errors.notAuthorized', { ns: 'auth' })
     case 'signup_disabled':
-      return 'Este correo no tiene cuenta y el registro está cerrado.'
+      return t('errors.signupDisabled', { ns: 'auth' })
     case 'provider_disabled':
-      return 'Este método de acceso no está activado.'
+      return t('errors.providerDisabled', { ns: 'auth' })
     case 'captcha_failed':
-      return 'No hemos podido comprobar que no eres un robot. Inténtalo de nuevo.'
+      return t('errors.captcha', { ns: 'auth' })
   }
-  if (e.status === 429) return 'Demasiados intentos. Espera un minuto y vuelve a intentarlo.'
+  if (e.status === 429) return t('errors.rateLimit', { ns: 'auth' })
   if (e.name === 'AuthRetryableFetchError' || err instanceof TypeError)
-    return 'No hay conexión con el servidor. Comprueba tu red.'
-  return e.message || 'Algo ha fallado. Inténtalo de nuevo.'
+    return t('errors.offline', { ns: 'auth' })
+  return e.message || t('errors.unknown', { ns: 'auth' })
 }
 
 /**
@@ -64,7 +69,7 @@ export async function verifyEmailCode(email: string, token: string) {
   const c = await loadSupabase()
   const { data, error } = await c.auth.verifyOtp({ email, token, type: 'email' })
   if (error) throw error
-  if (!data.session) throw new Error('No se pudo iniciar la sesión.')
+  if (!data.session) throw new Error(t('errors.noSession', { ns: 'auth' }))
   resetAuth()
   return toAccount(data.session)
 }
@@ -132,7 +137,7 @@ export async function completeAuthCallback(callback: AuthCallback) {
   const c = await loadSupabase()
   const { data, error } = await c.auth.exchangeCodeForSession(callback.code)
   if (error) throw error
-  if (!data.session) throw new Error('No se pudo iniciar la sesión.')
+  if (!data.session) throw new Error(t('errors.noSession', { ns: 'auth' }))
   resetAuth()
   return toAccount(data.session)
 }

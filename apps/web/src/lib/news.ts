@@ -1,6 +1,7 @@
 import type { Muninn, NewsItem, NewsSource } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { type QueryClient, queryOptions } from '@tanstack/react-query'
+import { currentLocale, t } from '../i18n'
 import { fail, notifyUndo } from './feedback'
 import { isBusy, serial } from './mutations'
 import { matchesAll, words } from './text'
@@ -97,7 +98,7 @@ export function topicTabs(items: NewsItem[], sources: NewsSource[]) {
     const t = topic.get(i.sourceId)
     if (t) counts.set(t, (counts.get(t) ?? 0) + 1)
   }
-  return [...counts].sort((a, b) => a[0].localeCompare(b[0], 'es'))
+  return [...counts].sort((a, b) => a[0].localeCompare(b[0], currentLocale()))
 }
 
 /** Cuántas han llegado en las últimas 24 horas (el «6 nuevas desde ayer» del diseño). */
@@ -120,16 +121,16 @@ export async function addSource(
   try {
     source = await run(() => m.news.sources.create(input))
   } catch (err) {
-    fail('No se pudo añadir la fuente', err)
+    fail(t('actions.addFailed', { ns: 'news' }), err)
     return null
   } finally {
     settleNews(qc)
   }
-  notifyUndo(`Fuente «${source.title}» añadida`, {
+  notifyUndo(t('actions.added', { ns: 'news', title: source.title }), {
     icon: 'news',
-    description: 'Sus artículos llegan en la próxima descarga',
+    description: t('actions.addedHint', { ns: 'news' }),
     undo: () => archiveSource(m, qc, source, { undoing: true }),
-    undone: 'Fuente quitada',
+    undone: t('actions.addUndone', { ns: 'news' }),
   })
   return source
 }
@@ -147,13 +148,14 @@ export async function setSourceEnabled(
   try {
     await run(() => m.news.sources.update(source.id, { enabled }))
   } catch (err) {
-    fail('No se pudo cambiar la fuente', err)
+    fail(t('actions.toggleFailed', { ns: 'news' }), err)
     settleNews(qc)
     return false
   }
   settleNews(qc)
   if (undoing) return true
-  const title = (on: boolean) => (on ? `«${source.title}» activada` : `«${source.title}» en pausa`)
+  const title = (on: boolean) =>
+    t(on ? 'actions.enabled' : 'actions.paused', { ns: 'news', title: source.title })
   notifyUndo(title(enabled), {
     icon: 'news',
     undo: () => setSourceEnabled(m, qc, { ...source, enabled }, !enabled, true),
@@ -172,18 +174,18 @@ export async function archiveSource(
   try {
     await run(() => m.news.sources.archive(source.id))
   } catch (err) {
-    fail('No se pudo quitar la fuente', err)
+    fail(t('actions.archiveFailed', { ns: 'news' }), err)
     settleNews(qc)
     return false
   }
   settleNews(qc)
   if (opts.undoing) return true
-  notifyUndo(`«${source.title}» quitada`, {
+  notifyUndo(t('actions.archived', { ns: 'news', title: source.title }), {
     icon: 'archive',
-    description: 'Sus artículos guardados se conservan',
+    description: t('actions.archivedHint', { ns: 'news' }),
     undo: () => run(() => m.news.sources.restore(source.id)).finally(() => settleNews(qc)),
-    undone: 'Fuente recuperada',
-    failTitle: 'No se pudo recuperar',
+    undone: t('actions.archiveUndone', { ns: 'news' }),
+    failTitle: t('actions.restoreFailed', { ns: 'news' }),
   })
   return true
 }
@@ -202,13 +204,13 @@ export async function setSaved(
   try {
     await run(() => m.news.items.setSaved(item.id, saved))
   } catch (err) {
-    fail('No se pudo guardar', err)
+    fail(t('actions.saveFailed', { ns: 'news' }), err)
     settleNews(qc)
     return false
   }
   settleNews(qc)
   if (undoing) return true
-  notifyUndo(saved ? 'Guardada para leer luego' : 'Ya no está guardada', {
+  notifyUndo(t(saved ? 'actions.saved' : 'actions.unsaved', { ns: 'news' }), {
     icon: 'pin',
     undo: () => setSaved(m, qc, item, !saved, true),
   })
@@ -229,40 +231,42 @@ export function markRead(m: Muninn, qc: QueryClient, item: NewsItem) {
  * red) se dice en palabras; cualquier otro fallo, como un error.
  */
 export async function refreshNews(m: Muninn, qc: QueryClient) {
-  const id = notify.loading('Buscando noticias…', { icon: 'sync' })
+  const id = notify.loading(t('actions.fetching', { ns: 'news' }), { icon: 'sync' })
   try {
     const r = await m.news.fetchNow()
     notify.dismiss(id)
     notify.success(
       r.added
-        ? `${r.added} ${r.added === 1 ? 'artículo nuevo' : 'artículos nuevos'}`
-        : 'No hay nada nuevo',
+        ? t('actions.newArticles', { ns: 'news', count: r.added })
+        : t('actions.nothingNew', { ns: 'news' }),
       {
         icon: 'news',
         description: r.errors.length
-          ? `${r.errors.length} ${r.errors.length === 1 ? 'fuente no respondió' : 'fuentes no respondieron'}`
+          ? t('actions.sourcesFailed', { ns: 'news', count: r.errors.length })
           : undefined,
       },
     )
   } catch (err) {
     notify.dismiss(id)
     if (err instanceof Error && err.name === 'ValidationError') {
-      notify.error('Las noticias aún no se descargan desde aquí', {
-        description: 'En la demo no se descargan feeds.',
+      notify.error(t('actions.notHereYet', { ns: 'news' }), {
+        description: t('actions.demoNoFeeds', { ns: 'news' }),
       })
     } else if (err instanceof Error && err.name === 'FunctionsFetchError' && navigator.onLine) {
-      notify.error('Las noticias aún no se descargan desde aquí', {
-        description:
-          'El servidor de Muninn no responde: la descarga aún no está en marcha (fase final).',
+      notify.error(t('actions.notHereYet', { ns: 'news' }), {
+        description: t('actions.serverDown', { ns: 'news' }),
       })
     } else {
-      fail('No se pudieron buscar noticias', err)
+      fail(t('actions.fetchFailed', { ns: 'news' }), err)
     }
   } finally {
     settleNews(qc)
   }
 }
 
-/** Texto de la nota que se crea desde un artículo: resumen y enlace. */
+/**
+ * Texto de la nota que se crea desde un artículo: resumen y enlace. Se guarda en la nota: sin traducir hasta la fase 5
+ * del ADR-0077 (textos guardados).
+ */
 export const noteFromItem = (item: NewsItem, sourceTitle: string | undefined) =>
   `${item.summary ? `${item.summary}\n\n` : ''}[Leer en ${sourceTitle ?? 'la fuente'}](${item.url})`

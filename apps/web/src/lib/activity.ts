@@ -1,68 +1,77 @@
 import type { Activity, ActorKind } from '@muninn/core'
+import { i18n, t } from '../i18n'
+
+// Los textos viven en `home` (ADR-0077), un namespace diferido. Lo usa también el historial del detalle de tarea, que
+// puede pintarse sin haber pasado por Inicio: se pide al cargar este módulo, antes de que llegue la actividad.
+void i18n.loadNamespaces('home')
 
 /** Quién hizo algo, para el historial de una tarea. */
 export const actorName = (actor: ActorKind) =>
-  actor === 'user'
-    ? 'Tú'
+  actor === 'user' || actor === 'assistant' || actor === 'agent'
+    ? t(`activity.actor.${actor}`, { ns: 'home' })
     : actor === 'mcp'
       ? 'Claude'
-      : actor === 'assistant'
-        ? 'El asistente'
-        : actor === 'agent'
-          ? 'Un agente'
-          : actor === 'github'
-            ? 'GitHub'
-            : 'Muninn'
+      : actor === 'github'
+        ? 'GitHub'
+        : 'Muninn'
 
-/** [segunda persona (tú), tercera (otro actor)] */
-const VERBS: Record<string, [string, string]> = {
-  created: ['creaste', 'creó'],
-  moved: ['moviste', 'movió'],
-  completed: ['completaste', 'completó'],
-  reopened: ['reabriste', 'reabrió'],
-  archived: ['archivaste', 'archivó'],
-  restored: ['recuperaste', 'recuperó'],
-  deleted: ['eliminaste', 'eliminó'],
-  updated: ['cambiaste', 'cambió'],
-}
+const VERBS = [
+  'created',
+  'moved',
+  'completed',
+  'reopened',
+  'archived',
+  'restored',
+  'deleted',
+  'updated',
+] as const
+type Verb = (typeof VERBS)[number]
+const isVerb = (action: string): action is Verb => (VERBS as readonly string[]).includes(action)
 
-const FIELDS: Record<string, string> = {
-  title: 'el título',
-  description: 'la descripción',
-  priority: 'la prioridad',
-  labels: 'las etiquetas',
-  dueDate: 'la fecha de vencimiento',
-}
+const FIELDS = ['title', 'description', 'priority', 'labels', 'dueDate'] as const
+type Field = (typeof FIELDS)[number]
+const isField = (key: string): key is Field => (FIELDS as readonly string[]).includes(key)
 
 const list = (items: string[]) =>
   items.length <= 1
     ? (items[0] ?? '')
-    : `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`
+    : t('activity.list', {
+        ns: 'home',
+        items: items.slice(0, -1).join(', '),
+        last: items[items.length - 1] ?? '',
+      })
 
 /** «moviste la tarea de Pendiente a En curso», «Claude cambió el título». Sin el nombre del actor. */
 export function describeActivity(a: Pick<Activity, 'action' | 'actor' | 'payload'>): string {
-  const verb = VERBS[a.action]?.[a.actor === 'user' ? 0 : 1] ?? a.action
+  // [segunda persona (tú), tercera (otro actor)]
+  const verb = isVerb(a.action)
+    ? t(`activity.verb.${a.action}.${a.actor === 'user' ? 'you' : 'other'}`, { ns: 'home' })
+    : a.action
   const p = a.payload as { from?: string; to?: string; number?: number }
-  const pr = p.number ? `el PR #${p.number}` : 'el PR'
+  const pr = p.number
+    ? t('activity.pr', { ns: 'home', number: p.number })
+    : t('activity.prUnknown', { ns: 'home' })
   switch (a.action) {
     // Columna «Para el agente» (ADR-0032): el actor es el agente o GitHub, nunca tú.
     case 'agent_pr_opened':
-      return `abrió ${pr} y pasó la tarea a revisión`
+      return t('activity.agentPrOpened', { ns: 'home', pr })
     case 'agent_pr_merged':
-      return `completó la tarea al fusionarse ${pr}`
+      return t('activity.agentPrMerged', { ns: 'home', pr })
     case 'agent_pr_closed':
-      return `devolvió la tarea: ${pr} se cerró sin fusionar`
+      return t('activity.agentPrClosed', { ns: 'home', pr })
     case 'agent_stopped':
-      return 'sacó la tarea del agente: terminó sin abrir un PR'
+      return t('activity.agentStopped', { ns: 'home' })
     case 'moved':
       return p.from && p.to
-        ? `${verb} la tarea de ${p.from} a ${p.to}`
-        : `${verb} la tarea de columna`
+        ? t('activity.moved', { ns: 'home', verb, from: p.from, to: p.to })
+        : t('activity.movedColumn', { ns: 'home', verb })
     case 'updated': {
       const fields = Object.keys(a.payload)
-        .map((k) => FIELDS[k])
-        .filter((f): f is string => Boolean(f))
-      return fields.length ? `${verb} ${list(fields)}` : `${verb} la tarea`
+        .filter(isField)
+        .map((k) => t(`activity.field.${k}`, { ns: 'home' }))
+      return fields.length
+        ? t('activity.fields', { ns: 'home', verb, fields: list(fields) })
+        : t('activity.task', { ns: 'home', verb })
     }
     case 'created':
     case 'completed':
@@ -70,7 +79,7 @@ export function describeActivity(a: Pick<Activity, 'action' | 'actor' | 'payload
     case 'archived':
     case 'restored':
     case 'deleted':
-      return `${verb} la tarea`
+      return t('activity.task', { ns: 'home', verb })
     default:
       return verb
   }

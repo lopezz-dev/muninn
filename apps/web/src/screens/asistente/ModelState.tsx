@@ -1,20 +1,22 @@
 import { Button, Card, Icon } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import type { AssistantAvailability } from '../../lib/assistant-status'
 
 /** El chip del cerebro en la cabecera: verde si está listo, ámbar si falta algo. */
 export function BrainChip({ status, label }: { status: AssistantAvailability; label: string }) {
+  const { t } = useTranslation('assistant')
   const ready = status.state === 'ready'
   const text =
     status.state === 'handheld'
-      ? 'Sin modelo en este dispositivo'
+      ? t('brain.handheld')
       : status.state === 'checking'
-        ? 'Buscando Ollama…'
+        ? t('brain.checking')
         : status.state === 'offline'
-          ? 'Ollama no responde'
+          ? t('brain.offline')
           : status.state === 'no-model'
-            ? `Falta ${status.model}`
+            ? t('brain.missing', { model: status.model })
             : label
   return (
     <span className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-fg-muted">
@@ -40,7 +42,8 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
   )
 }
 
-const Code = ({ children }: { children: ReactNode }) => (
+/** Sin `children` cuando lo pone `<Trans>` (las etiquetas `<code>` del texto). */
+const Code = ({ children }: { children?: ReactNode }) => (
   <code className="rounded-xs bg-surface-sunken px-1.5 py-0.5 font-mono text-[12.5px] break-all text-fg">
     {children}
   </code>
@@ -57,29 +60,25 @@ interface Props {
  * modelo; en el ordenador, Ollama apagado o el modelo sin descargar.
  */
 export function ModelState({ status, url, onRetry }: Props) {
+  const { t } = useTranslation('assistant')
   if (status.state === 'ready' || status.state === 'checking') return null
   if (status.state === 'handheld') {
     return (
       <Card className="flex flex-col gap-3 p-5">
         <h2 className="flex items-center gap-2 text-md font-semibold">
           <Icon name="assistant" className="text-accent" />
-          El asistente usa el modelo de tu ordenador
+          {t('state.handheldTitle')}
         </h2>
-        <p className="text-sm text-fg-muted text-pretty">
-          Muninn piensa con un modelo que corre en tu ordenador, y en este dispositivo no hay
-          ninguno. Para preguntarle, abre Muninn en el ordenador donde está Ollama. Desde aquí
-          puedes usar Claude con el conector de Muninn, y todo lo que cambie el asistente lo verás
-          en tus tareas y en su historial.
-        </p>
+        <p className="text-sm text-fg-muted text-pretty">{t('state.handheldBody')}</p>
         <div className="flex flex-wrap gap-2">
           <Button asChild>
             <Link to="/documentacion/$pagina" params={{ pagina: 'asistente' }}>
-              Cómo funciona
+              {t('state.howItWorks')}
             </Link>
           </Button>
           <Button asChild variant="ghost">
             <Link to="/documentacion/$pagina" params={{ pagina: 'asistentes-ia' }}>
-              Usar Claude
+              {t('state.useClaude')}
             </Link>
           </Button>
         </div>
@@ -92,55 +91,55 @@ export function ModelState({ status, url, onRetry }: Props) {
         <h2 className="flex items-center gap-2 text-md font-semibold">
           <Icon name="warning" className="text-project-amber" />
           {status.state === 'offline'
-            ? 'No encuentro Ollama en este ordenador'
-            : `Falta el modelo ${status.model}`}
+            ? t('state.offlineTitle')
+            : t('state.missingTitle', { model: status.model })}
         </h2>
         <p className="text-sm text-fg-muted text-pretty">
           {status.state === 'offline'
-            ? `El asistente habla con Ollama en ${url} y no responde: puede que no esté instalado, que esté cerrado o que no acepte peticiones de Muninn.`
-            : `Ollama está en marcha, pero no tiene descargado el modelo que elegiste.${status.models.length ? ` Tienes: ${status.models.join(', ')}.` : ''}`}
+            ? t('state.offlineBody', { url })
+            : `${t('state.missingBody')}${status.models.length ? ` ${t('state.youHave', { models: status.models.join(', ') })}` : ''}`}
         </p>
       </div>
       <ol className="flex flex-col gap-2.5 text-sm">
         {status.state === 'offline' ? (
           <>
             <Step n={1}>
-              Instala Ollama desde <Code>ollama.com/download</Code> (o ábrelo si ya lo tienes: vive
-              en la bandeja del sistema).
+              <Trans t={t} i18nKey="state.installStep" components={{ code: <Code /> }} />
             </Step>
             <Step n={2}>
-              Permite que Muninn le hable: variable <Code>OLLAMA_ORIGINS</Code> con los orígenes de
-              la guía y reinicia Ollama.
+              <Trans t={t} i18nKey="state.originsStep" components={{ code: <Code /> }} />
             </Step>
             <Step n={3}>
-              Descarga el modelo: <Code>ollama pull qwen3:8b</Code>.
+              <Trans t={t} i18nKey="state.pullStep" components={{ code: <Code /> }} />
             </Step>
           </>
         ) : (
           <Step n={1}>
-            En una terminal: <Code>ollama pull {status.model}</Code>, o elige otro modelo en Ajustes
-            › Asistente e IA.
+            <Trans
+              t={t}
+              i18nKey="state.missingStep"
+              values={{ model: status.model }}
+              components={{ code: <Code /> }}
+            />
           </Step>
         )}
       </ol>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="primary" onClick={onRetry}>
           <Icon name="sync" size={14} />
-          Reintentar
+          {t('state.retry')}
         </Button>
         <Button asChild>
           <Link to="/documentacion/$pagina" params={{ pagina: 'asistente' }}>
-            Guía paso a paso
+            {t('state.guide')}
           </Link>
         </Button>
         <Button asChild variant="ghost">
           <Link to="/ajustes/$seccion" params={{ seccion: 'asistente' }}>
-            Ajustes del asistente
+            {t('state.settings')}
           </Link>
         </Button>
-        <span className="text-xs text-fg-faint">
-          Se vuelve a comprobar solo cada pocos segundos.
-        </span>
+        <span className="text-xs text-fg-faint">{t('state.autoCheck')}</span>
       </div>
     </Card>
   )

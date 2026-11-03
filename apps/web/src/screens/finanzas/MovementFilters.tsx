@@ -1,8 +1,9 @@
 import type { AccountWithBalance, FinanceCategory } from '@muninn/core'
 import { Button, Dialog, projectColor, SheetContent } from '@muninn/ui'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FilterChip } from '../../components/FilterChip'
-import { ENTRY_LABEL, type EntryKind, NO_TX_FILTER, type TxFilter } from '../../lib/finance'
+import { type EntryKind, entryLabel, NO_TX_FILTER, type TxFilter } from '../../lib/finance'
 
 export const TX_KINDS: EntryKind[] = ['expense', 'income', 'saving', 'investment', 'transfer']
 
@@ -42,6 +43,7 @@ export function MovementFilterSheet({
   categories: FinanceCategory[]
   shown: number
 }) {
+  const { t } = useTranslation('finance')
   const set = (patch: Partial<TxFilter>) => onChange({ ...filter, ...patch })
   const expense = categories.filter((c) => !c.archivedAt && c.kind === 'expense')
   const income = categories.filter((c) => !c.archivedAt && c.kind === 'income')
@@ -60,7 +62,7 @@ export function MovementFilterSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        title="Filtrar movimientos"
+        title={t('movements.sheetTitle')}
         footer={
           <>
             <Button
@@ -69,7 +71,7 @@ export function MovementFilterSheet({
               disabled={activeTxFilters(filter) === 0}
               onClick={() => onChange({ ...NO_TX_FILTER, query: filter.query })}
             >
-              Quitar filtros
+              {t('movements.clearFilters')}
             </Button>
             <Button
               size="lg"
@@ -77,15 +79,15 @@ export function MovementFilterSheet({
               className="flex-1"
               onClick={() => onOpenChange(false)}
             >
-              Ver {shown} {shown === 1 ? 'movimiento' : 'movimientos'}
+              {t('movements.show', { count: shown })}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-5 pb-2">
-          <Group label="Tipo">
+          <Group label={t('type')}>
             <FilterChip touch pressed={filter.kind === null} onClick={() => set({ kind: null })}>
-              Todos
+              {t('movements.all')}
             </FilterChip>
             {TX_KINDS.map((k) => (
               <FilterChip
@@ -94,23 +96,23 @@ export function MovementFilterSheet({
                 pressed={filter.kind === k}
                 onClick={() => set({ kind: filter.kind === k ? null : k })}
               >
-                {ENTRY_LABEL[k]}
+                {entryLabel(k)}
               </FilterChip>
             ))}
           </Group>
           {expense.length ? (
-            <Group label="Categorías de gastos">{expense.map(category)}</Group>
+            <Group label={t('categories.expenseTitle')}>{expense.map(category)}</Group>
           ) : null}
           {income.length ? (
-            <Group label="Categorías de ingresos">{income.map(category)}</Group>
+            <Group label={t('categories.incomeTitle')}>{income.map(category)}</Group>
           ) : null}
-          <Group label="Cuenta">
+          <Group label={t('account')}>
             <FilterChip
               touch
               pressed={filter.accountId === null}
               onClick={() => set({ accountId: null })}
             >
-              Todas
+              {t('movements.allFem')}
             </FilterChip>
             {accounts
               .filter((a) => !a.archivedAt)

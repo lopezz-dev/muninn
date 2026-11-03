@@ -13,6 +13,7 @@ import {
 } from '@muninn/ui'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { monthLabel, shiftMonth } from '../lib/finance'
 import { useMuninn } from '../lib/muninn'
@@ -27,18 +28,15 @@ import { useFinanceBase } from './finanzas/use-finance'
 
 const route = getRouteApi('/_app/finanzas')
 
-const VIEWS: { value: FinanceView; label: string }[] = [
-  { value: 'resumen', label: 'Resumen' },
-  { value: 'movimientos', label: 'Movimientos' },
-  { value: 'suscripciones', label: 'Suscripciones' },
-  { value: 'cuentas', label: 'Cuentas' },
-]
+// Los valores van en la URL y no se traducen; las etiquetas, al pintar.
+const VIEWS: FinanceView[] = ['resumen', 'movimientos', 'suscripciones', 'cuentas']
 
 /**
  * Finanzas (Finanzas.dc.html, Movimientos.dc.html y sus versiones móviles; ADR-0037): cuentas con su saldo,
  * movimientos del mes con filtros, alta rápida y cuentas y categorías editables. La vista va en la URL.
  */
 export function Finanzas() {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const desktop = useIsDesktop()
   const navigate = useNavigate()
@@ -66,7 +64,7 @@ export function Finanzas() {
   const monthNav = (
     <div className="flex items-center gap-1">
       <IconButton
-        aria-label="Mes anterior"
+        aria-label={t('month.previous')}
         icon={<icons.chevronLeft />}
         variant="secondary"
         onClick={() => setMonth((mo) => shiftMonth(mo, -1))}
@@ -75,7 +73,7 @@ export function Finanzas() {
       <MonthPicker value={month} onChange={setMonth} current={today.slice(0, 7)}>
         <button
           type="button"
-          aria-label={`Elegir mes: ${monthLabel(month)}`}
+          aria-label={t('month.pick', { month: monthLabel(month) })}
           className="inline-flex h-11 min-w-[100px] cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent data-[state=open]:bg-surface-hover md:h-8 md:min-w-[120px]"
         >
           <span aria-live="polite">{monthLabel(month)}</span>
@@ -83,7 +81,7 @@ export function Finanzas() {
         </button>
       </MonthPicker>
       <IconButton
-        aria-label="Mes siguiente"
+        aria-label={t('month.next')}
         icon={<icons.chevronRight />}
         variant="secondary"
         onClick={() => setMonth((mo) => shiftMonth(mo, 1))}
@@ -115,24 +113,23 @@ export function Finanzas() {
     )
   } else if (error || !accounts || !categories) {
     body = (
-      <EmptyState icon="warning" title="No se pudieron cargar tus finanzas">
-        Comprueba la conexión y vuelve a intentarlo.
+      <EmptyState icon="warning" title={t('loadFailed')}>
+        {t('loadFailedHint')}
       </EmptyState>
     )
   } else if (!hasAccounts) {
     body = (
       <EmptyState
         icon="finance"
-        title="Empieza por tus cuentas"
+        title={t('empty.title')}
         actions={
           <Button variant="primary" onClick={() => setAccountDialog({ open: true })}>
             <Icon name="plus" />
-            Crear la primera cuenta
+            {t('empty.action')}
           </Button>
         }
       >
-        Una cuenta corriente, una hucha o el efectivo, con lo que tengan hoy. Después apuntas
-        gastos, ingresos y traspasos, y el saldo se calcula solo.
+        {t('empty.text')}
       </EmptyState>
     )
   } else if (view === 'suscripciones') {
@@ -164,10 +161,10 @@ export function Finanzas() {
       <div className="grid grid-cols-1 items-start gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[minmax(0,1fr)]">
         {list}
         <Card
-          aria-label="Nuevo movimiento"
+          aria-label={t('newTransaction')}
           className="flex flex-col gap-3 p-4 lg:max-h-full lg:overflow-y-auto"
         >
-          <h2 className="text-md font-semibold">Nuevo movimiento</h2>
+          <h2 className="text-md font-semibold">{t('newTransaction')}</h2>
           <TransactionForm accounts={accounts} categories={categories} today={today} />
         </Card>
       </div>
@@ -192,17 +189,13 @@ export function Finanzas() {
     )
   }
 
-  const title = txDialog.editing ? 'Editar movimiento' : 'Nuevo movimiento'
+  const title = txDialog.editing ? t('editTransaction') : t('newTransaction')
 
   return (
     <Page className={inlineForm ? 'lg:min-h-0' : undefined}>
       <PageHeader
-        title="Finanzas"
-        description={
-          view === 'movimientos' || view === 'resumen'
-            ? undefined
-            : 'Cuentas, gastos, ingresos y ahorro.'
-        }
+        title={t('title')}
+        description={view === 'movimientos' || view === 'resumen' ? undefined : t('description')}
         actions={
           hasAccounts ? (
             <>
@@ -210,7 +203,7 @@ export function Finanzas() {
               {inlineForm ? null : (
                 <Button variant="primary" size={desktop ? 'md' : 'lg'} onClick={() => openTx()}>
                   <Icon name="plus" />
-                  Movimiento
+                  {t('transactionButton')}
                 </Button>
               )}
             </>
@@ -219,10 +212,10 @@ export function Finanzas() {
       />
       {hasAccounts ? (
         <SegmentedControl
-          aria-label="Sección de Finanzas"
+          aria-label={t('sectionNav')}
           value={view}
           onValueChange={setView}
-          options={VIEWS}
+          options={VIEWS.map((v) => ({ value: v, label: t(`views.${v}`) }))}
           fill={!desktop}
           size={desktop ? 'md' : 'lg'}
           className="self-start"

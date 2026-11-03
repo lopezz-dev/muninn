@@ -2,6 +2,7 @@ import { Button, Card, Icon, type IconName, notify } from '@muninn/ui'
 import type { OAuthAuthorizationDetails } from '@supabase/supabase-js'
 import { getRouteApi, Link, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { resetAuth } from '../lib/auth'
 import { useAuth } from '../lib/muninn'
 import {
@@ -29,16 +30,17 @@ type State =
  * Auth manda aquí con `?authorization_id=…`; al aprobar o rechazar, se vuelve a la app con el resultado.
  */
 export function OAuthConsent() {
+  const { t } = useTranslation('auth')
   const { authorization_id: id } = route.useSearch()
   const auth = useAuth()
   const router = useRouter()
   const [state, setState] = useState<State>(
-    id ? { kind: 'loading' } : { kind: 'error', message: 'Falta la solicitud de autorización.' },
+    id ? { kind: 'loading' } : { kind: 'error', message: t('oauth.missingRequest') },
   )
   const [busy, setBusy] = useState<'approve' | 'deny' | null>(null)
 
   useEffect(() => {
-    document.title = 'Autorizar acceso · Muninn'
+    document.title = t('oauth.pageTitle')
     if (!id) return
     let alive = true
     Promise.all([getConsentRequest(id), consentSecondFactor()]).then(
@@ -58,7 +60,7 @@ export function OAuthConsent() {
     return () => {
       alive = false
     }
-  }, [id])
+  }, [id, t])
 
   // A /login, que con la sesión a medias pide el código y vuelve aquí (la solicitud sigue pendiente).
   const writeCode = () => {
@@ -72,7 +74,7 @@ export function OAuthConsent() {
 
   const decide = async (approve: boolean) => {
     if (!id || state.kind !== 'ask') return
-    const app = state.details.client.name || 'La app'
+    const app = state.details.client.name || t('oauth.theApp')
     setBusy(approve ? 'approve' : 'deny')
     try {
       // Antes de aprobar, que el servidor sepa que la aprobaste con el segundo factor (ADR-0066). Si no queda apuntada
@@ -89,18 +91,22 @@ export function OAuthConsent() {
       const url = await decideConsent(id, approve)
       const host = redirectHost(url)
       if (approve)
-        notify.success(`${app} ya puede usar tu Muninn`, {
+        notify.success(t('oauth.granted', { app }), {
           icon: 'check',
           description: mfaFailed
-            ? `Con el segundo factor activado no verá tus datos: quítale el acceso y vuelve a conectarla. Volviendo a ${host}…`
-            : `Volviendo a ${host}…`,
+            ? t('oauth.grantedNoMfa', { host })
+            : t('oauth.returningTo', { host }),
         })
-      else notify.info('Acceso rechazado', { icon: 'close', description: `Volviendo a ${host}…` })
+      else
+        notify.info(t('oauth.denied'), {
+          icon: 'close',
+          description: t('oauth.returningTo', { host }),
+        })
       setState({ kind: 'leaving', host })
       location.assign(url)
     } catch (err) {
       const message = consentErrorMessage(err)
-      notify.error(approve ? 'No se pudo dar el acceso' : 'No se pudo rechazar', {
+      notify.error(approve ? t('oauth.grantFailed') : t('oauth.denyFailed'), {
         description: message,
       })
       setBusy(null)
@@ -119,27 +125,30 @@ export function OAuthConsent() {
             <Ask details={state.details} busy={busy} onDecide={decide} />
           ) : state.kind === 'mfa' ? (
             <>
-              <Heading title="Falta un paso">
-                Tu cuenta tiene segundo factor. Escribe el código de tu app antes de dar acceso a{' '}
-                <span className="font-medium text-fg">
-                  {state.details.client.name || 'esta app'}
-                </span>
-                .
+              <Heading title={t('oauth.mfaTitle')}>
+                <Trans
+                  t={t}
+                  i18nKey="oauth.mfaText"
+                  values={{ app: state.details.client.name || t('oauth.thisApp') }}
+                  components={{ b: <span className="font-medium text-fg" /> }}
+                />
               </Heading>
               <Button variant="primary" size="lg" className="font-semibold" onClick={writeCode}>
-                Escribir el código
+                {t('oauth.writeCode')}
               </Button>
             </>
           ) : state.kind === 'error' ? (
             <>
-              <Heading title="No se puede autorizar">{state.message}</Heading>
+              <Heading title={t('oauth.errorTitle')}>{state.message}</Heading>
               <Button asChild variant="primary" size="lg">
-                <Link to="/">Ir a Inicio</Link>
+                <Link to="/">{t('oauth.goHome')}</Link>
               </Button>
             </>
           ) : (
             <p role="status" className="text-base text-fg-subtle">
-              {state.kind === 'leaving' ? `Volviendo a ${state.host}…` : 'Cargando la solicitud…'}
+              {state.kind === 'leaving'
+                ? t('oauth.returningTo', { host: state.host })
+                : t('oauth.loading')}
             </p>
           )}
         </Card>
@@ -166,28 +175,34 @@ function Ask({
   busy: 'approve' | 'deny' | null
   onDecide: (approve: boolean) => void
 }) {
-  const app = details.client.name || 'Una app'
+  const { t } = useTranslation('auth')
+  const app = details.client.name || t('oauth.anApp')
   const host = redirectHost(details.redirect_uri)
   const scopes = scopeLabels(details.scope)
   const points: { icon: IconName; text: React.ReactNode }[] = [
-    {
-      icon: 'projects',
-      text: 'Ver y cambiar tus proyectos, tareas y notas a través del MCP de Muninn, como si fueras tú.',
-    },
-    { icon: 'archive', text: 'Nunca borra nada: como mucho, archiva.' },
+    { icon: 'projects', text: t('oauth.pointAccess') },
+    { icon: 'archive', text: t('oauth.pointNoDelete') },
     {
       icon: 'external',
       text: (
-        <>
-          Al terminar vuelves a <b className="font-medium text-fg">{host}</b>.
-        </>
+        <Trans
+          t={t}
+          i18nKey="oauth.pointReturn"
+          values={{ host }}
+          components={{ b: <b className="font-medium text-fg" /> }}
+        />
       ),
     },
   ]
   return (
     <>
-      <Heading title={`${app} quiere usar tu Muninn`}>
-        Entrarás como <span className="font-medium text-fg">{details.user.email}</span>.
+      <Heading title={t('oauth.wants', { app })}>
+        <Trans
+          t={t}
+          i18nKey="oauth.signInAs"
+          values={{ email: details.user.email }}
+          components={{ b: <span className="font-medium text-fg" /> }}
+        />
       </Heading>
       <ul className="flex flex-col gap-3">
         {points.map((p) => (
@@ -198,7 +213,9 @@ function Ask({
         ))}
       </ul>
       {scopes.length > 0 ? (
-        <p className="text-xs text-fg-subtle">También pide: {scopes.join(' · ')}.</p>
+        <p className="text-xs text-fg-subtle">
+          {t('oauth.alsoAsks', { scopes: scopes.join(' · ') })}
+        </p>
       ) : null}
       <div className="flex flex-col gap-2.5">
         <Button
@@ -208,16 +225,13 @@ function Ask({
           disabled={busy !== null}
           onClick={() => onDecide(true)}
         >
-          {busy === 'approve' ? 'Dando acceso…' : 'Permitir acceso'}
+          {busy === 'approve' ? t('oauth.granting') : t('oauth.allow')}
         </Button>
         <Button size="lg" disabled={busy !== null} onClick={() => onDecide(false)}>
-          {busy === 'deny' ? 'Rechazando…' : 'Rechazar'}
+          {busy === 'deny' ? t('oauth.denying') : t('oauth.deny')}
         </Button>
       </div>
-      <p className="text-[12.5px] leading-normal text-fg-faint">
-        Da permiso solo a apps en las que confíes. Puedes quitarlo cuando quieras en Ajustes ›
-        Cuenta › Apps con acceso.
-      </p>
+      <p className="text-[12.5px] leading-normal text-fg-faint">{t('oauth.trustHint')}</p>
     </>
   )
 }

@@ -1,6 +1,7 @@
 import { icons, TextField } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMuninn } from '../../lib/muninn'
 import { createTask } from '../../lib/task-actions'
 
@@ -19,6 +20,7 @@ export function QuickAdd({
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,7 +43,7 @@ export function QuickAdd({
         className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm font-medium text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg ${large ? 'h-11' : 'h-8'}`}
       >
         <icons.plus size={14} />
-        Añadir tarea
+        {t('quickAdd.add')}
       </button>
     )
   }
@@ -49,9 +51,9 @@ export function QuickAdd({
   return (
     <form onSubmit={submit}>
       <TextField
-        label="Título de la nueva tarea"
+        label={t('quickAdd.label')}
         hideLabel
-        placeholder="Título de la tarea"
+        placeholder={t('quickAdd.placeholder')}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => {

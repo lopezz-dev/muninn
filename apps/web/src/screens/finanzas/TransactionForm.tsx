@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   DateField,
+  formatAmount,
   Icon,
   projectColor,
   SegmentedControl,
@@ -11,14 +12,16 @@ import {
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SelectMenu } from '../../components/SelectMenu'
+import { intlLocale } from '../../i18n'
 import {
-  ACCOUNT_KIND_LABEL,
+  accountKindLabel,
   categoriesFor,
   destinationKinds,
-  ENTRY_LABEL,
   type EntryKind,
   entryKindOf,
+  entryLabel,
   txKindOf,
 } from '../../lib/finance'
 import { archiveTransaction, createTransaction, updateTransaction } from '../../lib/finance-actions'
@@ -26,14 +29,6 @@ import { useMuninn } from '../../lib/muninn'
 import { createSubscription } from '../../lib/subscription-actions'
 
 const ENTRIES: EntryKind[] = ['expense', 'income', 'saving', 'investment', 'transfer']
-
-const SAVE_LABEL: Record<EntryKind, string> = {
-  expense: 'Guardar gasto',
-  income: 'Guardar ingreso',
-  saving: 'Guardar ahorro',
-  investment: 'Guardar inversión',
-  transfer: 'Guardar traspaso',
-}
 
 interface Props {
   accounts: AccountWithBalance[]
@@ -52,6 +47,7 @@ interface Props {
  * traspasos a una cuenta de ese tipo (ADR-0037): el destino solo ofrece esas cuentas.
  */
 export function TransactionForm({ accounts, categories, today, editing, onDone, large }: Props) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const open = accounts.filter((a) => !a.archivedAt)
@@ -95,20 +91,20 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
     value: a.id,
     label: a.name,
     dot: projectColor(a.color),
-    hint: ACCOUNT_KIND_LABEL[a.kind],
+    hint: accountKindLabel(a.kind),
   })
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!amount) return setError('Escribe el importe')
-    if (!accountId) return setError('Elige una cuenta')
+    if (!amount) return setError(t('form.amountRequired'))
+    if (!accountId) return setError(t('form.accountRequired'))
     if (kind === 'transfer' && !effectiveTo) {
       return setError(
         entry === 'saving'
-          ? 'Crea antes una cuenta de ahorro (Cuentas)'
+          ? t('form.needSavings')
           : entry === 'investment'
-            ? 'Crea antes una cuenta de inversión (Cuentas)'
-            : 'Necesitas otra cuenta a la que traspasar',
+            ? t('form.needInvestment')
+            : t('form.needOther'),
       )
     }
     setSaving(true)
@@ -130,7 +126,7 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
             m,
             qc,
             {
-              name: fields.concept || 'Suscripción',
+              name: fields.concept || t('form.defaultSubscription'),
               amount,
               frequency: 'monthly',
               accountId,
@@ -139,7 +135,7 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
             },
             { chargeNow: true },
           )
-        : await createTransaction(m, qc, fields, { title: `${ENTRY_LABEL[entry]} guardado` })
+        : await createTransaction(m, qc, fields, { title: t(`toast.txSaved.${entry}`) })
     setSaving(false)
     if (!ok) return
     if (!editing) {
@@ -154,7 +150,7 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <SegmentedControl
-        aria-label="Tipo"
+        aria-label={t('form.type')}
         fill
         size="lg"
         value={entry}
@@ -162,41 +158,42 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
           setEntry(v)
           setError(undefined)
         }}
-        options={ENTRIES.map((v) => ({ value: v, label: ENTRY_LABEL[v] }))}
+        options={ENTRIES.map((v) => ({ value: v, label: entryLabel(v) }))}
         className="[&>button]:px-1"
       />
       <AmountField
-        label="Importe"
+        locale={intlLocale()}
+        label={t('form.amount')}
         size="lg"
         valueCents={amount}
         onValueChange={(v) => {
           setAmount(v)
           setError(undefined)
         }}
-        placeholder="0,00"
+        placeholder={formatAmount(0, intlLocale())}
         className="[&_input]:h-14 [&_input]:font-mono [&_input]:text-[28px]"
         error={error}
       />
       <TextField
-        label="Concepto"
+        label={t('form.concept')}
         size={large ? 'lg' : 'md'}
         value={concept}
         maxLength={200}
         onChange={(e) => setConcept(e.target.value)}
-        placeholder={entry === 'expense' ? 'Cine + palomitas' : ''}
+        placeholder={entry === 'expense' ? t('form.conceptPlaceholder') : ''}
         autoComplete="off"
       />
       <div className="grid grid-cols-2 gap-3">
         {kind === 'transfer' ? null : (
           <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-xs font-medium text-fg-muted">Categoría</span>
+            <span className="text-xs font-medium text-fg-muted">{t('category')}</span>
             <SelectMenu
-              label="Categoría"
+              label={t('category')}
               large={large}
               value={effectiveCat}
               onChange={setCategoryId}
               options={[
-                { value: '', label: 'Sin categoría' },
+                { value: '', label: t('noCategory') },
                 ...catOptions.map((c) => ({
                   value: c.id,
                   label: c.name,
@@ -208,10 +205,10 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
         )}
         <div className="flex min-w-0 flex-col gap-1.5">
           <span className="text-xs font-medium text-fg-muted">
-            {kind === 'transfer' ? 'Desde' : 'Cuenta'}
+            {kind === 'transfer' ? t('form.from') : t('account')}
           </span>
           <SelectMenu
-            label={kind === 'transfer' ? 'Desde' : 'Cuenta'}
+            label={kind === 'transfer' ? t('form.from') : t('account')}
             large={large}
             value={accountId}
             onChange={setAccountId}
@@ -221,21 +218,21 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
         </div>
         {kind === 'transfer' ? (
           <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-xs font-medium text-fg-muted">A</span>
+            <span className="text-xs font-medium text-fg-muted">{t('form.to')}</span>
             <SelectMenu
-              label="A la cuenta"
+              label={t('form.toAccount')}
               large={large}
               value={effectiveTo}
               onChange={setToAccountId}
               options={toOptions.map(accountOption)}
               disabled={toOptions.length === 0}
-              buttonText={toOptions.length === 0 ? 'Sin cuentas' : undefined}
+              buttonText={toOptions.length === 0 ? t('form.noAccounts') : undefined}
             />
           </div>
         ) : null}
       </div>
       <DateField
-        label="Fecha"
+        label={t('form.date')}
         size={large ? 'lg' : 'md'}
         value={date}
         onChange={setDate}
@@ -244,11 +241,11 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
       {!editing && entry === 'expense' ? (
         <div className="flex items-center gap-2.5 text-sm">
           <Checkbox id="tx-repeat" checked={repeat} onCheckedChange={setRepeat} touch />
-          <label htmlFor="tx-repeat">Repetir cada mes (suscripción)</label>
+          <label htmlFor="tx-repeat">{t('form.repeat')}</label>
         </div>
       ) : null}
       <Button type="submit" variant="primary" size={large ? 'lg' : 'md'} disabled={saving}>
-        {editing ? 'Guardar cambios' : SAVE_LABEL[entry]}
+        {editing ? t('form.saveChanges') : t(`form.saveLabel.${entry}`)}
       </Button>
       {editing ? (
         <Button
@@ -260,12 +257,10 @@ export function TransactionForm({ accounts, categories, today, editing, onDone, 
           }}
         >
           <Icon name="archive" />
-          Archivar movimiento
+          {t('form.archive')}
         </Button>
       ) : (
-        <p className="text-xs leading-relaxed text-fg-subtle">
-          También puedes decírselo al asistente: «He gastado 24,90 en el cine».
-        </p>
+        <p className="text-xs leading-relaxed text-fg-subtle">{t('form.assistantHint')}</p>
       )}
     </form>
   )

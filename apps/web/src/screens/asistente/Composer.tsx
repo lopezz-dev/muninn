@@ -1,6 +1,7 @@
 import type { ChatProvider } from '@muninn/assistant'
 import { cn, Icon, IconButton, icons } from '@muninn/ui'
 import { type KeyboardEvent, type Ref, useImperativeHandle, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useImageAttachments } from './use-image-attachments'
 
 /** Lo que la pantalla puede pedirle a la caja de escribir sin tener el borrador en su estado. */
@@ -37,6 +38,7 @@ export function Composer({
   onSend,
   onStop,
 }: ComposerProps) {
+  const { t } = useTranslation('assistant')
   const [draft, setDraft] = useState('')
   const input = useRef<HTMLTextAreaElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -86,18 +88,18 @@ export function Composer({
         )}
       >
         {att.images.length ? (
-          <ul aria-label="Imágenes adjuntas" className="flex flex-wrap gap-2 px-1 pt-1">
+          <ul aria-label={t('composer.attachedImages')} className="flex flex-wrap gap-2 px-1 pt-1">
             {att.images.map((src, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: se quitan por posición
               <li key={i} className="relative">
                 <img
                   src={src}
-                  alt={`Imagen ${i + 1}`}
+                  alt={t('composer.image', { n: i + 1 })}
                   className="size-16 rounded-lg border border-border object-cover"
                 />
                 <button
                   type="button"
-                  aria-label={`Quitar la imagen ${i + 1}`}
+                  aria-label={t('composer.removeImage', { n: i + 1 })}
                   onClick={() => att.remove(i)}
                   className="absolute -top-1.5 -right-1.5 grid size-5 cursor-pointer place-items-center rounded-full border border-border-strong bg-surface-raised text-fg-muted hover:text-fg"
                 >
@@ -120,7 +122,7 @@ export function Composer({
             }}
           />
           <IconButton
-            aria-label="Adjuntar imágenes"
+            aria-label={t('composer.attach')}
             icon={<Icon name="attach" size={18} />}
             size="lg"
             disabled={!ready || running || att.full}
@@ -128,7 +130,7 @@ export function Composer({
             className="text-fg-subtle"
           />
           <label htmlFor="asistente-mensaje" className="sr-only">
-            Mensaje
+            {t('composer.message')}
           </label>
           <textarea
             id="asistente-mensaje"
@@ -139,12 +141,12 @@ export function Composer({
             onKeyDown={onKey}
             onPaste={att.onPaste}
             disabled={!ready}
-            placeholder={ready ? 'Pregunta o pide algo…' : 'Aquí no está disponible'}
+            placeholder={ready ? t('composer.placeholder') : t('composer.unavailable')}
             className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-base leading-normal text-fg outline-none [field-sizing:content] placeholder:text-fg-faint disabled:cursor-not-allowed"
           />
           {running ? (
             <IconButton
-              aria-label="Detener"
+              aria-label={t('composer.stop')}
               icon={<Icon name="close" size={17} />}
               variant="secondary"
               size="lg"
@@ -152,7 +154,7 @@ export function Composer({
             />
           ) : (
             <IconButton
-              aria-label="Enviar"
+              aria-label={t('composer.send')}
               icon={<Icon name="send" size={17} />}
               variant="primary"
               size="lg"
@@ -169,7 +171,7 @@ export function Composer({
         </p>
       ) : (
         <span className="hidden text-center text-xs text-fg-faint md:block">
-          Muninn puede crear, mover y archivar, pero nunca borra. Todo queda en la actividad.
+          {t('composer.footer')}
         </span>
       )}
     </div>

@@ -12,7 +12,7 @@ import {
 } from '../src/lib/assistant-history'
 import { base64Of } from '../src/lib/assistant-images'
 import { assistantPrefs, DEFAULT_ASSISTANT, normalizeUrl } from '../src/lib/assistant-settings'
-import { THINKING_PHRASES, TOOL_PHRASES } from '../src/screens/asistente/TurnView'
+import { thinkingPhrases, toolPhrases } from '../src/screens/asistente/TurnView'
 
 const conv = (id: string, updatedAt: string): Conversation => ({
   id,
@@ -64,9 +64,9 @@ describe('historial del asistente', () => {
 
   it('agrupa en Hoy, Esta semana y Antes', () => {
     const now = new Date(2026, 9, 22, 18)
-    expect(groupOf(new Date(2026, 9, 22, 8).toISOString(), now)).toBe('Hoy')
-    expect(groupOf(new Date(2026, 9, 17, 8).toISOString(), now)).toBe('Esta semana')
-    expect(groupOf(new Date(2026, 9, 10).toISOString(), now)).toBe('Antes')
+    expect(groupOf(new Date(2026, 9, 22, 8).toISOString(), now)).toBe('today')
+    expect(groupOf(new Date(2026, 9, 17, 8).toISOString(), now)).toBe('week')
+    expect(groupOf(new Date(2026, 9, 10).toISOString(), now)).toBe('earlier')
   })
 })
 
@@ -103,7 +103,7 @@ describe('chat', () => {
   })
 
   it('frases de «pensando»: cortas, sin repetir y acabadas en «…»', () => {
-    for (const list of [THINKING_PHRASES, TOOL_PHRASES]) {
+    for (const list of [thinkingPhrases(), toolPhrases()]) {
       expect(new Set(list).size).toBe(list.length)
       for (const p of list) {
         expect(p.endsWith('…')).toBe(true)

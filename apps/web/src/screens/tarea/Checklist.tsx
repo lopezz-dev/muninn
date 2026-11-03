@@ -20,6 +20,7 @@ import type { ChecklistItem, TaskWithColumn } from '@muninn/core'
 import { Checkbox, cn, IconButton, icons, ProgressBar, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMuninn } from '../../lib/muninn'
 import { checklistQuery } from '../../lib/queries'
 import {
@@ -39,6 +40,7 @@ const vertical: Modifier = ({ transform }) => ({ ...transform, x: 0 })
 export function Checklist({ task, touch }: { task: TaskWithColumn; touch?: boolean }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('task')
   const items = useQuery(checklistQuery(m, task.id)).data ?? []
   const [title, setTitle] = useState('')
   const done = items.filter((i) => i.done).length
@@ -49,7 +51,7 @@ export function Checklist({ task, touch }: { task: TaskWithColumn; touch?: boole
   )
   const name = (id: unknown) => items.find((i) => i.id === id)?.title ?? ''
   const place = (id: unknown) =>
-    `posición ${items.findIndex((i) => i.id === id) + 1} de ${items.length}`
+    t('checklist.place', { n: items.findIndex((i) => i.id === id) + 1, total: items.length })
 
   const add = async (e: FormEvent) => {
     e.preventDefault()
@@ -74,16 +76,16 @@ export function Checklist({ task, touch }: { task: TaskWithColumn; touch?: boole
           id={`cl-${task.id}`}
           className="text-xs font-semibold tracking-wider text-fg-subtle uppercase"
         >
-          Subtareas
+          {t('checklist.title')}
         </h2>
         {items.length ? (
           <>
             <span className="text-xs text-fg-subtle tabular">
-              {done} de {items.length}
+              {t('checklist.progress', { done, total: items.length })}
             </span>
             <ProgressBar
               value={done / items.length}
-              label="Subtareas hechas"
+              label={t('checklist.progressLabel')}
               className="h-[3px] flex-1"
             />
           </>
@@ -97,16 +99,20 @@ export function Checklist({ task, touch }: { task: TaskWithColumn; touch?: boole
         onDragEnd={onDragEnd}
         accessibility={{
           screenReaderInstructions: {
-            draggable:
-              'Para mover la subtarea, pulsa Espacio. Con las flechas eliges el sitio, con Espacio sueltas y con Escape cancelas.',
+            draggable: t('checklist.dragHelp'),
           },
           announcements: {
-            onDragStart: ({ active }) => `Has cogido «${name(active.id)}», ${place(active.id)}.`,
+            onDragStart: ({ active }) =>
+              t('checklist.dragStart', { name: name(active.id), place: place(active.id) }),
             onDragOver: ({ active, over }) =>
-              over ? `«${name(active.id)}» irá a la ${place(over.id)}.` : undefined,
+              over
+                ? t('checklist.dragOver', { name: name(active.id), place: place(over.id) })
+                : undefined,
             onDragEnd: ({ active, over }) =>
-              over ? `«${name(active.id)}» queda en la ${place(over.id)}.` : undefined,
-            onDragCancel: ({ active }) => `Cancelado: «${name(active.id)}» no se mueve.`,
+              over
+                ? t('checklist.dragEnd', { name: name(active.id), place: place(over.id) })
+                : undefined,
+            onDragCancel: ({ active }) => t('checklist.dragCancel', { name: name(active.id) }),
           },
         }}
       >
@@ -128,9 +134,9 @@ export function Checklist({ task, touch }: { task: TaskWithColumn; touch?: boole
 
       <form onSubmit={add}>
         <TextField
-          label="Añadir subtarea"
+          label={t('checklist.add')}
           hideLabel
-          placeholder="Añadir subtarea"
+          placeholder={t('checklist.add')}
           leading={<icons.plus size={14} />}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -166,6 +172,7 @@ function Row({
     transition,
     isDragging,
   } = useSortable({ id: item.id, disabled: !sortable })
+  const { t } = useTranslation('task')
   // En escritorio, el asa y la papelera aparecen al pasar por la fila (o al llegar con el teclado).
   const reveal =
     !touch && 'opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100'
@@ -183,7 +190,7 @@ function Row({
         <button
           ref={setActivatorNodeRef}
           type="button"
-          aria-label={`Mover subtarea: ${item.title}`}
+          aria-label={t('checklist.move', { title: item.title })}
           className={cn(
             '-mr-2 grid shrink-0 cursor-grab touch-none place-items-center rounded-sm text-fg-faint outline-none hover:text-fg focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-accent active:cursor-grabbing',
             touch ? '-ml-2 size-11' : '-ml-1 size-6',
@@ -198,7 +205,7 @@ function Row({
       <Checkbox
         checked={item.done}
         onCheckedChange={onDone}
-        aria-label={`${item.done ? 'Desmarcar' : 'Marcar'}: ${item.title}`}
+        aria-label={t(item.done ? 'checklist.uncheck' : 'checklist.check', { title: item.title })}
         touch={touch}
         size={touch ? 'lg' : 'md'}
       />
@@ -208,7 +215,7 @@ function Row({
         {item.title}
       </span>
       <IconButton
-        aria-label={`Quitar subtarea: ${item.title}`}
+        aria-label={t('checklist.remove', { title: item.title })}
         icon={<icons.close size={14} />}
         size={touch ? 'lg' : 'sm'}
         className={cn(reveal)}

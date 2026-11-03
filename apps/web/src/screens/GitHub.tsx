@@ -3,6 +3,7 @@ import { Button, Card, Chip, ColorDot, cn, Icon, type IconName, icons, notify } 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Page, PageHeader } from '../components/Page'
 import { SelectMenu } from '../components/SelectMenu'
 import { canBeAgentColumn, setAgentColumn } from '../lib/agent'
@@ -68,6 +69,7 @@ function useLinkedColumns(projects: Project[]) {
 
 /** «Sincronizar ahora»: la reconciliación entera en la Edge Function, sin esperar al cron. */
 function SyncButton({ onErrors }: { onErrors: (errors: Map<string, string>) => void }) {
+  const { t } = useTranslation('github')
   const m = useMuninn()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
@@ -77,8 +79,8 @@ function SyncButton({ onErrors }: { onErrors: (errors: Map<string, string>) => v
     try {
       const data = await m.github.syncNow('all')
       if (data === null) {
-        notify.info('En modo demo no hay nada que sincronizar', {
-          description: 'La sincronización con GitHub necesita una cuenta.',
+        notify.info(t('sync.demo'), {
+          description: t('sync.demoHint'),
         })
         return
       }
@@ -88,18 +90,18 @@ function SyncButton({ onErrors }: { onErrors: (errors: Map<string, string>) => v
       if (result?.errors.length) {
         notify.error(
           result.errors.length === 1
-            ? `No se pudo sincronizar ${result.errors[0]?.repo}`
-            : `No se pudieron sincronizar ${result.errors.length} repositorios`,
+            ? t('sync.failedRepo', { repo: result.errors[0]?.repo ?? '' })
+            : t('sync.failedMany', { n: result.errors.length }),
           { description: result.errors[0]?.error },
         )
       } else {
-        notify.success('Sincronizado con GitHub', {
+        notify.success(t('sync.done'), {
           icon: 'sync',
           description: result ? describeSync(result) : undefined,
         })
       }
     } catch (err) {
-      fail('No se pudo sincronizar con GitHub', err)
+      fail(t('sync.failed'), err)
     } finally {
       setBusy(false)
     }
@@ -108,7 +110,7 @@ function SyncButton({ onErrors }: { onErrors: (errors: Map<string, string>) => v
   return (
     <Button onClick={() => void run()} disabled={busy}>
       <icons.sync size={15} className={cn(busy && 'motion-safe:animate-spin')} aria-hidden="true" />
-      {busy ? 'Sincronizando…' : 'Sincronizar ahora'}
+      {busy ? t('sync.syncing') : t('sync.now')}
     </Button>
   )
 }
@@ -125,6 +127,7 @@ function ProjectPicker({
   projects: Project[]
   summary: GithubRepoSummary | undefined
 }) {
+  const { t } = useTranslation('github')
   const m = useMuninn()
   const qc = useQueryClient()
   const [checking, setChecking] = useState(false)
@@ -155,12 +158,12 @@ function ProjectPicker({
 
   return (
     <SelectMenu
-      label={`Proyecto de ${row.repo}`}
+      label={t('repos.projectOf', { repo: row.repo })}
       value={value}
       options={options}
       onChange={(id) => void choose(id)}
       disabled={checking}
-      buttonText={checking ? 'Comprobando…' : undefined}
+      buttonText={checking ? t('repos.checking') : undefined}
       className="max-w-full justify-between md:w-full"
     />
   )
@@ -177,6 +180,7 @@ function RepoLine({
   summary: GithubRepoSummary | undefined
   error: string | undefined
 }) {
+  const { t } = useTranslation(['github', 'common'])
   const linked = row.project !== null
   return (
     <li
@@ -195,7 +199,7 @@ function RepoLine({
         <span className="truncate">{row.repo}</span>
         {row.private ? (
           <Chip variant="outline" className="h-[18px] px-1.5 font-sans">
-            privado
+            {t('github.private', { ns: 'common' })}
           </Chip>
         ) : null}
       </span>
@@ -203,7 +207,7 @@ function RepoLine({
         <ProjectPicker row={row} projects={projects} summary={summary} />
       </span>
       <span className={cn('text-fg-muted', !linked && 'max-md:hidden')}>
-        {linked ? `${row.open} ${row.open === 1 ? 'abierta' : 'abiertas'}` : '—'}
+        {linked ? t('repos.open', { count: row.open }) : '—'}
       </span>
       <span
         className={cn(
@@ -216,16 +220,16 @@ function RepoLine({
         {error ? (
           <span className="flex items-center gap-1.5">
             <Icon name="warning" size={14} className="shrink-0" aria-hidden="true" />
-            <span className="truncate">Falló: {error}</span>
+            <span className="truncate">{t('repos.failed', { error })}</span>
           </span>
         ) : linked ? (
-          'Issues → tareas · cerrar ↔ completar'
+          t('repos.rule')
         ) : (
           '—'
         )}
       </span>
       <span className={cn('text-[13px] text-fg-subtle', !linked && 'max-md:hidden')}>
-        {row.last ? timeAgo(row.last) : linked ? 'sin issues aún' : '—'}
+        {row.last ? timeAgo(row.last) : linked ? t('repos.noIssuesYet') : '—'}
       </span>
     </li>
   )
@@ -242,6 +246,7 @@ function RepoTable({
   repos: GithubRepoSummary[] | null | undefined
   errors: Map<string, string>
 }) {
+  const { t } = useTranslation('github')
   const [expanded, setExpanded] = useState(false)
   const linked = rows.filter((r) => r.project)
   const free = rows.filter((r) => !r.project)
@@ -251,7 +256,7 @@ function RepoTable({
     repos?.find((r) => r.fullName.toLowerCase() === repo.toLowerCase())
 
   return (
-    <Card aria-label="Repositorios" className="overflow-hidden">
+    <Card aria-label={t('repos.label')} className="overflow-hidden">
       <div
         aria-hidden="true"
         className={cn(
@@ -259,11 +264,11 @@ function RepoTable({
           GRID,
         )}
       >
-        <span>Repositorio</span>
-        <span>Proyecto en Muninn</span>
-        <span>Issues</span>
-        <span>Sincronización</span>
-        <span>Último cambio</span>
+        <span>{t('repos.repo')}</span>
+        <span>{t('repos.project')}</span>
+        <span>{t('repos.issues')}</span>
+        <span>{t('repos.sync')}</span>
+        <span>{t('repos.last')}</span>
       </div>
       <ul>
         {shown.map((row) => (
@@ -283,7 +288,7 @@ function RepoTable({
           className="flex w-full cursor-pointer items-center gap-1.5 border-t border-border-subtle px-4 py-2.5 text-sm text-accent hover:bg-surface-hover"
         >
           <icons.chevronDown size={13} aria-hidden="true" />
-          {hidden === 1 ? 'Ver 1 repositorio más' : `Ver ${hidden} repositorios más`} sin vincular
+          {t('repos.showMore', { count: hidden })}
         </button>
       ) : null}
     </Card>
@@ -292,11 +297,8 @@ function RepoTable({
 
 // ─── Agente ──────────────────────────────────────────────────────────────────
 
-const STEPS = [
-  ['1 · Arrastras', 'una tarea de GitHub a la columna del agente'],
-  ['2 · Se etiqueta', 'la issue con muninn:agent y arranca el agente'],
-  ['3 · Abre un PR', 'y la tarea pasa a Revisión; al fusionarlo, se completa'],
-] as const
+/** Los tres pasos del agente: claves de `agent.steps` (título y texto). */
+const STEPS = ['drag', 'label', 'pr'] as const
 
 function AgentCard({
   linked,
@@ -305,6 +307,7 @@ function AgentCard({
   linked: Project[]
   columns: Map<string, BoardColumn[]> | undefined
 }) {
+  const { t } = useTranslation('github')
   const m = useMuninn()
   const qc = useQueryClient()
 
@@ -318,27 +321,25 @@ function AgentCard({
           <Icon name="agent" />
         </span>
         <h2 id="agente-titulo" className="text-md font-semibold">
-          Columna «Para el agente»
+          {t('agent.title')}
         </h2>
       </div>
       <ol className="grid grid-cols-1 gap-2 text-[12.5px] leading-snug text-fg-muted sm:grid-cols-3">
-        {STEPS.map(([title, text]) => (
-          <li key={title} className="rounded-md border border-border p-2.5">
-            <b className="mb-1 block font-semibold text-fg">{title}</b>
-            {text}
+        {STEPS.map((step) => (
+          <li key={step} className="rounded-md border border-border p-2.5">
+            <b className="mb-1 block font-semibold text-fg">{t(`agent.steps.${step}Title`)}</b>
+            {t(`agent.steps.${step}`)}
           </li>
         ))}
       </ol>
       {linked.length === 0 ? (
-        <p className="text-sm text-fg-subtle">
-          Vincula un repositorio a un proyecto para elegir su columna del agente.
-        </p>
+        <p className="text-sm text-fg-subtle">{t('agent.noLinked')}</p>
       ) : (
         <ul className="flex flex-col">
           {linked.map((p) => {
             const cols = columns?.get(p.id)
             const options = [
-              { value: '', label: 'Sin columna del agente', tone: 'text-fg-muted' },
+              { value: '', label: t('agent.noColumn'), tone: 'text-fg-muted' },
               ...(cols ?? [])
                 .filter((c) => canBeAgentColumn(p, true, c))
                 .map((c) => ({ value: c.id, label: c.name })),
@@ -353,11 +354,11 @@ function AgentCard({
                   <span className="truncate">{p.name}</span>
                 </span>
                 <SelectMenu
-                  label={`Columna del agente de ${p.name}`}
+                  label={t('agent.columnOf', { project: p.name })}
                   value={p.agentColumnId ?? ''}
                   options={options}
                   disabled={!cols}
-                  buttonText={cols ? undefined : 'Cargando…'}
+                  buttonText={cols ? undefined : t('agent.loading')}
                   onChange={(id) => void setAgentColumn(m, qc, p, cols ?? [], id || null)}
                   className="flex-[1_1_200px] justify-between"
                 />
@@ -367,30 +368,30 @@ function AgentCard({
         </ul>
       )}
       <p className="text-xs leading-relaxed text-fg-faint">
-        El agente es la Claude Code GitHub Action de cada repositorio: necesita la GitHub App de
-        Claude, un secreto y el workflow, y abre el PR contra la rama que diga ese workflow. Nunca
-        fusiona: el PR lo revisas tú.{' '}
+        {t('agent.about')}{' '}
         <Link
           to="/documentacion/$pagina"
           params={{ pagina: 'github' }}
           className="text-accent hover:underline"
         >
-          Cómo ponerlo en marcha
+          {t('agent.setup')}
         </Link>
       </p>
     </Card>
   )
 }
 
-const RUN_LOOK: Record<RunState, { label: string; icon: IconName; tone: string }> = {
-  working: { label: 'Trabajando', icon: 'clock', tone: 'text-accent' },
-  review: { label: 'PR abierto', icon: 'branch', tone: 'text-kind-review' },
-  merged: { label: 'Fusionado', icon: 'check', tone: 'text-success' },
-  closed: { label: 'PR cerrado', icon: 'close', tone: 'text-fg-muted' },
-  stopped: { label: 'Sin PR', icon: 'warning', tone: 'text-danger' },
+/** Cómo se ve cada estado; la etiqueta, `runs.state.<estado>`. */
+const RUN_LOOK: Record<RunState, { icon: IconName; tone: string }> = {
+  working: { icon: 'clock', tone: 'text-accent' },
+  review: { icon: 'branch', tone: 'text-kind-review' },
+  merged: { icon: 'check', tone: 'text-success' },
+  closed: { icon: 'close', tone: 'text-fg-muted' },
+  stopped: { icon: 'warning', tone: 'text-danger' },
 }
 
 function RunLine({ run, projectId }: { run: AgentRun; projectId: string | undefined }) {
+  const { t } = useTranslation('github')
   const look = RUN_LOOK[run.state]
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle py-2.5 text-sm">
@@ -401,7 +402,7 @@ function RunLine({ run, projectId }: { run: AgentRun; projectId: string | undefi
         )}
       >
         <Icon name={look.icon} size={14} aria-hidden="true" />
-        {look.label}
+        {t(`runs.state.${run.state}`)}
       </span>
       {projectId ? (
         <Link
@@ -425,7 +426,7 @@ function RunLine({ run, projectId }: { run: AgentRun; projectId: string | undefi
             {...externalLink(run.pr.url)}
             className="flex items-center gap-0.5 text-accent hover:underline"
           >
-            PR #{run.pr.number}
+            {t('runs.pr', { number: run.pr.number })}
             <Icon name="external" size={12} aria-hidden="true" />
           </a>
         ) : (
@@ -437,18 +438,18 @@ function RunLine({ run, projectId }: { run: AgentRun; projectId: string | undefi
 }
 
 function RunsCard({ runs, projectOf }: { runs: AgentRun[]; projectOf: Map<string, string> }) {
+  const { t } = useTranslation('github')
   return (
     <Card
       aria-labelledby="ejecuciones-titulo"
       className="flex flex-[1_1_420px] flex-col px-[18px] pt-4 pb-1.5"
     >
       <h2 id="ejecuciones-titulo" className="pb-2 text-md font-semibold">
-        Ejecuciones recientes
+        {t('runs.title')}
       </h2>
       {runs.length === 0 ? (
         <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-          Aún no has mandado nada al agente. Mueve una tarea de GitHub a su columna y aquí verás
-          cómo va: trabajando, PR abierto, fusionado o sin PR.
+          {t('runs.empty')}
         </p>
       ) : (
         <ul>
@@ -465,6 +466,7 @@ function RunsCard({ runs, projectOf }: { runs: AgentRun[]; projectOf: Map<string
 
 /** GitHub: los repos vinculados y su sincronización, y la columna del agente con sus ejecuciones. */
 export function GitHub() {
+  const { t } = useTranslation(['github', 'common'])
   const m = useMuninn()
   const auth = useAuth()
   const projects = useQuery(projectsQuery(m)).data ?? []
@@ -482,10 +484,10 @@ export function GitHub() {
   return (
     <Page>
       <PageHeader
-        title="GitHub"
+        title={t('nav.github', { ns: 'common' })}
         description={
           <span className="flex flex-wrap items-center gap-2">
-            Issues como tareas y un agente que abre PRs.
+            {t('page.tagline')}
             <Chip variant={linked.length ? 'success' : 'neutral'}>
               <span
                 aria-hidden="true"
@@ -495,10 +497,8 @@ export function GitHub() {
                 )}
               />
               {linked.length === 0
-                ? 'Ningún repositorio vinculado'
-                : linked.length === 1
-                  ? '1 repositorio vinculado'
-                  : `${linked.length} repositorios vinculados`}
+                ? t('page.noneLinked')
+                : t('page.linked', { count: linked.length })}
             </Chip>
           </span>
         }
@@ -508,7 +508,7 @@ export function GitHub() {
             <Button asChild variant="ghost">
               <Link to="/ajustes/$seccion" params={{ seccion: 'integraciones' }}>
                 <Icon name="settings" size={15} aria-hidden="true" />
-                Ajustes
+                {t('nav.settings', { ns: 'common' })}
               </Link>
             </Button>
           </>
@@ -518,31 +518,29 @@ export function GitHub() {
       {rows.length === 0 ? (
         <EmptyState
           icon="github"
-          title="Vincula un repositorio"
+          title={t('page.emptyTitle')}
           actions={
             <Button asChild variant="primary">
               <Link to="/ajustes/$seccion" params={{ seccion: 'integraciones' }}>
-                Vincular repositorios
+                {t('page.linkRepos')}
               </Link>
             </Button>
           }
         >
-          {repos.isPending && auth.kind !== 'demo'
-            ? 'Buscando los repositorios a los que llega el token…'
-            : 'Las issues de un repositorio llegan como tareas de su proyecto, y al cerrar una se completa la otra. Vincúlalo a un proyecto en Ajustes › Integraciones.'}
+          {repos.isPending && auth.kind !== 'demo' ? t('page.searching') : t('page.emptyHint')}
         </EmptyState>
       ) : (
         <RepoTable rows={rows} projects={projects} repos={repos.data} errors={errors} />
       )}
       {repos.isError ? (
         <p className="-mt-2 text-xs text-fg-subtle">
-          No se pudo pedir la lista de repositorios del token: solo salen los vinculados.{' '}
+          {t('page.reposError')}{' '}
           <button
             type="button"
             onClick={() => void repos.refetch()}
             className="cursor-pointer text-accent hover:underline"
           >
-            Reintentar
+            {t('page.retry')}
           </button>
         </p>
       ) : null}

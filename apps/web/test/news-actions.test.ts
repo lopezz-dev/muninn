@@ -97,7 +97,7 @@ describe('fuentes', () => {
     expect(f.news.sources.update).toHaveBeenLastCalledWith('s1', { enabled: true })
     // Antes, deshacer sacaba otro aviso con su propio «Deshacer».
     expect(notify.success).toHaveBeenCalledOnce()
-    expect(infos()).toEqual(['«Blog» activada'])
+    expect(infos()).toEqual(['Fuente activada: «Blog»'])
   })
 
   it('pausar: si deshacer falla, solo avisa del fallo', async () => {

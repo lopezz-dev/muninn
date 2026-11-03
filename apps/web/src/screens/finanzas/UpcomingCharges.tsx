@@ -1,6 +1,7 @@
 import type { Subscription } from '@muninn/core'
 import { Button, Card, CardHeader, cn } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { amountText, chargeLabel } from '../../lib/finance'
 import { upcomingChargesQuery } from '../../lib/finance-queries'
 import { useMuninn } from '../../lib/muninn'
@@ -41,16 +42,15 @@ function addOne(iso: string) {
  * Finanzas › Resumen. No pinta nada si no hay ninguno.
  */
 export function UpcomingCharges({ today, className }: { today: string; className?: string }) {
+  // También lo pinta Inicio: así carga `finance` antes de que «Apuntar» o «Saltar» avisen.
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const upcoming = useQuery(upcomingChargesQuery(m)).data
   if (!upcoming?.length) return null
   return (
-    <Card aria-label="Próximos cobros" className={cn('flex flex-col', className)}>
-      <CardHeader
-        title="Próximos cobros"
-        description="Muninn no apunta nada solo: confirma cada cobro o sáltalo."
-      />
+    <Card aria-label={t('subs.upcoming')} className={cn('flex flex-col', className)}>
+      <CardHeader title={t('subs.upcoming')} description={t('subs.upcomingDesc')} />
       <ul className="flex flex-col pb-1.5">
         {upcoming.map((s) => (
           <li
@@ -65,10 +65,10 @@ export function UpcomingCharges({ today, className }: { today: string; className
             <span className="font-mono text-base tabular">{amountText(s.amount, 'none')}</span>
             <span className="flex gap-1.5">
               <Button size="sm" variant="primary" onClick={() => chargeSubscription(m, qc, s)}>
-                Apuntar
+                {t('subs.charge')}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => skipSubscription(m, qc, s)}>
-                Saltar
+                {t('subs.skip')}
               </Button>
             </span>
           </li>

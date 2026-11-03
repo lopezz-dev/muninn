@@ -1,4 +1,5 @@
 import type { ProjectImageKind } from '@muninn/core'
+import { i18n, t } from '../i18n'
 
 /**
  * Logo y portada de proyecto (ADR-0055, ADR-0056): se reducen en el navegador antes de subirlos, como las imágenes del
@@ -22,12 +23,15 @@ export async function reduceProjectImage(
   file: File,
   kind: ProjectImageKind,
 ): Promise<ReducedImage> {
-  if (!file.type.startsWith('image/')) throw new Error(`«${file.name}» no es una imagen`)
+  // Los errores se enseñan en un aviso, y el diálogo del proyecto se abre desde cualquier pantalla.
+  await i18n.loadNamespaces('projects')
+  if (!file.type.startsWith('image/'))
+    throw new Error(t('image.notImage', { ns: 'projects', name: file.name }))
   let bitmap: ImageBitmap
   try {
     bitmap = await createImageBitmap(file)
   } catch {
-    throw new Error(`No puedo abrir «${file.name}»`)
+    throw new Error(t('image.cantOpen', { ns: 'projects', name: file.name }))
   }
   const color = kind === 'logo' ? sampleColor(bitmap) : null
   const scale = Math.min(1, MAX_SIDE[kind] / Math.max(bitmap.width, bitmap.height))
@@ -35,7 +39,7 @@ export async function reduceProjectImage(
   canvas.width = Math.round(bitmap.width * scale)
   canvas.height = Math.round(bitmap.height * scale)
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('El navegador no deja procesar imágenes')
+  if (!ctx) throw new Error(t('image.noCanvas', { ns: 'projects' }))
   if (kind === 'cover') {
     // JPEG no tiene transparencia: lo transparente queda del fondo de las tarjetas, no en negro.
     ctx.fillStyle = '#15181C'
@@ -48,7 +52,7 @@ export async function reduceProjectImage(
       ? canvas.toBlob(resolve, 'image/jpeg', 0.85)
       : canvas.toBlob(resolve, 'image/png'),
   )
-  if (!blob) throw new Error('No se pudo preparar la imagen')
+  if (!blob) throw new Error(t('image.failed', { ns: 'projects' }))
   return { blob, color }
 }
 

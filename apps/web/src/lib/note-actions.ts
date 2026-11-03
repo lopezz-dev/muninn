@@ -1,9 +1,10 @@
 import type { CreateNoteInput, Muninn, Note, UpdateNoteInput } from '@muninn/core'
 import { type IconName, notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { i18n, t } from '../i18n'
 import { notifyUndo } from './feedback'
 import { fail, serial } from './mutations'
-import { putNote, removeNote } from './notes'
+import { noteTitle, putNote, removeNote } from './notes'
 import { invalidateNotes, noteKeys } from './notes-queries'
 import { keys } from './queries'
 
@@ -34,22 +35,24 @@ export async function createNote(
   input: CreateNoteInput = {},
   opts: { onUndo?: (note: Note) => void } = {},
 ): Promise<Note | null> {
+  // Se crea también desde el buscador, una tarea o Noticias: sin la pantalla de Notas, el namespace aún no está.
+  await i18n.loadNamespaces('notes')
   let note: Note
   try {
     note = await m.notes.create(input)
   } catch (err) {
-    fail('No se pudo crear la nota', err)
+    fail(t('toast.createFailed', { ns: 'notes' }), err)
     return null
   }
   cacheNote(qc, note)
   void invalidateNotes(qc)
-  notifyUndo('Nota creada', {
+  notifyUndo(t('toast.created', { ns: 'notes' }), {
     icon: 'plus',
     undo: async () => {
       if (!(await archiveNote(m, qc, note, { undoing: true }))) return false
       opts.onUndo?.(note)
     },
-    undone: ['Nota archivada', { icon: 'archive' }],
+    undone: [t('toast.archived', { ns: 'notes' }), { icon: 'archive' }],
   })
   return note
 }
@@ -100,7 +103,7 @@ export async function patchNote(
     })
   } catch (err) {
     cacheNote(qc, { ...(cached(qc, id) ?? prev), ...before })
-    fail('No se pudo guardar el cambio', err)
+    fail(t('toast.changeFailed', { ns: 'notes' }), err)
     return false
   }
   if (opts.undoing) return true
@@ -125,20 +128,20 @@ export async function archiveNote(
     await serial(noteKey(note.id), () => m.notes.archive(note.id))
   } catch (err) {
     if (list) qc.setQueryData(noteKeys.list, list)
-    fail('No se pudo archivar la nota', err)
+    fail(t('toast.archiveFailed', { ns: 'notes' }), err)
     return false
   }
   void invalidateNotes(qc)
   if (opts.undoing) return true
-  notifyUndo(`«${note.title.trim() || 'Sin título'}» archivada`, {
+  notifyUndo(t('toast.archivedNamed', { ns: 'notes', title: noteTitle(note) }), {
     icon: 'archive',
     undo: async () => {
       await serial(noteKey(note.id), () => m.notes.restore(note.id))
       void invalidateNotes(qc)
       opts.onUndo?.()
     },
-    undone: ['Nota recuperada', { icon: 'archive' }],
-    failTitle: 'No se pudo recuperar la nota',
+    undone: [t('toast.restored', { ns: 'notes' }), { icon: 'archive' }],
+    failTitle: t('toast.restoreFailed', { ns: 'notes' }),
   })
   return true
 }
@@ -148,11 +151,11 @@ export async function restoreNote(m: Muninn, qc: QueryClient, id: string): Promi
   try {
     await serial(noteKey(id), () => m.notes.restore(id))
   } catch (err) {
-    fail('No se pudo recuperar la nota', err)
+    fail(t('toast.restoreFailed', { ns: 'notes' }), err)
     return false
   }
   void invalidateNotes(qc)
-  notify.success('Nota recuperada', { icon: 'archive' })
+  notify.success(t('toast.restored', { ns: 'notes' }), { icon: 'archive' })
   return true
 }
 

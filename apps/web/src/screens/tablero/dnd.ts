@@ -17,12 +17,13 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import type { MutableRefObject } from 'react'
+import { t } from '../../i18n'
 import { colId, findColumn, type ItemsByColumn, isColKey, isTabKey } from '../../lib/board'
 
 /**
  * Piezas de dnd-kit que comparten el tablero de escritorio, el de móvil y el calendario: los sensores,
  * elegir sobre qué se suelta, mover con el teclado entre columnas y avisar a los lectores de pantalla
- * (en español).
+ * (en el idioma activo).
  */
 
 /**
@@ -138,9 +139,11 @@ export const boardKeyboard: KeyboardCoordinateGetter = (
   return { x: rect.left, y: rect.top }
 }
 
+/** Instrucciones para el lector de pantalla: *getter*, para leerlas en el idioma activo (ADR-0077). */
 export const screenReaderInstructions: ScreenReaderInstructions = {
-  draggable:
-    'Para mover, pulsa Espacio. Con las flechas eliges el sitio, con Espacio sueltas y con Escape cancelas. Enter abre la tarea.',
+  get draggable() {
+    return t('dnd.instructions', { ns: 'board' })
+  },
 }
 
 interface Labels {
@@ -151,13 +154,15 @@ interface Labels {
 }
 
 export const announcements = ({ name, where }: Labels): Announcements => ({
-  onDragStart: ({ active }) => `Has recogido ${name(active.id)}. ${where(active.id)}.`,
-  onDragOver: ({ active, over }) => (over ? `${name(active.id)}: ${where(over.id)}.` : undefined),
+  onDragStart: ({ active }) =>
+    t('dnd.picked', { ns: 'board', name: name(active.id), where: where(active.id) }),
+  onDragOver: ({ active, over }) =>
+    over ? t('dnd.over', { ns: 'board', name: name(active.id), where: where(over.id) }) : undefined,
   onDragEnd: ({ active, over }) =>
     over
-      ? `Has soltado ${name(active.id)}. ${where(over.id)}.`
-      : `${name(active.id)} vuelve a su sitio.`,
-  onDragCancel: ({ active }) => `Movimiento cancelado: ${name(active.id)} vuelve a su sitio.`,
+      ? t('dnd.dropped', { ns: 'board', name: name(active.id), where: where(over.id) })
+      : t('dnd.back', { ns: 'board', name: name(active.id) }),
+  onDragCancel: ({ active }) => t('dnd.cancelled', { ns: 'board', name: name(active.id) }),
 })
 
 /** Posición «n de total» de `id` dentro de su columna, para los avisos. */
@@ -165,5 +170,10 @@ export function placeOf(items: ItemsByColumn, id: string, columnName: (id: strin
   const col = findColumn(items, id)
   if (!col) return ''
   const list = items[col] ?? []
-  return `posición ${list.indexOf(id) + 1} de ${list.length} en ${columnName(col)}`
+  return t('dnd.placeIn', {
+    ns: 'board',
+    position: list.indexOf(id) + 1,
+    total: list.length,
+    column: columnName(col),
+  })
 }

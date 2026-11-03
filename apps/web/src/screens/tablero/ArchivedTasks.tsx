@@ -10,19 +10,21 @@ import {
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { t as tr } from '../../i18n'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
 import { archivedTasksQuery } from '../../lib/queries'
 import { deleteArchivedTasksWithUndo, restoreArchivedTask } from '../../lib/task-actions'
 import { useIsDesktop } from '../../lib/use-media'
 
-/** «hace 3 días», o «el 12 oct» cuando ya es una fecha. */
-const when = (iso: string) => {
+/** «archivada hace 3 días», o «archivada el 12 oct» cuando ya es una fecha (a partir de una semana, como `timeAgo`). */
+const archivedWhen = (iso: string) => {
   const ago = timeAgo(iso)
-  return /^\d/.test(ago) ? `el ${ago}` : ago
+  return Math.abs(Date.now() - new Date(iso).getTime()) >= 7 * 86_400_000
+    ? tr('archived.archivedOn', { ns: 'board', date: ago })
+    : tr('archived.archivedAgo', { ns: 'board', when: ago })
 }
-
-const DESCRIPTION = 'Recupera una para devolverla a su columna, o elimínala para siempre.'
 
 /** Un clic en un aviso (su «Deshacer») no es un clic fuera: no cierra el diálogo. */
 const keepOnToast = (e: Event) => {
@@ -44,6 +46,8 @@ export function ArchivedTasks({ projectId, open, onOpenChange }: ArchivedTasksPr
   const m = useMuninn()
   const qc = useQueryClient()
   const desktop = useIsDesktop()
+  const { t } = useTranslation('board')
+  const description = t('archived.description')
   // Las que se están eliminando: desaparecen ya y vuelven con «Deshacer».
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
   const view = {
@@ -61,27 +65,25 @@ export function ArchivedTasks({ projectId, open, onOpenChange }: ArchivedTasksPr
         onClick={() => deleteArchivedTasksWithUndo(m, qc, projectId, tasks, view)}
       >
         <Icon name="trash" />
-        Eliminar todas
+        {t('archived.deleteAll')}
       </Button>
     ) : null
   const list = (
     <>
       {query.isPending ? (
-        <p className="py-6 text-center text-sm text-fg-muted">Cargando…</p>
+        <p className="py-6 text-center text-sm text-fg-muted">{t('loading')}</p>
       ) : query.isError ? (
-        <p className="py-6 text-center text-sm text-fg-muted">
-          No se pudieron cargar. Comprueba tu conexión e inténtalo de nuevo.
-        </p>
+        <p className="py-6 text-center text-sm text-fg-muted">{t('archived.loadFailed')}</p>
       ) : tasks.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-fg-muted">
-          No hay tareas archivadas en este proyecto.
+          {t('archived.empty')}
         </p>
       ) : (
         // A sangre: el relleno del diálogo es de 5 y el de la hoja, de 6.
         <ul className={cn('border-y border-border-subtle', desktop ? '-mx-5' : '-mx-6')}>
-          {tasks.map((t) => (
+          {tasks.map((task) => (
             <li
-              key={t.id}
+              key={task.id}
               className={cn(
                 'flex min-h-14 items-center gap-3 border-t border-border-subtle first:border-t-0 md:min-h-12',
                 desktop ? 'px-5' : 'px-6',
@@ -89,30 +91,30 @@ export function ArchivedTasks({ projectId, open, onOpenChange }: ArchivedTasksPr
             >
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="flex items-center gap-1.5 text-sm">
-                  {t.source === 'github' ? (
-                    <icons.github size={12} aria-label="De GitHub" className="shrink-0" />
+                  {task.source === 'github' ? (
+                    <icons.github size={12} aria-label={t('fromGithub')} className="shrink-0" />
                   ) : null}
-                  <span className="truncate">{t.title}</span>
+                  <span className="truncate">{task.title}</span>
                 </span>
                 <span className="truncate text-xs text-fg-subtle">
-                  {t.column.name} · archivada {when(t.archivedAt ?? t.updatedAt)}
+                  {task.column.name} · {archivedWhen(task.archivedAt ?? task.updatedAt)}
                 </span>
               </span>
               <Button
                 size="sm"
                 className="max-md:h-10"
-                onClick={() => restoreArchivedTask(m, qc, t)}
+                onClick={() => restoreArchivedTask(m, qc, task)}
               >
-                Recuperar
+                {t('archived.restore')}
               </Button>
               <IconButton
                 size="sm"
                 variant="danger"
-                aria-label={`Eliminar «${t.title}»`}
-                title="Eliminar para siempre"
+                aria-label={t('archived.deleteOne', { title: task.title })}
+                title={t('archived.deleteForever')}
                 className="max-md:size-10"
                 icon={<Icon name="trash" />}
-                onClick={() => deleteArchivedTasksWithUndo(m, qc, projectId, [t], view)}
+                onClick={() => deleteArchivedTasksWithUndo(m, qc, projectId, [task], view)}
               />
             </li>
           ))}
@@ -126,8 +128,8 @@ export function ArchivedTasks({ projectId, open, onOpenChange }: ArchivedTasksPr
     <Dialog open={open} onOpenChange={onOpenChange}>
       {desktop ? (
         <DialogContent
-          title="Tareas archivadas"
-          description={DESCRIPTION}
+          title={t('header.archivedTasks')}
+          description={description}
           footer={removeAll}
           onInteractOutside={keepOnToast}
         >
@@ -136,12 +138,12 @@ export function ArchivedTasks({ projectId, open, onOpenChange }: ArchivedTasksPr
       ) : (
         <SheetContent
           side="bottom"
-          title="Tareas archivadas"
+          title={t('header.archivedTasks')}
           footer={removeAll ? <div className="ml-auto">{removeAll}</div> : undefined}
           onInteractOutside={keepOnToast}
         >
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-fg-muted">{DESCRIPTION}</p>
+            <p className="text-sm text-fg-muted">{description}</p>
             {list}
           </div>
         </SheetContent>

@@ -1,5 +1,6 @@
 import type { AccountWithBalance, FinanceCategory, Transaction } from '@muninn/core'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { i18n } from '../src/i18n'
 import {
   amountText,
   applyCategoryMove,
@@ -182,6 +183,23 @@ describe('finanzas · suscripciones', () => {
     )
     expect(chargeLabel({ nextDate: '2026-10-18', frequency: 'monthly' }, t)).toBe(
       'Vencida · 18 oct',
+    )
+  })
+})
+
+describe('finanzas · en inglés', () => {
+  afterEach(() => i18n.changeLanguage('es'))
+
+  it('importes, días, cambios y cobros con el formato del idioma activo', async () => {
+    await i18n.changeLanguage('en')
+    expect(amountText(-1845)).toBe('−€18.45')
+    expect(amountText(-128430, 'none')).toBe('€1,284.30')
+    expect(dayLabel('2026-10-19', '2026-10-19')).toBe('Today · Monday 19')
+    expect(monthLabel('2026-10')).toBe('October 2026')
+    expect(deltaText(128430, 136600, '2026-09')).toBe('−6% vs. September')
+    expect(rateText(0.2034)).toBe('20%')
+    expect(chargeLabel({ nextDate: '2026-10-18', frequency: 'monthly' }, '2026-10-21')).toBe(
+      'Overdue · Oct 18',
     )
   })
 })

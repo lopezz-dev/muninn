@@ -16,6 +16,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Page } from '../components/Page'
 import { SelectMenu } from '../components/SelectMenu'
 import { useMuninn } from '../lib/muninn'
@@ -37,9 +38,10 @@ export function TareaDetalle() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const desktop = useIsDesktop()
+  const { t } = useTranslation(['task', 'common'])
   const project = useQuery(projectQuery(m, projectId)).data
   const board = useQuery(boardQuery(m, projectId))
-  const task = board.data?.tasks.find((t) => t.id === taskId)
+  const task = board.data?.tasks.find((x) => x.id === taskId)
 
   useEffect(() => {
     if (task) document.title = `${task.title} · Muninn`
@@ -51,7 +53,7 @@ export function TareaDetalle() {
   if (!task) {
     return desktop ? (
       <Dialog open onOpenChange={(o) => !o && close()}>
-        <SheetContent title="Tarea no encontrada">
+        <SheetContent title={t('detail.notFound')}>
           <Missing projectId={projectId} />
         </SheetContent>
       </Dialog>
@@ -65,8 +67,9 @@ export function TareaDetalle() {
   const done = task.column.kind === 'done'
   const copyLink = async () => {
     const ok = await copyText(location.href)
-    if (ok) notify.success('Enlace copiado', { icon: 'link', description: task.title })
-    else notify.error('No se pudo copiar el enlace')
+    if (ok)
+      notify.success(t('link.copied', { ns: 'common' }), { icon: 'link', description: task.title })
+    else notify.error(t('link.copyFailed', { ns: 'common' }))
   }
   const archive = async () => {
     if (await archiveTask(m, qc, task)) close()
@@ -75,17 +78,22 @@ export function TareaDetalle() {
 
   const actions = (size?: 'lg') => (
     <>
-      <IconButton aria-label="Copiar enlace" icon={<icons.link />} size={size} onClick={copyLink} />
+      <IconButton
+        aria-label={t('link.copy', { ns: 'common' })}
+        icon={<icons.link />}
+        size={size}
+        onClick={copyLink}
+      />
       <Menu>
         <MenuTrigger asChild>
-          <IconButton aria-label="Más acciones" icon={<icons.dots />} size={size} />
+          <IconButton aria-label={t('detail.moreActions')} icon={<icons.dots />} size={size} />
         </MenuTrigger>
         <MenuContent>
           <MenuItem icon={<icons.link />} onSelect={copyLink}>
-            Copiar enlace
+            {t('link.copy', { ns: 'common' })}
           </MenuItem>
           <MenuItem icon={<icons.archive />} onSelect={archive}>
-            Archivar tarea
+            {t('detail.archive')}
           </MenuItem>
         </MenuContent>
       </Menu>
@@ -108,7 +116,7 @@ export function TareaDetalle() {
           footer={
             <Button variant="primary" className="ml-auto h-9 px-4" onClick={toggleDone}>
               <icons.check size={14} weight="bold" />
-              {done ? 'Reabrir' : 'Completar'}
+              {done ? t('detail.reopen') : t('detail.complete')}
             </Button>
           }
         >
@@ -122,7 +130,11 @@ export function TareaDetalle() {
     <div className="flex flex-col gap-5">
       <header className="flex items-center gap-2">
         <Button asChild variant="secondary" className="size-11 px-0">
-          <Link to="/proyectos/$projectId" params={{ projectId }} aria-label="Volver al tablero">
+          <Link
+            to="/proyectos/$projectId"
+            params={{ projectId }}
+            aria-label={t('detail.backToBoard')}
+          >
             <icons.chevronLeft size={18} />
           </Link>
         </Button>
@@ -137,8 +149,8 @@ export function TareaDetalle() {
 
       <div className="glass fixed inset-x-0 bottom-0 z-30 flex gap-2.5 border-t border-border-subtle px-5 pt-3 pb-[calc(env(safe-area-inset-bottom)+14px)]">
         <SelectMenu
-          label="Mover a"
-          buttonText="Mover a…"
+          label={t('detail.moveTo')}
+          buttonText={t('detail.moveToEllipsis')}
           large
           className="h-12 flex-1 justify-center text-md"
           value={task.columnId}
@@ -160,7 +172,7 @@ export function TareaDetalle() {
           onClick={toggleDone}
         >
           <icons.check size={16} weight="bold" />
-          {done ? 'Reabrir' : 'Completar'}
+          {done ? t('detail.reopen') : t('detail.complete')}
         </Button>
       </div>
     </div>
@@ -168,19 +180,20 @@ export function TareaDetalle() {
 }
 
 function Missing({ projectId }: { projectId: string }) {
+  const { t } = useTranslation('task')
   return (
     <EmptyState
       icon="notes"
-      title="No encontramos esta tarea"
+      title={t('detail.notFoundTitle')}
       actions={
         <Button asChild variant="primary">
           <Link to="/proyectos/$projectId" params={{ projectId }}>
-            Volver al tablero
+            {t('detail.backToBoard')}
           </Link>
         </Button>
       }
     >
-      Puede que se haya archivado o que el enlace sea de otra cuenta.
+      {t('detail.notFoundHint')}
     </EmptyState>
   )
 }

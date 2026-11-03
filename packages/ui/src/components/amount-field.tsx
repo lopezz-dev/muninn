@@ -21,8 +21,13 @@ export function formatAmount(cents: number, locale = 'es-ES'): string {
   }).format(cents / 100)
 }
 
-/** Céntimos → texto editable sin separador de miles («1284,30»). */
-const toEditable = (cents: number) => formatAmount(cents).replace(/\./g, '')
+/** Céntimos → texto editable sin separador de miles («1284,30»; en inglés, «1284.30»). */
+const toEditable = (cents: number, locale: string) =>
+  new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  }).format(cents / 100)
 
 export interface AmountFieldProps
   extends Omit<TextFieldProps, 'value' | 'defaultValue' | 'onChange' | 'type' | 'inputMode'> {
@@ -31,6 +36,8 @@ export interface AmountFieldProps
   onValueChange: (cents: number | null) => void
   /** Símbolo a la derecha. */
   currency?: string
+  /** Idioma de Intl para mostrar el importe (separadores). Al teclear vale coma o punto. Por defecto, `es-ES`. */
+  locale?: string
 }
 
 /**
@@ -41,6 +48,7 @@ export function AmountField({
   valueCents,
   onValueChange,
   currency = '€',
+  locale = 'es-ES',
   onFocus,
   onBlur,
   className,
@@ -48,7 +56,7 @@ export function AmountField({
 }: AmountFieldProps) {
   // Mientras se edita mostramos lo que escribe el usuario; fuera de foco, el valor formateado.
   const [draft, setDraft] = useState<string | null>(null)
-  const shown = draft ?? (valueCents == null ? '' : formatAmount(valueCents))
+  const shown = draft ?? (valueCents == null ? '' : formatAmount(valueCents, locale))
 
   return (
     <TextField
@@ -59,7 +67,7 @@ export function AmountField({
       value={shown}
       trailing={currency}
       onFocus={(e) => {
-        setDraft(valueCents == null ? '' : toEditable(valueCents))
+        setDraft(valueCents == null ? '' : toEditable(valueCents, locale))
         onFocus?.(e)
       }}
       onChange={(e) => {

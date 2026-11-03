@@ -1,6 +1,7 @@
 import type { BoardColumn, Muninn, Project, TaskWithColumn } from '@muninn/core'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { i18n, t } from '../i18n'
 import { notifyUndo } from './feedback'
 import { useEnabledModules } from './modules'
 import { useMuninn } from './muninn'
@@ -11,8 +12,6 @@ import { invalidateProjects, projectQuery } from './queries'
  * Columna «Para el agente» (ADR-0032): mover ahí una tarea de GitHub etiqueta su issue, y la Claude Code
  * GitHub Action del repo la resuelve en un PR. Aquí, lo que necesita la interfaz.
  */
-
-export const AGENT_ONLY_GITHUB = 'Solo las tareas de GitHub pueden ir al agente'
 
 /** Se ofrece en proyectos con repo y con el módulo GitHub activado; nunca en una columna «Hecho». */
 export const canBeAgentColumn = (
@@ -62,27 +61,27 @@ export async function setAgentColumn(
 ): Promise<boolean> {
   const prev = project.agentColumnId ?? null
   if (prev === columnId) return true
+  // Se llama desde el tablero y desde GitHub: los textos de `task` tienen que estar cargados.
+  await i18n.loadNamespaces('task')
   try {
     await serial(project.id, () => m.projects.update(project.id, { agentColumnId: columnId }))
     await invalidateProjects(qc)
   } catch (err) {
-    fail('No se pudo cambiar la columna del agente', err)
+    fail(t('agent.changeFailed', { ns: 'task' }), err)
     return false
   }
   if (undoing) return true
   const nameOf = (id: string | null) => columns.find((c) => c.id === id)?.name
   const name = nameOf(columnId)
   const prevName = nameOf(prev)
-  notifyUndo(name ? `«${name}» es ahora la columna del agente` : 'Ya no hay columna del agente', {
+  notifyUndo(name ? t('agent.isNow', { ns: 'task', name }) : t('agent.none', { ns: 'task' }), {
     icon: 'agent',
-    description: name
-      ? 'Lo que muevas aquí desde GitHub se etiqueta para que lo resuelva el agente.'
-      : undefined,
+    description: name ? t('agent.isNowHint', { ns: 'task' }) : undefined,
     undo: () =>
       setAgentColumn(m, qc, { id: project.id, agentColumnId: columnId }, columns, prev, true),
     undone: prevName
-      ? `«${prevName}» vuelve a ser la columna del agente`
-      : 'Sin columna del agente',
+      ? t('agent.isAgain', { ns: 'task', name: prevName })
+      : t('agent.noneUndone', { ns: 'task' }),
   })
   return true
 }

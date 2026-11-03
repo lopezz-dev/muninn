@@ -1,5 +1,6 @@
 import { notify } from '@muninn/ui'
 import type { MouseEvent } from 'react'
+import { t } from '../i18n'
 import { isTauri } from './auth'
 import { askLink, type LinkAsk } from './link-menu'
 
@@ -39,7 +40,7 @@ export async function openExternal(url: string, deps: OpenerDeps = defaultDeps):
     return true
   } catch (err) {
     console.warn('[enlaces]', err)
-    notify.error('No se ha podido abrir el enlace', { description: url })
+    notify.error(t('link.openFailed'), { description: url })
     return false
   }
 }
@@ -110,6 +111,6 @@ export function openImage(dataUrl: string, open: (url: string) => void = default
     setTimeout(() => URL.revokeObjectURL(url), 60_000)
   } catch (err) {
     console.warn('[enlaces]', err)
-    notify.error('No se ha podido abrir la imagen')
+    notify.error(t('link.imageFailed'))
   }
 }

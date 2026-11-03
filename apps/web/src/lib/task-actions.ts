@@ -9,7 +9,8 @@ import type {
 } from '@muninn/core'
 import { type IconName, notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
-import { AGENT_ONLY_GITHUB, blocksAgentDrop, flushGithubSoon } from './agent'
+import { i18n, t } from '../i18n'
+import { blocksAgentDrop, flushGithubSoon } from './agent'
 import { applyTaskMove, type BoardData, indexInColumn } from './board'
 import { dueToast } from './calendar'
 import { notifyUndo } from './feedback'
@@ -31,6 +32,12 @@ const board = (qc: QueryClient, projectId: string) =>
 /** El proyecto en caché (para su columna del agente). */
 const cachedProject = (qc: QueryClient, projectId: string) =>
   qc.getQueryData<Project>(keys.project(projectId))
+
+/**
+ * Los avisos usan el namespace `task`, y estas acciones se llaman también desde el tablero, Inicio o el diálogo de
+ * nueva tarea: se carga antes de avisar (si ya está, no espera a nada).
+ */
+const ready = () => i18n.loadNamespaces('task')
 
 // ─── Mover ──────────────────────────────────────────────────────────────────
 
@@ -55,8 +62,9 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
   // La columna del agente solo admite tareas de una issue (ADR-0032): se avisa antes de moverla.
   const cached = board(qc, projectId)?.tasks.find((t) => t.id === taskId)
   if (cached && blocksAgentDrop(cachedProject(qc, projectId), cached, columnId)) {
-    notify.error(AGENT_ONLY_GITHUB, {
-      description: 'Las que creas en Muninn no tienen una issue que etiquetar.',
+    await ready()
+    notify.error(t('actions.agentOnlyGithub', { ns: 'task' }), {
+      description: t('actions.agentOnlyGithubHint', { ns: 'task' }),
     })
     return false
   }
@@ -64,14 +72,15 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
   const task = prev?.tasks.find((t) => t.id === taskId)
   const fromColumnId = task?.columnId ?? o.fromColumnId
   const fromIndex = prev ? indexInColumn(prev, taskId) : undefined
-  const title = task?.title ?? o.title ?? 'Tarea'
+  await ready()
+  const title = task?.title ?? o.title ?? t('actions.defaultTitle', { ns: 'task' })
   const target = prev?.columns.find((c) => c.id === columnId)
 
   try {
     await serial(projectId, () => m.tasks.move(taskId, { columnId, index }))
   } catch (err) {
     rollback(qc, projectId, prev)
-    fail('No se pudo mover la tarea', err)
+    fail(t('actions.moveFailed', { ns: 'task' }), err)
     return false
   }
   settle(qc, projectId, taskId)
@@ -84,16 +93,23 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
   const over = target?.wipLimit != null && inTarget + 1 > target.wipLimit
   notifyUndo(
     o.verb === 'completed'
-      ? `«${title}» completada`
+      ? t('actions.completed', { ns: 'task', title })
       : o.verb === 'reopened'
-        ? `«${title}» reabierta`
+        ? t('actions.reopened', { ns: 'task', title })
         : same
-          ? `«${title}» reordenada`
-          : `«${title}» movida${target ? ` a ${target.name}` : ''}`,
+          ? t('actions.reordered', { ns: 'task', title })
+          : target
+            ? t('actions.movedTo', { ns: 'task', title, column: target.name })
+            : t('actions.moved', { ns: 'task', title }),
     {
       icon: o.verb === 'completed' ? 'check' : 'move',
       description: over
-        ? `${target?.name} supera su límite (${inTarget + 1} de ${target?.wipLimit})`
+        ? t('actions.overLimit', {
+            ns: 'task',
+            column: target?.name ?? '',
+            count: inTarget + 1,
+            limit: target?.wipLimit ?? 0,
+          })
         : undefined,
       // Sin tablero en caché ni `o.fromColumnId` no se sabe de dónde venía.
       undo: fromColumnId
@@ -108,7 +124,7 @@ export async function moveTask(m: Muninn, qc: QueryClient, o: MoveOptions): Prom
               undoing: true,
             })
         : null,
-      undone: ['Movimiento deshecho', { icon: 'move' }],
+      undone: [t('actions.moveUndone', { ns: 'task' }), { icon: 'move' }],
     },
   )
   return true
@@ -122,8 +138,9 @@ async function columnsOf(m: Muninn, qc: QueryClient, projectId: string): Promise
 export async function completeTask(m: Muninn, qc: QueryClient, task: TaskRef) {
   const done = (await columnsOf(m, qc, task.projectId)).find((c) => c.kind === 'done')
   if (!done) {
-    notify.error('Este proyecto no tiene una columna «Hecho»', {
-      description: 'Añade una o cambia el tipo de una columna.',
+    await ready()
+    notify.error(t('actions.noDoneColumn', { ns: 'task' }), {
+      description: t('actions.noDoneColumnHint', { ns: 'task' }),
     })
     return false
   }
@@ -163,6 +180,7 @@ export async function createTask(
   input: CreateTaskInput,
 ): Promise<TaskWithColumn | null> {
   let created: TaskWithColumn
+  await ready()
   try {
     const task = await serial(input.projectId, () => m.tasks.create(input))
     const data = board(qc, task.projectId)
@@ -183,15 +201,15 @@ export async function createTask(
       })
     }
   } catch (err) {
-    fail('No se pudo crear la tarea', err)
+    fail(t('actions.createFailed', { ns: 'task' }), err)
     return null
   }
   settle(qc, created.projectId, created.id)
-  notifyUndo(`Tarea «${created.title}» creada`, {
+  notifyUndo(t('actions.created', { ns: 'task', title: created.title }), {
     icon: 'plus',
     description: created.column.name || undefined,
     undo: () => archiveTask(m, qc, created, { undoing: true }),
-    undone: [`«${created.title}» archivada`, { icon: 'archive' }],
+    undone: [t('actions.archived', { ns: 'task', title: created.title }), { icon: 'archive' }],
   })
   return created
 }
@@ -219,11 +237,12 @@ export async function patchTask(
     ...d,
     tasks: d.tasks.map((t) => (t.id === task.id ? ({ ...t, ...patch } as TaskWithColumn) : t)),
   }))
+  await ready()
   try {
     await serial(task.projectId, () => m.tasks.update(task.id, patch))
   } catch (err) {
     rollback(qc, task.projectId, prev)
-    fail('No se pudo guardar el cambio', err)
+    fail(t('actions.saveFailed', { ns: 'task' }), err)
     return false
   }
   settle(qc, task.projectId, task.id)
@@ -248,6 +267,8 @@ export async function setDueDate(
   dueDate: string | null,
 ): Promise<boolean> {
   if ((task.dueDate ?? null) === dueDate) return true
+  // El aviso es del calendario (`board`): se puede cambiar la fecha desde otras pantallas.
+  await i18n.loadNamespaces('board')
   return patchTask(
     m,
     qc,
@@ -268,23 +289,24 @@ export async function archiveTask(
     ...d,
     tasks: d.tasks.filter((t) => t.id !== task.id),
   }))
+  await ready()
   try {
     await serial(task.projectId, () => m.tasks.archive(task.id))
   } catch (err) {
     rollback(qc, task.projectId, prev)
-    fail('No se pudo archivar la tarea', err)
+    fail(t('actions.archiveFailed', { ns: 'task' }), err)
     return false
   }
   settle(qc, task.projectId, task.id)
   if (opts.undoing) return true
-  notifyUndo(`«${task.title}» archivada`, {
+  notifyUndo(t('actions.archived', { ns: 'task', title: task.title }), {
     icon: 'archive',
     undo: async () => {
       await serial(task.projectId, () => m.tasks.restore(task.id))
       settle(qc, task.projectId, task.id)
     },
-    undone: [`«${task.title}» recuperada`, { icon: 'archive' }],
-    failTitle: 'No se pudo recuperar la tarea',
+    undone: [t('actions.restored', { ns: 'task', title: task.title }), { icon: 'archive' }],
+    failTitle: t('actions.restoreFailed', { ns: 'task' }),
   })
   return true
 }
@@ -295,22 +317,23 @@ export async function restoreArchivedTask(
   qc: QueryClient,
   task: Pick<TaskRef, 'id' | 'projectId' | 'title'>,
 ): Promise<boolean> {
+  await ready()
   try {
     await serial(task.projectId, () => m.tasks.restore(task.id))
   } catch (err) {
-    fail('No se pudo recuperar la tarea', err)
+    fail(t('actions.restoreFailed', { ns: 'task' }), err)
     return false
   }
   settle(qc, task.projectId, task.id)
-  notifyUndo(`«${task.title}» recuperada`, {
+  notifyUndo(t('actions.restored', { ns: 'task', title: task.title }), {
     icon: 'archive',
-    description: 'Vuelve a estar en su columna.',
+    description: t('actions.restoredHint', { ns: 'task' }),
     undo: async () => {
       await serial(task.projectId, () => m.tasks.archive(task.id))
       settle(qc, task.projectId, task.id)
     },
-    undone: [`«${task.title}» archivada otra vez`, { icon: 'archive' }],
-    failTitle: 'No se pudo archivar la tarea',
+    undone: [t('actions.archivedAgain', { ns: 'task', title: task.title }), { icon: 'archive' }],
+    failTitle: t('actions.archiveFailed', { ns: 'task' }),
   })
   return true
 }
@@ -341,23 +364,32 @@ export function deleteArchivedTasksWithUndo(
     settle(qc, projectId)
     view.show(failed)
     if (failed.length)
-      notify.error('No se pudo eliminar todo', {
-        description: `${failed.length === 1 ? 'Queda 1' : `Quedan ${failed.length}`} en Archivadas.`,
+      notify.error(t('actions.deleteFailed', { ns: 'task' }), {
+        description: t('actions.deleteLeft', { ns: 'task', count: failed.length }),
       })
   }, DELETE_DELAY)
-  notifyUndo(one ? `«${tasks[0]?.title}» eliminada` : `${tasks.length} tareas eliminadas`, {
-    icon: 'trash',
-    description: fromGithub
-      ? 'Si su issue de GitHub sigue abierta, volverá con la próxima sincronización.'
-      : 'Con sus subtareas. Sus notas se quedan sin tarea.',
-    duration: DELETE_DELAY,
-    // Aún no se ha borrado nada: deshacer es cancelar la espera, no puede fallar.
-    undo: () => {
-      clearTimeout(timer)
-      view.show(ids)
-    },
-    undone: one ? 'Tarea devuelta a Archivadas' : 'Tareas devueltas a Archivadas',
-  })
+  const toast = () =>
+    notifyUndo(
+      one
+        ? t('actions.deletedOne', { ns: 'task', title: tasks[0]?.title ?? '' })
+        : t('actions.deletedMany', { ns: 'task', count: tasks.length }),
+      {
+        icon: 'trash',
+        description: fromGithub
+          ? t('actions.deletedGithubHint', { ns: 'task' })
+          : t('actions.deletedHint', { ns: 'task' }),
+        duration: DELETE_DELAY,
+        // Aún no se ha borrado nada: deshacer es cancelar la espera, no puede fallar.
+        undo: () => {
+          clearTimeout(timer)
+          view.show(ids)
+        },
+        undone: t(one ? 'actions.deleteUndoneOne' : 'actions.deleteUndoneMany', { ns: 'task' }),
+      },
+    )
+  // Es síncrona (la vista se actualiza ya): si el namespace aún no está, el aviso sale al tenerlo.
+  if (i18n.hasLoadedNamespace('task')) toast()
+  else void ready().then(toast)
 }
 
 // ─── Subtareas ──────────────────────────────────────────────────────────────
@@ -374,14 +406,15 @@ export async function addChecklistItem(
   title: string,
 ): Promise<boolean> {
   let item: ChecklistItem
+  await ready()
   try {
     item = await m.checklist.add(task.id, title)
   } catch (err) {
-    fail('No se pudo añadir la subtarea', err)
+    fail(t('actions.subtaskAddFailed', { ns: 'task' }), err)
     return false
   }
   refreshChecklist(qc, task)
-  notifyUndo('Subtarea añadida', {
+  notifyUndo(t('actions.subtaskAdded', { ns: 'task' }), {
     icon: 'plus',
     description: item.title,
     id: `cl-${task.id}`,
@@ -389,8 +422,8 @@ export async function addChecklistItem(
       await m.checklist.delete(item.id)
       refreshChecklist(qc, task)
     },
-    undone: 'Subtarea quitada',
-    failTitle: 'No se pudo quitar la subtarea',
+    undone: t('actions.subtaskRemoved', { ns: 'task' }),
+    failTitle: t('actions.subtaskRemoveFailed', { ns: 'task' }),
   })
   return true
 }
@@ -408,16 +441,17 @@ export async function setChecklistDone(
   qc.setQueryData<ChecklistItem[]>(key, (items) =>
     items?.map((i) => (i.id === item.id ? { ...i, done } : i)),
   )
+  await ready()
   try {
     await m.checklist.update(item.id, { done })
   } catch (err) {
     qc.setQueryData(key, prev)
-    fail('No se pudo actualizar la subtarea', err)
+    fail(t('actions.subtaskUpdateFailed', { ns: 'task' }), err)
     return false
   }
   refreshChecklist(qc, task)
   if (opts.undoing) return true
-  notifyUndo(done ? 'Subtarea hecha' : 'Subtarea pendiente', {
+  notifyUndo(t(done ? 'actions.subtaskDone' : 'actions.subtaskPending', { ns: 'task' }), {
     icon: 'check',
     description: item.title,
     id: `cl-${item.id}`,
@@ -444,16 +478,17 @@ export async function moveChecklistItem(
     const rest = items.filter((i) => i.id !== item.id)
     return [...rest.slice(0, index), item, ...rest.slice(index)]
   })
+  await ready()
   try {
     await m.checklist.move(item.id, index)
   } catch (err) {
     qc.setQueryData(key, prev)
-    fail('No se pudo mover la subtarea', err)
+    fail(t('actions.subtaskMoveFailed', { ns: 'task' }), err)
     return false
   }
   refreshChecklist(qc, task)
   if (opts.undoing || from < 0) return true
-  notifyUndo('Subtarea movida', {
+  notifyUndo(t('actions.subtaskMoved', { ns: 'task' }), {
     icon: 'move',
     description: item.title,
     id: `cl-move-${item.id}`,
@@ -472,23 +507,24 @@ export async function deleteChecklistItem(
   const key = keys.checklist(task.id)
   const prev = qc.getQueryData<ChecklistItem[]>(key)
   qc.setQueryData<ChecklistItem[]>(key, (items) => items?.filter((i) => i.id !== item.id))
+  await ready()
   try {
     await m.checklist.delete(item.id)
   } catch (err) {
     qc.setQueryData(key, prev)
-    fail('No se pudo quitar la subtarea', err)
+    fail(t('actions.subtaskRemoveFailed', { ns: 'task' }), err)
     return false
   }
   refreshChecklist(qc, task)
-  notifyUndo('Subtarea quitada', {
+  notifyUndo(t('actions.subtaskRemoved', { ns: 'task' }), {
     icon: 'trash',
     description: item.title,
     undo: async () => {
       await m.checklist.add(task.id, item.title, { done: item.done, index })
       refreshChecklist(qc, task)
     },
-    undone: 'Subtarea recuperada',
-    failTitle: 'No se pudo recuperar la subtarea',
+    undone: t('actions.subtaskRestored', { ns: 'task' }),
+    failTitle: t('actions.subtaskRestoreFailed', { ns: 'task' }),
   })
   return true
 }

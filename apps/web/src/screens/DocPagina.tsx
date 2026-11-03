@@ -1,8 +1,9 @@
 import { Button, cn, icons } from '@muninn/ui'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../components/Page'
-import { type Doc, docLink, groupLabel, neighbours } from '../lib/docs'
+import { type Doc, docLink, neighbours } from '../lib/docs'
 import { useNoIndex, usePageMeta } from '../lib/seo'
 import { type CalloutLook, Markdown } from '../markdown/Markdown'
 import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/outline'
@@ -140,6 +141,7 @@ function Toc({ toc, active, touch }: { toc: OutlineItem[]; active?: string; touc
 
 /** Guía anterior o siguiente, con su icono y su grupo. */
 function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
+  const { t } = useTranslation('docs')
   const next = dir === 'next'
   const Arrow = next ? icons.move : icons.chevronLeft
   return (
@@ -155,7 +157,7 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
       <DocTile doc={doc} size="sm" />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-xs text-fg-subtle">
-          {next ? 'Siguiente' : 'Anterior'} · {groupLabel(doc.group)}
+          {next ? t('page.next') : t('page.previous')} · {t(`groups.${doc.group}`)}
         </span>
         <span className="truncate text-base font-medium">{doc.title}</span>
       </span>
@@ -165,19 +167,20 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
 
 /** Guía que no existe (enlace de otra versión de la ayuda): fuera del índice de los buscadores. */
 function DocNotFound() {
+  const { t } = useTranslation('docs')
   useNoIndex()
   return (
     <EmptyState
       icon="docs"
-      title="No encontramos esta guía"
+      title={t('page.notFoundTitle')}
       className="mt-10 flex-1"
       actions={
         <Button asChild variant="primary">
-          <Link to="/documentacion">Ver la documentación</Link>
+          <Link to="/documentacion">{t('page.seeDocs')}</Link>
         </Button>
       }
     >
-      Puede que el enlace sea de una versión anterior de la ayuda.
+      {t('page.notFoundText')}
     </EmptyState>
   )
 }
@@ -190,13 +193,14 @@ function DocNotFound() {
  * queda fijo debajo. En el móvil hace scroll la página y van al final, como siempre.
  */
 export function DocPagina() {
+  const { t } = useTranslation('docs')
   const { pagina } = route.useParams()
   const doc = DOCS.find((d) => d.slug === pagina)
   const toc = useMemo(() => (doc ? outline(doc.body) : []), [doc])
   const active = useActiveHeading(toc.map((t) => t.id))
 
   usePageMeta({
-    title: doc?.title ?? 'Documentación',
+    title: doc?.title ?? t('title'),
     description: doc?.description || undefined,
   })
 
@@ -218,18 +222,18 @@ export function DocPagina() {
             className="-mb-1 flex h-11 items-center gap-1.5 self-start text-md text-accent md:hidden"
           >
             <icons.chevronLeft size={18} aria-hidden="true" />
-            Documentación
+            {t('title')}
           </Link>
           <nav
-            aria-label="Estás en"
+            aria-label={t('page.youAreHere')}
             className="hidden items-center gap-1.5 text-sm text-fg-subtle md:flex"
           >
             <Link to="/documentacion" className="flex items-center gap-1.5 hover:text-fg">
               <icons.docs size={14} aria-hidden="true" />
-              Documentación
+              {t('title')}
             </Link>
             <icons.chevronRight size={12} aria-hidden="true" className="text-fg-faint" />
-            <span>{groupLabel(doc.group)}</span>
+            <span>{t(`groups.${doc.group}`)}</span>
             <icons.chevronRight size={12} aria-hidden="true" className="text-fg-faint" />
             <span className="text-fg-muted">{doc.title}</span>
           </nav>
@@ -245,12 +249,12 @@ export function DocPagina() {
             <StatusBadge status={doc.status} />
             <span className="flex items-center gap-1.5">
               <icons.clock size={14} aria-hidden="true" />
-              {doc.minutes} min de lectura
+              {t('page.minutes', { count: doc.minutes })}
             </span>
             {sections > 1 ? (
               <span className="flex items-center gap-1.5">
                 <DocIcon name="list" size={14} />
-                {sections} apartados
+                {t('page.sections', { count: sections })}
               </span>
             ) : null}
           </p>
@@ -259,8 +263,10 @@ export function DocPagina() {
             <details className="group glass rounded-lg border border-border xl:hidden">
               <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-3.5 text-md text-fg [&::-webkit-details-marker]:hidden">
                 <DocIcon name="list" size={16} className="text-fg-subtle" />
-                En esta página
-                <span className="text-fg-subtle">· {toc.length} apartados</span>
+                {t('page.onThisPage')}
+                <span className="text-fg-subtle">
+                  · {t('page.sections', { count: toc.length })}
+                </span>
                 <icons.chevronDown
                   size={16}
                   aria-hidden="true"
@@ -284,7 +290,7 @@ export function DocPagina() {
 
         {prev || next ? (
           <nav
-            aria-label="Otras guías"
+            aria-label={t('page.otherGuides')}
             className="mt-8 flex shrink-0 flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row md:mt-0 md:pt-3"
           >
             {prev ? (
@@ -303,12 +309,12 @@ export function DocPagina() {
 
       {toc.length > 1 ? (
         <aside
-          aria-label="En esta página"
+          aria-label={t('page.onThisPage')}
           className="hidden min-h-0 w-[220px] shrink-0 flex-col gap-1 overflow-y-auto pt-1 xl:flex"
         >
           <span className="mb-1.5 flex items-center gap-1.5 px-2 text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
             <DocIcon name="list" size={13} />
-            En esta página
+            {t('page.onThisPage')}
           </span>
           <Toc toc={toc} active={active} />
         </aside>

@@ -10,7 +10,9 @@ import {
   MenuTrigger,
   SheetContent,
 } from '@muninn/ui'
+import { useTranslation } from 'react-i18next'
 import { FilterChip } from '../../components/FilterChip'
+import { t } from '../../i18n'
 import { PRIORITIES } from '../../lib/board'
 import {
   activeGroups,
@@ -33,12 +35,16 @@ interface GroupProps {
   labels: string[]
 }
 
-/** Los cuatro grupos de opciones, con la clave del filtro a la que corresponde cada uno. */
+/**
+ * Los cuatro grupos de opciones, con la clave del filtro a la que corresponde cada uno. Los textos se leen al pintar,
+ * en el idioma activo (ADR-0077).
+ */
 function groups({ filter, onChange, labels }: GroupProps) {
   return [
     {
       id: 'priorities',
-      label: 'Prioridad',
+      label: t('filter.groups.priorities', { ns: 'board' }),
+      by: t('filter.by.priorities', { ns: 'board' }),
       options: PRIORITIES as Option<string>[],
       selected: filter.priorities as string[],
       toggle: (v: string) =>
@@ -47,16 +53,18 @@ function groups({ filter, onChange, labels }: GroupProps) {
     },
     {
       id: 'labels',
-      label: 'Etiquetas',
+      label: t('filter.groups.labels', { ns: 'board' }),
+      by: t('filter.by.labels', { ns: 'board' }),
       options: labels.map((l) => ({ value: l, label: l })),
       selected: filter.labels,
       toggle: (v: string) => onChange({ ...filter, labels: toggle(filter.labels, v) }),
       clear: () => onChange({ ...filter, labels: [] }),
-      empty: 'Aún no hay etiquetas en este tablero.',
+      empty: t('filter.noLabels', { ns: 'board' }),
     },
     {
       id: 'sources',
-      label: 'Origen',
+      label: t('filter.groups.sources', { ns: 'board' }),
+      by: t('filter.by.sources', { ns: 'board' }),
       options: SOURCE_OPTIONS as Option<string>[],
       selected: filter.sources as string[],
       toggle: (v: string) => onChange({ ...filter, sources: toggle(filter.sources, v as never) }),
@@ -64,7 +72,8 @@ function groups({ filter, onChange, labels }: GroupProps) {
     },
     {
       id: 'due',
-      label: 'Vence',
+      label: t('filter.groups.due', { ns: 'board' }),
+      by: t('filter.by.due', { ns: 'board' }),
       options: DUE_OPTIONS as Option<string>[],
       selected: filter.due as string[],
       toggle: (v: string) => onChange({ ...filter, due: toggle(filter.due, v as never) }),
@@ -83,13 +92,14 @@ function summary(label: string, options: Option<string>[], selected: string[]) {
 }
 
 function FilterMenu({ g }: { g: ReturnType<typeof groups>[number] }) {
+  const { t } = useTranslation('board')
   const on = g.selected.length > 0
   return (
     <Menu>
       <MenuTrigger asChild>
         <button
           type="button"
-          aria-label={`Filtrar por ${g.label.toLowerCase()}`}
+          aria-label={g.by}
           className={cn(
             'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:outline-accent',
             on
@@ -128,7 +138,7 @@ function FilterMenu({ g }: { g: ReturnType<typeof groups>[number] }) {
         {on ? (
           <>
             <MenuSeparator />
-            <MenuItem onSelect={g.clear}>Quitar selección</MenuItem>
+            <MenuItem onSelect={g.clear}>{t('filter.clearSelection')}</MenuItem>
           </>
         ) : null}
       </MenuContent>
@@ -145,6 +155,7 @@ function SearchField({
   onChange: (v: string) => void
   touch?: boolean
 }) {
+  const { t } = useTranslation('board')
   return (
     <label
       className={cn(
@@ -155,8 +166,8 @@ function SearchField({
       <icons.search size={touch ? 16 : 14} aria-hidden="true" />
       <input
         type="search"
-        aria-label="Filtrar tareas por texto"
-        placeholder="Filtrar tareas…"
+        aria-label={t('filter.searchLabel')}
+        placeholder={t('filter.searchPlaceholder')}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         // 16 px en móvil: con menos, iOS hace zoom al enfocar el campo.
@@ -174,9 +185,10 @@ interface BarProps extends GroupProps {
 
 /** Barra de filtros del tablero de escritorio (Tablero.dc.html): texto, prioridad, etiquetas, origen y vencimiento. */
 export function FilterBar({ filter, onChange, labels, shown, total }: BarProps) {
+  const { t } = useTranslation('board')
   const active = activeGroups(filter) > 0
   return (
-    <search aria-label="Filtrar el tablero" className="flex flex-wrap items-center gap-2">
+    <search aria-label={t('filter.boardLabel')} className="flex flex-wrap items-center gap-2">
       <SearchField value={filter.query} onChange={(query) => onChange({ ...filter, query })} />
       {groups({ filter, onChange, labels }).map((g) => (
         <FilterMenu key={g.id} g={g} />
@@ -188,10 +200,10 @@ export function FilterBar({ filter, onChange, labels, shown, total }: BarProps) 
             onClick={() => onChange(NO_FILTER)}
             className="h-7 cursor-pointer rounded-md px-2 text-[12.5px] font-medium text-accent hover:underline"
           >
-            Quitar filtros
+            {t('filter.clear')}
           </button>
           <span role="status" className="ml-auto text-xs text-fg-subtle tabular">
-            {shown} de {total} {total === 1 ? 'tarea' : 'tareas'}
+            {t('filter.shownOf', { shown, count: total })}
           </span>
         </>
       ) : null}
@@ -211,17 +223,18 @@ export function FilterSummary({
   shown: number
   total: number
 }) {
+  const { t } = useTranslation('board')
   if (activeGroups(filter) === 0) return null
   return (
     <p role="status" className="flex items-center gap-2 text-xs text-fg-subtle">
       <icons.filter size={13} aria-hidden="true" />
-      {shown} de {total} {total === 1 ? 'tarea' : 'tareas'}
+      {t('filter.shownOf', { shown, count: total })}
       <button
         type="button"
         onClick={onClear}
         className="ml-auto h-9 cursor-pointer px-1 text-sm font-medium text-accent"
       >
-        Quitar filtros
+        {t('filter.clear')}
       </button>
     </p>
   )
@@ -240,12 +253,13 @@ export function FilterSheet({
   onOpenChange: (open: boolean) => void
   shown: number
 }) {
+  const { t } = useTranslation('board')
   const active = activeGroups(filter) > 0
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        title="Filtrar tareas"
+        title={t('filter.sheetTitle')}
         footer={
           <>
             <Button
@@ -254,7 +268,7 @@ export function FilterSheet({
               disabled={!active}
               onClick={() => onChange(NO_FILTER)}
             >
-              Quitar filtros
+              {t('filter.clear')}
             </Button>
             <Button
               size="lg"
@@ -262,7 +276,7 @@ export function FilterSheet({
               className="flex-1"
               onClick={() => onOpenChange(false)}
             >
-              Ver {shown} {shown === 1 ? 'tarea' : 'tareas'}
+              {t('filter.showTasks', { count: shown })}
             </Button>
           </>
         }

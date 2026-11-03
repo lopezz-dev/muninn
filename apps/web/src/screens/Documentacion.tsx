@@ -1,7 +1,8 @@
 import { cn, icons } from '@muninn/ui'
 import { Link, Outlet, useMatch } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { Page } from '../components/Page'
-import { type Doc, groupDocs } from '../lib/docs'
+import { type Doc, type DocGroupId, groupDocs } from '../lib/docs'
 import { usePageMeta } from '../lib/seo'
 import { useIsDesktop } from '../lib/use-media'
 import { DOCS } from './docs/content'
@@ -12,8 +13,17 @@ import { TreeItem, TreeList } from './docs/tree'
 
 const GROUPS = groupDocs(DOCS)
 
-/** Título de grupo: mayúsculas pequeñas con su icono. */
-function GroupTitle({ id, label, className }: { id: string; label: string; className?: string }) {
+/** Título de grupo: mayúsculas pequeñas con su icono. Sin `label`, el nombre del grupo en el idioma activo. */
+function GroupTitle({
+  id,
+  label,
+  className,
+}: {
+  id: DocGroupId
+  label?: string
+  className?: string
+}) {
+  const { t } = useTranslation('docs')
   return (
     <h2
       className={cn(
@@ -21,8 +31,8 @@ function GroupTitle({ id, label, className }: { id: string; label: string; class
         className,
       )}
     >
-      <DocIcon name={GROUP_ICON[id as keyof typeof GROUP_ICON] ?? 'docs'} size={13} />
-      {label}
+      <DocIcon name={GROUP_ICON[id] ?? 'docs'} size={13} />
+      {label ?? t(`groups.${id}`)}
     </h2>
   )
 }
@@ -56,17 +66,18 @@ function DocCard({ doc, featured }: { doc: Doc; featured?: boolean }) {
 
 /** Qué significan «Parcial» y «Próximamente». */
 function Leyenda() {
+  const { t } = useTranslation('docs')
   return (
     <aside className="mt-1 flex flex-col gap-2 rounded-lg bg-surface-sunken px-4 py-3.5 text-sm leading-relaxed text-fg-subtle">
       <span className="flex items-center gap-1.5 font-medium text-fg-muted">
         <icons.info size={14} aria-hidden="true" />
-        Qué significan las marcas
+        {t('legend.title')}
       </span>
       <span>
-        <StatusBadge status="parcial" /> funciona, pero falta algo que la guía te cuenta.
+        <StatusBadge status="parcial" /> {t('legend.partial')}
       </span>
       <span>
-        <StatusBadge status="proximamente" /> aún no existe: la guía explica qué llegará.
+        <StatusBadge status="proximamente" /> {t('legend.soon')}
       </span>
     </aside>
   )
@@ -77,11 +88,9 @@ function Leyenda() {
  * guías por grupos. Con texto en el buscador, los resultados ocupan su sitio.
  */
 function Portada() {
+  const { t } = useTranslation('docs')
   const search = useDocSearch()
-  usePageMeta({
-    title: 'Documentación',
-    description: 'Guías de cada parte de Muninn: qué funciona ya y qué falta.',
-  })
+  usePageMeta({ title: t('title'), description: t('description') })
   const [first, ...rest] = GROUPS
 
   return (
@@ -93,28 +102,26 @@ function Portada() {
           </span>
           <div className="flex min-w-0 flex-col gap-1.5">
             <p className="text-2xs font-semibold tracking-wider text-fg-subtle uppercase">
-              Ayuda · versión {__APP_VERSION__}
+              {t('eyebrow', { version: __APP_VERSION__ })}
             </p>
             <h1 className="text-[28px] leading-tight font-semibold tracking-tight md:text-[34px]">
-              Documentación
+              {t('title')}
             </h1>
-            <p className="max-w-xl text-md text-fg-muted">
-              Guías cortas de cada parte de Muninn. Cada una dice qué funciona ya y qué falta.
-            </p>
+            <p className="max-w-xl text-md text-fg-muted">{t('intro')}</p>
           </div>
         </div>
         <DocSearchField search={search} size="lg" className="w-full lg:w-[440px]" />
       </header>
 
       {search.searching ? (
-        <section aria-label="Resultados de la búsqueda" className="max-w-3xl">
+        <section aria-label={t('searchResults')} className="max-w-3xl">
           <DocResults search={search} />
         </section>
       ) : (
         <>
           {first ? (
-            <section className="flex flex-col gap-3" aria-label="Empieza aquí">
-              <GroupTitle id={first.id} label="Empieza aquí" />
+            <section className="flex flex-col gap-3" aria-label={t('startHere')}>
+              <GroupTitle id={first.id} label={t('startHere')} />
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {first.docs.map((d) => (
                   <DocCard key={d.slug} doc={d} featured />
@@ -125,7 +132,7 @@ function Portada() {
           <div className="grid gap-7 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
             {rest.map((g, i) => (
               <section key={g.id} className="flex flex-col gap-2.5">
-                <GroupTitle id={g.id} label={g.label} />
+                <GroupTitle id={g.id} />
                 {g.docs.map((d) => (
                   <DocCard key={d.slug} doc={d} />
                 ))}
@@ -141,10 +148,11 @@ function Portada() {
 
 /** Índice de la izquierda (escritorio, con una guía abierta): buscador y guías colgando de su grupo, con scroll propio. */
 function Indice() {
+  const { t } = useTranslation('docs')
   const search = useDocSearch()
   return (
     <nav
-      aria-label="Páginas de ayuda"
+      aria-label={t('helpPages')}
       className="flex min-h-0 w-[248px] shrink-0 flex-col gap-3 overflow-y-auto"
     >
       <Link
@@ -152,7 +160,7 @@ function Indice() {
         className="flex items-center gap-2 px-1 text-xl font-semibold tracking-tight text-fg"
       >
         <icons.docs size={18} aria-hidden="true" className="text-accent" />
-        Documentación
+        {t('title')}
       </Link>
       <DocSearchField search={search} />
       {search.searching ? (
@@ -160,7 +168,7 @@ function Indice() {
       ) : (
         GROUPS.map((g) => (
           <div key={g.id} className="flex flex-col">
-            <GroupTitle id={g.id} label={g.label} className="px-2.5 pt-2 pb-1" />
+            <GroupTitle id={g.id} className="px-2.5 pt-2 pb-1" />
             <TreeList className="ml-4">
               {g.docs.map((d) => (
                 <TreeItem key={d.slug}>
@@ -187,7 +195,8 @@ function Indice() {
         ))
       )}
       <p className="mt-auto px-2.5 pt-3 text-xs leading-relaxed text-fg-faint">
-        Versión {__APP_VERSION__} · generada desde <span className="font-mono">docs/user</span>
+        {t('generatedFrom', { version: __APP_VERSION__ })}{' '}
+        <span className="font-mono">docs/user</span>
       </p>
     </nav>
   )

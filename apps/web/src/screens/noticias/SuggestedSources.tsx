@@ -2,6 +2,7 @@ import type { NewsSource } from '@muninn/core'
 import { Button, Dialog, DialogContent, Icon, icons, SheetContent } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMuninn } from '../../lib/muninn'
 import { addSource } from '../../lib/news'
 import { NEWS_CATALOG, sameFeed } from '../../lib/news-catalog'
@@ -22,6 +23,7 @@ export function SuggestedSources({
   onOpenChange: (open: boolean) => void
   sources: NewsSource[]
 }) {
+  const { t } = useTranslation('news')
   const m = useMuninn()
   const qc = useQueryClient()
   const desktop = useIsDesktop()
@@ -36,17 +38,14 @@ export function SuggestedSources({
 
   const body = (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-fg-muted text-pretty">
-        Feeds RSS publicados por el propio medio, organismo o empresa. Se guardan con su tema, así
-        tendrás una pestaña por cada uno.
-      </p>
+      <p className="text-sm text-fg-muted text-pretty">{t('suggested.intro')}</p>
       {NEWS_CATALOG.map((g) => (
         <section key={g.topic} aria-labelledby={`cat-${g.topic}`} className="flex flex-col">
           <h3
             id={`cat-${g.topic}`}
             className="pb-1.5 text-xs font-semibold tracking-wider text-fg-subtle uppercase"
           >
-            {g.topic}
+            {g.label}
           </h3>
           <ul>
             {g.sources.map((s) => {
@@ -65,18 +64,18 @@ export function SuggestedSources({
                   {added ? (
                     <span className="inline-flex h-8 shrink-0 items-center gap-1 px-2 text-xs font-medium text-fg-subtle">
                       <icons.check size={13} aria-hidden="true" />
-                      Añadida
+                      {t('suggested.added')}
                     </span>
                   ) : (
                     <Button
                       size={desktop ? 'sm' : 'md'}
-                      aria-label={`Añadir ${s.title}`}
+                      aria-label={t('suggested.addNamed', { title: s.title })}
                       disabled={busy !== null}
                       onClick={() => void add(s.url, s.title, g.topic)}
                       className="shrink-0"
                     >
                       <icons.plus size={13} />
-                      Añadir
+                      {t('suggested.add')}
                     </Button>
                   )}
                 </li>
@@ -91,11 +90,11 @@ export function SuggestedSources({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {desktop ? (
-        <DialogContent title="Fuentes oficiales" size="lg" className="max-h-[76vh]">
+        <DialogContent title={t('suggested.title')} size="lg" className="max-h-[76vh]">
           {body}
         </DialogContent>
       ) : (
-        <SheetContent side="bottom" title="Fuentes oficiales">
+        <SheetContent side="bottom" title={t('suggested.title')}>
           {body}
         </SheetContent>
       )}
@@ -103,22 +102,23 @@ export function SuggestedSources({
   )
 }
 
-/** Botón que abre el catálogo. */
+/** Botón que abre el catálogo (por defecto, «Fuentes oficiales»). */
 export function SuggestedSourcesButton({
   sources,
   variant = 'secondary',
-  label = 'Fuentes oficiales',
+  label,
 }: {
   sources: NewsSource[]
   variant?: 'primary' | 'secondary'
   label?: string
 }) {
+  const { t } = useTranslation('news')
   const [open, setOpen] = useState(false)
   return (
     <>
       <Button variant={variant} onClick={() => setOpen(true)}>
         <Icon name="news" />
-        {label}
+        {label ?? t('suggested.title')}
       </Button>
       <SuggestedSources open={open} onOpenChange={setOpen} sources={sources} />
     </>

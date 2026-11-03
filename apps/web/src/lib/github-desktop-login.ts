@@ -1,5 +1,6 @@
 import { notify } from '@muninn/ui'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { t } from '../i18n'
 import type { Account } from './auth'
 import {
   authErrorMessage,
@@ -13,15 +14,17 @@ import { OAuthAbortedError } from './oauth-callback'
 export function notifyGitHubFailure(err: unknown) {
   if (err instanceof OAuthAbortedError) {
     if (err.reason === 'timeout')
-      notify.error('GitHub no ha respondido', {
-        description: 'Han pasado cinco minutos sin volver a la app. Inténtalo de nuevo.',
+      notify.error(t('notify.githubTimeout', { ns: 'auth' }), {
+        description: t('notify.githubTimeoutHint', { ns: 'auth' }),
       })
     else if (err.reason === 'denied')
-      notify.info('Acceso con GitHub cancelado', { description: 'No has dado permiso en GitHub.' })
-    else notify.info('Acceso con GitHub cancelado')
+      notify.info(t('notify.githubCancelled', { ns: 'auth' }), {
+        description: t('notify.githubDenied', { ns: 'auth' }),
+      })
+    else notify.info(t('notify.githubCancelled', { ns: 'auth' }))
     return
   }
-  notify.error('No se pudo entrar con GitHub', { description: authErrorMessage(err) })
+  notify.error(t('notify.githubFailed', { ns: 'auth' }), { description: authErrorMessage(err) })
 }
 
 let launchChecked = false
@@ -49,7 +52,10 @@ export function useGitHubDesktopLogin(
       .then(async (callback) => {
         if (!callback) return
         const account = await completeAuthCallback(callback)
-        notify.success('Sesión iniciada', { icon: 'user', description: account.name })
+        notify.success(t('notify.signedIn', { ns: 'auth' }), {
+          icon: 'user',
+          description: account.name,
+        })
         await signedIn.current(account)
       })
       .catch(notifyGitHubFailure)
@@ -67,13 +73,16 @@ export function useGitHubDesktopLogin(
       const account = await signInWithGitHubDesktop({
         signal: ctrl.signal,
         onBrowser: () =>
-          notify.info('Sigue en el navegador', {
+          notify.info(t('notify.continueInBrowser', { ns: 'auth' }), {
             icon: 'github',
-            description: 'Autoriza a Muninn en GitHub y vuelve aquí.',
+            description: t('notify.continueInBrowserHint', { ns: 'auth' }),
           }),
       })
       if (!account) return
-      notify.success('Sesión iniciada', { icon: 'user', description: account.name })
+      notify.success(t('notify.signedIn', { ns: 'auth' }), {
+        icon: 'user',
+        description: account.name,
+      })
       await signedIn.current(account)
     } catch (err) {
       notifyGitHubFailure(err)
