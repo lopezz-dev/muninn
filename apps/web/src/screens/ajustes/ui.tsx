@@ -1,6 +1,7 @@
 import { Button, cn, IconButton, icons } from '@muninn/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { type ReactNode, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppIcon, type AppIconName } from '../../components/AppIcon'
 import type { SettingsSection } from './sections'
 
@@ -12,13 +13,14 @@ export function ChangedDot({
   className?: string
   decorative?: boolean
 }) {
+  const { t } = useTranslation('settings')
   return (
     <span
-      title={decorative ? undefined : 'Cambiado'}
+      title={decorative ? undefined : t('changed')}
       aria-hidden={decorative || undefined}
       className={cn('inline-block size-1.5 shrink-0 rounded-full bg-accent', className)}
     >
-      {decorative ? null : <span className="sr-only">Cambiado</span>}
+      {decorative ? null : <span className="sr-only">{t('changed')}</span>}
     </span>
   )
 }
@@ -59,9 +61,10 @@ export function SectionHeader({
   changed?: number
   onReset?: () => void
 }) {
+  const { t } = useTranslation(['settings', 'common'])
   useEffect(() => {
-    document.title = `${section.label} · Ajustes · Muninn`
-  }, [section.label])
+    document.title = t('pageTitle', { section: section.label })
+  }, [section.label, t])
   return (
     <header className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-border-subtle pb-5">
       <span className={cn('grid size-11 shrink-0 place-items-center rounded-lg', section.tile)}>
@@ -75,11 +78,11 @@ export function SectionHeader({
         <div className="flex items-center gap-2.5 pt-1.5">
           <span className="flex items-center gap-1.5 text-sm text-fg-muted">
             <ChangedDot decorative />
-            {changed === 1 ? '1 cambiado' : `${changed} cambiados`}
+            {t('changedCount', { count: changed })}
           </span>
           <Button size="sm" onClick={onReset}>
             <AppIcon name="reset" size={13} />
-            Restablecer sección
+            {t('account.resetSection', { ns: 'common' })}
           </Button>
         </div>
       ) : null}
@@ -184,6 +187,7 @@ export function PrefRow({
   tile?: string
   children?: ReactNode
 }) {
+  const { t } = useTranslation('settings')
   const Title = htmlFor ? 'label' : 'span'
   return (
     <div
@@ -214,8 +218,8 @@ export function PrefRow({
           {children}
           {changed && onReset ? (
             <IconButton
-              aria-label={resetLabel ?? 'Volver al valor de fábrica'}
-              title={resetLabel ?? 'Volver al valor de fábrica'}
+              aria-label={resetLabel ?? t('resetToDefault')}
+              title={resetLabel ?? t('resetToDefault')}
               size="sm"
               icon={<AppIcon name="reset" size={14} />}
               onClick={onReset}
@@ -229,14 +233,15 @@ export function PrefRow({
 
 /** Columna «En la documentación» (pantallas muy anchas): la guía de la sección. */
 export function HelpAside({ section }: { section: SettingsSection }) {
+  const { t } = useTranslation('settings')
   const doc = section.doc
   if (!doc) return null
   return (
     <aside
-      aria-label="En la documentación"
+      aria-label={t('help.inDocs')}
       className="sticky top-7 ml-auto hidden w-[280px] shrink-0 flex-col gap-3 self-start 2xl:flex"
     >
-      <MicroTitle icon="docs">En la documentación</MicroTitle>
+      <MicroTitle icon="docs">{t('help.inDocs')}</MicroTitle>
       <Link
         to="/documentacion/$pagina"
         params={{ pagina: doc.pagina }}
@@ -250,7 +255,7 @@ export function HelpAside({ section }: { section: SettingsSection }) {
           <span className="text-base font-medium">{doc.title}</span>
           <span className="text-sm leading-snug text-fg-subtle">{doc.text}</span>
           <span className="flex items-center gap-1 text-sm text-accent">
-            Abrir la guía
+            {t('help.openGuide')}
             <icons.move size={13} aria-hidden="true" />
           </span>
         </span>
@@ -258,10 +263,9 @@ export function HelpAside({ section }: { section: SettingsSection }) {
       <p className="flex flex-col gap-1 rounded-lg bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-fg-subtle">
         <span className="flex items-center gap-1.5 font-medium text-fg-muted">
           <ChangedDot decorative />
-          Marca de cambiado
+          {t('help.changedMark')}
         </span>
-        Los ajustes que no están en su valor de fábrica llevan un punto. El botón de la flecha
-        devuelve uno; «Restablecer sección», todos, con Deshacer.
+        {t('help.changedText')}
       </p>
     </aside>
   )

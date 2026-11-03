@@ -36,7 +36,7 @@ describe('módulos', () => {
     const { m, qc } = await setup()
     await setModuleEnabled(m, qc, 'news', false, toast)
     expect(notify.success).toHaveBeenCalledWith(
-      'Noticias desactivado',
+      'Módulo desactivado: Noticias',
       expect.objectContaining({ icon: 'news', id: 'module-news' }),
     )
     expect((await m.settings.get()).enabledModules).not.toContain('news')

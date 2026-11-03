@@ -1,4 +1,5 @@
-import type { BoardColumn, TaskPriority, TaskWithColumn } from '@muninn/core'
+import type { BoardColumn, ColumnKind, TaskPriority, TaskWithColumn } from '@muninn/core'
+import { t } from '../i18n'
 
 /** Lo que pinta el tablero de un proyecto: una sola consulta, una sola entrada de caché. */
 export interface BoardData {
@@ -8,13 +9,17 @@ export interface BoardData {
   counts: Record<string, { done: number; total: number }>
 }
 
-export const PRIORITIES: { value: TaskPriority; label: string }[] = [
-  { value: 'none', label: 'Sin prioridad' },
-  { value: 'low', label: 'Baja' },
-  { value: 'medium', label: 'Media' },
-  { value: 'high', label: 'Alta' },
-  { value: 'urgent', label: 'Urgente' },
-]
+/** Una prioridad con su etiqueta, que se lee al pintar en el idioma activo (ADR-0077). */
+const priority = (value: TaskPriority) => ({
+  value,
+  get label() {
+    return t(`board.priority.${value}`)
+  },
+})
+
+export const PRIORITIES: { value: TaskPriority; label: string }[] = (
+  ['none', 'low', 'medium', 'high', 'urgent'] as const
+).map(priority)
 
 export const priorityLabel = (p: TaskPriority) => PRIORITIES.find((x) => x.value === p)?.label ?? p
 
@@ -27,13 +32,24 @@ export const PRIORITY_RANK: Record<TaskPriority, number> = {
   urgent: 4,
 }
 
-export const KIND_LABEL = {
-  backlog: 'Backlog',
-  todo: 'Por hacer',
-  in_progress: 'En curso',
-  review: 'Revisión',
-  done: 'Hecho',
-} as const
+/** Etiqueta de cada tipo de columna: *getters*, para leerla en el idioma activo. */
+export const KIND_LABEL: Readonly<Record<ColumnKind, string>> = {
+  get backlog() {
+    return t('board.kind.backlog')
+  },
+  get todo() {
+    return t('board.kind.todo')
+  },
+  get in_progress() {
+    return t('board.kind.in_progress')
+  },
+  get review() {
+    return t('board.kind.review')
+  },
+  get done() {
+    return t('board.kind.done')
+  },
+}
 
 // ─── Identificadores para dnd-kit ───────────────────────────────────────────
 

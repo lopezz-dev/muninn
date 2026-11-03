@@ -1,6 +1,7 @@
 import { Button } from '@muninn/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
 import { keys } from '../../lib/queries'
@@ -18,6 +19,7 @@ import { PrefGroup, PrefRow } from './ui'
 
 /** Ajustes › Cuenta › Segundo factor. */
 export function SegundoFactor() {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const factors = useQuery({
     queryKey: keys.accountMfa,
@@ -36,34 +38,30 @@ export function SegundoFactor() {
 
   if (!m.account.available()) return null
   return (
-    <PrefGroup
-      title="Segundo factor"
-      icon="shield"
-      description="Además del código del correo o de GitHub, un código de una app de tu móvil. Opcional."
-    >
+    <PrefGroup title={t('mfa.title')} icon="shield" description={t('mfa.description')}>
       <PrefRow
         id="segundo-factor"
         icon="key"
         tile={active ? 'bg-success/15 text-success' : undefined}
-        title="App de códigos"
+        title={t('mfa.app')}
         description={
           factors.isPending
-            ? 'Cargando…'
+            ? t('loading')
             : factors.isError
-              ? 'No se pudo comprobar si está activado.'
+              ? t('mfa.checkFailed')
               : active
-                ? `Activado ${timeAgo(active.createdAt)}. Al entrar, te pedimos un código de la app.`
-                : 'Desactivado. Para entrar basta con el código del correo o con GitHub.'
+                ? t('mfa.on', { time: timeAgo(active.createdAt) })
+                : t('mfa.off')
         }
       >
         {factors.isSuccess ? (
           active ? (
             <Button size="sm" onClick={() => setDialog('disable')}>
-              Desactivar
+              {t('mfa.turnOff')}
             </Button>
           ) : (
             <Button size="sm" variant="primary" onClick={() => setDialog('enroll')}>
-              Activar
+              {t('mfa.turnOn')}
             </Button>
           )
         ) : null}
@@ -75,17 +73,20 @@ export function SegundoFactor() {
           tile={
             recovery.data && recovery.data.remaining <= 2 ? 'bg-danger-soft text-danger' : undefined
           }
-          title="Códigos de recuperación"
+          title={t('mfa.codesTitle')}
           description={
             recovery.isPending
-              ? 'Cargando…'
+              ? t('loading')
               : recovery.isError
-                ? 'No están disponibles ahora mismo.'
+                ? t('mfa.codesUnavailable')
                 : !recovery.data
-                  ? 'Sin generar. Te sirven para entrar si pierdes el móvil.'
+                  ? t('mfa.codesNone')
                   : recovery.data.remaining === 0
-                    ? 'Los has usado todos. Genera otros por si pierdes el móvil.'
-                    : `Te quedan ${recovery.data.remaining} de ${recovery.data.total}. Cada uno vale una vez.`
+                    ? t('mfa.codesUsedUp')
+                    : t('mfa.codesLeft', {
+                        remaining: recovery.data.remaining,
+                        total: recovery.data.total,
+                      })
           }
         >
           {recovery.isSuccess ? (
@@ -94,7 +95,7 @@ export function SegundoFactor() {
               variant={!recovery.data || recovery.data.remaining <= 2 ? 'primary' : undefined}
               onClick={() => setDialog('codes')}
             >
-              {recovery.data ? 'Generar nuevos' : 'Generar'}
+              {recovery.data ? t('mfa.generateNew') : t('mfa.generate')}
             </Button>
           ) : null}
         </PrefRow>

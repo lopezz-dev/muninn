@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { i18n, t } from '../src/i18n'
+import { i18n, NAMESPACES, t } from '../src/i18n'
 import {
   browserLocale,
   LOCALE_KEY,
@@ -9,8 +9,6 @@ import {
   toLocalePref,
   writeLocalePref,
 } from '../src/i18n/locale'
-import { common as en } from '../src/i18n/locales/en/common'
-import { common as es } from '../src/i18n/locales/es/common'
 import { changedPrefs } from '../src/lib/settings-changes'
 
 /** `{ a: { b: 'x' } }` → `[['a.b', 'x']]`. */
@@ -70,18 +68,37 @@ describe('idioma: preferencia y resolución', () => {
   })
 })
 
+const EN = import.meta.glob('../src/i18n/locales/en/*.ts', { eager: true }) as Record<
+  string,
+  Record<string, object>
+>
+const ES = import.meta.glob('../src/i18n/locales/es/*.ts', { eager: true }) as Record<
+  string,
+  Record<string, object>
+>
+const nsOf = (file: string) => file.replace(/^.*\/(\w+)\.ts$/, '$1')
+
 describe('diccionarios', () => {
-  const enKeys = flat(en)
-  const esMap = new Map(flat(es))
-
-  it('el español tiene las mismas claves que el inglés, sin textos vacíos', () => {
-    expect([...esMap.keys()].sort()).toEqual(enKeys.map(([k]) => k).sort())
-    for (const [, text] of [...enKeys, ...esMap]) expect(text.trim()).not.toBe('')
+  it('cada namespace existe en los dos idiomas y está en NAMESPACES', () => {
+    expect(Object.keys(EN).map(nsOf).sort()).toEqual(Object.keys(ES).map(nsOf).sort())
+    expect(Object.keys(EN).map(nsOf).sort()).toEqual([...NAMESPACES].sort())
   })
 
-  it('cada traducción usa las mismas variables {{…}} que el inglés', () => {
-    for (const [key, text] of enKeys) expect(vars(esMap.get(key) ?? ''), key).toEqual(vars(text))
-  })
+  for (const [file, mod] of Object.entries(EN)) {
+    const ns = nsOf(file)
+    const enKeys = flat(mod[ns] ?? {})
+    const esMod = ES[file.replace('/en/', '/es/')] ?? {}
+    const esMap = new Map(flat(esMod[ns] ?? {}))
+
+    it(`${ns}: el español tiene las mismas claves que el inglés, sin textos vacíos`, () => {
+      expect([...esMap.keys()].sort()).toEqual(enKeys.map(([k]) => k).sort())
+      for (const [, text] of [...enKeys, ...esMap]) expect(text.trim()).not.toBe('')
+    })
+
+    it(`${ns}: cada traducción usa las mismas variables {{…}} que el inglés`, () => {
+      for (const [key, text] of enKeys) expect(vars(esMap.get(key) ?? ''), key).toEqual(vars(text))
+    })
+  }
 })
 
 describe('i18next', () => {

@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { loadSupabase, resetAuth } from './auth'
 import { authErrorMessage } from './login-actions'
 
@@ -13,7 +14,7 @@ export async function verifySecondFactor(code: string) {
   const { data, error } = await c.auth.mfa.listFactors()
   if (error) throw error
   const factor = data.totp[0]
-  if (!factor) throw new Error('Tu cuenta no tiene ninguna app de códigos.')
+  if (!factor) throw new Error(t('secondFactor.noApp'))
   const res = await c.auth.mfa.challengeAndVerify({ factorId: factor.id, code })
   if (res.error) throw res.error
   resetAuth()
@@ -38,15 +39,14 @@ export async function abandonSecondFactor() {
   resetAuth()
 }
 
-/** Mensajes en español para lo que puede fallar al escribir el código. */
+/** Mensajes, en el idioma activo, para lo que puede fallar al escribir el código. */
 export function secondFactorErrorMessage(err: unknown): string {
   const e = err as { code?: string }
   if (e.code === 'mfa_verification_failed' || e.code === 'mfa_challenge_expired')
-    return 'El código no es correcto o ha caducado. Escribe el que sale ahora en tu app.'
+    return t('secondFactor.wrongOrExpired')
   if (e.code === 'mfa_verification_rejected' || e.code === 'mfa_recovery_codes_locked')
-    return 'Demasiados intentos. Espera un minuto y vuelve a probar.'
-  if (e.code === 'mfa_recovery_codes_verify_not_enabled')
-    return 'Este servidor no tiene activados los códigos de recuperación.'
+    return t('secondFactor.tooManyAttempts')
+  if (e.code === 'mfa_recovery_codes_verify_not_enabled') return t('secondFactor.recoveryDisabled')
   return authErrorMessage(err)
 }
 
@@ -59,6 +59,6 @@ export function recoveryCodeErrorMessage(err: unknown): string {
     e.code === 'validation_failed' ||
     e.code === 'mfa_factor_not_found'
   )
-    return 'Ese código no es correcto o ya se usó. Cada código vale una sola vez.'
+    return t('secondFactor.recoveryInvalid')
   return secondFactorErrorMessage(err)
 }

@@ -1,6 +1,7 @@
 import type { ModuleName, Muninn, UserSettings } from '@muninn/core'
 import type { IconName } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { i18n, t } from '../i18n'
 import { notifyUndo } from './feedback'
 import { withModule } from './modules'
 import { fail, serial } from './mutations'
@@ -18,6 +19,8 @@ export async function setModuleEnabled(
   toast: { label: string; icon: IconName },
   opts: { undoing?: boolean } = {},
 ): Promise<boolean> {
+  // Se llama también desde fuera de Ajustes (`ModuleOff`): sus textos tienen que estar cargados.
+  await i18n.loadNamespaces('settings')
   const prev: UserSettings =
     qc.getQueryData<UserSettings>(keys.settings) ?? (await m.settings.get())
   const next = withModule(prev.enabledModules, id, on)
@@ -29,16 +32,14 @@ export async function setModuleEnabled(
     )
   } catch (err) {
     qc.setQueryData<UserSettings>(keys.settings, prev)
-    fail('No se pudo guardar el cambio', err)
+    fail(t('modules.saveFailed', { ns: 'settings' }), err)
     return false
   }
   if (opts.undoing) return true
-  notifyUndo(`${toast.label} ${on ? 'activado' : 'desactivado'}`, {
+  notifyUndo(t(on ? 'modules.on' : 'modules.off', { ns: 'settings', name: toast.label }), {
     icon: toast.icon,
     id: `module-${id}`,
-    description: on
-      ? 'Vuelve a estar en el menú y en el buscador'
-      : 'Sale del menú y del buscador; tus datos siguen guardados',
+    description: t(on ? 'modules.onHint' : 'modules.offHint', { ns: 'settings' }),
     undo: () => setModuleEnabled(m, qc, id, !on, toast, { undoing: true }),
   })
   return true

@@ -1,6 +1,8 @@
 import type { ModuleName } from '@muninn/core'
 import { cn, Icon, type IconName, Switch } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { setModuleEnabled } from '../../lib/module-actions'
 import { MODULE_ORDER, useEnabledModules } from '../../lib/modules'
 import { useMuninn } from '../../lib/muninn'
@@ -17,62 +19,68 @@ interface ModuleInfo {
   locked?: boolean
 }
 
+/** Un módulo con sus textos como *getters*: se leen al pintar, en el idioma activo (ADR-0077). */
+const moduleInfo = (
+  id: ModuleName,
+  rest: Omit<ModuleInfo, 'label' | 'text' | 'soon'> & { soon?: true },
+): ModuleInfo => {
+  const { soon, ...base } = rest
+  return {
+    ...base,
+    get label() {
+      return t(`modules.items.${id}.label`, { ns: 'settings' })
+    },
+    get text() {
+      return t(`modules.items.${id}.text`, { ns: 'settings' })
+    },
+    ...(soon
+      ? {
+          get soon() {
+            return t('modules.soon', { ns: 'settings' })
+          },
+        }
+      : {}),
+  }
+}
+
 const MODULES: Record<ModuleName, ModuleInfo> = {
-  tasks: {
-    label: 'Tareas y proyectos',
-    text: 'Kanban por proyecto',
-    icon: 'projects',
-    tile: 'bg-project-blue/15 text-project-blue',
-  },
-  notes: {
-    label: 'Notas',
-    text: 'Markdown vinculado a proyectos',
-    icon: 'notes',
-    tile: 'bg-project-teal/15 text-project-teal',
-  },
-  finance: {
-    label: 'Finanzas',
-    text: 'Gastos, ingresos, ahorro, inversión y suscripciones',
+  tasks: moduleInfo('tasks', { icon: 'projects', tile: 'bg-project-blue/15 text-project-blue' }),
+  notes: moduleInfo('notes', { icon: 'notes', tile: 'bg-project-teal/15 text-project-teal' }),
+  finance: moduleInfo('finance', {
     icon: 'finance',
     tile: 'bg-project-amber/15 text-project-amber',
-  },
-  github: {
-    label: 'GitHub',
-    text: 'Issues como tareas y agentes',
+  }),
+  github: moduleInfo('github', {
     icon: 'github',
     tile: 'bg-project-violet/15 text-project-violet',
-  },
-  news: {
-    label: 'Noticias',
-    text: 'RSS con resumen local',
-    icon: 'news',
-    tile: 'bg-project-pink/15 text-project-pink',
-  },
-  focus: {
-    label: 'Concentración',
-    text: 'Bloques de trabajo profundo con la isla',
+  }),
+  news: moduleInfo('news', { icon: 'news', tile: 'bg-project-pink/15 text-project-pink' }),
+  focus: moduleInfo('focus', {
     icon: 'clock',
     tile: 'bg-surface-raised text-fg-subtle',
-    soon: 'Próximamente',
+    soon: true,
     locked: true,
-  },
+  }),
 }
 
 /** Ajustes › Módulos (Ajustes.dc.html): activa solo lo que uses; lo demás sale del menú, de las pestañas y del buscador. */
 export function Modulos() {
+  const { t } = useTranslation('settings')
   const m = useMuninn()
   const qc = useQueryClient()
   const enabled = useEnabledModules()
 
   return (
     <PrefGroup
-      title="Módulos"
+      title={t('modules.title')}
       icon="more"
       action={
         enabled ? (
           <span className="text-xs text-fg-faint">
-            {MODULE_ORDER.filter((x) => x !== 'focus' && enabled.has(x)).length} de{' '}
-            {MODULE_ORDER.length - 1} activos
+            {t('modules.active', {
+              on: MODULE_ORDER.filter((x) => x !== 'focus' && enabled.has(x)).length,
+              total: MODULE_ORDER.length - 1,
+            })}
           </span>
         ) : null
       }
@@ -98,7 +106,9 @@ export function Modulos() {
                   {info.label}
                   {info.soon ? (
                     <span className="rounded-xs bg-accent-soft px-1.5 py-px text-2xs font-semibold tracking-wide text-accent uppercase">
-                      {info.locked ? info.soon : `Llega en la ${info.soon.toLowerCase()}`}
+                      {info.locked
+                        ? info.soon
+                        : t('modules.arrivesIn', { phase: info.soon.toLowerCase() })}
                     </span>
                   ) : null}
                 </label>

@@ -2,6 +2,7 @@ import type { PushDevice } from '@muninn/core'
 import { cn } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { AppIcon } from '../../components/AppIcon'
 import { useDock } from '../../lib/dock'
 import { MODULE_ORDER, useEnabledModules } from '../../lib/modules'
@@ -22,6 +23,7 @@ const ACTIVABLE = MODULE_ORDER.filter((m) => m !== 'focus')
  * activos, a qué hora va el informe… Solo datos que ya están en la caché: nada de peticiones por pintar el menú.
  */
 export function useSectionHints(): Partial<Record<string, string>> {
+  const { t } = useTranslation(['settings', 'common'])
   const m = useMuninn()
   const auth = useAuth()
   const modules = useEnabledModules()
@@ -32,21 +34,19 @@ export function useSectionHints(): Partial<Record<string, string>> {
   return {
     cuenta:
       auth.kind === 'demo'
-        ? 'Modo demo'
+        ? t('account.demo', { ns: 'common' })
         : auth.account.provider === 'github'
           ? 'GitHub'
-          : 'Código por correo',
-    barra: dock.length === 1 ? '1 pestaña' : `${dock.length} pestañas`,
-    modulos: on === null ? undefined : `${on} de ${ACTIVABLE.length}`,
+          : t('account.providerEmail'),
+    barra: t('hints.tabs', { count: dock.length }),
+    modulos: on === null ? undefined : t('hints.modules', { on, total: ACTIVABLE.length }),
     notificaciones:
       auth.kind === 'demo' || devices === undefined
         ? undefined
         : devices.length === 0
-          ? 'Sin activar'
-          : devices.length === 1
-            ? '1 dispositivo'
-            : `${devices.length} dispositivos`,
-    informe: report.enabled ? report.time : 'Apagado',
+          ? t('hints.notificationsOff')
+          : t('hints.devices', { count: devices.length }),
+    informe: report.enabled ? report.time : t('hints.reportOff'),
     acerca: `v${__APP_VERSION__}`,
   }
 }
@@ -92,6 +92,8 @@ function RailLink({
  * cuenta» (ADR-0072).
  */
 export function Ajustes() {
+  // Pide el namespace antes de pintar: las etiquetas de `sections.ts` y del índice lo leen fuera de React.
+  const { t } = useTranslation(['settings', 'common'])
   const search = useSettingsSearch()
   const changed = bySection(useChangedPrefs())
   const hints = useSectionHints()
@@ -99,12 +101,12 @@ export function Ajustes() {
   return (
     <div className="flex w-full flex-1 flex-col gap-5 md:flex-row md:gap-10 xl:gap-12">
       <nav
-        aria-label="Secciones de ajustes"
+        aria-label={t('sectionsNav')}
         className="hidden shrink-0 md:sticky md:top-7 md:flex md:max-h-[calc(100dvh-3.5rem)] md:w-[248px] md:flex-col md:gap-3 md:self-start md:overflow-y-auto"
       >
         <p className="flex items-center gap-2 px-1 text-xl font-semibold tracking-tight">
           <AppIcon name="settings" size={18} className="text-accent" />
-          Ajustes
+          {t('nav.settings', { ns: 'common' })}
         </p>
         <SettingsSearchField search={search} />
         {sectionsByGroup().map((g) => (

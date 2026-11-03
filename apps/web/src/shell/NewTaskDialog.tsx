@@ -11,14 +11,13 @@ import {
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SelectMenu } from '../components/SelectMenu'
 import { PRIORITIES } from '../lib/board'
 import { useMuninn } from '../lib/muninn'
 import { boardQuery, projectsQuery } from '../lib/queries'
 import { createTask } from '../lib/task-actions'
 import type { NewTaskPreset } from './shell-context'
-
-const priorityOptions = PRIORITIES.map((p) => ({ value: p.value, label: p.label }))
 
 /**
  * Nueva tarea desde cualquier sitio (botón, atajo N, «+» de una columna). Se carga en diferido: el
@@ -35,6 +34,7 @@ export function NewTaskDialog({
   onOpenChange: (open: boolean) => void
   onNewProject: () => void
 }) {
+  const { t } = useTranslation('dialogs')
   const m = useMuninn()
   const qc = useQueryClient()
   const projects = useQuery({ ...projectsQuery(m), enabled: open }).data ?? []
@@ -70,7 +70,7 @@ export function NewTaskDialog({
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const clean = title.trim()
-    if (!clean) return setError('Ponle un título a la tarea')
+    if (!clean) return setError(t('newTask.titleRequired'))
     if (!effectiveProject) return
     setSaving(true)
     const task = await createTask(m, qc, {
@@ -88,16 +88,12 @@ export function NewTaskDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        title="Nueva tarea"
-        description={
-          projects.length ? 'Se crea al final de la columna que elijas.' : 'Necesitas un proyecto.'
-        }
+        title={t('newTask.title')}
+        description={projects.length ? t('newTask.description') : t('newTask.needsProject')}
       >
         {projects.length === 0 ? (
           <div className="flex flex-col items-start gap-3">
-            <p className="text-sm text-fg-muted">
-              Las tareas viven en el tablero de un proyecto. Crea el primero y vuelve aquí.
-            </p>
+            <p className="text-sm text-fg-muted">{t('newTask.noProjects')}</p>
             <Button
               variant="primary"
               onClick={() => {
@@ -106,13 +102,13 @@ export function NewTaskDialog({
               }}
             >
               <Icon name="plus" />
-              Nuevo proyecto
+              {t('newTask.newProject')}
             </Button>
           </div>
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
             <TextField
-              label="Título"
+              label={t('newTask.titleField')}
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value)
@@ -125,9 +121,9 @@ export function NewTaskDialog({
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-fg-muted">Proyecto</span>
+                <span className="text-xs font-medium text-fg-muted">{t('newTask.project')}</span>
                 <SelectMenu
-                  label="Proyecto"
+                  label={t('newTask.project')}
                   value={effectiveProject ?? ''}
                   options={projects.map((p) => ({ value: p.id, label: p.name, dot: p.color }))}
                   onChange={(id) => {
@@ -137,9 +133,9 @@ export function NewTaskDialog({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-fg-muted">Columna</span>
+                <span className="text-xs font-medium text-fg-muted">{t('newTask.column')}</span>
                 <SelectMenu
-                  label="Columna"
+                  label={t('newTask.column')}
                   value={effectiveColumn ?? ''}
                   options={columns.map((c) => ({
                     value: c.id,
@@ -150,16 +146,16 @@ export function NewTaskDialog({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-fg-muted">Prioridad</span>
+                <span className="text-xs font-medium text-fg-muted">{t('newTask.priority')}</span>
                 <SelectMenu
-                  label="Prioridad"
+                  label={t('newTask.priority')}
                   value={priority}
-                  options={priorityOptions}
+                  options={PRIORITIES.map((p) => ({ value: p.value, label: p.label }))}
                   onChange={setPriority}
                 />
               </div>
               <DateField
-                label="Vence"
+                label={t('newTask.due')}
                 value={dueDate}
                 onChange={setDueDate}
                 today={m.today()}
@@ -168,10 +164,10 @@ export function NewTaskDialog({
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <DialogClose asChild>
-                <Button variant="ghost">Cancelar</Button>
+                <Button variant="ghost">{t('actions.cancel')}</Button>
               </DialogClose>
               <Button type="submit" variant="primary" disabled={saving || !effectiveColumn}>
-                Crear tarea
+                {t('newTask.create')}
               </Button>
             </div>
           </form>

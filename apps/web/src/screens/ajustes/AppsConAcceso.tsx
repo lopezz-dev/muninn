@@ -2,6 +2,7 @@ import type { OAuthAppGrant } from '@muninn/core'
 import { Button, notify } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
 import { fail } from '../../lib/mutations'
@@ -15,6 +16,7 @@ import { PrefGroup, PrefRow } from './ui'
  */
 
 function AppRow({ grant }: { grant: OAuthAppGrant }) {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
@@ -22,25 +24,25 @@ function AppRow({ grant }: { grant: OAuthAppGrant }) {
     setBusy(true)
     try {
       await m.account.apps.revoke(grant.clientId)
-      notify.success(`${grant.name} ya no tiene acceso`, {
+      notify.success(t('apps.revoked', { name: grant.name }), {
         icon: 'user',
-        description: 'Para volver a usarla con Muninn, conéctala otra vez desde esa app.',
+        description: t('apps.revokedHint'),
       })
     } catch (err) {
-      fail('No se pudo quitar el acceso', err)
+      fail(t('apps.revokeFailed'), err)
     }
     setBusy(false)
     void qc.invalidateQueries({ queryKey: keys.accountApps })
   }
   const details = [
-    `Desde ${timeAgo(grant.grantedAt)}`,
+    t('apps.since', { time: timeAgo(grant.grantedAt) }),
     grant.uri ? redirectHost(grant.uri) : null,
     ...scopeLabels(grant.scopes.join(' ')),
   ].filter(Boolean)
   return (
     <PrefRow icon="plug" title={grant.name} description={details.join(' · ')}>
       <Button size="sm" variant="danger" onClick={() => void revoke()} disabled={busy}>
-        {busy ? 'Quitando…' : 'Quitar acceso'}
+        {busy ? t('apps.revoking') : t('apps.revoke')}
       </Button>
     </PrefRow>
   )
@@ -48,6 +50,7 @@ function AppRow({ grant }: { grant: OAuthAppGrant }) {
 
 /** Ajustes › Cuenta › Apps con acceso. */
 export function AppsConAcceso() {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const grants = useQuery({
     queryKey: keys.accountApps,
@@ -56,22 +59,14 @@ export function AppsConAcceso() {
   })
   if (!m.account.available()) return null
   return (
-    <PrefGroup
-      title="Apps con acceso"
-      icon="plug"
-      description="Las que pueden usar tu cuenta por el MCP remoto, como claude.ai. Ven y cambian proyectos, tareas y notas; nunca borran."
-    >
+    <PrefGroup title={t('apps.title')} icon="plug" description={t('apps.description')}>
       <div id="ajuste-apps">
         {grants.isPending ? (
-          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">Cargando…</p>
+          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">{t('loading')}</p>
         ) : grants.isError ? (
-          <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">
-            No se pudo cargar la lista de apps.
-          </p>
+          <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">{t('apps.loadError')}</p>
         ) : grants.data.length === 0 ? (
-          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">
-            Ninguna. Cuando conectes claude.ai u otra app a Muninn, saldrá aquí.
-          </p>
+          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">{t('apps.empty')}</p>
         ) : (
           grants.data.map((g) => <AppRow key={g.clientId} grant={g} />)
         )}

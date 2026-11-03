@@ -1,4 +1,5 @@
 import type { Muninn, PushDevice } from '@muninn/core'
+import { t } from '../i18n'
 import { isTauri } from './auth'
 
 /**
@@ -83,8 +84,8 @@ export function deviceLabel(ua: string, maxTouchPoints = 0, standalone = false) 
             ? 'Windows'
             : /Linux|CrOS/.test(ua)
               ? 'Linux'
-              : 'Dispositivo'
-  if (standalone) return `${os} · App`
+              : t('push.device')
+  if (standalone) return `${os} · ${t('push.app')}`
   const browser = /Edg\//.test(ua)
     ? 'Edge'
     : /Firefox\/|FxiOS/.test(ua)
@@ -93,7 +94,7 @@ export function deviceLabel(ua: string, maxTouchPoints = 0, standalone = false) 
         ? 'Chrome'
         : /Safari\//.test(ua)
           ? 'Safari'
-          : 'Navegador'
+          : t('push.browser')
   return `${os} · ${browser}`
 }
 
@@ -154,11 +155,10 @@ export class PushError extends Error {
 export async function enablePush(m: Muninn): Promise<PushDevice> {
   // Lo primero, antes de cualquier `await` largo: Safari exige que el permiso salga del mismo gesto.
   const permission = await Notification.requestPermission()
-  if (permission === 'denied') throw new PushError('Has bloqueado los avisos', 'denied')
-  if (permission !== 'granted') throw new PushError('No diste permiso para los avisos', 'dismissed')
+  if (permission === 'denied') throw new PushError(t('push.blocked'), 'denied')
+  if (permission !== 'granted') throw new PushError(t('push.dismissed'), 'dismissed')
   const reg = await registration()
-  if (!reg)
-    throw new PushError('La app aún no está lista: recárgala y vuelve a probar', 'no-worker')
+  if (!reg) throw new PushError(t('push.notReady'), 'no-worker')
   const sub =
     (await reg.pushManager.getSubscription()) ??
     (await reg.pushManager.subscribe({

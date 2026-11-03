@@ -1,4 +1,6 @@
 import type { AppIconName } from '../../components/AppIcon'
+import { t } from '../../i18n'
+import type { settings as en } from '../../i18n/locales/en/settings'
 
 export interface SettingsSection {
   id: string
@@ -15,165 +17,126 @@ export interface SettingsSection {
   soon?: { phase: string; text: string }
 }
 
-export const SETTINGS_GROUPS = [
-  { id: 'tu', label: 'Tú' },
-  { id: 'espacio', label: 'Espacio de trabajo' },
-  { id: 'asistente', label: 'Asistente' },
-  { id: 'integraciones', label: 'Integraciones' },
-  { id: 'datos', label: 'Datos' },
-] as const
+const GROUP_IDS = ['tu', 'espacio', 'asistente', 'integraciones', 'datos'] as const
 
-export type SettingsGroupId = (typeof SETTINGS_GROUPS)[number]['id']
+export type SettingsGroupId = (typeof GROUP_IDS)[number]
+
+/** Grupos del menú. `label` se lee al pintar, en el idioma activo (ADR-0077). */
+export const SETTINGS_GROUPS = GROUP_IDS.map((id) => ({
+  id,
+  get label() {
+    return t(`groups.${id}`, { ns: 'settings' })
+  },
+}))
+
+type SectionKey = keyof typeof en.sections
+type DocKey = keyof typeof en.docs
+
+/**
+ * Una sección con sus textos como *getters*: se leen al pintar, en el idioma activo (ADR-0077). El `id` es un slug
+ * de la ruta y no se traduce.
+ */
+function section(
+  id: SectionKey,
+  rest: Omit<SettingsSection, 'id' | 'label' | 'subtitle' | 'doc'> & {
+    doc?: { pagina: string; hash?: string }
+  },
+): SettingsSection {
+  const { doc, ...base } = rest
+  return {
+    id,
+    ...base,
+    get label() {
+      return t(`sections.${id}.label`, { ns: 'settings' })
+    },
+    get subtitle() {
+      return t(`sections.${id}.subtitle`, { ns: 'settings' })
+    },
+    ...(doc
+      ? {
+          doc: {
+            ...doc,
+            get title() {
+              return t(`docs.${id as DocKey}.title`, { ns: 'settings' })
+            },
+            get text() {
+              return t(`docs.${id as DocKey}.text`, { ns: 'settings' })
+            },
+          },
+        }
+      : {}),
+  }
+}
 
 /** Secciones de Ajustes por grupos (ADR-0053). «Acerca de» va aparte, al pie del menú. */
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  {
-    id: 'cuenta',
-    label: 'Cuenta',
+  section('cuenta', {
     icon: 'user',
-    subtitle: 'Con qué entras, dónde está abierta tu sesión y qué apps usan tu cuenta.',
     group: 'tu',
     tile: 'bg-project-blue/15 text-project-blue',
-    doc: {
-      pagina: 'cuenta-y-seguridad',
-      title: 'Cuenta y seguridad',
-      text: 'El segundo factor, las sesiones abiertas y las apps con acceso a tu cuenta.',
-    },
-  },
-  {
-    id: 'apariencia',
-    label: 'Apariencia',
+    doc: { pagina: 'cuenta-y-seguridad' },
+  }),
+  section('apariencia', {
     icon: 'palette',
-    subtitle: 'Cómo se ve Muninn. Te sigue a todos tus dispositivos.',
     group: 'tu',
     tile: 'bg-accent-soft text-accent',
-    doc: {
-      pagina: 'moverte-por-muninn',
-      hash: 'cambiar-la-apariencia',
-      title: 'Moverte por Muninn › Apariencia',
-      text: 'Cristal y color de acento: qué cambia cada uno y dónde se guarda.',
-    },
-  },
-  {
-    id: 'barra',
-    label: 'Barra de abajo',
+    doc: { pagina: 'moverte-por-muninn', hash: 'cambiar-la-apariencia' },
+  }),
+  section('barra', {
     icon: 'dock',
-    subtitle:
-      'Las pestañas de abajo en el móvil: cuáles y en qué orden. Te sigue a todos tus dispositivos.',
     group: 'tu',
     tile: 'bg-accent-soft text-accent',
-    doc: {
-      pagina: 'moverte-por-muninn',
-      hash: 'elegir-las-pestanas-de-abajo',
-      title: 'Moverte por Muninn › Barra de abajo',
-      text: 'Qué pestañas puedes poner, cuántas caben y dónde queda todo lo demás.',
-    },
-  },
-  {
-    id: 'atajos',
-    label: 'Atajos de teclado',
+    doc: { pagina: 'moverte-por-muninn', hash: 'elegir-las-pestanas-de-abajo' },
+  }),
+  section('atajos', {
     icon: 'keyboard',
-    subtitle: 'Todo lo que puedes hacer sin soltar el teclado.',
     group: 'tu',
     tile: 'bg-surface-raised text-fg-muted',
-    doc: {
-      pagina: 'moverte-por-muninn',
-      hash: 'atajos-de-teclado',
-      title: 'Moverte por Muninn › Atajos',
-      text: 'Los atajos del buscador, del tablero y de los diálogos.',
-    },
-  },
-  {
-    id: 'modulos',
-    label: 'Módulos',
+    doc: { pagina: 'moverte-por-muninn', hash: 'atajos-de-teclado' },
+  }),
+  section('modulos', {
     icon: 'more',
-    subtitle: 'Activa solo lo que uses. Lo desactivado sale del menú; tus datos siguen guardados.',
     group: 'espacio',
     tile: 'bg-project-teal/15 text-project-teal',
-    doc: {
-      pagina: 'moverte-por-muninn',
-      hash: 'activar-y-desactivar-modulos',
-      title: 'Moverte por Muninn › Módulos',
-      text: 'Qué pasa al desactivar un módulo y cómo volver a activarlo.',
-    },
-  },
-  {
-    id: 'notificaciones',
-    label: 'Notificaciones',
+    doc: { pagina: 'moverte-por-muninn', hash: 'activar-y-desactivar-modulos' },
+  }),
+  section('notificaciones', {
     icon: 'bell',
-    subtitle: 'Avisos en el móvil y en el ordenador, aunque Muninn esté cerrada.',
     group: 'espacio',
     tile: 'bg-project-amber/15 text-project-amber',
-    doc: {
-      pagina: 'notificaciones',
-      title: 'Notificaciones',
-      text: 'Cómo activar los avisos en el iPhone y qué te avisa Muninn.',
-    },
-  },
-  {
-    id: 'asistente',
-    label: 'Modelo local',
+    doc: { pagina: 'notificaciones' },
+  }),
+  section('asistente', {
     icon: 'assistant',
-    subtitle: 'El modelo de tu ordenador que usa el Asistente, con Ollama.',
     group: 'asistente',
     tile: 'bg-project-green/15 text-project-green',
-    doc: {
-      pagina: 'asistente',
-      hash: 'instalar-ollama',
-      title: 'Asistente › Instalar Ollama',
-      text: 'Cómo instalar Ollama y el modelo recomendado, paso a paso.',
-    },
-  },
-  {
-    id: 'informe',
-    label: 'Informe de la mañana',
+    doc: { pagina: 'asistente', hash: 'instalar-ollama' },
+  }),
+  section('informe', {
     icon: 'sun',
-    subtitle: 'Cada día, una nota fijada con lo que tienes para hoy.',
     group: 'asistente',
     tile: 'bg-project-amber/15 text-project-amber',
-    doc: {
-      pagina: 'asistente',
-      hash: 'informe-de-la-manana',
-      title: 'Asistente › Informe de la mañana',
-      text: 'Qué incluye, cuándo se hace y qué pasa si el ordenador está apagado.',
-    },
-  },
-  {
-    id: 'integraciones',
-    label: 'GitHub',
+    doc: { pagina: 'asistente', hash: 'informe-de-la-manana' },
+  }),
+  section('integraciones', {
     icon: 'github',
-    subtitle: 'Las issues de tus repositorios, como tareas de su proyecto.',
     group: 'integraciones',
     tile: 'bg-project-violet/15 text-project-violet',
-    doc: {
-      pagina: 'github',
-      title: 'GitHub',
-      text: 'Cómo se sincronizan las issues y qué cambia en cada lado.',
-    },
-  },
-  {
-    id: 'datos',
-    label: 'Datos y sincronización',
+    doc: { pagina: 'github' },
+  }),
+  section('datos', {
     icon: 'sync',
-    subtitle: 'Dónde se guardan tus datos y cómo viajan entre dispositivos.',
     group: 'datos',
     tile: 'bg-project-blue/15 text-project-blue',
-    doc: {
-      pagina: 'datos-y-privacidad',
-      title: 'Tus datos y privacidad',
-      text: 'Dónde se guarda todo, quién puede verlo y qué queda sin conexión.',
-    },
-  },
+    doc: { pagina: 'datos-y-privacidad' },
+  }),
 ]
 
-export const ABOUT_SECTION: SettingsSection = {
-  id: 'acerca',
-  label: 'Acerca de Muninn',
+export const ABOUT_SECTION: SettingsSection = section('acerca', {
   icon: 'info',
-  subtitle: 'Versión, documentación y código.',
   group: 'datos',
   tile: 'bg-surface-raised text-fg-muted',
-}
+})
 
 const ALL = [...SETTINGS_SECTIONS, ABOUT_SECTION]
 
@@ -182,6 +145,15 @@ export const settingsSection = (id: string) => ALL.find((s) => s.id === id)
 /** Las secciones por grupo, en el orden del menú. */
 export const sectionsByGroup = () =>
   SETTINGS_GROUPS.map((g) => ({
-    ...g,
+    id: g.id,
+    label: g.label,
     sections: SETTINGS_SECTIONS.filter((s) => s.group === g.id),
   }))
+
+/** El aviso al restablecer una sección entera (lo comparten la pantalla de Ajustes y la hoja «Tu cuenta»). */
+export const resetSectionLabel = (section: SettingsSection) =>
+  section.id === 'apariencia'
+    ? t('reset.appearance', { ns: 'settings' })
+    : section.id === 'informe'
+      ? t('reset.report', { ns: 'settings' })
+      : t('reset.section', { ns: 'settings', section: section.label })

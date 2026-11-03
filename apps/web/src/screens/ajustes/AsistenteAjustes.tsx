@@ -2,6 +2,7 @@ import { Button, Icon, notify, Switch, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DEFAULT_ASSISTANT,
   normalizeUrl,
@@ -33,6 +34,7 @@ async function listModels(url: string): Promise<string[] | null> {
  * local; Claude se conecta aparte, por MCP. No llevan marca de «cambiado»: son configuración de tu equipo (ADR-0053).
  */
 export function AsistenteAjustes() {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const qc = useQueryClient()
   const auth = useAuth()
@@ -59,29 +61,31 @@ export function AsistenteAjustes() {
     e.preventDefault()
     const next = { ollamaUrl: normalizeUrl(url), model: model.trim() || DEFAULT_ASSISTANT.model }
     if (next.ollamaUrl === prefs.ollamaUrl && next.model === prefs.model) {
-      notify.info('No has cambiado nada')
+      notify.info(t('assistant.nothingChanged'))
       return
     }
-    await saveAssistantPrefs(m, qc, next, { label: 'Ajustes del asistente guardados' })
+    await saveAssistantPrefs(m, qc, next, { label: t('assistant.saved') })
   }
 
   const test = async () => {
     const found = await check(normalizeUrl(url))
     if (found === null)
-      notify.error('Ollama no responde', { description: `No hay nada en ${normalizeUrl(url)}` })
+      notify.error(t('assistant.ollamaDown'), {
+        description: t('assistant.nothingAt', { url: normalizeUrl(url) }),
+      })
     else if (!found.some((x) => x === model || x === `${model}:latest`)) {
-      notify.error(`Ollama responde, pero falta ${model}`, { description: `ollama pull ${model}` })
-    } else notify.success('Ollama está listo', { icon: 'assistant', description: model })
+      notify.error(t('assistant.modelMissing', { model }), { description: `ollama pull ${model}` })
+    } else notify.success(t('assistant.ollamaReady'), { icon: 'assistant', description: model })
   }
 
   return (
     <>
-      <PrefGroup title="Estado" icon="assistant">
+      <PrefGroup title={t('assistant.statusTitle')} icon="assistant">
         <PrefRow
           icon="assistant"
           tile="bg-project-green/15 text-project-green"
-          title="Cerebro"
-          description="Un modelo que corre en tu ordenador con Ollama: gratis y privado, tus datos no salen de casa."
+          title={t('assistant.brain')}
+          description={t('assistant.brainHint')}
         >
           <span className="flex items-center gap-1.5 text-sm text-fg-muted">
             <span
@@ -93,20 +97,20 @@ export function AsistenteAjustes() {
               }
             />
             {models === undefined
-              ? 'Comprobando…'
+              ? t('assistant.checking')
               : models === null
-                ? 'Ollama no responde'
-                : 'Local · Ollama'}
+                ? t('assistant.ollamaDown')
+                : t('assistant.local')}
           </span>
         </PrefRow>
       </PrefGroup>
-      <PrefGroup title="Conexión" icon="sync" padded>
+      <PrefGroup title={t('assistant.connection')} icon="sync" padded>
         <form onSubmit={save} className="flex flex-col gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div id="ajuste-ollama">
               <TextField
-                label="Dirección de Ollama"
-                hint="Normalmente no hace falta cambiarla."
+                label={t('assistant.ollamaUrl')}
+                hint={t('assistant.ollamaUrlHint')}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 inputMode="url"
@@ -115,11 +119,11 @@ export function AsistenteAjustes() {
             </div>
             <div id="ajuste-modelo">
               <TextField
-                label="Modelo"
+                label={t('assistant.model')}
                 hint={
                   models?.length
-                    ? `En tu Ollama: ${models.join(', ')}`
-                    : `Recomendado: ${DEFAULT_ASSISTANT.model} (5,2 GB).`
+                    ? t('assistant.inYourOllama', { models: models.join(', ') })
+                    : t('assistant.recommended', { model: DEFAULT_ASSISTANT.model })
                 }
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -135,26 +139,24 @@ export function AsistenteAjustes() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="primary">
-              Guardar
+              {t('assistant.save')}
             </Button>
             <Button onClick={test}>
               <Icon name="sync" size={14} />
-              Probar conexión
+              {t('assistant.testConnection')}
             </Button>
           </div>
         </form>
       </PrefGroup>
       <p className="px-0.5 text-xs text-fg-faint">
-        {auth.kind === 'user'
-          ? 'Se guarda en tu cuenta. Solo se usa en el ordenador donde está Ollama: en el móvil no hay modelo.'
-          : 'En la demo el asistente responde con un guion y no usa Ollama.'}{' '}
+        {auth.kind === 'user' ? t('assistant.savedInAccount') : t('assistant.demo')}{' '}
         <Link
           to="/documentacion/$pagina"
           params={{ pagina: 'asistente' }}
           hash="instalar-ollama"
           className="underline"
         >
-          Cómo instalarlo
+          {t('assistant.howToInstall')}
         </Link>
       </p>
     </>
@@ -166,6 +168,7 @@ export function AsistenteAjustes() {
  * Muninn abierto a esa hora (o al abrirlo después) y se guarda como nota fijada.
  */
 export function InformeAjustes() {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -178,25 +181,25 @@ export function InformeAjustes() {
 
   const now = async () => {
     setBusy(true)
-    const id = notify.loading('Preparando tu informe…', { icon: 'assistant' })
+    const id = notify.loading(t('report.preparing'), { icon: 'assistant' })
     try {
       // Diferido: lleva @muninn/assistant, que Ajustes no necesita para nada más.
       const { generateMorningReport } = await import('../../lib/morning-report')
       const note = await generateMorningReport(m, qc, { modules, force: true })
       notify.dismiss(id)
       if (note) {
-        notify.success('Informe listo', {
+        notify.success(t('report.ready'), {
           icon: 'assistant',
           id: `morning-report-${note.id}`,
           action: {
-            label: 'Abrir',
+            label: t('report.open'),
             onClick: () => void navigate({ to: '/notas/$noteId', params: { noteId: note.id } }),
           },
         })
       }
     } catch (err) {
       notify.dismiss(id)
-      fail('No se pudo preparar el informe', err)
+      fail(t('report.failed'), err)
     } finally {
       setBusy(false)
     }
@@ -204,16 +207,16 @@ export function InformeAjustes() {
 
   return (
     <>
-      <PrefGroup title="Cada día" icon="sun">
+      <PrefGroup title={t('report.daily')} icon="sun">
         <PrefRow
           id="informe-activo"
           icon="sun"
           tile="bg-project-amber/15 text-project-amber"
-          title="Informe de la mañana"
-          description="Tus tareas de hoy y vencidas, los cobros próximos y el resumen de noticias, en una nota fijada."
+          title={t('report.title')}
+          description={t('report.description')}
           htmlFor="ajuste-informe-switch"
           changed={changed.includes('reportEnabled')}
-          onReset={() => void resetPrefs(m, qc, ['reportEnabled'], 'Informe desactivado')}
+          onReset={() => void resetPrefs(m, qc, ['reportEnabled'], t('report.turnedOff'))}
         >
           <Switch
             id="ajuste-informe-switch"
@@ -224,14 +227,14 @@ export function InformeAjustes() {
         <PrefRow
           id="informe-hora"
           icon="clock"
-          title="Hora"
-          description="Si a esa hora el ordenador está apagado, se hace al abrir Muninn ese día (y lo dice)."
+          title={t('report.time')}
+          description={t('report.timeHint')}
           changed={changed.includes('reportTime')}
-          onReset={() => void resetPrefs(m, qc, ['reportTime'], 'Hora del informe: 08:30')}
-          resetLabel="Volver a las 08:30"
+          onReset={() => void resetPrefs(m, qc, ['reportTime'], t('report.timeReset'))}
+          resetLabel={t('report.timeResetLabel')}
         >
           <TextField
-            label="Hora del informe"
+            label={t('report.timeLabel')}
             hideLabel
             type="time"
             value={time}
@@ -244,20 +247,18 @@ export function InformeAjustes() {
           />
         </PrefRow>
       </PrefGroup>
-      <PrefGroup title="Ahora" icon="assistant">
+      <PrefGroup title={t('report.now')} icon="assistant">
         <PrefRow
           id="informe-ahora"
           icon="assistant"
-          title="Hacer ahora"
+          title={t('report.makeNow')}
           description={
-            prefs.lastDate
-              ? `El último es del ${prefs.lastDate}. Si ya hay uno hoy, se hace otro.`
-              : 'Para ver cómo queda. Usa el modelo de este ordenador si está listo.'
+            prefs.lastDate ? t('report.lastOne', { date: prefs.lastDate }) : t('report.firstOne')
           }
         >
           <Button onClick={now} disabled={busy}>
             <Icon name="assistant" size={14} />
-            {busy ? 'Preparando…' : 'Hacer ahora'}
+            {busy ? t('report.preparingShort') : t('report.makeNow')}
           </Button>
         </PrefRow>
       </PrefGroup>

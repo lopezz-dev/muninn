@@ -1,5 +1,6 @@
 import type { Muninn, UserSettings } from '@muninn/core'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
+import { t } from '../i18n'
 import { notifyUndo } from './feedback'
 import { useMuninn } from './muninn'
 import { fail, serial } from './mutations'
@@ -63,11 +64,11 @@ export async function saveAssistantPrefs(
     await serial('settings', () => m.settings.update({ preferences: { assistant: { ...next } } }))
   } catch (err) {
     apply(before)
-    fail('No se pudo guardar el ajuste', err)
+    fail(t('assistant.saveFailed'), err)
     return false
   }
   if (!opts.undoing) {
-    notifyUndo(opts.label ?? 'Ajuste guardado', {
+    notifyUndo(opts.label ?? t('assistant.saved'), {
       icon: 'assistant',
       undo: () => saveAssistantPrefs(m, qc, before, { undoing: true }),
     })
