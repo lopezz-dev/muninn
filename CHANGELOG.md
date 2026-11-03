@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.9.0](https://github.com/lopezz-dev/muninn/compare/v0.8.0...v0.9.0) (2026-11-03)
+
+
+### Features
+
+* **core:** la búsqueda del servidor encuentra palabras en cualquier orden ([91c6e4f](https://github.com/lopezz-dev/muninn/commit/91c6e4fdb59b4f6ce44d8d8c92306b7f5530dda0))
+* **core:** la búsqueda del servidor encuentra palabras en cualquier orden ([2771460](https://github.com/lopezz-dev/muninn/commit/27714601f49c1202d322e3a02f67ba0dbcd4e091))
+* **web:** cabecera del proyecto más compacta en el móvil ([2e58208](https://github.com/lopezz-dev/muninn/commit/2e5820826ba3a2d7129d34960607c9d871ce394d))
+* **web:** cabecera del proyecto más compacta en el móvil ([c402e89](https://github.com/lopezz-dev/muninn/commit/c402e8925c0681a898b300cc80fe11df8e2a9d6f))
+* **web:** códigos de recuperación del segundo factor ([#119](https://github.com/lopezz-dev/muninn/issues/119)) ([1f3b042](https://github.com/lopezz-dev/muninn/commit/1f3b042d927a63e2fc2e3849765e47083ade9ffb))
+* **web:** color propio de columna y reordenar subtareas arrastrando ([0c3934a](https://github.com/lopezz-dev/muninn/commit/0c3934a90d2563c854d9cd0914c1033ad606a0ea))
+* **web:** color propio de columna y reordenar subtareas arrastrando ([cd466b1](https://github.com/lopezz-dev/muninn/commit/cd466b108313cfaccd694fb390510421bb6620fd))
+* **web:** el calendario cruza de mes con el teclado y el móvil recuerda el mes desplegado ([1de41b2](https://github.com/lopezz-dev/muninn/commit/1de41b23b78ea116dc15aea8aad476ccff10cd77))
+* **web:** el calendario cruza de mes con el teclado y el móvil recuerda el mes desplegado ([8f15a1e](https://github.com/lopezz-dev/muninn/commit/8f15a1ee49ffe025163509f3cb55fcaab026e129))
+* **web:** en táctil, un enlace externo abre antes «Abrir enlace · Copiar enlace» ([6652498](https://github.com/lopezz-dev/muninn/commit/66524982870158f7aaa9160b6ff681374f353f3e))
+* **web:** en táctil, un enlace externo abre antes «Abrir enlace · Copiar enlace» ([7087b50](https://github.com/lopezz-dev/muninn/commit/7087b50bb04561276bda825d7003aea839c99ecf))
+
+
+### Bug Fixes
+
+* **db:** cerrar una sesión quita también los avisos push de ese dispositivo ([2d740c9](https://github.com/lopezz-dev/muninn/commit/2d740c92510930a5135677cde3a5c124029a3ede))
+* **tooling:** ignorar .claude/worktrees en git y en Biome ([5ccc3dc](https://github.com/lopezz-dev/muninn/commit/5ccc3dc8ade648ac25dfff33ff6e0e677f6db9d0))
+* **tooling:** ignorar .claude/worktrees en git y en Biome ([e3beadb](https://github.com/lopezz-dev/muninn/commit/e3beadba18470980fea039a332b3d075dca03fa1))
+* **web:** el segundo factor al volver de GitHub y en /oauth/consent ([beb5a7e](https://github.com/lopezz-dev/muninn/commit/beb5a7ee7c4117068af8594dd2caad4034fc693c))
+* **web:** el segundo factor al volver de GitHub y en /oauth/consent ([a5b3695](https://github.com/lopezz-dev/muninn/commit/a5b3695bb56372c0b839b5e48be472ba6763199e))
+* **web:** en Notas, el buscador y los filtros se quedan fijos y solo hace scroll la lista ([#118](https://github.com/lopezz-dev/muninn/issues/118)) ([3b5a36d](https://github.com/lopezz-dev/muninn/commit/3b5a36deb3efa59ba2ccc9407e3ea7ab3fe47dfa))
+
 ## [0.8.0](https://github.com/lopezz-dev/muninn/compare/v0.7.0...v0.8.0) (2026-10-30)
 
 
