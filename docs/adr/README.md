@@ -177,6 +177,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
+- [ADR-0077](0077-i18n-ingles-por-defecto-con-i18next.md) — La app en varios idiomas con i18next: inglés por defecto, español con prefijo `/es` y rutas en inglés
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

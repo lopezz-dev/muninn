@@ -368,6 +368,18 @@ más o menos en este orden:
 - [ ] Más proveedores: Apple (útil en iPhone) y Google
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
 
+## Idiomas (i18n)
+
+Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (ADR-0077). Antes del lanzamiento público.
+
+- [ ] Fase 1: i18next con claves tipadas y carga diferida por pantalla, idioma de la cuenta en Ajustes › Apariencia y el shell
+  en los dos idiomas
+- [ ] Fase 2: el resto de pantallas en inglés y en español, por grupos
+- [ ] Fase 3: rutas en inglés (`/projects`, `/notes`, `/docs`…) con redirecciones de las antiguas
+- [ ] Fase 4: guías en los dos idiomas, prerender por idioma con `hreflang` y sitemap, y el aviso «Esta página también está en
+  español» (abajo a la derecha; en el móvil, encima del dock)
+- [ ] Fase 5: correos de Supabase, avisos push y lo que escriben el asistente y el MCP para el usuario
+
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
