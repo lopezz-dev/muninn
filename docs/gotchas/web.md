@@ -679,8 +679,10 @@
     `twitter:*` y la canónica (la ruta sin `?…` ni `#…`), y al salir los devuelve a como estaban. Eso lo leen Google y los
     buscadores que ejecutan JavaScript.
   - Las pantallas privadas siguen con `PageHeader`, que solo cambia el título.
-  - Que las tarjetas lleven el título de la guía necesitaría prerender (propuesta del ADR-0045).
-  - El dominio de producción está escrito a mano en el repo: si cambia, sigue [Cambiar el dominio de la web](#cambiar-el-dominio-de-la-web-lista-completa).
+  - Las guías llevan además su HTML prerenderizado con las metas ya puestas (ADR-0076): las tarjetas las leen sin JavaScript.
+    `applyPageMeta` quita la canónica que trae ese HTML antes de poner la suya: una sola por página.
+  - Una página que no existe llama a `useNoIndex()`: la app responde 200 en cualquier ruta y, sin él, se indexaría.
+  - El dominio de producción sale de `SITE_URL` (`vite/seo.ts`): si cambia, sigue [Cambiar el dominio de la web](#cambiar-el-dominio-de-la-web-lista-completa).
 - **Ojo en tests:** en jsdom, `document.head.innerHTML = …` también borra el `<title>`; pon `document.title` después.
 - **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md)
 
@@ -688,13 +690,12 @@
 
 - **Síntoma:** tras pasar a un dominio propio (o a otro `*.vercel.app`), la tarjeta al compartir enseña la URL vieja, los buscadores
   siguen el sitemap viejo, entrar con GitHub vuelve al dominio anterior o el Asistente de la web no llega a Ollama.
-- **Causa:** la URL de producción (hoy `https://muninn-sepia.vercel.app`) no sale de una variable. Las tarjetas y los buscadores no
-  ejecutan JavaScript, así que va escrita a mano en el repo; y además está configurada en varios servicios.
+- **Causa:** la URL de producción (hoy `https://muninn-sepia.vercel.app`) tiene que estar en el HTML, porque las tarjetas y los
+  buscadores no ejecutan JavaScript; y además está configurada en varios servicios.
 - **Solución:** al cambiarla, repasa todo esto (y busca la vieja con `git grep muninn-sepia`).
   - **En el repo**, en un PR a `develop`:
-    - `apps/web/index.html`: `og:url`, `og:image` y `twitter:image`;
-    - `apps/web/public/robots.txt`: la línea `Sitemap:`;
-    - `apps/web/public/sitemap.xml`: cada `<loc>`;
+    - `SITE_URL` en `apps/web/vite/seo.ts` (o la variable `MUNINN_SITE_URL` en Vercel): de ahí salen las metas de `index.html`
+      (`%SITE_URL%`), `robots.txt`, `sitemap.xml` y las guías prerenderizadas (ADR-0076);
     - la URL en los docs que la citan: `ROADMAP.md`, `fase-final.md`, ADR-0040 y la entrada «Vercel: qué URL es pública» de aquí.
   - **Fuera del repo** (a mano, cada uno en su panel):
     - Vercel › *Settings › Domains*: añadir el dominio (el `*.vercel.app` puede quedarse como alias);
@@ -709,7 +710,26 @@
     - Cloudflare › Turnstile: añadir el dominio a los *hostnames* del widget del CAPTCHA (ADR-0060), o el login fallará.
   - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
     Las apps instaladas (PWA) de la URL vieja no se mudan solas: hay que instalarlas otra vez desde la nueva.
-- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)
+- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0076](../adr/0076-guias-publicas-prerenderizadas-y-url-unica.md),
+  [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)
+
+### Guías prerenderizadas: lo que hay que saber
+
+- **Síntoma:** en Vercel, `/documentacion/notas` sale como la app vacía o con 404; o en `pnpm preview` se ve la app y no el HTML
+  prerenderizado; o el texto de una guía aparece un instante sin estilo antes de pintarse la pantalla.
+- **Causa:** el plugin `vite/seo.ts` escribe, al cerrar el build, `dist/documentacion/<guía>/index.html` (y `robots.txt`,
+  `sitemap.xml` y `404.html`). Vercel los sirve por las *rewrites* de `vercel.json`; `vite preview` no resuelve
+  `/documentacion/notas` sin la barra final y cae en el `index.html` normal, y el *service worker* siempre sirve el `index.html`
+  (las páginas prerenderizadas no se precachean, a propósito). El texto prerenderizado está dentro de `#root` y React lo
+  sustituye al arrancar.
+- **Solución:**
+  - Para ver el HTML que lee un buscador, pídelo sin *service worker*: `curl -s http://localhost:4173/documentacion/notas/`.
+  - Si cambias la ruta `/documentacion`, cambia también las *rewrites* de `vercel.json`, el `globIgnores` del PWA
+    (`vite.config.ts`) e `isPublicPath` (`router.tsx`).
+  - Las metas que cambia el prerender (`description`, `og:*`, `twitter:title`, `twitter:description`) tienen que seguir en
+    `index.html`: si falta una, el build falla con «index.html no tiene la meta …».
+  - Sin sesión, `_app` pinta `PublicShell` y su loader devuelve `null`: una pantalla de la documentación no puede usar `useMuninn()`.
+- **Ref:** [ADR-0076](../adr/0076-guias-publicas-prerenderizadas-y-url-unica.md)
 
 ### Ajustes: un ajuste nuevo se da de alta en dos sitios
 

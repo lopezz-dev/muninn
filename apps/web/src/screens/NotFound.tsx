@@ -1,9 +1,12 @@
 import { Button } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import { EmptyState, Page, PageHeader } from '../components/Page'
+import { useNoIndex } from '../lib/seo'
 
 /** Ruta desconocida. Va en el bundle inicial: es la que se ve si un chunk no existe. */
 export function NotFound() {
+  // La app responde 200 a cualquier ruta: sin esto, Google indexaría la página de «no existe».
+  useNoIndex()
   return (
     <Page>
       <PageHeader title="No encontrado" />
