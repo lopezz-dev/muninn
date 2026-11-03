@@ -63,13 +63,14 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
-- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
+- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core *(avisos al cerrar sesiones: ADR-0074)*
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0065](0065-eliminar-proyectos-archivados.md) — Los proyectos archivados se pueden eliminar para siempre, con «Deshacer» diferido, y archivar suelta el repo de GitHub
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
 - [ADR-0067](0067-eliminar-tareas-archivadas.md) — Las tareas archivadas se pueden eliminar para siempre desde «Tareas archivadas», con «Deshacer» diferido
 - [ADR-0069](0069-noticias-equilibradas-por-fuente.md) — Noticias equilibradas por fuente: rachas plegadas en «Todas» y resumen repartido
+- [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -88,10 +89,11 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0042](0042-noticias-rss-con-descarga-en-servidor.md) — Noticias: fuentes RSS por usuario, descarga en una Edge Function con cron y resumen diario en local
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
-- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
+- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core *(avisos al cerrar sesiones: ADR-0074)*
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
+- [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -158,7 +160,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
-- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core
+- [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core *(avisos al cerrar sesiones: ADR-0074)*
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
 - [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
@@ -172,6 +174,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0069](0069-noticias-equilibradas-por-fuente.md) — Noticias equilibradas por fuente: rachas plegadas en «Todas» y resumen repartido
 - [ADR-0070](0070-staletime-global-de-30-segundos.md) — Lo leído vale 30 s (`staleTime` global): el tiempo real invalida y volver a la pestaña refresca lo caducado
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
+- [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

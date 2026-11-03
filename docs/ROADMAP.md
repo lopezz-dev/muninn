@@ -358,6 +358,8 @@ más o menos en este orden:
 - [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
   o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
   prueba real, en la fase final (4d)
+  - [x] Cerrar una sesión quita también los avisos push de ese dispositivo ([ADR-0074](adr/0074-avisos-push-atados-a-la-sesion.md)).
+    La migración, en la fase final (4b)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
 - [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo

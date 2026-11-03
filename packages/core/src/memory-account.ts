@@ -21,9 +21,14 @@ const fakeSecret = () =>
 
 /**
  * Seguridad de la cuenta en memoria (ADR-0061), para la demo y los tests: imita lo que hace Supabase Auth sin red.
- * No se guarda en la instantánea del store: es Auth, no datos del usuario.
+ * No se guarda en la instantánea del store: es Auth, no datos del usuario. `onClosed` recibe las sesiones que se cierran,
+ * como la cascada de `auth.sessions` a `push_subscriptions` en Supabase (ADR-0074).
  */
-export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => string): AccountStore {
+export function createMemoryAccount(
+  seed: MemoryAccountSeed = {},
+  now: () => string,
+  onClosed: (sessionIds: string[]) => void = () => {},
+): AccountStore {
   let sessions = [...(seed.sessions ?? [])]
   if (!sessions.some((s) => s.current)) {
     const ts = now()
@@ -51,12 +56,15 @@ export function createMemoryAccount(seed: MemoryAccountSeed = {}, now: () => str
       return structuredClone(sessions)
     },
     async revokeSession(id) {
-      const before = sessions.length
+      const found = sessions.some((s) => s.id === id)
       sessions = sessions.filter((s) => s.id !== id)
-      return sessions.length < before
+      if (found) onClosed([id])
+      return found
     },
     async signOut(scope) {
-      sessions = scope === 'global' ? [] : sessions.filter((s) => s.current)
+      const closed = sessions.filter((s) => scope === 'global' || !s.current).map((s) => s.id)
+      sessions = sessions.filter((s) => !closed.includes(s.id))
+      onClosed(closed)
     },
     oauthGrants: {
       async list() {

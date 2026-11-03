@@ -3,6 +3,7 @@ import {
   type AccountSession,
   createMemoryStore,
   createMuninn,
+  emptySnapshot,
   MEMORY_WRONG_MFA_CODE,
   type MemoryAccountSeed,
   sessionDeviceLabel,
@@ -59,6 +60,49 @@ describe('sesiones', () => {
     expect(await account.sessions.list()).toHaveLength(1)
     await account.sessions.signOut('global')
     expect(await account.sessions.list()).toHaveLength(0)
+  })
+
+  it('los avisos van con la sesión que los activó: cerrarla los quita (ADR-0074)', async () => {
+    const phone = session({})
+    const laptop = session({})
+    const here = session({ current: true })
+    const device = (n: number, sessionId: string | null) => ({
+      id: `d${n}`,
+      endpoint: `https://web.push.apple.com/d${n}`,
+      p256dh: 'p',
+      auth: 'a',
+      userAgent: null,
+      label: null,
+      sessionId,
+      lastSeenAt: '2026-10-20T08:00:00.000Z',
+      createdAt: '2026-10-20T08:00:00.000Z',
+      updatedAt: '2026-10-20T08:00:00.000Z',
+    })
+    const store = createMemoryStore(
+      {
+        ...emptySnapshot(),
+        pushDevices: [device(1, phone.id), device(2, laptop.id), device(3, null)],
+      },
+      { account: { sessions: [phone, laptop, here] } },
+    )
+    const m = createMuninn(store, { timeZone: 'UTC' })
+    const mine = await m.push.subscribe({
+      endpoint: 'https://web.push.apple.com/aqui',
+      keys: { p256dh: 'p', auth: 'a' },
+    })
+    expect(mine.sessionId).toBe(here.id)
+    const endpoints = async () => (await m.push.devices()).map((d) => d.endpoint).sort()
+
+    await m.account.sessions.revoke(phone.id)
+    expect(await endpoints()).not.toContain('https://web.push.apple.com/d1')
+    await m.account.sessions.signOut('others')
+    // Sin sesión conocida (guardada antes de la columna) no se toca.
+    expect(await endpoints()).toEqual([
+      'https://web.push.apple.com/aqui',
+      'https://web.push.apple.com/d3',
+    ])
+    await m.account.sessions.signOut('global')
+    expect(await endpoints()).toEqual(['https://web.push.apple.com/d3'])
   })
 
   it('valida el alcance de cerrar sesión', async () => {

@@ -138,8 +138,11 @@ export interface NewsFetchSummary {
 /** Dispositivos con avisos, del visto más recientemente al más antiguo. */
 export interface PushDeviceStore {
   list(): Promise<PushDevice[]>
-  /** Crea la fila del dispositivo o, si ya está (mismo `endpoint`), la actualiza. */
-  upsert(row: NewRow<PushDevice>): Promise<PushDevice>
+  /**
+   * Crea la fila del dispositivo o, si ya está (mismo `endpoint`), la actualiza. La sesión no la elige el core: es la de
+   * quien escribe (ADR-0074).
+   */
+  upsert(row: Omit<NewRow<PushDevice>, 'sessionId'>): Promise<PushDevice>
   remove(id: string): Promise<void>
   removeEndpoint(endpoint: string): Promise<void>
 }

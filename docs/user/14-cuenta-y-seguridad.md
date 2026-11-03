@@ -81,7 +81,8 @@ Si ves una que no reconoces, ciérrala.
 
 ## Cerrar la sesión en otro dispositivo
 
-Pulsa **Cerrar** en su fila. Ese dispositivo saldrá en menos de una hora (lo que tarda en caducar su acceso) y, para
+Pulsa **Cerrar** en su fila. Ese dispositivo deja de recibir tus avisos al momento y saldrá en menos de una hora (lo que
+tarda en caducar su acceso). Para
 volver, tendrá que entrar de nuevo con el código o con GitHub. No se puede deshacer, pero tampoco borra nada: tus datos
 siguen en tu cuenta.
 
@@ -94,7 +95,8 @@ Al final de la lista, en **Cerrar en otros dispositivos**:
 - **En los demás:** sales de todos menos de este. Útil si has perdido el móvil o entraste en un ordenador ajeno.
 - **En todos:** sales también de este, y vuelves a la pantalla de entrada.
 
-En los dos casos, los demás dispositivos salen en menos de una hora.
+En los dos casos, los demás dispositivos dejan de recibir tus avisos al momento y salen en menos de una hora. Si vuelves
+a entrar en uno de ellos y quieres los avisos, actívalos otra vez en **Ajustes › Notificaciones**.
 
 ## Quitar el acceso a una app
 

@@ -638,6 +638,11 @@ export interface PushDevice {
   userAgent: string | null
   /** Nombre que enseña Ajustes («iPhone · Safari»). */
   label: string | null
+  /**
+   * La sesión de Auth que la guardó (ADR-0074). La pone el servidor, no el core: al cerrarse esa sesión (aquí, en los
+   * demás dispositivos o en todos) la fila se borra con ella. `null` en las guardadas antes de existir la columna.
+   */
+  sessionId: string | null
   lastSeenAt: string
   createdAt: string
   updatedAt: string

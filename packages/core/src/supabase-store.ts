@@ -432,7 +432,8 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
   }
 
   // Avisos push (ADR-0040, migración 20261028180000_push_subscriptions). Sin borrado lógico: un dispositivo que se quita
-  // ya no recibe nada, y «Deshacer» lo vuelve a guardar con las mismas claves.
+  // ya no recibe nada, y «Deshacer» lo vuelve a guardar con las mismas claves. `session_id` lo pone un trigger con la
+  // sesión del JWT (20261031120000_push_por_sesion, ADR-0074): al cerrarse esa sesión, la fila se borra en cascada.
   const pushDevices: PushDeviceStore = {
     async list() {
       const { data, error } = await client
