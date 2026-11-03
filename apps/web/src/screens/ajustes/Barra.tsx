@@ -1,5 +1,6 @@
 import { Avatar, cn, Icon, IconButton, icons, notify, Switch } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { dockLabel, useDock } from '../../lib/dock'
 import { changeDock } from '../../lib/dock-actions'
 import { useEnabledModules } from '../../lib/modules'
@@ -51,6 +52,7 @@ function Preview({ tabs }: { tabs: DockTab[] }) {
  * «Deshacer». Las de un módulo desactivado se pueden dejar puestas, pero no se ven mientras siga apagado.
  */
 export function Barra() {
+  const { t } = useTranslation(['settings', 'common'])
   const m = useMuninn()
   const qc = useQueryClient()
   const auth = useAuth()
@@ -66,31 +68,22 @@ export function Barra() {
   const toggle = (id: DockTab) => {
     const next = toggleDockTab(dock, id)
     if (!next) {
-      notify.info(
-        dock.includes(id)
-          ? 'La barra necesita al menos una pestaña'
-          : `Caben ${DOCK_MAX} pestañas: quita una antes`,
-      )
+      notify.info(dock.includes(id) ? t('dock.atLeastOne') : t('dock.full', { max: DOCK_MAX }))
       return
     }
-    apply(
-      next,
-      next.includes(id)
-        ? `${dockLabel(id)} añadida a la barra`
-        : `${dockLabel(id)} quitada de la barra`,
-    )
+    apply(next, t(next.includes(id) ? 'dock.added' : 'dock.removed', { name: dockLabel(id) }))
   }
   const move = (id: DockTab, delta: -1 | 1) =>
     apply(
       moveDockTab(dock, id, delta),
-      `${dockLabel(id)} ${delta < 0 ? 'a la izquierda' : 'a la derecha'}`,
+      t(delta < 0 ? 'dock.movedLeft' : 'dock.movedRight', { name: dockLabel(id) }),
     )
 
   return (
     <>
       <Preview tabs={visible.length ? visible : ['home']} />
       <PrefGroup
-        title="En la barra"
+        title={t('dock.inBar')}
         icon="dock"
         action={
           <span className="rounded-full bg-accent-soft px-2 py-px text-2xs font-semibold text-accent tabular">
@@ -105,19 +98,19 @@ export function Barra() {
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-base">{DOCK_TAB[id].label}</span>
                 {off(id) ? (
-                  <span className="text-xs text-fg-faint">Módulo desactivado: no se ve</span>
+                  <span className="text-xs text-fg-faint">{t('dock.moduleOffHidden')}</span>
                 ) : null}
               </span>
               <IconButton
                 size="sm"
-                aria-label={`Mover ${DOCK_TAB[id].label} a la izquierda`}
+                aria-label={t('dock.moveLeft', { name: DOCK_TAB[id].label })}
                 icon={<icons.chevronUp />}
                 disabled={i === 0}
                 onClick={() => move(id, -1)}
               />
               <IconButton
                 size="sm"
-                aria-label={`Mover ${DOCK_TAB[id].label} a la derecha`}
+                aria-label={t('dock.moveRight', { name: DOCK_TAB[id].label })}
                 icon={<icons.chevronDown />}
                 disabled={i === dock.length - 1}
                 onClick={() => move(id, 1)}
@@ -125,7 +118,7 @@ export function Barra() {
               <Switch
                 checked
                 disabled={dock.length <= 1}
-                aria-label={`Quitar ${DOCK_TAB[id].label} de la barra`}
+                aria-label={t('dock.remove', { name: DOCK_TAB[id].label })}
                 onCheckedChange={() => toggle(id)}
                 className="ml-1.5"
               />
@@ -133,11 +126,7 @@ export function Barra() {
           ))}
         </ul>
       </PrefGroup>
-      <PrefGroup
-        title="Fuera de la barra"
-        icon="more"
-        description="Lo que no está abajo sigue a un toque en tu avatar, en «Ir a»."
-      >
+      <PrefGroup title={t('dock.outOfBar')} icon="more" description={t('dock.outOfBarText')}>
         <ul>
           {rest.map((id) => (
             <li key={id} className={cn(row, off(id) && 'text-fg-muted')}>
@@ -145,14 +134,14 @@ export function Barra() {
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-base">{DOCK_TAB[id].label}</span>
                 {off(id) ? (
-                  <span className="text-xs text-fg-faint">Módulo desactivado</span>
+                  <span className="text-xs text-fg-faint">{t('dock.moduleOff')}</span>
                 ) : id === 'search' ? (
-                  <span className="text-xs text-fg-faint">Abre el buscador</span>
+                  <span className="text-xs text-fg-faint">{t('dock.opensSearch')}</span>
                 ) : null}
               </span>
               <Switch
                 checked={false}
-                aria-label={`Añadir ${DOCK_TAB[id].label} a la barra`}
+                aria-label={t('dock.add', { name: DOCK_TAB[id].label })}
                 onCheckedChange={() => toggle(id)}
                 className={cn(dock.length >= DOCK_MAX && 'opacity-50')}
               />
@@ -161,24 +150,20 @@ export function Barra() {
           <li className={cn(row, 'text-fg-muted')}>
             <Icon name="assistant" size={19} className="text-fg-faint" />
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-base">Asistente</span>
-              <span className="text-xs text-fg-faint">
-                Aún no contesta en el móvil: usa el del ordenador
-              </span>
+              <span className="truncate text-base">{t('nav.assistant', { ns: 'common' })}</span>
+              <span className="text-xs text-fg-faint">{t('dock.assistantNotOnPhone')}</span>
             </span>
             <Switch
               checked={false}
               disabled
-              aria-label="Añadir Asistente a la barra"
+              aria-label={t('dock.add', { name: t('nav.assistant', { ns: 'common' }) })}
               onCheckedChange={() => {}}
             />
           </li>
         </ul>
       </PrefGroup>
       <p className="px-0.5 text-xs text-fg-faint">
-        {auth.kind === 'user'
-          ? 'Se guarda en tu cuenta: te sigue a todos tus dispositivos.'
-          : 'Estás en modo demo: se pierde al recargar.'}
+        {auth.kind === 'user' ? t('savedToAccountFooter') : t('dock.demoFooter')}
       </p>
     </>
   )

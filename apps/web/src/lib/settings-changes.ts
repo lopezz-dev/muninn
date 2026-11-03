@@ -1,6 +1,7 @@
 import type { Muninn } from '@muninn/core'
 import type { Appearance } from '@muninn/ui'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
+import { t } from '../i18n'
 import type { LocalePref } from '../i18n/locale'
 import {
   appearanceStore,
@@ -100,14 +101,14 @@ export async function resetPrefs(
         saveAppearanceRemote(prevLook)
       }
       if (prevLocale) storeLocalePref(prevLocale)
-      fail('No se pudo restablecer', err)
+      fail(t('reset.failed', { ns: 'settings' }), err)
       return
     }
   }
 
   notifyUndo(label, {
     icon: 'sync',
-    description: 'Vuelven a su valor de fábrica',
+    description: t('reset.done', { ns: 'settings' }),
     undo: async () => {
       if (prevLook) {
         appearanceStore.set(prevLook)

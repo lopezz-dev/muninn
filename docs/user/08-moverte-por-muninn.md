@@ -157,8 +157,9 @@ En **Ajustes › Apariencia**:
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
 
-> **Estado:** la traducción al inglés llega por partes. Hoy están en inglés el menú, la barra de abajo, tu cuenta y
-> los avisos; el resto de pantallas y estas guías siguen en español mientras se traducen.
+> **Estado:** la traducción al inglés llega por partes. Hoy están en inglés el menú, la barra de abajo, tu cuenta, los
+> avisos, el buscador, Ajustes y los diálogos de nuevo proyecto y nueva tarea; el resto de pantallas y estas guías siguen
+> en español mientras se traducen.
 
 > **Próximamente:** tema claro.
 

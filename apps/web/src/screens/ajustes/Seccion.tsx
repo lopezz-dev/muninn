@@ -14,6 +14,7 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../../components/Page'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
+import { t } from '../../i18n'
 import { browserLocale, type LocalePref } from '../../i18n/locale'
 import { ACCENT_LABEL, changeAppearance, useAppearance } from '../../lib/appearance'
 import { isTauri } from '../../lib/auth'
@@ -31,21 +32,25 @@ import { Modulos } from './Modulos'
 import { Notificaciones } from './Notificaciones'
 import { SegundoFactor } from './SegundoFactor'
 import { Sesiones } from './Seguridad'
-import { type SettingsSection, settingsSection } from './sections'
+import { resetSectionLabel, type SettingsSection, settingsSection } from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
 const route = getRouteApi('/_app/ajustes/$seccion')
 
-const ACCENT_OPTIONS: Swatch<AccentName>[] = (Object.keys(ACCENTS) as AccentName[]).map((a) => ({
-  value: a,
-  label: ACCENT_LABEL[a],
-  color: ACCENTS[a],
-}))
+// Funciones, no constantes: los textos se leen al pintar, en el idioma activo (ADR-0077).
+const accentOptions = (): Swatch<AccentName>[] =>
+  (Object.keys(ACCENTS) as AccentName[]).map((a) => ({
+    value: a,
+    label: ACCENT_LABEL[a],
+    color: ACCENTS[a],
+  }))
 
-const PROVIDER_LABEL: Record<string, string> = {
-  email: 'Código por correo',
-  github: 'GitHub',
-}
+const providerLabel = (provider: string) =>
+  provider === 'email'
+    ? t('account.providerEmail', { ns: 'settings' })
+    : provider === 'github'
+      ? 'GitHub'
+      : provider
 
 /** Para resetear desde una fila o desde la cabecera de la sección. */
 export function useReset(section: string) {
@@ -57,6 +62,7 @@ export function useReset(section: string) {
 }
 
 function Cuenta() {
+  const { t } = useTranslation('settings')
   const auth = useAuth()
   const endSession = useEndSession()
   const [busy, setBusy] = useState(false)
@@ -70,20 +76,19 @@ function Cuenta() {
     return (
       <EmptyState
         icon="user"
-        title="Estás en modo demo"
+        title={t('account.demoTitle')}
         actions={
           <>
             <Button asChild variant="primary">
-              <Link to="/login">Iniciar sesión</Link>
+              <Link to="/login">{t('account.signIn')}</Link>
             </Button>
             <Button onClick={end} disabled={busy}>
-              Salir del modo demo
+              {t('account.leaveDemo')}
             </Button>
           </>
         }
       >
-        Tus datos viven en memoria y se pierden al recargar. Inicia sesión para guardarlos en tu
-        cuenta y verlos en todos tus dispositivos.
+        {t('account.demoText')}
       </EmptyState>
     )
   }
@@ -91,7 +96,7 @@ function Cuenta() {
   const { account } = auth
   return (
     <>
-      <PrefGroup title="Perfil" icon="user">
+      <PrefGroup title={t('account.profile')} icon="user">
         <div className="flex items-center gap-3.5 px-4 py-4 md:px-[18px]">
           <Avatar name={account.name} src={account.avatarUrl} size="lg" />
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -102,25 +107,23 @@ function Cuenta() {
           </div>
         </div>
       </PrefGroup>
-      <PrefGroup title="Acceso" icon="link">
+      <PrefGroup title={t('account.access')} icon="link">
         <PrefRow
           id="acceso"
           icon={account.provider === 'github' ? 'github' : 'send'}
-          title="Método de acceso"
-          description="Sin contraseñas: entras con un código o con GitHub."
+          title={t('account.method')}
+          description={t('account.methodText')}
         >
-          <span className="text-sm text-fg-muted">
-            {PROVIDER_LABEL[account.provider] ?? account.provider}
-          </span>
+          <span className="text-sm text-fg-muted">{providerLabel(account.provider)}</span>
         </PrefRow>
         <PrefRow
           id="sesion"
           icon="close"
-          title="Sesión"
-          description="Se cierra solo en este dispositivo. Tus datos siguen en tu cuenta."
+          title={t('account.session')}
+          description={t('account.sessionText')}
         >
           <Button onClick={end} disabled={busy}>
-            {busy ? 'Cerrando…' : 'Cerrar sesión'}
+            {busy ? t('account.signingOut') : t('account.signOut')}
           </Button>
         </PrefRow>
       </PrefGroup>
@@ -132,51 +135,46 @@ function Cuenta() {
 }
 
 function Datos() {
+  const { t } = useTranslation('settings')
   const auth = useAuth()
   if (auth.kind === 'demo') {
     return (
       <EmptyState
         icon="sync"
-        title="Datos en memoria"
+        title={t('data.demoTitle')}
         actions={
           <Button asChild variant="primary">
-            <Link to="/login">Iniciar sesión</Link>
+            <Link to="/login">{t('account.signIn')}</Link>
           </Button>
         }
       >
-        Estás en modo demo: tus datos viven en memoria y se pierden al recargar. Con una cuenta se
-        guardan en el servidor y los ves en todos tus dispositivos.
+        {t('data.demoText')}
       </EmptyState>
     )
   }
   return (
-    <PrefGroup title="Tus datos" icon="sync">
-      <PrefRow
-        id="donde"
-        icon="archive"
-        title="Dónde se guardan"
-        description="En tu cuenta de Muninn, en un servidor de la Unión Europea (París). Solo tú puedes verlos."
-      >
+    <PrefGroup title={t('data.title')} icon="sync">
+      <PrefRow id="donde" icon="archive" title={t('data.where')} description={t('data.whereText')}>
         <span className="flex items-center gap-1.5 text-sm text-fg-muted">
           <span aria-hidden="true" className="size-1.5 rounded-full bg-success" />
-          Guardado
+          {t('data.saved')}
         </span>
       </PrefRow>
       <PrefRow
         id="dispositivos"
         icon="sync"
-        title="Entre dispositivos"
-        description="Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al momento, sin recargar."
+        title={t('data.devices')}
+        description={t('data.devicesText')}
       >
-        <span className="text-sm text-fg-muted">Al momento</span>
+        <span className="text-sm text-fg-muted">{t('data.instant')}</span>
       </PrefRow>
       <PrefRow
         id="sin-conexion"
         icon="download"
-        title="Sin conexión"
-        description="La app guarda en este dispositivo lo último que viste: puedes abrirla y consultarlo sin red. Para cambiar algo necesitas conexión. Al cerrar sesión, se borra."
+        title={t('data.offline')}
+        description={t('data.offlineText')}
       >
-        <span className="text-sm text-fg-muted">Solo lectura</span>
+        <span className="text-sm text-fg-muted">{t('data.readOnly')}</span>
       </PrefRow>
     </PrefGroup>
   )
@@ -216,38 +214,38 @@ function Apariencia() {
   const auth = useAuth()
   const appearance = useAppearance()
   const { changed, reset } = useReset('apariencia')
-  const { t } = useTranslation()
+  const { t } = useTranslation(['settings', 'common'])
   return (
     <>
-      <PrefGroup title={t('language.title')} icon="globe">
+      <PrefGroup title={t('language.title', { ns: 'common' })} icon="globe">
         <IdiomaRow
           changed={changed.includes('locale')}
-          onReset={() => reset(['locale'], t('language.restored'))}
+          onReset={() => reset(['locale'], t('language.restored', { ns: 'common' }))}
         />
       </PrefGroup>
-      <PrefGroup title="Tema" icon="glass">
+      <PrefGroup title={t('appearance.theme')} icon="glass">
         <PrefRow
           id="tema"
           icon="palette"
-          title="Modo"
-          description="Muninn está pensado en oscuro. El tema claro llegará más adelante."
+          title={t('appearance.mode')}
+          description={t('appearance.modeText')}
         >
           <span className="flex items-center gap-2 text-sm text-fg-muted">
-            Oscuro
+            {t('appearance.dark')}
             <span className="inline-flex items-center gap-1 rounded-xs border border-dashed border-border-strong px-1.5 py-px text-2xs font-semibold tracking-wide uppercase">
               <icons.clock size={10} aria-hidden="true" />
-              Claro, próximamente
+              {t('appearance.lightSoon')}
             </span>
           </span>
         </PrefRow>
         <PrefRow
           id="cristal"
           icon="glass"
-          title="Cristal"
-          description="Desenfoque translúcido en paneles y menús de toda la app."
+          title={t('appearance.glass')}
+          description={t('appearance.glassText')}
           htmlFor="ajuste-cristal-switch"
           changed={changed.includes('glass')}
-          onReset={() => reset(['glass'], 'Cristal restablecido')}
+          onReset={() => reset(['glass'], t('appearance.glassReset'))}
         >
           <Switch
             id="ajuste-cristal-switch"
@@ -256,74 +254,78 @@ function Apariencia() {
           />
         </PrefRow>
       </PrefGroup>
-      <PrefGroup title="Color" icon="palette">
+      <PrefGroup title={t('appearance.color')} icon="palette">
         <PrefRow
           id="acento"
           icon="palette"
           tile="bg-accent-soft text-accent"
-          title="Color de acento"
-          description="Botones, selección y la pestaña activa de la barra de abajo. Por defecto, ámbar."
+          title={t('appearance.accent')}
+          description={t('appearance.accentText')}
           changed={changed.includes('accent')}
-          onReset={() => reset(['accent'], 'Acento restablecido')}
-          resetLabel="Volver a ámbar"
+          onReset={() => reset(['accent'], t('appearance.accentReset'))}
+          resetLabel={t('appearance.backToAmber')}
         >
           <SwatchPicker
-            legend="Color de acento"
+            legend={t('appearance.accent')}
             hideLegend
             name="accent"
             value={appearance.accent}
-            options={ACCENT_OPTIONS}
+            options={accentOptions()}
             onChange={(accent) => changeAppearance({ accent })}
           />
         </PrefRow>
       </PrefGroup>
       <p className="px-0.5 text-xs text-fg-faint">
-        {auth.kind === 'user'
-          ? 'Se guarda en tu cuenta: te sigue a todos tus dispositivos.'
-          : 'Se guarda en este dispositivo. Cuando inicies sesión, te seguirá a todos.'}
+        {auth.kind === 'user' ? t('savedToAccountFooter') : t('appearance.deviceFooter')}
       </p>
     </>
   )
 }
 
-const SHORTCUTS: { group: string; id: string; items: { keys: string[]; action: string }[] }[] = [
+/** Los atajos por grupo. Una función, no una constante: los textos se leen al pintar (ADR-0077). */
+const shortcuts = (): {
+  group: string
+  id: string
+  items: { keys: string[]; action: string }[]
+}[] => [
   {
-    group: 'Buscador',
+    group: t('shortcuts.search', { ns: 'settings' }),
     id: 'atajos-buscador',
     items: [
-      { keys: [PALETTE_SHORTCUT], action: 'Abrir o cerrar el buscador' },
-      { keys: ['↑', '↓'], action: 'Moverse por los resultados' },
-      { keys: ['↵'], action: 'Abrir el resultado elegido' },
-      { keys: ['/'], action: 'Ir al buscador de Ajustes o de la Documentación' },
+      { keys: [PALETTE_SHORTCUT], action: t('shortcuts.openSearch', { ns: 'settings' }) },
+      { keys: ['↑', '↓'], action: t('shortcuts.moveResults', { ns: 'settings' }) },
+      { keys: ['↵'], action: t('shortcuts.openResult', { ns: 'settings' }) },
+      { keys: ['/'], action: t('shortcuts.focusSearch', { ns: 'settings' }) },
     ],
   },
   {
-    group: 'Tablero',
+    group: t('shortcuts.board', { ns: 'settings' }),
     id: 'atajos-tablero',
     items: [
-      { keys: ['N'], action: 'Nueva tarea (fuera de un campo de texto)' },
-      { keys: ['Espacio'], action: 'Con una tarjeta o columna enfocada, recogerla y soltarla' },
-      { keys: ['←', '↑', '→', '↓'], action: 'Con algo recogido, moverlo' },
+      { keys: ['N'], action: t('shortcuts.newTask', { ns: 'settings' }) },
+      {
+        keys: [t('shortcuts.space', { ns: 'settings' })],
+        action: t('shortcuts.pickUp', { ns: 'settings' }),
+      },
+      { keys: ['←', '↑', '→', '↓'], action: t('shortcuts.moveItem', { ns: 'settings' }) },
     ],
   },
   {
-    group: 'En toda la app',
+    group: t('shortcuts.general', { ns: 'settings' }),
     id: 'atajos-general',
     items: [
-      {
-        keys: [USER_MENU_SHORTCUT],
-        action: 'Abrir el menú de tu cuenta, al pie de la barra lateral',
-      },
-      { keys: ['Esc'], action: 'Cerrar un diálogo, un menú o el panel de una tarea' },
-      { keys: ['Tab'], action: 'Pasar al siguiente control (el primero: «Saltar al contenido»)' },
+      { keys: [USER_MENU_SHORTCUT], action: t('shortcuts.accountMenu', { ns: 'settings' }) },
+      { keys: ['Esc'], action: t('shortcuts.close', { ns: 'settings' }) },
+      { keys: ['Tab'], action: t('shortcuts.nextControl', { ns: 'settings' }) },
     ],
   },
 ]
 
 function Atajos() {
+  useTranslation('settings')
   return (
     <>
-      {SHORTCUTS.map((g) => (
+      {shortcuts().map((g) => (
         <PrefGroup key={g.id} title={g.group} icon="keyboard">
           <dl id={`ajuste-${g.id}`}>
             {g.items.map((s) => (
@@ -347,34 +349,23 @@ function Atajos() {
 }
 
 function Acerca() {
+  const { t } = useTranslation('settings')
   return (
     <PrefGroup title="Muninn" icon="info">
       <PrefRow
         id="version"
         icon="info"
-        title="Versión"
-        description={
-          isTauri
-            ? 'En el ordenador, Muninn busca versiones nuevas al abrirse y te avisa con «Reiniciar».'
-            : 'En el navegador y en el móvil, la app se actualiza sola al volver a abrirla.'
-        }
+        title={t('about.version')}
+        description={isTauri ? t('about.versionDesktop') : t('about.versionWeb')}
       >
         <span className="font-mono text-sm text-fg-muted">v{__APP_VERSION__}</span>
       </PrefRow>
-      <PrefRow
-        icon="docs"
-        title="Documentación"
-        description="Guías de cada parte de Muninn: qué funciona ya y qué falta."
-      >
+      <PrefRow icon="docs" title={t('about.docs')} description={t('about.docsText')}>
         <Button asChild size="sm">
-          <Link to="/documentacion">Abrir</Link>
+          <Link to="/documentacion">{t('about.open')}</Link>
         </Button>
       </PrefRow>
-      <PrefRow
-        icon="github"
-        title="Código"
-        description="Muninn es de código abierto, con licencia MIT."
-      >
+      <PrefRow icon="github" title={t('about.code')} description={t('about.codeText')}>
         <Button asChild size="sm">
           <a {...externalLink('https://github.com/lopezz-dev/muninn')}>
             GitHub
@@ -400,11 +391,6 @@ const BODY: Record<string, () => ReactNode> = {
   acerca: () => <Acerca />,
 }
 
-export const RESET_LABEL: Record<string, string> = {
-  apariencia: 'Apariencia restablecida',
-  informe: 'Informe de la mañana restablecido',
-}
-
 /** El contenido de una sección, sin su cabecera: lo comparten la pantalla de Ajustes y la hoja «Tu cuenta» del móvil. */
 export function SectionContent({ section }: { section: SettingsSection }) {
   const body = BODY[section.id]
@@ -424,9 +410,7 @@ function Body({ section }: { section: SettingsSection }) {
       <SectionHeader
         section={section}
         changed={changed.length}
-        onReset={() =>
-          reset(changed, RESET_LABEL[section.id] ?? `${section.label}: valores de fábrica`)
-        }
+        onReset={() => reset(changed, resetSectionLabel(section))}
       />
       <SectionContent section={section} />
     </>
@@ -434,6 +418,7 @@ function Body({ section }: { section: SettingsSection }) {
 }
 
 export function Seccion() {
+  useTranslation('settings')
   const { seccion } = route.useParams()
   const section = settingsSection(seccion)
   useFlashHash()

@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+import type { settings as en } from '../i18n/locales/en/settings'
 import { matchesAll, words } from './text'
 
 /**
@@ -16,231 +18,59 @@ export interface SettingEntry {
   soon?: boolean
 }
 
+type IndexId = keyof typeof en.index
+
+/**
+ * Una entrada con sus textos como *getters*: se leen al buscar, en el idioma activo (ADR-0077). Los textos van en
+ * `index.<id>` del namespace `settings`, en los dos idiomas.
+ */
+const entry = (id: IndexId, section: string): SettingEntry => ({
+  id,
+  section,
+  get label() {
+    return t(`index.${id}.label`, { ns: 'settings' })
+  },
+  get description() {
+    return t(`index.${id}.description`, { ns: 'settings' })
+  },
+  get keywords() {
+    return t(`index.${id}.keywords`, { ns: 'settings' })
+  },
+})
+
 export const SETTINGS_INDEX: SettingEntry[] = [
-  {
-    id: 'acceso',
-    section: 'cuenta',
-    label: 'Método de acceso',
-    description: 'Entras con un código por correo o con GitHub. Sin contraseñas.',
-    keywords: 'login correo email',
-  },
-  {
-    id: 'sesion',
-    section: 'cuenta',
-    label: 'Cerrar sesión',
-    description: 'Se cierra solo en este dispositivo.',
-    keywords: 'salir logout',
-  },
-  {
-    id: 'segundo-factor',
-    section: 'cuenta',
-    label: 'Segundo factor',
-    description: 'Un código de una app de tu móvil al entrar, además del correo o GitHub.',
-    keywords: 'mfa 2fa totp autenticador authenticator verificación dos pasos seguridad',
-  },
-  {
-    id: 'sesiones',
-    section: 'cuenta',
-    label: 'Sesiones y dispositivos',
-    description: 'Dónde tienes la sesión abierta, con su última actividad.',
-    keywords: 'dispositivos navegadores seguridad',
-  },
-  {
-    id: 'cerrar-sesiones',
-    section: 'cuenta',
-    label: 'Cerrar sesión en otros dispositivos',
-    description: 'En los demás o en todos, también en este.',
-    keywords: 'salir logout todos seguridad',
-  },
-  {
-    id: 'apps',
-    section: 'cuenta',
-    label: 'Apps con acceso',
-    description:
-      'Las apps que usan tu cuenta por el MCP remoto, como claude.ai. Quita las que no uses.',
-    keywords: 'oauth permisos claude conectores mcp revocar',
-  },
-  {
-    id: 'idioma',
-    section: 'apariencia',
-    label: 'Idioma',
-    description: 'El idioma de la app. Por defecto, el de tu navegador.',
-    keywords: 'language english inglés español traducción',
-  },
-  {
-    id: 'tema',
-    section: 'apariencia',
-    label: 'Tema',
-    description: 'Oscuro. El claro llegará más adelante.',
-    keywords: 'modo oscuro claro',
-  },
-  {
-    id: 'cristal',
-    section: 'apariencia',
-    label: 'Cristal',
-    description: 'Desenfoque translúcido en paneles y menús.',
-    keywords: 'transparencia desenfoque',
-  },
-  {
-    id: 'acento',
-    section: 'apariencia',
-    label: 'Color de acento',
-    description: 'Botones, selección y la pestaña activa de la barra de abajo.',
-    keywords: 'color tema',
-  },
-  {
-    id: 'barra-pestanas',
-    section: 'barra',
-    label: 'Pestañas de la barra de abajo',
-    description: 'Elige de una a cuatro y su orden. Tu avatar queda siempre a la derecha.',
-    keywords: 'dock pestañas móvil navegación inicio buscar más',
-  },
-  {
-    id: 'atajos-buscador',
-    section: 'atajos',
-    label: 'Atajos del buscador',
-    description: 'Abrirlo, moverte por los resultados y abrir uno.',
-    keywords: 'teclado ctrl k cmd',
-  },
-  {
-    id: 'atajos-tablero',
-    section: 'atajos',
-    label: 'Atajos del tablero',
-    description: 'Nueva tarea y mover tarjetas con el teclado.',
-    keywords: 'teclado n espacio flechas',
-  },
-  {
-    id: 'modulo-tasks',
-    section: 'modulos',
-    label: 'Tareas y proyectos',
-    description: 'Kanban por proyecto.',
-    keywords: 'modulo activar desactivar',
-  },
-  {
-    id: 'modulo-notes',
-    section: 'modulos',
-    label: 'Notas',
-    description: 'Markdown vinculado a proyectos.',
-    keywords: 'modulo activar desactivar',
-  },
-  {
-    id: 'modulo-finance',
-    section: 'modulos',
-    label: 'Finanzas',
-    description: 'Gastos, ingresos, ahorro, inversión y suscripciones.',
-    keywords: 'modulo activar desactivar dinero',
-  },
-  {
-    id: 'modulo-github',
-    section: 'modulos',
-    label: 'GitHub',
-    description: 'Issues como tareas y agentes.',
-    keywords: 'modulo activar desactivar',
-  },
-  {
-    id: 'modulo-news',
-    section: 'modulos',
-    label: 'Noticias',
-    description: 'RSS con resumen local.',
-    keywords: 'modulo activar desactivar rss',
-  },
-  {
-    id: 'avisos',
-    section: 'notificaciones',
-    label: 'Avisos en este dispositivo',
-    description: 'Actívalos para recibir avisos aunque Muninn esté cerrada.',
-    keywords: 'notificaciones push permiso iphone movil',
-  },
-  {
-    id: 'avisos-cobros',
-    section: 'notificaciones',
-    label: 'Avisos antes de cada cobro',
-    description: 'En el móvil, antes de que te cobren una suscripción.',
-    keywords: 'notificaciones push suscripciones',
-  },
-  {
-    id: 'avisos-dispositivos',
-    section: 'notificaciones',
-    label: 'Dispositivos con avisos',
-    description: 'Los que reciben tus avisos. Quita los que ya no uses.',
-    keywords: 'notificaciones push quitar movil',
-  },
-  {
-    id: 'ollama',
-    section: 'asistente',
-    label: 'Dirección de Ollama',
-    description: 'Dónde está Ollama en tu ordenador.',
-    keywords: 'servidor url local',
-  },
-  {
-    id: 'modelo',
-    section: 'asistente',
-    label: 'Modelo',
-    description: 'El modelo de Ollama que usa el Asistente.',
-    keywords: 'qwen ia llm',
-  },
-  {
-    id: 'informe-activo',
-    section: 'informe',
-    label: 'Informe de la mañana',
-    description: 'Cada día, una nota fijada con lo que tienes para hoy.',
-    keywords: 'resumen diario',
-  },
-  {
-    id: 'informe-hora',
-    section: 'informe',
-    label: 'Hora del informe',
-    description: 'A qué hora se prepara si el ordenador está encendido.',
-    keywords: 'hora',
-  },
-  {
-    id: 'informe-ahora',
-    section: 'informe',
-    label: 'Hacer ahora',
-    description: 'Genera el informe sin esperar a su hora.',
-  },
-  {
-    id: 'github-estado',
-    section: 'integraciones',
-    label: 'Sincronización de GitHub',
-    description: 'Si el módulo está activo y cuándo llegó la última issue.',
-    keywords: 'issues sincronizar',
-  },
-  {
-    id: 'repos',
-    section: 'integraciones',
-    label: 'Repositorio de cada proyecto',
-    description: 'Vincula un repositorio de GitHub a cada proyecto.',
-    keywords: 'vincular issues repo',
-  },
-  {
-    id: 'donde',
-    section: 'datos',
-    label: 'Dónde se guardan',
-    description: 'En tu cuenta, en un servidor de la Unión Europea.',
-    keywords: 'servidor privacidad europa',
-  },
-  {
-    id: 'dispositivos',
-    section: 'datos',
-    label: 'Entre dispositivos',
-    description: 'Lo que cambias en uno aparece al momento en los demás.',
-    keywords: 'sincronizar tiempo real',
-  },
-  {
-    id: 'sin-conexion',
-    section: 'datos',
-    label: 'Sin conexión',
-    description: 'Lo último que viste se puede consultar sin red.',
-    keywords: 'offline cache',
-  },
-  {
-    id: 'version',
-    section: 'acerca',
-    label: 'Versión',
-    description: 'Qué versión de Muninn tienes.',
-    keywords: 'actualizar acerca',
-  },
+  entry('acceso', 'cuenta'),
+  entry('sesion', 'cuenta'),
+  entry('segundo-factor', 'cuenta'),
+  entry('sesiones', 'cuenta'),
+  entry('cerrar-sesiones', 'cuenta'),
+  entry('apps', 'cuenta'),
+  entry('idioma', 'apariencia'),
+  entry('tema', 'apariencia'),
+  entry('cristal', 'apariencia'),
+  entry('acento', 'apariencia'),
+  entry('barra-pestanas', 'barra'),
+  entry('atajos-buscador', 'atajos'),
+  entry('atajos-tablero', 'atajos'),
+  entry('modulo-tasks', 'modulos'),
+  entry('modulo-notes', 'modulos'),
+  entry('modulo-finance', 'modulos'),
+  entry('modulo-github', 'modulos'),
+  entry('modulo-news', 'modulos'),
+  entry('avisos', 'notificaciones'),
+  entry('avisos-cobros', 'notificaciones'),
+  entry('avisos-dispositivos', 'notificaciones'),
+  entry('ollama', 'asistente'),
+  entry('modelo', 'asistente'),
+  entry('informe-activo', 'informe'),
+  entry('informe-hora', 'informe'),
+  entry('informe-ahora', 'informe'),
+  entry('github-estado', 'integraciones'),
+  entry('repos', 'integraciones'),
+  entry('donde', 'datos'),
+  entry('dispositivos', 'datos'),
+  entry('sin-conexion', 'datos'),
+  entry('version', 'acerca'),
 ]
 
 /**

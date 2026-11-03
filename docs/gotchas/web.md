@@ -731,14 +731,16 @@
   - Sin sesión, `_app` pinta `PublicShell` y su loader devuelve `null`: una pantalla de la documentación no puede usar `useMuninn()`.
 - **Ref:** [ADR-0076](../adr/0076-guias-publicas-prerenderizadas-y-url-unica.md)
 
-### Ajustes: un ajuste nuevo se da de alta en dos sitios
+### Ajustes: un ajuste nuevo se da de alta en tres sitios
 
 - **Síntoma:** un ajuste nuevo no sale en el buscador de Ajustes, o cambia su valor y no aparece el punto de «cambiado»
   ni el botón de restablecer.
 - **Causa:** el buscador no recorre las filas pintadas (obligaría a montar todas las secciones): lee `SETTINGS_INDEX`
   de `lib/settings-search.ts`. Y la marca de «cambiado» solo conoce las preferencias de `changedPrefs`
   (`lib/settings-changes.ts`).
-- **Solución:** añade la entrada al índice con el mismo `id` que la fila (`<PrefRow id="…">` pinta `id="ajuste-…"`).
+- **Solución:** añade la entrada al índice con el mismo `id` que la fila (`<PrefRow id="…">` pinta `id="ajuste-…"`), y
+  sus textos en `index.<id>` (`label`, `description` y `keywords`) de `locales/en/settings.ts` y `locales/es/settings.ts`
+  (ADR-0077): las palabras clave van en cada idioma, no traducidas palabra a palabra.
   Si el ajuste tiene un valor de fábrica claro, añádelo también a `PrefKey`, `PREF_SECTION`, `changedPrefs` y
   `resetPrefs`. `test/settings.test.ts` falla si una entrada apunta a una sección que no existe o repite fila.
 - **Al saltar a un ajuste** desde los resultados, la sección se monta en el mismo render en que cambia la dirección: el
@@ -845,7 +847,13 @@
     fuera, `t` de `src/i18n`. Nunca un texto calculado en una constante de módulo: un *getter* o una función.
   - Un namespace de pantalla nuevo: su fichero en `en/` y `es/` con un `export const <ns>`, y añadirlo a `resources` de
     `i18next.d.ts`. Se pide solo al usarlo (`useTranslation('<ns>')`, que suspende hasta tenerlo).
-  - Un test que quiera el inglés hace `await i18n.changeLanguage('en')` y lo devuelve al acabar.
+  - Un test que quiera el inglés hace `await i18n.changeLanguage('en')` y lo devuelve al acabar. `test/setup.ts` precarga
+    todos los `NAMESPACES`: un componente con namespace diferido no suspende en mitad de un test.
+  - Un texto de `lib/` que sale en varias pantallas (avisos de sesión, errores del segundo factor, prioridades…) va en
+    `common`, que siempre está cargado. Si una función de `lib/` usa un namespace diferido (`setModuleEnabled` con
+    `settings`), lo carga antes con `i18n.loadNamespaces`: si no, el aviso sale con la clave en crudo.
+  - Al traducir, cuidado con el género en español: «{{name}} activado» falla con «Notas». Pon el nombre aparte
+    («Módulo activado: Notas»).
   - La preferencia vive en `preferences.locale` de la cuenta (`auto`, `en` o `es`) y en `localStorage['muninn.locale']`
     para el primer pintado (`lib/locale-pref.ts`, como la apariencia).
 - **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

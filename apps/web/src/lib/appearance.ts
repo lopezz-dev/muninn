@@ -8,6 +8,7 @@ import {
   prefersReducedTransparency,
 } from '@muninn/ui'
 import { useSyncExternalStore } from 'react'
+import { t } from '../i18n'
 import { notifyUndo } from './feedback'
 
 /**
@@ -137,8 +138,8 @@ export function connectAppearance(
 /** Guarda en la cuenta (si hay); si falla, avisa y se queda en este dispositivo. */
 export function saveAppearanceRemote(appearance: Appearance) {
   remote?.(appearance).catch(() => {
-    notify.error('No se pudo guardar en tu cuenta', {
-      description: 'El cambio se queda en este dispositivo',
+    notify.error(t('appearance.saveFailed', { ns: 'settings' }), {
+      description: t('appearance.saveFailedHint', { ns: 'settings' }),
     })
   })
 }
@@ -147,12 +148,23 @@ export function useAppearance(): Appearance {
   return useSyncExternalStore(appearanceStore.subscribe, appearanceStore.get)
 }
 
+/** Nombre de cada acento, en el idioma activo (se lee al pintar: ADR-0077). */
 export const ACCENT_LABEL: Record<AccentName, string> = {
-  amber: 'Ámbar',
-  blue: 'Azul',
-  violet: 'Violeta',
-  teal: 'Verde azulado',
-  pink: 'Rosa',
+  get amber() {
+    return t('accents.amber', { ns: 'settings' })
+  },
+  get blue() {
+    return t('accents.blue', { ns: 'settings' })
+  },
+  get violet() {
+    return t('accents.violet', { ns: 'settings' })
+  },
+  get teal() {
+    return t('accents.teal', { ns: 'settings' })
+  },
+  get pink() {
+    return t('accents.pink', { ns: 'settings' })
+  },
 }
 
 /** Cambia la apariencia con feedback y «Deshacer» (ADR-0019). */
@@ -163,17 +175,25 @@ export function changeAppearance(patch: Partial<Appearance>) {
   const isGlass = patch.glass !== undefined
   notifyUndo(
     isGlass
-      ? `Cristal ${now.glass ? 'activado' : 'desactivado'}`
-      : `Acento ${ACCENT_LABEL[now.accent].toLowerCase()}`,
+      ? t(now.glass ? 'appearance.glassOn' : 'appearance.glassOff', { ns: 'settings' })
+      : t('appearance.accentChanged', {
+          ns: 'settings',
+          name: ACCENT_LABEL[now.accent].toLowerCase(),
+        }),
     {
       icon: isGlass ? 'glass' : 'palette',
-      description: remote ? 'Guardado en tu cuenta' : 'Guardado en este dispositivo',
+      description: t(remote ? 'appearance.savedToAccount' : 'appearance.savedToDevice', {
+        ns: 'settings',
+      }),
       // Local al instante; si la cuenta falla, avisa `saveAppearanceRemote`.
       undo: () => {
         appearanceStore.set(prev)
         saveAppearanceRemote(prev)
       },
-      undone: ['Apariencia restaurada', { icon: isGlass ? 'glass' : 'palette' }],
+      undone: [
+        t('appearance.restored', { ns: 'settings' }),
+        { icon: isGlass ? 'glass' : 'palette' },
+      ],
     },
   )
 }

@@ -3,6 +3,7 @@ import { Button, IconButton, icons, notify, Switch } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../../components/Page'
 import { timeAgo } from '../../lib/dates'
 import { fail, notifyUndo } from '../../lib/feedback'
@@ -19,25 +20,16 @@ import {
 } from '../../lib/push'
 import { PrefGroup, PrefRow } from './ui'
 
-/** Por qué no se puede activar aquí, en palabras de usuario. `available` no sale: ahí va el interruptor. */
-const BLOCKED: Record<Exclude<PushSupport, 'available'>, { title: string; text: string }> = {
-  'ios-install': {
-    title: 'Añade Muninn a tu pantalla de inicio',
-    text: 'En iPhone y iPad los avisos solo funcionan con la app instalada (iOS 16.4 o posterior). En Safari, toca Compartir › «Añadir a pantalla de inicio», abre Muninn desde el icono y vuelve aquí.',
-  },
-  denied: {
-    title: 'Avisos bloqueados',
-    text: 'Bloqueaste los avisos de Muninn. Para volver a recibirlos, permítelos en los ajustes del navegador (en el iPhone: Ajustes › Notificaciones › Muninn) y vuelve aquí.',
-  },
-  unsupported: {
-    title: 'Este navegador no admite avisos',
-    text: 'Abre Muninn en el móvil o en Chrome, Edge, Firefox o Safari del ordenador. En la app de escritorio aún no hay avisos.',
-  },
-  unconfigured: {
-    title: 'Avisos sin configurar',
-    text: 'Esta instalación de Muninn aún no tiene la clave de los avisos. Cuando esté, podrás activarlos aquí.',
-  },
-}
+/**
+ * Por qué no se puede activar aquí, en palabras de usuario: la clave de cada caso en `integrations.push.blocked`.
+ * `available` no sale: ahí va el interruptor.
+ */
+const BLOCKED = {
+  'ios-install': 'iosInstall',
+  denied: 'denied',
+  unsupported: 'unsupported',
+  unconfigured: 'unconfigured',
+} as const satisfies Record<Exclude<PushSupport, 'available'>, string>
 
 function useDevices() {
   const m = useMuninn()
@@ -53,6 +45,7 @@ function useBrowserEndpoint() {
 }
 
 function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const qc = useQueryClient()
   // El permiso puede cambiar fuera (ajustes del navegador): se relee al montar y tras cada intento.
@@ -72,17 +65,17 @@ function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
     try {
       if (next) {
         const device = await enablePush(m)
-        notify.success('Avisos activados en este dispositivo', {
+        notify.success(t('push.enabled'), {
           icon: 'bell',
           description: device.label ?? undefined,
         })
       } else {
         await disablePush(m)
-        notify.info('Avisos desactivados en este dispositivo')
+        notify.info(t('push.disabled'))
       }
     } catch (err) {
       if (err instanceof PushError && err.code === 'dismissed') notify.info(err.message)
-      else fail(next ? 'No se pudieron activar los avisos' : 'No se pudieron desactivar', err)
+      else fail(next ? t('push.enableFailed') : t('push.disableFailed'), err)
     }
     setBusy(false)
     settle()
@@ -95,16 +88,16 @@ function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
       // Un dispositivo que ya no existía se ha borrado: la lista cambia.
       if (res.removed) void qc.invalidateQueries({ queryKey: keys.devices })
       if (res.sent) {
-        notify.success('Aviso de prueba enviado', {
+        notify.success(t('push.testSent'), {
           icon: 'send',
-          description: res.sent === 1 ? 'a 1 dispositivo' : `a ${res.sent} dispositivos`,
+          description: t('push.sentTo', { count: res.sent }),
         })
       } else
-        notify.error('No llegó a ningún dispositivo', {
-          description: 'Vuelve a activar los avisos aquí',
+        notify.error(t('push.testNotDelivered'), {
+          description: t('push.testNotDeliveredHint'),
         })
     } catch (err) {
-      fail('No se pudo enviar el aviso de prueba', err)
+      fail(t('push.testFailed'), err)
     }
     setBusy(false)
   }
@@ -116,8 +109,8 @@ function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
         id="avisos"
         icon={support === 'ios-install' ? 'download' : 'warning'}
         tile="bg-project-amber/15 text-project-amber"
-        title={blocked.title}
-        description={blocked.text}
+        title={t(`push.blocked.${blocked}.title`)}
+        description={t(`push.blocked.${blocked}.text`)}
       />
     )
   }
@@ -128,12 +121,8 @@ function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
         id="avisos"
         icon="bell"
         tile={on ? 'bg-accent-soft text-accent' : undefined}
-        title="Avisos en este dispositivo"
-        description={
-          on
-            ? 'Activados. Te llegan aunque Muninn esté cerrada.'
-            : 'Te pedirá permiso. Puedes quitarlos cuando quieras.'
-        }
+        title={t('push.thisDeviceRow')}
+        description={on ? t('push.onHint') : t('push.offHint')}
         htmlFor="ajuste-avisos-switch"
       >
         <Switch
@@ -144,14 +133,9 @@ function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
         />
       </PrefRow>
       {on && m.push.canTest() ? (
-        <PrefRow
-          id="probar"
-          icon="send"
-          title="Probar"
-          description="Manda un aviso a todos tus dispositivos para ver que llega."
-        >
+        <PrefRow id="probar" icon="send" title={t('push.test')} description={t('push.testHint')}>
           <Button size="sm" onClick={() => void test()} disabled={busy}>
-            Enviar prueba
+            {t('push.sendTest')}
           </Button>
         </PrefRow>
       ) : null}
@@ -160,6 +144,7 @@ function ThisDevice({ devices }: { devices: PushDevice[] | undefined }) {
 }
 
 function DeviceRow({ device, current }: { device: PushDevice; current: boolean }) {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const qc = useQueryClient()
   const remove = async () => {
@@ -170,18 +155,18 @@ function DeviceRow({ device, current }: { device: PushDevice; current: boolean }
     )
     try {
       await m.push.unsubscribe(device.id)
-      notifyUndo(`«${device.label ?? 'Dispositivo'}» ya no recibe avisos`, {
+      notifyUndo(t('push.removed', { name: device.label ?? t('push.device') }), {
         icon: 'trash',
         undo: () =>
           m.push
             .restore(device)
             .finally(() => void qc.invalidateQueries({ queryKey: keys.devices })),
-        undone: 'Dispositivo recuperado',
-        failTitle: 'No se pudo recuperar el dispositivo',
+        undone: t('push.restored'),
+        failTitle: t('push.restoreFailed'),
       })
     } catch (err) {
       if (prev) qc.setQueryData(keys.devices, prev)
-      fail('No se pudo quitar el dispositivo', err)
+      fail(t('push.removeFailed'), err)
     }
     void qc.invalidateQueries({ queryKey: keys.devices })
   }
@@ -191,19 +176,24 @@ function DeviceRow({ device, current }: { device: PushDevice; current: boolean }
       tile={current ? 'bg-accent-soft text-accent' : undefined}
       title={
         <>
-          {device.label ?? 'Dispositivo'}
+          {device.label ?? t('push.device')}
           {current ? (
             <span className="rounded-xs bg-accent-soft px-1.5 py-px text-2xs font-semibold text-accent">
-              Este
+              {t('push.thisOne')}
             </span>
           ) : null}
         </>
       }
-      description={`Activado ${timeAgo(device.createdAt)} · visto ${timeAgo(device.lastSeenAt)}`}
+      description={t('push.deviceDetails', {
+        since: timeAgo(device.createdAt),
+        seen: timeAgo(device.lastSeenAt),
+      })}
     >
       <IconButton
-        aria-label={`Quitar ${device.label ?? 'el dispositivo'}`}
-        title="Quitar"
+        aria-label={
+          device.label ? t('push.removeNamed', { name: device.label }) : t('push.removeDevice')
+        }
+        title={t('push.remove')}
         size="sm"
         icon={<icons.trash size={14} aria-hidden="true" />}
         onClick={() => void remove()}
@@ -214,6 +204,7 @@ function DeviceRow({ device, current }: { device: PushDevice; current: boolean }
 
 /** Ajustes › Notificaciones (ADR-0040): avisos push en este dispositivo, qué avisa y los dispositivos suscritos. */
 export function Notificaciones() {
+  const { t } = useTranslation('integrations')
   const auth = useAuth()
   const m = useMuninn()
   const qc = useQueryClient()
@@ -237,58 +228,55 @@ export function Notificaciones() {
     return (
       <EmptyState
         icon="bell"
-        title="Los avisos necesitan una cuenta"
+        title={t('push.demoTitle')}
         actions={
           <Button asChild variant="primary">
-            <Link to="/login">Iniciar sesión</Link>
+            <Link to="/login">{t('push.signIn')}</Link>
           </Button>
         }
       >
-        En el modo demo no hay servidor que te avise. Con una cuenta, Muninn te avisa en el móvil
-        antes de cada cobro aunque la app esté cerrada.
+        {t('push.demoText')}
       </EmptyState>
     )
   }
 
   return (
     <>
-      <PrefGroup title="Este dispositivo" icon="bell">
+      <PrefGroup title={t('push.thisDevice')} icon="bell">
         <ThisDevice devices={devices.data} />
       </PrefGroup>
-      <PrefGroup title="Qué te avisa" icon="info">
+      <PrefGroup title={t('push.whatTitle')} icon="info">
         <PrefRow
           id="avisos-cobros"
           icon="recurring"
           tile="bg-project-green/15 text-project-green"
-          title="Antes de cada cobro"
-          description="Cada mañana, de las suscripciones que se cobran dentro de sus días de aviso. Un aviso por cobro."
+          title={t('push.beforeCharge')}
+          description={t('push.beforeChargeHint')}
         >
           <Button asChild size="sm" variant="ghost">
             <Link to="/finanzas" search={{ vista: 'suscripciones' }}>
-              Suscripciones
+              {t('push.subscriptions')}
             </Link>
           </Button>
         </PrefRow>
-        <PrefRow icon="agent" title="Cuando un agente termine" description="Llegará más adelante.">
-          <span className="text-sm text-fg-faint">Próximamente</span>
+        <PrefRow icon="agent" title={t('push.agentDone')} description={t('push.agentDoneHint')}>
+          <span className="text-sm text-fg-faint">{t('push.soon')}</span>
         </PrefRow>
       </PrefGroup>
       <PrefGroup
-        title="Dispositivos"
+        title={t('push.devicesTitle')}
         icon="sync"
-        description="Los que reciben tus avisos. Quita los que ya no uses."
+        description={t('push.devicesDescription')}
       >
         <div id="ajuste-avisos-dispositivos">
           {devices.isPending ? (
-            <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">Cargando…</p>
+            <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">{t('loading')}</p>
           ) : devices.isError ? (
             <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">
-              No se pudo cargar la lista de dispositivos.
+              {t('push.devicesLoadError')}
             </p>
           ) : devices.data.length === 0 ? (
-            <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">
-              Aún no hay ninguno. Activa los avisos en el móvil desde esta misma pantalla.
-            </p>
+            <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">{t('push.noDevices')}</p>
           ) : (
             devices.data.map((d) => (
               <DeviceRow key={d.id} device={d} current={d.endpoint === endpoint} />

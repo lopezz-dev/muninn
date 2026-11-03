@@ -1,4 +1,5 @@
 import type { OAuthAuthorizationDetails } from '@supabase/supabase-js'
+import { t } from '../i18n'
 import { loadSupabase, type SecondFactorStep, secondFactorStep } from './auth'
 
 /**
@@ -12,18 +13,15 @@ export type ConsentRequest =
   | { kind: 'ask'; details: OAuthAuthorizationDetails }
   | { kind: 'redirect'; url: string }
 
-/** Qué significa cada *scope* estándar de Supabase Auth, en palabras de la pantalla. */
-const SCOPES: Record<string, string> = {
-  openid: 'Saber quién eres',
-  email: 'Ver tu correo',
-  profile: 'Ver tu nombre y tu foto',
-  phone: 'Ver tu teléfono',
-}
+/** Los *scopes* estándar de Supabase Auth que tienen texto propio (`oauth.scopes.*`). */
+const SCOPES = ['openid', 'email', 'profile', 'phone'] as const
+type KnownScope = (typeof SCOPES)[number]
+const isKnownScope = (s: string): s is KnownScope => (SCOPES as readonly string[]).includes(s)
 
-/** Los *scopes* pedidos, sin repetir y en texto (los desconocidos, tal cual). */
+/** Los *scopes* pedidos, sin repetir y en texto del idioma activo (los desconocidos, tal cual). */
 export function scopeLabels(scope: string | undefined): string[] {
   const names = (scope ?? '').split(/\s+/).filter(Boolean)
-  return [...new Set(names)].map((s) => SCOPES[s] ?? s)
+  return [...new Set(names)].map((s) => (isKnownScope(s) ? t(`oauth.scopes.${s}`) : s))
 }
 
 /** La web a la que vuelves al terminar (`claude.ai`), para enseñarla. */
@@ -39,7 +37,7 @@ export async function getConsentRequest(authorizationId: string): Promise<Consen
   const c = await loadSupabase()
   const { data, error } = await c.auth.oauth.getAuthorizationDetails(authorizationId)
   if (error) throw error
-  if (!data) throw new Error('La solicitud no existe.')
+  if (!data) throw new Error(t('oauth.notFound'))
   return 'authorization_id' in data
     ? { kind: 'ask', details: data }
     : { kind: 'redirect', url: data.redirect_url }
@@ -77,16 +75,14 @@ export async function decideConsent(authorizationId: string, approve: boolean): 
     ? await c.auth.oauth.approveAuthorization(authorizationId, opts)
     : await c.auth.oauth.denyAuthorization(authorizationId, opts)
   if (error) throw error
-  if (!data?.redirect_url) throw new Error('Supabase no devolvió a dónde volver.')
+  if (!data?.redirect_url) throw new Error(t('oauth.noRedirect'))
   return data.redirect_url
 }
 
-/** Mensajes en español para lo que puede fallar al pedir o decidir la autorización. */
+/** Mensajes, en el idioma activo, para lo que puede fallar al pedir o decidir la autorización. */
 export function consentErrorMessage(err: unknown): string {
   const e = err as { status?: number; message?: string; name?: string }
-  if (e.status === 404 || e.status === 400 || e.status === 410)
-    return 'La solicitud ha caducado o ya se usó. Vuelve a conectar desde la app que te ha traído aquí.'
-  if (e.name === 'AuthRetryableFetchError' || err instanceof TypeError)
-    return 'No hay conexión con el servidor. Comprueba tu red.'
-  return e.message || 'Algo ha fallado. Inténtalo de nuevo.'
+  if (e.status === 404 || e.status === 400 || e.status === 410) return t('oauth.expired')
+  if (e.name === 'AuthRetryableFetchError' || err instanceof TypeError) return t('oauth.offline')
+  return e.message || t('oauth.unknown')
 }

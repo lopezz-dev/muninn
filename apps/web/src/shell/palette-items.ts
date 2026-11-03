@@ -4,15 +4,7 @@ import { matchesAll, normalize, words } from '../lib/text'
 
 export type PaletteGroup = 'ask' | 'nav' | 'projects' | 'tasks' | 'notes' | 'actions'
 
-export const GROUP_LABEL: Record<PaletteGroup, string> = {
-  ask: 'Preguntar',
-  nav: 'Ir a',
-  projects: 'Proyectos',
-  tasks: 'Tareas',
-  notes: 'Notas',
-  actions: 'Acciones',
-}
-
+// La cabecera de cada grupo sale de `palette:groups.<grupo>`.
 const GROUP_ORDER: PaletteGroup[] = ['ask', 'nav', 'projects', 'tasks', 'notes', 'actions']
 
 /** Mínimo de letras para buscar tareas y notas en el core, y cuántas de cada una se piden. */

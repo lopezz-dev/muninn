@@ -29,9 +29,9 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFound,
 })
 
-const screen = <T extends Record<string, unknown>>(
+const screen = <T extends Record<string, unknown>, K extends keyof T & string>(
   load: () => Promise<T>,
-  name: keyof T & string,
+  name: K,
 ) => lazyRouteComponent(load, name)
 
 export interface LoginSearch {

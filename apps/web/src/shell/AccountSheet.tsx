@@ -12,9 +12,10 @@ import { useAuth } from '../lib/muninn'
 import { useEndSession } from '../lib/session'
 import { bySection, useChangedPrefs } from '../lib/settings-changes'
 import { useSectionHints } from '../screens/ajustes/Ajustes'
-import { RESET_LABEL, SectionContent, useReset } from '../screens/ajustes/Seccion'
+import { SectionContent, useReset } from '../screens/ajustes/Seccion'
 import {
   ABOUT_SECTION,
+  resetSectionLabel,
   type SettingsSection,
   sectionsByGroup,
   settingsSection,
@@ -234,9 +235,7 @@ function SectionView({ section }: { section: SettingsSection }) {
         <Button
           size="sm"
           className="self-start"
-          onClick={() =>
-            reset(changed, RESET_LABEL[section.id] ?? `${section.label}: valores de fábrica`)
-          }
+          onClick={() => reset(changed, resetSectionLabel(section))}
         >
           <AppIcon name="reset" size={13} />
           {t('account.resetSection')}
@@ -274,6 +273,8 @@ const viewTitle = (view: string) =>
  * pantalla en la que estabas. Diseño: lienzo «Dock y cuenta».
  */
 export function AccountSheet() {
+  // Las etiquetas de las secciones (`sections.ts`) son del namespace `settings`: que esté cargado al pintarlas.
+  useTranslation('settings')
   const { open, stack } = useAccountSheet()
   const view = stack.at(-1) ?? 'root'
   const parent = stack.at(-2)

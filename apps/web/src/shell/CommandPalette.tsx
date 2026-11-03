@@ -2,6 +2,7 @@ import { ColorDot, cn, Dialog, DialogContent, Icon, IconButton, icons, Kbd } fro
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useId, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { accountSheet, isPhone, settingsViewOf } from '../lib/account-sheet'
 import { changeAppearance, useAppearance } from '../lib/appearance'
 import { useEnabledModules } from '../lib/modules'
@@ -13,7 +14,6 @@ import { SECTIONS, type SectionId, sectionEnabled } from './nav'
 import {
   bestMatch,
   filterItems,
-  GROUP_LABEL,
   groupItems,
   matchRange,
   type PaletteItem,
@@ -35,14 +35,10 @@ const NAV_ORDER: SectionId[] = [
   'settings',
 ]
 
-const NAV_KEYWORDS: Partial<Record<SectionId, string>> = {
-  home: 'hoy resumen dashboard',
-  projects: 'kanban tablero tareas',
-  finance: 'gastos ingresos dinero cuentas',
-  assistant: 'jarvis ia chat claude',
-  docs: 'ayuda guia manual',
-  settings: 'preferencias configuracion apariencia',
-}
+/** Secciones con sinónimos propios (`palette:keywords.<sección>`), en el idioma de quien busca. */
+const NAV_KEYWORDS = ['home', 'projects', 'finance', 'assistant', 'docs', 'settings'] as const
+const hasKeywords = (id: SectionId): id is (typeof NAV_KEYWORDS)[number] =>
+  (NAV_KEYWORDS as readonly SectionId[]).includes(id)
 
 function Highlight({ label, query }: { label: string; query: string }) {
   const r = matchRange(label, query)
@@ -74,6 +70,7 @@ interface CommandPaletteProps {
 
 /** Buscador ⌘K: punto de entrada a todo. Diseño: Buscador.dc.html. */
 export function CommandPalette({ open, onOpenChange, initialQuery = '' }: CommandPaletteProps) {
+  const { t } = useTranslation('palette')
   const m = useMuninn()
   const shell = useShell()
   const navigate = useNavigate()
@@ -119,7 +116,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       all.push({
         id: 'ask',
         group: 'ask',
-        label: `Preguntar a Muninn: «${q}»`,
+        label: t('ask.muninn', { query: q }),
         icon: 'assistant',
         keywords: q,
         run: () => navigate({ to: '/asistente', search: { q } }),
@@ -128,7 +125,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         all.push({
           id: 'search-news',
           group: 'ask',
-          label: `Buscar en Noticias: «${q}»`,
+          label: t('ask.news', { query: q }),
           icon: 'news',
           keywords: q,
           run: () => navigate({ to: '/noticias', search: { q } }),
@@ -143,7 +140,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         group: 'nav',
         label: s.label,
         icon: s.icon,
-        keywords: NAV_KEYWORDS[id],
+        keywords: hasKeywords(id) ? t(`keywords.${id}`) : undefined,
         // En el teléfono, Ajustes se abre en la hoja de tu cuenta (ADR-0072), sin pasar por el historial.
         run: () =>
           isPhone() && settingsViewOf(s.to) ? accountSheet.open() : navigate({ to: s.to }),
@@ -156,7 +153,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         label: p.name,
         icon: 'projects',
         color: p.color,
-        hint: 'Tablero',
+        hint: t('items.board'),
         run: () => navigate({ to: '/proyectos/$projectId', params: { projectId: p.id } }),
       })
     }
@@ -164,10 +161,10 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
     if (found && q.length >= SEARCH_MIN_LENGTH) {
       all.push(
         ...searchResultItems(found, projects, q, {
-          task: (t) =>
+          task: (task) =>
             navigate({
               to: '/proyectos/$projectId/tareas/$taskId',
-              params: { projectId: t.projectId, taskId: t.id },
+              params: { projectId: task.projectId, taskId: task.id },
             }),
           note: (n) => navigate({ to: '/notas/$noteId', params: { noteId: n.id } }),
         }),
@@ -177,9 +174,9 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       all.push({
         id: 'new-note',
         group: 'actions',
-        label: 'Nueva nota',
+        label: t('items.newNote'),
         icon: 'plus',
-        keywords: 'crear anadir escribir apunte',
+        keywords: t('keywords.newNote'),
         run: async () => {
           const note = await createNote(
             m,
@@ -197,9 +194,9 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       all.push({
         id: 'new-project',
         group: 'actions',
-        label: 'Nuevo proyecto…',
+        label: t('items.newProject'),
         icon: 'plus',
-        keywords: 'crear anadir',
+        keywords: t('keywords.newProject'),
         run: shell.openNewProject,
       })
     }
@@ -207,17 +204,17 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       {
         id: 'toggle-glass',
         group: 'actions',
-        label: appearance.glass ? 'Desactivar el cristal' : 'Activar el cristal',
+        label: appearance.glass ? t('items.glassOff') : t('items.glassOn'),
         icon: 'glass',
-        keywords: 'blur desenfoque transparencia apariencia',
+        keywords: t('keywords.glass'),
         run: () => changeAppearance({ glass: !appearance.glass }),
       },
       {
         id: 'appearance',
         group: 'actions',
-        label: 'Cambiar la apariencia…',
+        label: t('items.appearance'),
         icon: 'palette',
-        keywords: 'acento color tema',
+        keywords: t('keywords.appearance'),
         run: () =>
           isPhone()
             ? accountSheet.open('apariencia')
@@ -226,9 +223,9 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
       {
         id: 'sign-out',
         group: 'actions',
-        label: auth.kind === 'user' ? 'Cerrar sesión' : 'Salir del modo demo',
+        label: auth.kind === 'user' ? t('items.signOut') : t('items.leaveDemo'),
         icon: 'user',
-        keywords: 'salir logout desconectar cuenta',
+        keywords: t('keywords.signOut'),
         run: () => endSession(auth.kind),
       },
     )
@@ -247,6 +244,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
     shell.openNewProject,
     auth.kind,
     endSession,
+    t,
   ])
 
   const groups = groupItems(items)
@@ -279,7 +277,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
   let index = -1
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title="Buscar o preguntar" bare size="lg">
+      <DialogContent title={t('input.label')} bare size="lg">
         <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border px-[18px]">
           <icons.search size={18} aria-hidden="true" className="text-fg-subtle" />
           <input
@@ -288,8 +286,8 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
             aria-controls={listId}
             aria-activedescendant={items.length ? optionId(current) : undefined}
             aria-autocomplete="list"
-            aria-label="Buscar o preguntar"
-            placeholder="Busca o pregunta…"
+            aria-label={t('input.label')}
+            placeholder={t('input.placeholder')}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
@@ -302,7 +300,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
           />
           <Kbd className="hidden md:inline-flex">Esc</Kbd>
           <IconButton
-            aria-label="Cerrar"
+            aria-label={t('input.close')}
             icon={<icons.close />}
             onClick={() => onOpenChange(false)}
             size="lg"
@@ -313,7 +311,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         <div
           id={listId}
           role="listbox"
-          aria-label="Resultados"
+          aria-label={t('results.label')}
           className="max-h-[min(470px,60vh)] overflow-y-auto px-2 pt-1.5 pb-2"
         >
           {groups.map(({ group, items: groupItems }) => (
@@ -323,7 +321,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
                 id={`${listId}-${group}`}
                 className="px-3 pt-2.5 pb-1 text-[11.5px] font-semibold tracking-wider text-fg-faint uppercase"
               >
-                {GROUP_LABEL[group]}
+                {t(`groups.${group}`)}
               </div>
               {groupItems.map((it) => {
                 index += 1
@@ -366,7 +364,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
             </div>
           ))}
           {items.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-fg-subtle">Escribe para buscar.</p>
+            <p className="px-3 py-6 text-center text-sm text-fg-subtle">{t('results.empty')}</p>
           ) : null}
         </div>
 
@@ -374,15 +372,13 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
           <span className="flex items-center gap-1.5">
             <Kbd>↑</Kbd>
             <Kbd>↓</Kbd>
-            Moverse
+            {t('footer.move')}
           </span>
           <span className="flex items-center gap-1.5">
             <Kbd>↵</Kbd>
-            Abrir
+            {t('footer.open')}
           </span>
-          <span className="ml-auto">
-            Secciones, proyectos, tareas, notas y acciones · o pregunta a Muninn
-          </span>
+          <span className="ml-auto">{t('footer.hint')}</span>
         </div>
       </DialogContent>
     </Dialog>

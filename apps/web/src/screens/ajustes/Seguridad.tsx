@@ -2,6 +2,7 @@ import { type AccountSession, sessionDeviceLabel } from '@muninn/core'
 import { Button, notify } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { timeAgo } from '../../lib/dates'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { fail } from '../../lib/mutations'
@@ -14,10 +15,8 @@ import { PrefGroup, PrefRow } from './ui'
  * entrar en ese dispositivo): en lugar de «Deshacer», el aviso dice qué pasa.
  */
 
-const LEAVES_SOON =
-  'Saldrá en menos de una hora y ya no le llegan tus avisos. Para volver, tendrá que entrar de nuevo.'
-
 function SessionRow({ session }: { session: AccountSession }) {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
@@ -26,18 +25,23 @@ function SessionRow({ session }: { session: AccountSession }) {
     setBusy(true)
     try {
       await m.account.sessions.revoke(session.id)
-      notify.success(`Sesión cerrada en «${label}»`, { icon: 'user', description: LEAVES_SOON })
+      notify.success(t('sessions.signedOut', { device: label }), {
+        icon: 'user',
+        description: t('sessions.leavesSoon'),
+      })
     } catch (err) {
-      fail('No se pudo cerrar la sesión', err)
+      fail(t('sessions.signOutFailed'), err)
     }
     setBusy(false)
     void qc.invalidateQueries({ queryKey: keys.accountSessions })
   }
   const details = [
-    session.current ? 'Activa ahora' : `Última actividad ${timeAgo(session.lastActiveAt)}`,
-    `entraste ${timeAgo(session.createdAt)}`,
+    session.current
+      ? t('sessions.activeNow')
+      : t('sessions.lastActive', { time: timeAgo(session.lastActiveAt) }),
+    t('sessions.signedIn', { time: timeAgo(session.createdAt) }),
     session.ip,
-    session.aal === 'aal2' ? 'con segundo factor' : null,
+    session.aal === 'aal2' ? t('sessions.withSecondFactor') : null,
   ].filter(Boolean)
   return (
     <PrefRow
@@ -48,7 +52,7 @@ function SessionRow({ session }: { session: AccountSession }) {
           {label}
           {session.current ? (
             <span className="rounded-xs bg-accent-soft px-1.5 py-px text-2xs font-semibold text-accent">
-              Este
+              {t('sessions.thisOne')}
             </span>
           ) : null}
         </>
@@ -57,7 +61,7 @@ function SessionRow({ session }: { session: AccountSession }) {
     >
       {session.current ? null : (
         <Button size="sm" onClick={() => void revoke()} disabled={busy}>
-          {busy ? 'Cerrando…' : 'Cerrar'}
+          {busy ? t('sessions.signingOut') : t('sessions.signOut')}
         </Button>
       )}
     </PrefRow>
@@ -66,6 +70,7 @@ function SessionRow({ session }: { session: AccountSession }) {
 
 /** Dónde está abierta la sesión, y cerrarla en uno, en los demás o en todos. */
 export function Sesiones() {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const auth = useAuth()
   const qc = useQueryClient()
@@ -82,13 +87,12 @@ export function Sesiones() {
     setBusy('others')
     try {
       await m.account.sessions.signOut('others')
-      notify.success('Sesión cerrada en los demás dispositivos', {
+      notify.success(t('sessions.othersDone'), {
         icon: 'user',
-        description:
-          'Saldrán en menos de una hora y ya no les llegan tus avisos. En este sigues dentro y tus datos no cambian.',
+        description: t('sessions.othersDoneHint'),
       })
     } catch (err) {
-      fail('No se pudo cerrar la sesión en los demás dispositivos', err)
+      fail(t('sessions.othersFailed'), err)
     }
     setBusy(null)
     void qc.invalidateQueries({ queryKey: keys.accountSessions })
@@ -101,18 +105,12 @@ export function Sesiones() {
 
   if (!m.account.available()) return null
   return (
-    <PrefGroup
-      title="Sesiones y dispositivos"
-      icon="devices"
-      description="Dónde tienes la sesión abierta. Cierra las que no reconozcas."
-    >
+    <PrefGroup title={t('sessions.title')} icon="devices" description={t('sessions.description')}>
       <div id="ajuste-sesiones">
         {sessions.isPending ? (
-          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">Cargando…</p>
+          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">{t('loading')}</p>
         ) : sessions.isError ? (
-          <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">
-            No se pudo cargar la lista de sesiones.
-          </p>
+          <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">{t('sessions.loadError')}</p>
         ) : (
           sessions.data.map((s) => <SessionRow key={s.id} session={s} />)
         )}
@@ -120,8 +118,8 @@ export function Sesiones() {
       <PrefRow
         id="cerrar-sesiones"
         icon="signOut"
-        title="Cerrar en otros dispositivos"
-        description="En todos, también en este: tendrás que volver a entrar aquí."
+        title={t('sessions.othersTitle')}
+        description={t('sessions.othersDescription')}
       >
         <div className="flex flex-wrap justify-end gap-2">
           <Button
@@ -129,7 +127,7 @@ export function Sesiones() {
             onClick={() => void closeOthers()}
             disabled={busy !== null || others === 0}
           >
-            {busy === 'others' ? 'Cerrando…' : 'En los demás'}
+            {busy === 'others' ? t('sessions.signingOut') : t('sessions.others')}
           </Button>
           <Button
             size="sm"
@@ -137,7 +135,7 @@ export function Sesiones() {
             onClick={() => void closeAll()}
             disabled={busy !== null}
           >
-            {busy === 'global' ? 'Cerrando…' : 'En todos'}
+            {busy === 'global' ? t('sessions.signingOut') : t('sessions.everywhere')}
           </Button>
         </div>
       </PrefRow>
