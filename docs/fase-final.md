@@ -161,6 +161,9 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
   - entrar con GitHub vuelve a la URL publicada;
   - la pestaña lleva el logo, `/robots.txt` y `/sitemap.xml` se abren, y al pegar la URL en un chat sale la tarjeta con la imagen
     (ADR-0045). *(Hecho el 27 de octubre: la tarjeta sale bien en WhatsApp y los ficheros responden en producción.)*
+  - sin sesión, `/documentacion/notas` se lee con la cabecera «Entrar»; al pegar su enlace en un chat, la tarjeta dice «Notas · Muninn»;
+    una guía que no existe (`/documentacion/xyz`) responde 404
+    (ADR-0076)
 - [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`. *(Más adelante.)*
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
   local», acéptalo.

@@ -4,7 +4,14 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @muninn/web build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/((?!assets/|.*\\.[a-z0-9]+$).*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/documentacion", "destination": "/documentacion/index.html" },
+    { "source": "/documentacion/:pagina", "destination": "/documentacion/:pagina/index.html" },
+    {
+      "source": "/((?!assets/|documentacion(?:/|$)|.*\\.[a-z0-9]+$).*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(sw.js|registerSW.js|push-sw.js|manifest.webmanifest)",

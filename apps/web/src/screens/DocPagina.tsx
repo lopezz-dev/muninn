@@ -3,7 +3,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { EmptyState } from '../components/Page'
 import { type Doc, docLink, groupLabel, neighbours } from '../lib/docs'
-import { usePageMeta } from '../lib/seo'
+import { useNoIndex, usePageMeta } from '../lib/seo'
 import { type CalloutLook, Markdown } from '../markdown/Markdown'
 import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/outline'
 import { DOCS } from './docs/content'
@@ -163,6 +163,25 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
   )
 }
 
+/** Guía que no existe (enlace de otra versión de la ayuda): fuera del índice de los buscadores. */
+function DocNotFound() {
+  useNoIndex()
+  return (
+    <EmptyState
+      icon="docs"
+      title="No encontramos esta guía"
+      className="mt-10 flex-1"
+      actions={
+        <Button asChild variant="primary">
+          <Link to="/documentacion">Ver la documentación</Link>
+        </Button>
+      }
+    >
+      Puede que el enlace sea de una versión anterior de la ayuda.
+    </EmptyState>
+  )
+}
+
 /**
  * Una guía (ADR-0052): cabecera con icono, estado y tiempo de lectura; el texto y, en pantallas anchas,
  * «En esta página» a su lado (desplegable en el móvil); la guía anterior y siguiente al final.
@@ -181,22 +200,7 @@ export function DocPagina() {
     description: doc?.description || undefined,
   })
 
-  if (!doc) {
-    return (
-      <EmptyState
-        icon="docs"
-        title="No encontramos esta guía"
-        className="mt-10 flex-1"
-        actions={
-          <Button asChild variant="primary">
-            <Link to="/documentacion">Ver la documentación</Link>
-          </Button>
-        }
-      >
-        Puede que el enlace sea de una versión anterior de la ayuda.
-      </EmptyState>
-    )
-  }
+  if (!doc) return <DocNotFound />
 
   const { prev, next } = neighbours(DOCS, doc.slug)
   const sections = toc.filter((t) => t.depth === 2).length

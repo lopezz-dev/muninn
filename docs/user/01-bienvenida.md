@@ -40,4 +40,6 @@ asistente, puedes [conectarlo a tus datos](06-asistentes-ia.md).
 - **Móvil:** como app instalada desde el navegador (iPhone y Android).
 - Todo se **sincroniza** entre tus dispositivos.
 
+Estas guías se pueden leer sin cuenta, en la web: comparte el enlace de una con quien quieras.
+
 Sigue con [Instalación](02-instalacion.md).
