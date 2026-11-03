@@ -40,6 +40,16 @@ i18n.on('languageChanged', setDocumentLang)
 
 export { i18n }
 
+/** Todos los namespaces (el primero va en el arranque; los demás, en diferido). Uno nuevo se añade aquí y en `i18next.d.ts`. */
+export const NAMESPACES = [
+  'common',
+  'palette',
+  'dialogs',
+  'settings',
+  'security',
+  'integrations',
+] as const
+
 /** Traduce fuera de un componente (avisos, etiquetas de datos). Dentro, mejor `useTranslation()`. */
 export const t = i18n.t.bind(i18n)
 
