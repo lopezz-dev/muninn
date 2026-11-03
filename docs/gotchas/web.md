@@ -337,6 +337,17 @@
   que la pestaña corriera el bundle anterior (la versión con la RPC salió a las ~07:22 UTC y la PWA es `autoUpdate`: la primera carga
   tras publicar sirve lo que tenía el service worker). Al probar algo recién publicado, recarga dos veces.
 
+### Códigos de recuperación: API experimental de supabase-js
+
+- **Síntoma:** «the MFA recovery codes API is experimental and disabled by default» al generar o al entrar con un código; o, tras
+  actualizar supabase-js, la fila de Ajustes dice «No están disponibles ahora mismo».
+- **Causa:** `auth.mfa.recoveryCodes.*` solo existe si el cliente se crea con `auth: { experimental: { recoveryCodes: true } }`
+  (`loadSupabase`, `lib/auth.ts`). Es experimental: puede cambiar de forma entre versiones ([ADR-0075](../adr/0075-codigos-de-recuperacion-del-segundo-factor.md)).
+- **Solución:** no crees otro cliente sin esa opción. Al subir supabase-js, revisa en su changelog `recoveryCodes` y prueba el paso de
+  la fase final. Los códigos son un factor `recovery_code` que no puede quedarse solo: borra los códigos **antes** de quitar la app de
+  códigos (`account.mfa.disable` ya lo hace), o Supabase lo rechaza (`mfa_recovery_codes_sole_factor`). La demo no enseña Ajustes ›
+  Cuenta: la interfaz se prueba en `test/segundo-factor.test.tsx`, con la cuenta en memoria del core.
+
 ### `/login` no tiene shell ni datos
 
 - La pantalla de login cuelga de la raíz, no de `_app`: no uses ahí `useMuninn()`, `useAuth()` ni nada del

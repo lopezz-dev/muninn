@@ -745,6 +745,15 @@ export const mfaCode = z
 
 export const mfaFactorName = z.string().trim().min(1).max(60)
 
+/**
+ * Códigos de recuperación del segundo factor (ADR-0075): cuántos hay y cuántos quedan sin usar. Nunca los códigos: el
+ * servidor solo los enseña una vez, al generarlos.
+ */
+export interface RecoveryCodesStatus {
+  total: number
+  remaining: number
+}
+
 /** Una app a la que diste acceso a tu cuenta por OAuth (claude.ai y otros clientes del MCP remoto, ADR-0036). */
 export interface OAuthAppGrant {
   clientId: string

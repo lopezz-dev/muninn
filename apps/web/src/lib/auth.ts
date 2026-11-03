@@ -95,7 +95,13 @@ export function loadSupabase(): Promise<SupabaseClient> {
     return Promise.reject(new Error('Faltan VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY'))
   client ??= import('@supabase/supabase-js').then(({ createClient }) => {
     const c = createClient(url, key, {
-      auth: { storageKey: SESSION_KEY, flowType: 'pkce', detectSessionInUrl: true },
+      auth: {
+        storageKey: SESSION_KEY,
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        // Códigos de recuperación del segundo factor (ADR-0075): API experimental, apagada si no se pide.
+        experimental: { recoveryCodes: true },
+      },
     })
     // Solo nos interesa si cambia el usuario: refrescar el token o volver a la pestaña no cuenta.
     c.auth.onAuthStateChange((_event, session) => {

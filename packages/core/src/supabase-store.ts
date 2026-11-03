@@ -103,6 +103,10 @@ const PROJECT_IMAGES_BUCKET = 'project-images'
 const PAGE = 1000
 
 /** Los errores de Supabase Auth MFA que puede ver el usuario, en español (el resto, tal cual). */
+/** La cuenta no tiene códigos de recuperación (no es un fallo: aún no los ha generado). */
+const noRecoveryCodes = (error: { code?: string; status?: number }) =>
+  error.status === 404 || error.code === 'mfa_factor_not_found'
+
 function mfaError(error: { code?: string; message: string }) {
   switch (error.code) {
     case 'mfa_verification_failed':
@@ -117,6 +121,13 @@ function mfaError(error: { code?: string; message: string }) {
     case 'mfa_totp_enroll_not_enabled':
     case 'mfa_totp_verify_not_enabled':
       return new Error('El segundo factor no está activado en este servidor.')
+    case 'mfa_recovery_codes_enroll_not_enabled':
+    case 'mfa_recovery_codes_verify_not_enabled':
+      return new Error('Los códigos de recuperación no están activados en este servidor.')
+    case 'mfa_recovery_codes_locked':
+      return new Error(
+        'Demasiados intentos con los códigos de recuperación. Espera y vuelve a probar.',
+      )
   }
   return error
 }
@@ -621,6 +632,31 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
         if (error) throw error
         const level = (l: string | null) => (l === 'aal1' || l === 'aal2' ? l : null)
         return { current: level(data.currentLevel), next: level(data.nextLevel) }
+      },
+      // API experimental de supabase-js (ADR-0075): el cliente tiene que crearse con
+      // `auth.experimental.recoveryCodes` o estas llamadas lanzan.
+      recoveryCodes: {
+        async status() {
+          const { data, error } = await client.auth.mfa.recoveryCodes.getStatus()
+          if (error) {
+            // Sin códigos generados, el servidor responde 404.
+            if (noRecoveryCodes(error)) return null
+            throw mfaError(error)
+          }
+          return { total: data.total, remaining: data.remaining }
+        },
+        async generate() {
+          const { data: current } = await client.auth.mfa.recoveryCodes.getStatus()
+          const { data, error } = current
+            ? await client.auth.mfa.recoveryCodes.regenerate()
+            : await client.auth.mfa.recoveryCodes.generate()
+          if (error) throw mfaError(error)
+          return data.codes
+        },
+        async remove() {
+          const { error } = await client.auth.mfa.recoveryCodes.unenroll()
+          if (error && !noRecoveryCodes(error)) throw mfaError(error)
+        },
       },
     },
   }

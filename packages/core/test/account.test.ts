@@ -174,6 +174,46 @@ describe('segundo factor', () => {
   })
 })
 
+describe('códigos de recuperación', () => {
+  const withFactor = async () => {
+    const account = setup()
+    const { factorId } = await account.mfa.enroll()
+    await account.mfa.confirm(factorId, '123456')
+    return account
+  }
+
+  it('solo se generan con el segundo factor activado', async () => {
+    const account = setup()
+    expect(await account.mfa.recoveryCodes.status()).toBeNull()
+    await expect(account.mfa.recoveryCodes.generate()).rejects.toThrow(/actívalo antes/)
+  })
+
+  it('genera diez códigos de un solo uso y cuenta los que quedan', async () => {
+    const account = await withFactor()
+    const codes = await account.mfa.recoveryCodes.generate()
+    expect(codes).toHaveLength(10)
+    expect(new Set(codes).size).toBe(10)
+    for (const c of codes) expect(c).toMatch(/^[a-z2-7]{5}-[a-z2-7]{5}$/)
+    expect(await account.mfa.recoveryCodes.status()).toEqual({ total: 10, remaining: 10 })
+  })
+
+  it('generar otra vez sustituye los anteriores', async () => {
+    const account = await withFactor()
+    const first = await account.mfa.recoveryCodes.generate()
+    const second = await account.mfa.recoveryCodes.generate()
+    expect(second.some((c) => first.includes(c))).toBe(false)
+    expect(await account.mfa.recoveryCodes.status()).toEqual({ total: 10, remaining: 10 })
+  })
+
+  it('desactivar el segundo factor borra también los códigos', async () => {
+    const account = await withFactor()
+    await account.mfa.recoveryCodes.generate()
+    await account.mfa.disable('654321')
+    expect(await account.mfa.active()).toBeNull()
+    expect(await account.mfa.recoveryCodes.status()).toBeNull()
+  })
+})
+
 describe('apps con acceso', () => {
   const grant = (name: string, grantedAt: string) => ({
     clientId: crypto.randomUUID(),

@@ -16,6 +16,14 @@ export const MEMORY_WRONG_MFA_CODE = '000000'
 const browserAgent = () => (typeof navigator === 'undefined' ? null : (navigator.userAgent ?? null))
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+/** Diez códigos `xxxxx-xxxxx`, como los que da Supabase. */
+const fakeRecoveryCodes = () =>
+  Array.from({ length: 10 }, () => {
+    const s = Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => BASE32[b % 32])
+      .join('')
+      .toLowerCase()
+    return `${s.slice(0, 5)}-${s.slice(5)}`
+  })
 const fakeSecret = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => BASE32[b % 32]).join('')
 
@@ -50,6 +58,8 @@ export function createMemoryAccount(
   const hasVerified = () => factors.some((f) => f.status === 'verified')
   // Con un factor confirmado de partida, la sesión ya pasó el código al entrar.
   let aal: AssuranceLevel['current'] = hasVerified() ? 'aal2' : 'aal1'
+  // Códigos de recuperación sin usar y cuántos se generaron (ADR-0075).
+  let recovery: { codes: string[]; total: number } | null = null
 
   return {
     async sessions() {
@@ -114,11 +124,32 @@ export function createMemoryAccount(
         // Como Supabase: quitar un factor confirmado pide una sesión que ya pasó el código.
         if (factor?.status === 'verified' && aal !== 'aal2')
           throw new Error('Para quitar el segundo factor, primero escribe un código')
+        // Como Supabase (`mfa_recovery_codes_sole_factor`): los códigos no se quedan solos.
+        if (factor?.status === 'verified' && recovery)
+          throw new Error('Quita antes los códigos de recuperación')
         factors = factors.filter((f) => f.id !== factorId)
         if (!hasVerified()) aal = 'aal1'
       },
       async assurance() {
         return { current: aal, next: hasVerified() ? 'aal2' : 'aal1' }
+      },
+      recoveryCodes: {
+        async status() {
+          return recovery ? { total: recovery.total, remaining: recovery.codes.length } : null
+        },
+        async generate() {
+          // Como Supabase: generarlos pide una sesión que ya pasó el código.
+          if (aal !== 'aal2')
+            throw new Error('Para generar los códigos, primero escribe un código de tu app')
+          const codes = fakeRecoveryCodes()
+          recovery = { codes: [...codes], total: codes.length }
+          return codes
+        },
+        async remove() {
+          if (recovery && aal !== 'aal2')
+            throw new Error('Para quitar los códigos, primero escribe un código de tu app')
+          recovery = null
+        },
       },
     },
   }

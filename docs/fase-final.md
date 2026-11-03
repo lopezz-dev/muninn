@@ -232,6 +232,15 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
 - [x] Cierra sesión y entra con el código del correo: sale **Falta un paso** y no deja ir a ninguna pantalla sin el código de la app. Con
   el código, entras donde ibas. Lo mismo entrando con GitHub. *(Con el correo; GitHub no se probó.)*
 - [ ] En el iPhone (sesión abierta de antes de activarlo): al volver a abrir la app (como mucho, una hora después) pide el código.
+- [ ] **Códigos de recuperación ([ADR-0075](adr/0075-codigos-de-recuperacion-del-segundo-factor.md))**, con el segundo factor activado:
+  en Ajustes › Cuenta, **Códigos de recuperación › Generar**: salen diez; guárdalos y la fila dice «Te quedan 10 de 10». Si sale «Los
+  códigos de recuperación no están activados en este servidor», mira en Supabase › **Authentication › Multi-Factor** si hay que
+  activarlos. Cierra sesión, entra con el correo y, en **Falta un paso**, **Usa un código de recuperación** con uno de ellos: entras, y
+  en Ajustes quedan 9. El mismo código otra vez da «Ese código no es correcto o ya se usó». En el registro de Supabase,
+  `factors/recovery-codes/verify` con 200; y la app ve tus datos (la sesión es `aal2`). Si el mensaje de un código usado es otro,
+  apunta el `error_code` para `recoveryCodeErrorMessage`.
+- [ ] **Desactivar con códigos de recuperación:** desactiva el segundo factor y comprueba que no da error y que, al volver a
+  activarlo, el alta enseña diez códigos nuevos y los de antes ya no valen al entrar.
 - [x] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
 - [x] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código. *(Al desactivarlo,
   el conector de claude.ai también quedó invalidado y hubo que reconectarlo.)*
