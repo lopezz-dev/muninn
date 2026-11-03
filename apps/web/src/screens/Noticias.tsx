@@ -145,7 +145,10 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
         ))}
       </div>
       <h3 className={cn('text-md leading-snug font-semibold', item.readAt && 'text-fg-muted')}>
-        <a {...externalLink(item.url, () => markRead(m, qc, item))} className="hover:underline">
+        <a
+          {...externalLink(item.url, { onOpen: () => markRead(m, qc, item) })}
+          className="hover:underline"
+        >
           {item.title}
         </a>
       </h3>
@@ -187,7 +190,10 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
           <Icon name="pin" size={14} className={item.savedAt ? 'text-accent' : undefined} />
           {item.savedAt ? 'Guardada' : 'Leer luego'}
         </button>
-        <a {...externalLink(item.url, () => markRead(m, qc, item))} className={act}>
+        <a
+          {...externalLink(item.url, { onOpen: () => markRead(m, qc, item), direct: true })}
+          className={act}
+        >
           <Icon name="external" size={14} />
           Abrir
         </a>

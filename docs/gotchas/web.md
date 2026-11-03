@@ -145,7 +145,9 @@
 
 - **Síntoma:** en la lista no se puede reordenar; o en otro dispositivo el proyecto se abre en «Tablero» aunque elegiste «Lista».
 - **Causa:** es intencionado ([ADR-0030](../adr/0030-vista-lista-del-tablero.md)). `BoardList` pinta la caché del tablero sin dnd-kit, y la
-  vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta.
+  vista se guarda por proyecto en `localStorage['muninn.boardView']` (`lib/board-view.ts`), no en la cuenta. El calendario guarda ahí
+  su escala (`calendar` / `calendar-week`) y, con el sufijo `:open`, que en el móvil se dejó el mes desplegado. Si añades otra
+  preferencia de la vista, súmala a `STORED` o `readAll` la tirará como valor desconocido.
 - **Solución:** si añades una acción a la fila (mover, archivar…), usa las de `task-actions.ts` para que sea optimista y con «Deshacer».
   Las filas llevan `data-task-id` en el enlace: `Tablero` devuelve el foco ahí al cerrar el panel de la tarea, en las tres vistas.
 
@@ -159,6 +161,11 @@
   «Sin fecha»), y su `collisionDetection` la devuelve tal cual cuando no hay puntero. Con ratón o dedo se usa `pointerWithin`. Si
   añades otro destino (otro panel que reciba tareas), dale un id en `lib/calendar.ts` y súmalo a `keyboardTarget` o a la tecla que lo
   elija.
+- **Cruzar de mes (o de semana):** si el día destino no se ve, su celda aún no existe y el `coordinateGetter` no tiene dónde llevar la
+  tarjeta. Entonces apunta `keyTarget` a ese día, cambia `anchor` (`anchorFor`) y deja la tarjeta donde está. Como el `KeyboardSensor`
+  solo mueve en un `keydown` (y lo escucha en el documento), un efecto despacha una tecla falsa `SETTLE_CODE` en los fotogramas
+  siguientes hasta que dnd-kit ha medido la celda nueva, y el getter la coloca ahí. No quites `SETTLE_CODE` del getter ni le pongas un
+  código que otro atajo de la app escuche. ADR-0068 lo daba como coste aceptado: ya no lo es.
 - **Ref:** [ADR-0068](../adr/0068-vista-calendario-del-tablero.md)
 
 ### Calendario: soltar cambia solo `dueDate`
@@ -255,6 +262,9 @@
   pantalla (`scrollToTopSelectors`) y recuerda su posición (`data-scroll-restoration-id`). Para que una lista haga scroll
   dentro, la cadena entera necesita `min-h-0` (desde `Page fit` hasta la lista con `overflow-y-auto`): un solo eslabón
   sin él y crece en lugar de hacer scroll.
+- **Columna con altura máxima:** no pongas el `overflow-y-auto` en la misma columna `flex-col` que lleva la cabecera. Sus hijos
+  encogen (`flex-shrink` por defecto: en Notas el buscador bajaba de 32 a 22 px) y se van con el scroll. Cabecera, buscador y
+  filtros con `shrink-0`, y el scroll solo en la lista (`min-h-0 flex-1 overflow-y-auto`), como en `screens/Notas.tsx`.
 - **En una guía de Documentación** el texto tiene su propio scroll, `#guia` ([ADR-0071](../adr/0071-guia-de-documentacion-a-la-altura-de-la-ventana.md)):
   ahí `#contenido` tampoco se mueve. El router lo vuelve arriba al cambiar de guía.
 
@@ -272,8 +282,8 @@
   (sin tildes ni mayúsculas, todas las palabras en cualquier orden). Junta en un solo texto los campos donde se busca, con
   `
 ` entre ellos, para que las palabras puedan estar en campos distintos.
-- **Ojo:** lo que busca el core en el servidor (`search` de `tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas)
-  sigue siendo por frase (`ilike`): lo que devuelve ya lo filtra la paleta por palabras, pero no encuentra lo desordenado.
+- **Ojo:** el `search` del core en el servidor (`tasks.list`, `notes.list`…, que usa el ⌘K para tareas y notas) también busca
+  por palabras en cualquier orden, pero distingue tildes (`ilike`): «documentacion» no encuentra «Documentación» en el servidor.
 
 ### Sesión: saber si hay usuario sin descargar supabase-js
 
@@ -296,12 +306,47 @@
 ### Estado `mfa`: sesión abierta, pero falta el código de la app
 
 - **Síntoma:** tras entrar con el código del correo, la app vuelve a /login y enseña «Falta un paso» en lugar de entrar.
-- **Causa:** la cuenta tiene segundo factor y la sesión aún es `aal1`. `getAuth()` devuelve `{ kind: 'mfa', account }` (lo mira con
-  `getAuthenticatorAssuranceLevel`, sin red), `/_app` manda a /login y `screens/login/Entrada.tsx` enseña el paso del código.
+- **Causa:** la cuenta tiene segundo factor y la sesión aún es `aal1`. `getAuth()` devuelve `{ kind: 'mfa', account }` (lo mira
+  `secondFactorStep` en `lib/auth.ts`), `/_app` manda a /login y `screens/login/Entrada.tsx` enseña el paso del código.
 - **Solución:** es lo esperado ([ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)). Dentro de la app, `useAuth()` nunca ve `mfa`
   (`AppAuthState`). Una ruta nueva que necesite una cuenta completa compara con `kind === 'user'`, no con `!== 'anonymous'`.
-- **Ojo:** el estado se calcula al resolver `getAuth()`. Un dispositivo con la sesión abierta antes de activar el segundo factor lo
-  pide al volver a abrir la app, cuando la sesión guardada ya trae el factor (al renovarse el token, como mucho en una hora).
+- **Ojo:** el estado se calcula al resolver `getAuth()`, una vez por arranque o cambio de usuario.
+
+### Volver de GitHub con el segundo factor: la sesión llega sin factores
+
+- **Síntoma:** con un factor TOTP verificado, entrar con GitHub iba directo a la app, sin «Falta un paso». En el registro de Supabase:
+  `authorize?provider=github` → `token?grant_type=pkce` y ninguna llamada a `factors/…/challenge`. El servidor seguía protegido
+  (`require_mfa`, ADR-0062), pero la app trataba la sesión `aal1` como cuenta completa.
+- **Causa:** `mfa.getAuthenticatorAssuranceLevel()` sin argumentos no va a la red: saca `nextLevel` de `session.user.factors`, y el usuario
+  que guarda el canje PKCE llega sin `factors`. Sale `aal1` → `aal1`, como una cuenta sin segundo factor. Lo mismo pasa con una sesión
+  abierta antes de activarlo.
+- **Solución:** `secondFactorStep` (`lib/auth.ts`): con `aal2` o con el factor ya en la sesión, decide sin red; con `aal1` y sin factores,
+  pregunta al servidor con `mfa.listFactors()` (hace `getUser()`; `totp` solo trae los verificados). Cuesta una petición al arrancar
+  a las cuentas sin segundo factor. Sin red, `getAuth()` se queda con lo guardado; `/oauth/consent` no (ver abajo).
+
+### `/oauth/consent` y el segundo factor
+
+- **Síntoma:** «Claude ya puede usar tu Muninn» sin aviso, pero con el factor activado la app no ve nada.
+- **Causa:** la aprobación solo vale si queda apuntada con `approve_oauth_client_mfa` desde una sesión `aal2` (ADR-0066). La RPC devuelve
+  `false` (sin lanzar) si la sesión es `aal1` o la autorización ya no está pendiente.
+- **Solución:** la pantalla pregunta antes con `consentSecondFactor()` (al servidor, sin fiarse de la sesión guardada): con el factor sin
+  pasar enseña «Falta un paso» y manda a /login con `resetAuth()`, que pide el código y vuelve; nunca enseña «Permitir acceso». Con el
+  factor pasado, `false` o un error de la RPC es fallo: aprueba igual y avisa de quitarle el acceso y reconectar. Sin segundo factor en
+  la cuenta no llama a la RPC.
+- **Ojo:** el 30 de octubre a las 08:03 UTC no hubo ni la llamada ni su *preflight*, cuando a las 08:39 y después sí: lo más probable es
+  que la pestaña corriera el bundle anterior (la versión con la RPC salió a las ~07:22 UTC y la PWA es `autoUpdate`: la primera carga
+  tras publicar sirve lo que tenía el service worker). Al probar algo recién publicado, recarga dos veces.
+
+### Códigos de recuperación: API experimental de supabase-js
+
+- **Síntoma:** «the MFA recovery codes API is experimental and disabled by default» al generar o al entrar con un código; o, tras
+  actualizar supabase-js, la fila de Ajustes dice «No están disponibles ahora mismo».
+- **Causa:** `auth.mfa.recoveryCodes.*` solo existe si el cliente se crea con `auth: { experimental: { recoveryCodes: true } }`
+  (`loadSupabase`, `lib/auth.ts`). Es experimental: puede cambiar de forma entre versiones ([ADR-0075](../adr/0075-codigos-de-recuperacion-del-segundo-factor.md)).
+- **Solución:** no crees otro cliente sin esa opción. Al subir supabase-js, revisa en su changelog `recoveryCodes` y prueba el paso de
+  la fase final. Los códigos son un factor `recovery_code` que no puede quedarse solo: borra los códigos **antes** de quitar la app de
+  códigos (`account.mfa.disable` ya lo hace), o Supabase lo rechaza (`mfa_recovery_codes_sole_factor`). La demo no enseña Ajustes ›
+  Cuenta: la interfaz se prueba en `test/segundo-factor.test.tsx`, con la cuenta en memoria del core.
 
 ### `/login` no tiene shell ni datos
 
@@ -731,3 +776,33 @@
 - **Solución:** para revisar los diálogos en la demo, en local y sin commitear, haz que esa rama devuelva `<SegundoFactor />`
   y navega con el router (recargar borra la demo). La demo no genera QR (`qrCode: ''`): el diálogo enseña un hueco que
   manda a la clave. Para ver el QR, envuelve `m.account.mfa.enroll` desde la consola y devuelve un `data:image/svg+xml`.
+
+### Color de columna: el punto sale de `ColumnDot`, y las tareas llevan una copia
+
+- **Síntoma:** cambias el color de una columna y en la Lista o en el calendario las tareas siguen con el punto de antes, o una
+  vista nueva pinta el color del tipo aunque la columna tenga uno propio.
+- **Causa:** las tareas del tablero llevan una copia de su columna (`TaskWithColumn.column`: nombre, tipo y `color`), y el color
+  propio (`board_columns.color`, un nombre de la paleta como `violet`) tiene prioridad sobre el del tipo (`KIND_DOT`).
+- **Solución:** pinta el punto con `ColumnDot` (o `columnDot`, si necesitas la clase y el estilo por separado) de
+  `screens/tablero/Column.tsx`, nunca con `KIND_DOT[column.kind]` a pelo. `updateColumn` (`lib/column-actions.ts`) actualiza a la vez
+  la columna y la copia de cada tarea; si añades otra forma de cambiar una columna, haz lo mismo.
+
+### Subtareas: dnd-kit también en el detalle de la tarea
+
+- **Síntoma:** el chunk del detalle de tarea pesa más que antes, o en el móvil el asa de una subtarea no responde al primer toque.
+- **Causa:** `screens/tarea/Checklist.tsx` reordena con dnd-kit (como las categorías de Finanzas), así que la librería ya no vive
+  solo en el chunk del tablero ([ADR-0023](../adr/0023-drag-and-drop-con-dnd-kit.md)); Vite la saca a un chunk compartido. En
+  tacto, el asa espera 200 ms pulsada (`TouchSensor`) para no pelear con el scroll.
+- **Solución:** no la metas en un grupo de `codeSplitting`: se pide al abrir una tarea, no al arrancar. El orden lo calcula el core
+  (`checklist.move`, índice entre las demás) y la acción optimista con «Deshacer» es `moveChecklistItem` (`lib/task-actions.ts`).
+
+### Enlaces externos: siempre con `externalLink`, y en táctil piden el menú
+
+- **Síntoma:** en el móvil, un enlace a otra web abre Safari al primer toque (sin el menú «Abrir enlace · Copiar enlace»), o un botón
+  «Abrir» pide el menú cuando no hace falta.
+- **Causa:** el menú de [ADR-0073](../adr/0073-menu-de-enlace-externo-en-tactil.md) lo pide `externalLink` (`lib/external-link.ts`) con
+  `(pointer: coarse)`. Un `<a href target="_blank">` a mano se lo salta. El estado está en `lib/link-menu.ts` y lo pinta el shell
+  (`shell/LinkMenu.tsx`): fuera del shell (la entrada) se abre directo.
+- **Solución:** todo enlace externo con `{...externalLink(url)}`; `onOpen` para lo que hace al abrirse y `direct: true` solo si el
+  texto del control ya dice que abre fuera («Abrir»). Para probarlo en el navegador integrado, el preset `mobile` de
+  `resize_window` emula `pointer: coarse`.

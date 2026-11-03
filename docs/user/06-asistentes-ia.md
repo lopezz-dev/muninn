@@ -42,7 +42,8 @@ Puedes añadir Muninn como **conector** en claude.ai: Claude entra con tu cuenta
 2. Ponle un nombre (por ejemplo, Muninn) y pega esta dirección:
    `https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/mcp`
 3. Pulsa conectar. claude.ai te trae a una pantalla de Muninn que dice qué app pide acceso, con qué cuenta entrarás y qué podrá
-   hacer. Si no tenías la sesión abierta, primero te pide entrar.
+   hacer. Si no tenías la sesión abierta, primero te pide entrar. Con el segundo factor activado, también te pide el código de
+   tu app antes de dejarte dar acceso.
 4. Elige **Permitir acceso** (o **Rechazar**). Vuelves a claude.ai con el conector listo y sus herramientas.
 
 Un consejo: deja las herramientas de consulta como «permitir siempre» y las que cambian cosas, con «pedir aprobación», para

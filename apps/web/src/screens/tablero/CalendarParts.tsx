@@ -29,7 +29,7 @@ import { dayShort, isOverdue } from '../../lib/calendar'
 import { useMuninn } from '../../lib/muninn'
 import { createTask } from '../../lib/task-actions'
 import { useShell } from '../../shell/shell-context'
-import { KIND_DOT } from './Column'
+import { ColumnDot } from './Column'
 import { CardBody, type Progress } from './TaskCard'
 
 /** Lo que dnd-kit necesita de una tarea arrastrable del calendario: enlace al detalle y asa a la vez. */
@@ -87,10 +87,7 @@ export function TaskPill({
       {done ? (
         <icons.check size={12} weight="bold" className="shrink-0 text-success" aria-label="Hecha" />
       ) : (
-        <span
-          aria-hidden="true"
-          className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[task.column.kind])}
-        />
+        <ColumnDot column={task.column} />
       )}
       <span className={cn('min-w-0 flex-1 truncate', done && 'line-through')}>{task.title}</span>
       {overdue ? <span className="sr-only">(vencida)</span> : null}
@@ -191,10 +188,7 @@ export function CompactBody({
             aria-hidden="true"
           />
         ) : (
-          <span
-            aria-hidden="true"
-            className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[task.column.kind])}
-          />
+          <ColumnDot column={task.column} />
         )}
         {overdue ? null : <span className="min-w-0 truncate">{task.column.name}</span>}
         {overdue ? (
@@ -354,12 +348,7 @@ export function AddTaskPopover({
               <Menu>
                 <MenuTrigger asChild>
                   <Button type="button" size="sm" aria-label={`Columna: ${column?.name ?? ''}`}>
-                    {column ? (
-                      <span
-                        aria-hidden="true"
-                        className={cn('size-2 rounded-xs', KIND_DOT[column.kind])}
-                      />
-                    ) : null}
+                    {column ? <ColumnDot column={column} /> : null}
                     {column?.name}
                     <icons.chevronDown size={11} aria-hidden="true" />
                   </Button>
@@ -368,10 +357,7 @@ export function AddTaskPopover({
                   {choices.map((c) => (
                     <MenuItem key={c.id} onSelect={() => setColumnId(c.id)}>
                       <span className="flex items-center gap-2">
-                        <span
-                          aria-hidden="true"
-                          className={cn('size-2 rounded-xs', KIND_DOT[c.kind])}
-                        />
+                        <ColumnDot column={c} />
                         {c.name}
                       </span>
                     </MenuItem>

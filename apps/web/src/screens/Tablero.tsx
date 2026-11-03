@@ -21,7 +21,13 @@ import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { ProjectAvatar } from '../components/ProjectAvatar'
 import { activeGroups, type BoardFilter, labelsOf, NO_FILTER } from '../lib/board-filter'
 import { useBoardGroups } from '../lib/board-groups'
-import { type BoardView, readBoardView, readCalendarScale, saveBoardView } from '../lib/board-view'
+import {
+  type BoardView,
+  readBoardView,
+  readCalendarFolded,
+  readCalendarScale,
+  saveBoardView,
+} from '../lib/board-view'
 import type { CalendarScale } from '../lib/calendar'
 import { useMuninn } from '../lib/muninn'
 import { archiveProjectWithUndo, boardQuery, projectQuery } from '../lib/queries'
@@ -47,6 +53,25 @@ const VIEWS: { value: BoardView; label: string; icon: ReactNode }[] = [
   { value: 'board', label: 'Tablero', icon: <icons.projects size={14} aria-hidden="true" /> },
   { value: 'list', label: 'Lista', icon: <screenIcons.list size={14} aria-hidden="true" /> },
   { value: 'calendar', label: 'Calendario', icon: <icons.calendar size={14} aria-hidden="true" /> },
+]
+
+/** En el móvil, solo los iconos (el nombre queda para el lector de pantalla). */
+const COMPACT_VIEWS: { value: BoardView; label: ReactNode; icon: ReactNode }[] = [
+  {
+    value: 'board',
+    label: <span className="sr-only">Tablero</span>,
+    icon: <icons.projects size={18} aria-hidden="true" />,
+  },
+  {
+    value: 'list',
+    label: <span className="sr-only">Lista</span>,
+    icon: <screenIcons.list size={18} aria-hidden="true" />,
+  },
+  {
+    value: 'calendar',
+    label: <span className="sr-only">Calendario</span>,
+    icon: <icons.calendar size={18} aria-hidden="true" />,
+  },
 ]
 
 /** Mientras llega el calendario: su rejilla de verdad, con fantasmas, para que no salte de alto. */
@@ -100,20 +125,27 @@ export function Tablero() {
   const [sheet, setSheet] = useState(false)
   const [newColumn, setNewColumn] = useState(false)
   const [archivedOpen, setArchivedOpen] = useState(false)
-  // Tablero, Lista o Calendario (y su escala), recordado por proyecto en este dispositivo (`lib/board-view.ts`).
+  // Tablero, Lista o Calendario (con su escala y, en el móvil, el mes plegado o no), recordado por proyecto en
+  // este dispositivo (`lib/board-view.ts`).
   const [view, setView] = useState<BoardView>(() => readBoardView(projectId))
   const [scale, setScale] = useState<CalendarScale>(() => readCalendarScale(projectId))
+  const [folded, setFolded] = useState(() => readCalendarFolded(projectId))
   useEffect(() => {
     setView(readBoardView(projectId))
     setScale(readCalendarScale(projectId))
+    setFolded(readCalendarFolded(projectId))
   }, [projectId])
   const changeView = (next: BoardView) => {
     setView(next)
-    saveBoardView(projectId, next, undefined, scale)
+    saveBoardView(projectId, next, undefined, scale, folded)
   }
   const changeScale = (next: CalendarScale) => {
     setScale(next)
-    saveBoardView(projectId, 'calendar', undefined, next)
+    saveBoardView(projectId, 'calendar', undefined, next, folded)
+  }
+  const changeFolded = (next: boolean) => {
+    setFolded(next)
+    saveBoardView(projectId, 'calendar', undefined, scale, next)
   }
   const project = useQuery(projectQuery(m, projectId))
   const board = useQuery({ ...boardQuery(m, projectId), enabled: project.isSuccess })
@@ -175,13 +207,36 @@ export function Tablero() {
 
   return (
     <Page fit>
-      <nav aria-label="Ruta" className="-mb-2 flex items-center gap-1.5 text-sm text-fg-subtle">
-        <Link to="/proyectos" className="transition-colors hover:text-fg">
-          Proyectos
-        </Link>
-        <icons.chevronRight size={12} aria-hidden="true" />
-        <span className="text-fg">{p.name}</span>
-      </nav>
+      {desktop ? (
+        <nav aria-label="Ruta" className="-mb-2 flex items-center gap-1.5 text-sm text-fg-subtle">
+          <Link to="/proyectos" className="transition-colors hover:text-fg">
+            Proyectos
+          </Link>
+          <icons.chevronRight size={12} aria-hidden="true" />
+          <span className="text-fg">{p.name}</span>
+        </nav>
+      ) : (
+        // Móvil (lienzo «Muninn — Móvil 2.0»): la ruta se queda en «‹ Proyectos» (el nombre ya es el título) y el
+        // selector de vista, solo con iconos, comparte su fila. Así la cabecera son dos filas y no tres.
+        <div className="-mb-2 flex items-center justify-between gap-2">
+          <Link
+            to="/proyectos"
+            className="-ml-1 inline-flex h-11 items-center gap-0.5 pr-2 text-sm text-fg-subtle transition-colors hover:text-fg"
+          >
+            <icons.chevronLeft size={16} aria-hidden="true" />
+            Proyectos
+          </Link>
+          {board.data ? (
+            <SegmentedControl
+              aria-label="Vista"
+              value={view}
+              onValueChange={changeView}
+              options={COMPACT_VIEWS}
+              size="lg"
+            />
+          ) : null}
+        </div>
+      )}
       <PageHeader
         title={p.name}
         leading={<ProjectAvatar project={p} size="sm" />}
@@ -267,14 +322,6 @@ export function Tablero() {
       ) : null}
       {board.data && !desktop ? (
         <>
-          <SegmentedControl
-            aria-label="Vista"
-            value={view}
-            onValueChange={changeView}
-            options={VIEWS}
-            size="lg"
-            fill
-          />
           <FilterSummary
             filter={filter}
             onClear={() => setFilter(NO_FILTER)}
@@ -307,6 +354,8 @@ export function Tablero() {
               onFilterChange={setFilter}
               scale={scale}
               onScaleChange={changeScale}
+              folded={folded}
+              onFoldedChange={changeFolded}
               desktop={desktop}
             />
           </Suspense>

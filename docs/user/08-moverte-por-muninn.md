@@ -68,6 +68,14 @@ En **Ajustes › Barra de abajo** (en la hoja de tu cuenta) eliges qué pestaña
 Cada cambio se aplica al momento y se puede deshacer desde el aviso. Con cuenta, se guarda en ella: tu barra te sigue a todos
 tus dispositivos. Si desactivas un módulo, su pestaña se esconde, y vuelve al activarlo.
 
+### Enlaces que salen de Muninn
+
+En el móvil (y en cualquier pantalla táctil), al tocar un enlace a otra web, por ejemplo en una descripción, una nota o el
+título de una noticia, no te vas de Muninn al momento: sale un menú pequeño junto al enlace que dice adónde lleva, con
+**Abrir enlace** y **Copiar enlace**. Toca fuera para cerrarlo. Así, un toque sin querer no te saca de la app. Los botones
+que ya dicen que abren fuera, como **Abrir** en una noticia, abren directamente. En el ordenador, el clic abre el enlace
+como siempre.
+
 ## Inicio
 
 La primera pantalla te resume el día: arriba, la fecha y una línea con lo importante («Nada vence hoy · 4 en curso»),
@@ -108,8 +116,8 @@ Pulsa **⌘K** en Mac o **Ctrl K** en Windows y Linux (o el botón **Buscar o pr
 lateral) y escribe:
 
 - El nombre de una sección o de un proyecto, para ir directamente. Da igual que pongas tildes o mayúsculas.
-- Parte del título o del texto de una **tarea** (sale con su proyecto) o de una **nota**, para abrirla. Busca a partir
-  de dos letras.
+- Palabras del título o del texto de una **tarea** (sale con su proyecto) o de una **nota**, en cualquier orden, para
+  abrirla. Busca a partir de dos letras.
 - Una acción, como «nuevo proyecto», «nueva nota», «cristal» o «cerrar sesión».
 - Cualquier otra cosa, para preguntársela a Muninn: se abre el [Asistente](11-asistente.md) con tu pregunta ya enviada
   (si el modelo de tu ordenador está listo; si no, la deja escrita).

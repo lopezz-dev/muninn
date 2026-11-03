@@ -19,6 +19,17 @@ export async function verifySecondFactor(code: string) {
   resetAuth()
 }
 
+/**
+ * Entra con un código de recuperación en lugar del de la app (ADR-0075): vale una sola vez y sube la sesión a `aal2`
+ * igual que el de la app. Supabase ignora mayúsculas, espacios y guiones.
+ */
+export async function verifyRecoveryCode(code: string) {
+  const c = await loadSupabase()
+  const res = await c.auth.mfa.recoveryCodes.verify({ code: code.trim() })
+  if (res.error) throw res.error
+  resetAuth()
+}
+
 /** «Usar otra cuenta»: deja la sesión a medias y vuelve al formulario. */
 export async function abandonSecondFactor() {
   const c = await loadSupabase()
@@ -32,7 +43,22 @@ export function secondFactorErrorMessage(err: unknown): string {
   const e = err as { code?: string }
   if (e.code === 'mfa_verification_failed' || e.code === 'mfa_challenge_expired')
     return 'El código no es correcto o ha caducado. Escribe el que sale ahora en tu app.'
-  if (e.code === 'mfa_verification_rejected')
+  if (e.code === 'mfa_verification_rejected' || e.code === 'mfa_recovery_codes_locked')
     return 'Demasiados intentos. Espera un minuto y vuelve a probar.'
+  if (e.code === 'mfa_recovery_codes_verify_not_enabled')
+    return 'Este servidor no tiene activados los códigos de recuperación.'
   return authErrorMessage(err)
+}
+
+/** Mensajes para un código de recuperación: el que no vale suele ser uno ya usado o mal copiado. */
+export function recoveryCodeErrorMessage(err: unknown): string {
+  const e = err as { code?: string }
+  if (
+    e.code === 'mfa_verification_failed' ||
+    e.code === 'invalid_credentials' ||
+    e.code === 'validation_failed' ||
+    e.code === 'mfa_factor_not_found'
+  )
+    return 'Ese código no es correcto o ya se usó. Cada código vale una sola vez.'
+  return secondFactorErrorMessage(err)
 }

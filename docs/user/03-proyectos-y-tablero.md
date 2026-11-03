@@ -10,8 +10,8 @@ icon: projects
 # Proyectos y tablero
 
 > **Estado:** ya puedes crear y editar proyectos (nombre, descripción, color, logo y portada), mover tareas arrastrándolas,
-> personalizar las columnas y ver el tablero como lista o como calendario. El color de las columnas llegará más
-> adelante. En modo demo, sin cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
+> personalizar las columnas (también su color) y ver el tablero como lista o como calendario. En modo demo, sin
+> cuenta, lo que hagas no se guarda (ver [Moverte por Muninn](08-moverte-por-muninn.md)).
 
 ## Proyectos
 
@@ -93,7 +93,7 @@ Cada proyecto tiene su propio tablero Kanban. Al crearlo empieza con cinco colum
 
 ### Personalizar las columnas
 
-Desde el menú **⋯** de cada columna puedes **editarla** (nombre, tipo y límite), **moverla** a la izquierda o a la
+Desde el menú **⋯** de cada columna puedes **editarla** (nombre, tipo, color y límite), **moverla** a la izquierda o a la
 derecha y **borrarla**. Con **Columna**, arriba junto a **Nueva tarea** (o en el menú **⋯** del proyecto), creas una nueva
 al final. También puedes reordenarlas arrastrándolas por el asa de su cabecera.
 
@@ -117,6 +117,9 @@ Cada columna tiene además un **tipo**, que le dice a Muninn qué significa, la 
 Gracias al tipo, si llamas a tu última columna "Publicado", Muninn sabe que lo que hay ahí está terminado
 y lo cuenta así en los resúmenes.
 
+El punto de color de cada columna es el de su tipo, salvo que le elijas otro en **Color** (la primera muestra,
+**Automático**, vuelve al del tipo). Ese color lo ves en el tablero, en las pestañas del móvil, en la Lista y en el calendario.
+
 ### Borrar una columna
 
 Si la columna tiene tareas, eliges a qué columna pasan (**Borrar y mover sus tareas a…**). Un proyecto siempre necesita
@@ -124,7 +127,7 @@ al menos una columna. No hay diálogo de confirmación: pulsa **Deshacer** en el
 
 ## Tablero, lista o calendario
 
-Arriba del tablero tienes **Tablero · Lista · Calendario**. La lista enseña las mismas tareas, agrupadas por columna, una por fila:
+Arriba del tablero tienes **Tablero · Lista · Calendario** (en el móvil, sus tres iconos junto a «‹ Proyectos»). La lista enseña las mismas tareas, agrupadas por columna, una por fila:
 
 - La **casilla** de cada fila la completa (o la reabre si ya está hecha), con su aviso y **Deshacer**.
 - Un clic en el título abre la tarea, igual que en el tablero. Para cambiarla de columna, hazlo desde la tarea.
@@ -157,15 +160,16 @@ El calendario coloca cada tarea en el día en que vence. Siempre se abre en hoy.
   que tienen.
 - **Crear en un día:** pulsa el **+** que aparece al pasar el ratón por un día (o haz clic en su hueco), escribe el título y pulsa
   Enter. La tarea nace con esa fecha, en la columna «Por hacer» (puedes elegir otra). **Más opciones…** abre el formulario completo.
-- **Con el teclado:** ve con Tab hasta una tarea y pulsa **Espacio** para cogerla. Las flechas ← → la mueven un día y ↑ ↓ una semana,
-  **S** la lleva a «Sin fecha» y **Espacio** la suelta. **Escape** cancela.
+- **Con el teclado:** ve con Tab hasta una tarea y pulsa **Espacio** para cogerla. Las flechas ← → la mueven un día y ↑ ↓ una semana
+  (si te sales de lo que ves, el calendario pasa solo al mes o a la semana de al lado), **S** la lleva a «Sin fecha» y **Espacio** la suelta. **Escape** cancela.
 - Dentro de un día no se ordena a mano: primero las pendientes, luego por prioridad y por columna.
 
 ### En el móvil
 
 - Se abre en **la semana de hoy**, con las tareas de hoy debajo. Cada día tiene un punto por tarea (rojo si está vencida); toca
   un día para ver las suyas. Las flechas pasan de semana en semana.
-- **Ver el mes** despliega el mes entero (y las flechas pasan de mes en mes); **Solo esta semana** lo vuelve a plegar.
+- **Ver el mes** despliega el mes entero (y las flechas pasan de mes en mes); **Solo esta semana** lo vuelve a plegar. Se
+  acuerda de cómo lo dejaste en cada proyecto.
 - Para **cambiar la fecha**, toca el botón del calendario junto a la tarea o mantenla pulsada. Elige **Hoy**, **Mañana**,
   **Próximo lunes**, **En una semana**, otra fecha o **Quitar fecha**. Siempre con **Deshacer**.
 - **Desliza a la izquierda** para completarla, como en el tablero.

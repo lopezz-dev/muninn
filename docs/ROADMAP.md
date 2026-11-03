@@ -34,6 +34,8 @@
 - [x] Tablero Kanban con drag & drop (ratón, tacto y teclado; [ADR-0023](adr/0023-drag-and-drop-con-dnd-kit.md)), columnas
   personalizables, límite WIP, detalle de tarea como ruta ([ADR-0024](adr/0024-detalle-de-tarea-como-ruta.md)), subtareas
   y «Deshacer» en cada acción ([ADR-0025](adr/0025-escrituras-optimistas-y-deshacer.md))
+  - [x] Color propio de columna (paleta del proyecto, o «Automático» con el del tipo) y reordenar las subtareas arrastrando su asa
+    (`checklist.move` en el core; 31 de octubre, sale del backlog)
 - [x] Tareas archivadas (menú **⋯** del tablero): recuperarlas o eliminarlas para siempre, con «Deshacer» diferido como los
   proyectos archivados ([ADR-0067](adr/0067-eliminar-tareas-archivadas.md); sale del backlog)
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
@@ -54,6 +56,7 @@
 - [x] Tablero: vista **Calendario** (mes y semana, arrastrar cambia la fecha con «Deshacer», bandeja «Sin fecha», crear en un día;
   en el móvil, mes compacto y hoja «Cambiar fecha» sin arrastre; ADR-0068, diseño en el lienzo
   [«Muninn — Calendario»](https://claude.ai/artifact/5a4s3wiHqsZVG88jZKwAMB))
+  - [x] Pulido (31 de octubre): con el teclado cruza de mes o de semana, y el móvil recuerda el mes plegado o desplegado
 - [ ] Sync GitHub: issues → tareas, cerrar issue ↔ completar (ADR-0031, [#16](https://github.com/lopezz-dev/muninn/pull/16))
   - [x] Diseño, reglas en el core con tests, cola de salida, Edge Function `github` y migración preparadas
   - [x] Insignia «GitHub #n», enlace a la issue en el detalle y Ajustes › Integraciones (repo por proyecto)
@@ -235,13 +238,15 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 ### Enlaces externos (`tauri-plugin-opener`)
 > Antes, en escritorio ningún enlace externo abría nada (`target="_blank"` no hace nada en Tauri). Ahora todos pasan por `openExternal`.
 > Probado con tests (escritorio o web, y el aviso si falla) y `cargo check`; nada a mano todavía.
+> Desde el 31 de octubre, en pantallas táctiles un toque en un enlace externo abre antes el menú «Abrir enlace · Copiar enlace»
+> ([ADR-0073](adr/0073-menu-de-enlace-externo-en-tactil.md)); probado en el navegador con el móvil emulado, falta el iPhone.
 - [ ] Escritorio (`pnpm dev:desktop` y la app instalada tras la siguiente versión): en Noticias, el título y «Abrir» abren el artículo en el
   navegador del sistema y la noticia queda leída; también la issue y «Ver el PR» del detalle de una tarea, «PR #n» de la pantalla GitHub,
   un enlace dentro de una nota y «GitHub» de Ajustes › Acerca de
 - [ ] Escritorio: las imágenes adjuntas en el Asistente se ven en la burbuja y no llevan enlace
 - [ ] Navegador: los mismos enlaces abren otra pestaña y la noticia queda leída; Ctrl/⌘-clic sigue abriendo en segundo plano; una imagen
   adjunta del Asistente se abre a tamaño real en otra pestaña
-- [ ] iPhone (PWA instalada): «Abrir» y el título de una noticia abren el artículo en Safari (o en la hoja de Safari) sin cerrar Muninn, y al
+- [ ] iPhone (PWA instalada): «Abrir» (y el título, tras el menú «Abrir enlace») de una noticia abren el artículo en Safari (o en la hoja de Safari) sin cerrar Muninn, y al
   volver la noticia sale leída; lo mismo con un enlace de una nota; una imagen adjunta del Asistente se abre
 
 ## F3 · Móvil y finanzas
@@ -286,6 +291,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     `20261028120000_project_images` aplicada el 28 de octubre. Logo y portada por separado, con el color del logo como color del proyecto
     ([ADR-0056](adr/0056-logo-y-portada-de-proyecto-con-color-del-logo.md), migración `20261028150000_project_cover`)
   - [ ] Fase 2b: tablero en el teléfono (cabecera con «‹ Proyectos», columnas como chips, «Añadir» dentro de la columna)
+    - [x] Cabecera del proyecto en dos filas: «‹ Proyectos» con el selector de vista en iconos, y el título con filtro, + y ⋯
+      (31 de octubre)
   - [ ] Fase 3: detalle de tarea con las acciones abajo, al alcance del pulgar; nueva tarea y nuevo movimiento como hojas
   - [x] Barra de abajo configurable (1–4 pestañas, en tu cuenta) con tu avatar en lugar del botón del Asistente, hoja «Tu cuenta»
     en lugar de «Más» y de la pantalla de Ajustes en el móvil, y menú de usuario (⌘⇧U) y «Plegar barra» en el ordenador
@@ -345,12 +352,15 @@ más o menos en este orden:
   código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4d)
   - [x] Exigirlo en el servidor (RLS, también en las funciones de sesiones) y para conectar GitHub
     ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)). Finanzas, cuando conecte algo externo. La prueba real, en la fase final (4d)
-  - [ ] Códigos de recuperación (en supabase-js aún experimentales)
+  - [x] Códigos de recuperación: diez al activarlo, «Generar nuevos» en Ajustes y «Usa un código de recuperación» al entrar
+    ([ADR-0075](adr/0075-codigos-de-recuperacion-del-segundo-factor.md); API experimental de supabase-js). La prueba real, en la fase final (4d)
 - [x] **Apps con acceso** en Ajustes › Cuenta: ver y quitar los permisos OAuth dados a otras apps, como claude.ai
   ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4d)
 - [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno
   o en todos ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la migración y la
   prueba real, en la fase final (4d)
+  - [x] Cerrar una sesión quita también los avisos push de ese dispositivo ([ADR-0074](adr/0074-avisos-push-atados-a-la-sesion.md)).
+    La migración, en la fase final (4b)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
 - [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
@@ -361,7 +371,6 @@ más o menos en este orden:
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
 - MCP remoto sin OAuth: tokens personales de Muninn creados y revocados desde Ajustes (plan B de ADR-0033)
-- Tablero: color propio de columna, y reordenar las subtareas arrastrándolas
 - Modo local persistente sin cuenta (IndexedDB), en lugar de la demo en memoria
 - Posición de las notificaciones configurable en Ajustes › Apariencia (arriba o abajo; en móvil, abajo queda
   encima del dock). Hoy van arriba en el centro por ADR-0019: el cambio necesita un ADR que lo actualice

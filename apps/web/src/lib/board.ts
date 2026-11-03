@@ -88,7 +88,7 @@ export function applyTaskMove(
   const moved: TaskWithColumn = {
     ...task,
     columnId,
-    column: { id: target.id, name: target.name, kind: target.kind },
+    column: { id: target.id, name: target.name, kind: target.kind, color: target.color },
     completedAt: entersDone ? now : leavesDone ? null : task.completedAt,
   }
   return { ...data, tasks: [...rest.slice(0, at), moved, ...rest.slice(at)] }

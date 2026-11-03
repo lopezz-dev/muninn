@@ -217,7 +217,7 @@ function KeyStep({ secret }: { secret: string }) {
       </div>
       <p className="flex gap-2 text-xs text-fg-subtle">
         <Icon name="info" size={14} className="mt-px shrink-0" />
-        Muninn aún no tiene códigos de recuperación: esta clave es tu copia de seguridad.
+        Al terminar te daremos también códigos de recuperación, por si un día no tienes el móvil.
       </p>
     </>
   )
@@ -236,6 +236,8 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // Los códigos de recuperación se generan al confirmar (ADR-0075); `null` si el servidor no los da.
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null)
 
   const begin = async () => {
     setLoadError(null)
@@ -260,6 +262,9 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
     setError(null)
     try {
       await m.account.mfa.confirm(enrollment.factorId, value)
+      // Con la sesión ya en `aal2`. Si falla (servidor sin la API experimental), el segundo factor sigue activado y se
+      // pueden generar luego desde Ajustes: la clave queda como copia.
+      setRecoveryCodes(await m.account.mfa.recoveryCodes.generate().catch(() => null))
       setStep(3)
       notify.success('Segundo factor activado', {
         icon: 'user',
@@ -287,7 +292,7 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
   const footer =
     step === 3 ? (
       <Button variant="primary" onClick={onClose}>
-        Hecho
+        {recoveryCodes ? 'Los he guardado' : 'Hecho'}
       </Button>
     ) : !enrollment ? (
       <Button variant="ghost" onClick={onClose}>
@@ -319,7 +324,8 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
       title="Activar el segundo factor"
       footer={footer}
       onClose={onClose}
-      keepOnOutsideClick={step < 3}
+      // Con los códigos a la vista, un clic fuera no cierra: no se pueden volver a ver.
+      keepOnOutsideClick={step < 3 || Boolean(recoveryCodes)}
     >
       <Steps current={step} />
       {loadError ? (
@@ -362,7 +368,15 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
               />
             </form>
           ) : null}
-          {step === 3 ? (
+          {step === 3 && recoveryCodes ? (
+            <>
+              <div className="flex items-center gap-3">
+                <SuccessMark />
+                <p className="text-md font-semibold">Activado. Ahora, guarda estos códigos</p>
+              </div>
+              <RecoveryCodesList codes={recoveryCodes} />
+            </>
+          ) : step === 3 ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
               <SuccessMark />
               <p className="mt-2 text-lg font-semibold">Tu cuenta está más protegida</p>
@@ -455,6 +469,136 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       </form>
+    </Ventana>
+  )
+}
+
+// ─── Códigos de recuperación ─────────────────────────────────────────────────
+
+/**
+ * Los códigos recién generados, con «Copiar todos». Solo se ven esta vez (ADR-0075): el texto lo dice y el diálogo no se
+ * cierra con un clic fuera.
+ */
+export function RecoveryCodesList({ codes }: { codes: string[] }) {
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(t)
+  }, [copied])
+  const copy = async () => {
+    if (await copyText(`Códigos de recuperación de Muninn\n\n${codes.join('\n')}\n`)) {
+      setCopied(true)
+      notify.success('Códigos copiados', { icon: 'check' })
+    } else notify.error('No se pudo copiar', { description: 'Cópialos a mano.' })
+  }
+  return (
+    <>
+      <p className="text-sm text-fg-muted">
+        Si un día no tienes el móvil, entra con uno de ellos en lugar del código de la app. Cada uno
+        vale una sola vez. Guárdalos en tu gestor de contraseñas:{' '}
+        <span className="font-medium text-fg">no los volverás a ver.</span>
+      </p>
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-border-strong bg-surface-sunken p-4">
+        <ul
+          aria-label="Códigos de recuperación"
+          className="grid grid-cols-2 gap-x-6 gap-y-1.5 font-mono text-md tracking-[0.06em] text-fg select-all"
+        >
+          {codes.map((c) => (
+            <li key={c}>{c}</li>
+          ))}
+        </ul>
+        <Button
+          size="sm"
+          className={cn('self-stretch sm:self-center', copied && 'text-success hover:text-success')}
+          onClick={() => void copy()}
+        >
+          {copied ? (
+            <Icon name="check" size={14} weight="bold" />
+          ) : (
+            <AppIcon name="copy" size={14} />
+          )}
+          {copied ? 'Copiados' : 'Copiar todos'}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+/**
+ * Generar códigos de recuperación desde Ajustes. Si ya hay, los anteriores dejan de valer y no hay «Deshacer» (no se pueden
+ * recuperar), así que el primer paso lo explica y genera al pulsar; el segundo los enseña.
+ */
+export function GenerarCodigos({
+  replacing,
+  onClose,
+}: {
+  replacing: boolean
+  onClose: () => void
+}) {
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const [codes, setCodes] = useState<string[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const generate = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      setCodes(await m.account.mfa.recoveryCodes.generate())
+      notify.success(replacing ? 'Códigos nuevos generados' : 'Códigos generados', {
+        icon: 'user',
+        description: replacing ? 'Los anteriores ya no valen.' : 'Guárdalos antes de cerrar.',
+      })
+      void qc.invalidateQueries({ queryKey: ['account'] })
+    } catch (err) {
+      setError(errorText(err))
+    }
+    setBusy(false)
+  }
+
+  return (
+    <Ventana
+      title="Códigos de recuperación"
+      onClose={onClose}
+      keepOnOutsideClick={Boolean(codes)}
+      footer={
+        codes ? (
+          <Button variant="primary" onClick={onClose}>
+            Los he guardado
+          </Button>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onClose} disabled={busy}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={() => void generate()} disabled={busy}>
+              {busy ? 'Generando…' : replacing ? 'Generar nuevos' : 'Generar'}
+            </Button>
+          </>
+        )
+      }
+    >
+      {codes ? (
+        <div className="flex animate-step-in flex-col gap-4">
+          <RecoveryCodesList codes={codes} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-fg-muted">
+            Diez códigos de un solo uso para entrar si no tienes el móvil de la app. Solo los verás
+            una vez, así que ten a mano dónde guardarlos.
+          </p>
+          {replacing ? (
+            <div className="flex gap-2.5 rounded-lg bg-accent-soft p-3 text-sm text-fg-muted">
+              <Icon name="warning" size={16} className="mt-0.5 shrink-0 text-accent" />
+              <p>Los códigos que tienes ahora dejarán de valer, también los que no has usado.</p>
+            </div>
+          ) : null}
+          {error ? <p className="text-sm text-danger">{error}</p> : null}
+        </div>
+      )}
     </Ventana>
   )
 }

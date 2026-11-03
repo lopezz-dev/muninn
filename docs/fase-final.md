@@ -64,6 +64,11 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
   - [ ] «En el proyecto Prueba final, crea 5 tareas, cada una con 2 subtareas, y una más en la columna "No existe"». Una sola llamada a
     `create_tasks`: 5 creadas con sus subtareas en orden, 1 con el error de la columna, y no repite las buenas. Archívalas al acabar.
   - [ ] «¿Qué tareas tiene Muninn?» lista las del proyecto activo, no las del archivado con el mismo nombre.
+- [ ] **Redesplegar `mcp`, `news`, `github` y `push`** (31-10): llevan el core empaquetado, que desde la PR #91 lee en lote (`overview` en tres
+  consultas en paralelo, #94) y ahora busca por palabras en cualquier orden. `pnpm --filter @muninn/core build:edge`,
+  `pnpm --filter @muninn/mcp build:edge` y desplegar las cuatro como arriba. Después, en claude.ai:
+  - [ ] «¿Cómo voy hoy?» contesta igual que antes con todos tus proyectos.
+  - [ ] «Busca tareas de github login» encuentra «Login con GitHub» aunque las palabras estén al revés.
 
 ## 3. En el ordenador, con tu sesión (≈ 1 h)
 
@@ -168,6 +173,9 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 - [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
   Justo después, `20261029180000_require_mfa_push` (la política del segundo factor en sus dos tablas) y comprobar que hay
   tantas políticas `require_mfa` como tablas de `public` con RLS más una (hoy, 19 = 18 + 1, con `oauth_mfa_grants`).
+- [ ] Después, `20261031120000_push_por_sesion` ([ADR-0074](adr/0074-avisos-push-atados-a-la-sesion.md)): `push_subscriptions.session_id`
+  con borrado en cascada desde `auth.sessions` y el trigger que lo rellena. Comprobar en el editor SQL que la columna existe y que
+  `push_subscriptions_set_session` no tiene `execute` para `authenticated` ni `anon`.
 - [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
 - [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
 - [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
@@ -224,11 +232,27 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
 - [x] Cierra sesión y entra con el código del correo: sale **Falta un paso** y no deja ir a ninguna pantalla sin el código de la app. Con
   el código, entras donde ibas. Lo mismo entrando con GitHub. *(Con el correo; GitHub no se probó.)*
 - [ ] En el iPhone (sesión abierta de antes de activarlo): al volver a abrir la app (como mucho, una hora después) pide el código.
+- [ ] **Códigos de recuperación ([ADR-0075](adr/0075-codigos-de-recuperacion-del-segundo-factor.md))**, con el segundo factor activado:
+  en Ajustes › Cuenta, **Códigos de recuperación › Generar**: salen diez; guárdalos y la fila dice «Te quedan 10 de 10». Si sale «Los
+  códigos de recuperación no están activados en este servidor», mira en Supabase › **Authentication › Multi-Factor** si hay que
+  activarlos. Cierra sesión, entra con el correo y, en **Falta un paso**, **Usa un código de recuperación** con uno de ellos: entras, y
+  en Ajustes quedan 9. El mismo código otra vez da «Ese código no es correcto o ya se usó». En el registro de Supabase,
+  `factors/recovery-codes/verify` con 200; y la app ve tus datos (la sesión es `aal2`). Si el mensaje de un código usado es otro,
+  apunta el `error_code` para `recoveryCodeErrorMessage`.
+- [ ] **Desactivar con códigos de recuperación:** desactiva el segundo factor y comprueba que no da error y que, al volver a
+  activarlo, el alta enseña diez códigos nuevos y los de antes ya no valen al entrar.
 - [x] «Usar otra cuenta» en **Falta un paso** vuelve al formulario sin entrar.
 - [x] **Desactivar** con un código equivocado no lo quita; con el bueno, sí, y al volver a entrar ya no pide el código. *(Al desactivarlo,
   el conector de claude.ai también quedó invalidado y hubo que reconectarlo.)*
 - [ ] Con el segundo factor activado, la pantalla de autorización OAuth (`/oauth/consent`) también pide antes el código. *(Pendiente: la
   *Site URL* sirve `main`, que aún no lo tiene. Repetir cuando `develop` pase a `main`.)*
+- [ ] **Entrar con GitHub pide el código** (arreglo del 31 de octubre, tras publicarlo y recargar dos veces): con el factor activado,
+  cierra sesión y entra con GitHub: sale **Falta un paso**, no la app. En el registro de Supabase, tras `token?grant_type=pkce` hay
+  un `GET /user` y, al escribir el código, `factors/…/challenge` y `verify`. *(30 de octubre: entró directo, con la sesión en `aal1`.)*
+- [ ] **`/oauth/consent` con GitHub y el segundo factor:** desde claude.ai, quita el acceso a Claude y reconecta entrando con GitHub.
+  Antes de **Permitir acceso** sale **Falta un paso** («Escribir el código» lleva al código y vuelve a la solicitud). Al permitir, el
+  aviso es solo «Volviendo a claude.ai…» y en el registro hay `rpc/approve_oauth_client_mfa` antes de `…/consent`. Si saliera «quítale
+  el acceso y vuelve a conectarla», la aprobación no quedó apuntada: mira la respuesta de la RPC.
 - [x] **Servidor (ADR-0062), con el segundo factor activado:** en claude.ai, «¿Qué tareas tiene Muninn?» sigue respondiendo. Si
   responde vacío o con error de permisos, sus tokens son `aal1`: quita el acceso en **Apps con acceso**, vuelve a conectar el conector
   (el consentimiento pide el código) y repite. Si aun así falla, apúntalo como tarea: el MCP remoto necesita otra salida.
@@ -263,19 +287,26 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
 - [ ] Pasa entera la [lista de pruebas del iPhone](pruebas-iphone.md): instalar, teclado, gestos del tablero, pestañas y sin conexión.
 - [ ] Vista **Lista** en un proyecto:
   - la casilla de cada fila se toca bien y completa con «Deshacer»;
-  - al cerrar y abrir la app sigue en Lista, y en el ordenador sigue en Tablero.
+  - al cerrar y abrir la app sigue en Lista, y en el ordenador sigue en Tablero;
+  - la cabecera ocupa dos filas y los tres iconos de vista (junto a «‹ Proyectos») se tocan sin fallar.
+- [ ] Subtareas y color de columna:
+  - en una tarea con varias subtareas, mantener pulsada el asa ⠿ y arrastrar cambia el orden (sin que la página haga scroll), con
+    «Deshacer»;
+  - una columna con color propio (⋯ › Editar columna › Color) enseña ese color en las pestañas de columnas y en el calendario.
 - [ ] Vista **Calendario** en un proyecto:
   - tocar un día enseña sus tareas; mantener pulsada una abre «Cambiar fecha» (no el menú de enlace de Safari) y «Mañana» la mueve con
     «Deshacer»;
-  - «Otra fecha» abre la rueda de iOS, y deslizar a la izquierda completa.
+  - «Otra fecha» abre la rueda de iOS, y deslizar a la izquierda completa;
+  - «Ver el mes», cerrar la app y volver a abrir el proyecto: sigue con el mes desplegado.
 - [ ] Finanzas:
   - «Nuevo movimiento» se abre desde abajo;
   - el importe saca el teclado decimal y no hace zoom;
   - lo apuntado en el iPhone aparece en el ordenador sin recargar.
 - [ ] El Asistente dice que usa el modelo del ordenador y no intenta conectar.
 - [ ] Noticias muestra el mismo resumen de hoy que el ordenador.
-- [ ] En Noticias, «Abrir» y el título abren el artículo en Safari sin cerrar Muninn, y al volver sale leída. Igual con un enlace de una
-  nota y con una imagen adjunta del Asistente.
+- [ ] En Noticias, «Abrir» abre el artículo en Safari sin cerrar Muninn, y al volver sale leída. Tocar el título (o un enlace de una
+  nota o de una descripción) saca el menú «Abrir enlace · Copiar enlace» junto al enlace, sin abrir nada; «Abrir enlace» lo abre y
+  «Copiar enlace» lo copia. Tocar fuera lo cierra. Una imagen adjunta del Asistente se abre directa.
 - [ ] El informe de la mañana se lee en Notas y en el Asistente, y el iPhone no genera ninguno.
 - [ ] **Avisos push** (necesita el paso 4b):
   - antes de instalar, en Safari, Ajustes › Notificaciones dice «Añade Muninn a tu pantalla de inicio»;
@@ -285,6 +316,9 @@ Instala la PWA desde Safari (Compartir › Añadir a pantalla de inicio) y entra
   - crea una suscripción «Prueba final» que se cobre **mañana** y lanza el cron a mano (el `curl` del paso 4b): llega «Mañana te cobran
     Prueba final · …» y al tocarlo abre Finanzas › Suscripciones. Lanzarlo otra vez no lo repite. Archiva la suscripción al acabar;
   - en el ordenador, quita el iPhone de la lista y pulsa **Deshacer**: vuelve, y «Enviar prueba» sigue llegando.
+  - con los avisos activados en el iPhone, en el ordenador pulsa **Cerrar** en la sesión del iPhone (o **En los demás**): el iPhone
+    desaparece de Dispositivos en Ajustes › Notificaciones y «Enviar prueba» ya no le llega (ADR-0074). Entra otra vez en el iPhone y
+    vuelve a activar los avisos.
 
 ## 6. OAuth del MCP remoto con Claude Code (≈ 10 min)
 

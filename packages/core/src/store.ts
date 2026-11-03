@@ -21,6 +21,7 @@ import type {
   Project,
   ProjectStatus,
   PushDevice,
+  RecoveryCodesStatus,
   SignOutScope,
   Subscription,
   Task,
@@ -138,8 +139,11 @@ export interface NewsFetchSummary {
 /** Dispositivos con avisos, del visto más recientemente al más antiguo. */
 export interface PushDeviceStore {
   list(): Promise<PushDevice[]>
-  /** Crea la fila del dispositivo o, si ya está (mismo `endpoint`), la actualiza. */
-  upsert(row: NewRow<PushDevice>): Promise<PushDevice>
+  /**
+   * Crea la fila del dispositivo o, si ya está (mismo `endpoint`), la actualiza. La sesión no la elige el core: es la de
+   * quien escribe (ADR-0074).
+   */
+  upsert(row: Omit<NewRow<PushDevice>, 'sessionId'>): Promise<PushDevice>
   remove(id: string): Promise<void>
   removeEndpoint(endpoint: string): Promise<void>
 }
@@ -315,6 +319,20 @@ export interface MfaStore {
   verify(factorId: string, code: string): Promise<void>
   unenroll(factorId: string): Promise<void>
   assurance(): Promise<AssuranceLevel>
+  recoveryCodes: RecoveryCodesStore
+}
+
+/**
+ * Códigos de recuperación del segundo factor (ADR-0075; en Supabase, API experimental). Cada código vale una vez y sube la
+ * sesión a `aal2` como un código de la app; eso lo hace el paso del código al entrar, fuera del core.
+ */
+export interface RecoveryCodesStore {
+  /** Cuántos hay y cuántos quedan; `null` si la cuenta no los ha generado. */
+  status(): Promise<RecoveryCodesStatus | null>
+  /** Genera un juego nuevo (los anteriores dejan de valer) y devuelve los códigos: es la única vez que se ven. */
+  generate(): Promise<string[]>
+  /** Los borra. */
+  remove(): Promise<void>
 }
 
 /** Permisos OAuth dados a otras apps (servidor OAuth de Supabase Auth, ADR-0036). */

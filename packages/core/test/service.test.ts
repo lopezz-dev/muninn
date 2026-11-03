@@ -159,6 +159,27 @@ describe('tareas', () => {
     ])
   })
 
+  it('busca por palabras en cualquier orden y en cualquier campo', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    await app.tasks.create({
+      projectId: p.id,
+      title: 'Login con GitHub',
+      description: 'falla en móvil',
+    })
+    await app.tasks.create({ projectId: p.id, title: 'Login con correo' })
+    const titles = async (search: string) =>
+      (await app.tasks.list({ search })).map((x) => x.title).sort()
+    expect(await titles('github login')).toEqual(['Login con GitHub'])
+    expect(await titles('  móvil   LOGIN ')).toEqual(['Login con GitHub'])
+    expect(await titles('login')).toEqual(['Login con GitHub', 'Login con correo'])
+    expect(await titles('login slack')).toEqual([])
+    await app.notes.create({ title: 'Viaje', content: 'Hotel en Madrid' })
+    expect((await app.notes.list({ search: 'madrid viaje' })).map((n) => n.title)).toEqual([
+      'Viaje',
+    ])
+  })
+
   it('borrar una columna con tareas exige destino', async () => {
     const { app } = setup()
     const p = await app.projects.create({ name: 'P' })
@@ -177,6 +198,21 @@ describe('tareas', () => {
     const t = await app.tasks.create({ projectId: p.id, title: 't' })
     await app.columns.update(t.columnId, { kind: 'done' })
     expect((await app.tasks.get(t.id)).completedAt).not.toBeNull()
+  })
+
+  it('las subtareas se reordenan contando las demás', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 't', checklist: ['a', 'b', 'c'] })
+    const titles = async () => (await app.checklist.list(t.id)).map((i) => i.title)
+    const [a, , c] = await app.checklist.list(t.id)
+    await app.checklist.move(c?.id ?? '', 0)
+    expect(await titles()).toEqual(['c', 'a', 'b'])
+    await app.checklist.move(c?.id ?? '', 2)
+    expect(await titles()).toEqual(['a', 'b', 'c'])
+    await app.checklist.move(a?.id ?? '', 1)
+    expect(await titles()).toEqual(['b', 'a', 'c'])
+    await expect(app.checklist.move('no-existe', 0)).rejects.toThrow()
   })
 
   it('create acepta un checklist', async () => {
@@ -535,6 +571,20 @@ describe('consultas', () => {
     expect(board.columns.map((c) => c.kind)).toEqual(DEFAULT_COLUMNS.map((c) => c.kind))
     expect(board.tasks.map((x) => [x.title, x.column.kind])).toEqual([['con subtareas', 'todo']])
     expect(board.counts).toEqual({ [t.id]: { done: 1, total: 2 } })
+  })
+
+  it('el color propio de una columna se guarda, se quita y viaja con sus tareas', async () => {
+    const { app } = setup()
+    const p = await app.projects.create({ name: 'P' })
+    const t = await app.tasks.create({ projectId: p.id, title: 'pintada' })
+    expect((await app.projects.board(p.id)).tasks[0]?.column.color).toBeNull()
+    await app.columns.update(t.columnId, { color: 'violet' })
+    const board = await app.projects.board(p.id)
+    expect(board.columns.find((c) => c.id === t.columnId)?.color).toBe('violet')
+    expect(board.tasks[0]?.column.color).toBe('violet')
+    await app.columns.update(t.columnId, { color: null })
+    expect((await app.projects.board(p.id)).tasks[0]?.column.color).toBeNull()
+    await expect(app.columns.update(t.columnId, { color: 'x'.repeat(33) })).rejects.toThrow()
   })
 
   it('las columnas de varios proyectos, en una consulta y en su orden', async () => {

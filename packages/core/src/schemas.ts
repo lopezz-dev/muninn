@@ -638,6 +638,11 @@ export interface PushDevice {
   userAgent: string | null
   /** Nombre que enseña Ajustes («iPhone · Safari»). */
   label: string | null
+  /**
+   * La sesión de Auth que la guardó (ADR-0074). La pone el servidor, no el core: al cerrarse esa sesión (aquí, en los
+   * demás dispositivos o en todos) la fila se borra con ella. `null` en las guardadas antes de existir la columna.
+   */
+  sessionId: string | null
   lastSeenAt: string
   createdAt: string
   updatedAt: string
@@ -739,6 +744,15 @@ export const mfaCode = z
   .pipe(z.string().regex(/^\d{6}$/, 'El código tiene 6 cifras'))
 
 export const mfaFactorName = z.string().trim().min(1).max(60)
+
+/**
+ * Códigos de recuperación del segundo factor (ADR-0075): cuántos hay y cuántos quedan sin usar. Nunca los códigos: el
+ * servidor solo los enseña una vez, al generarlos.
+ */
+export interface RecoveryCodesStatus {
+  total: number
+  remaining: number
+}
 
 /** Una app a la que diste acceso a tu cuenta por OAuth (claude.ai y otros clientes del MCP remoto, ADR-0036). */
 export interface OAuthAppGrant {

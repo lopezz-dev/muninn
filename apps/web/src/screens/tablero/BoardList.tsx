@@ -11,7 +11,7 @@ import { useBoardGroups } from '../../lib/board-groups'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, reopenTask } from '../../lib/task-actions'
-import { ColumnCount, KIND_DOT } from './Column'
+import { ColumnCount, ColumnDot } from './Column'
 import { QuickAdd } from './QuickAdd'
 import type { Progress } from './TaskCard'
 
@@ -114,10 +114,7 @@ function Group({ column, tasks, total, filtering, counts, today, projectId }: Gr
             aria-hidden="true"
             className={cn('shrink-0 text-fg-subtle transition-transform', !open && '-rotate-90')}
           />
-          <span
-            aria-hidden="true"
-            className={cn('size-2 shrink-0 rounded-xs', KIND_DOT[column.kind])}
-          />
+          <ColumnDot column={column} />
           <span className="truncate">{column.name}</span>
           {isAgent ? (
             <icons.agent

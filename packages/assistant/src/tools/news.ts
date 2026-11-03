@@ -12,7 +12,10 @@ export const newsTools: AnyTool[] = [
       'Artículos de las fuentes RSS del usuario, del más reciente al más antiguo, con su fuente y los proyectos con los que tienen que ver. Úsalo para "¿qué hay de nuevo sobre X?".',
     input: {
       topic: z.string().optional().describe('Tema de la fuente («Rust», «IA local»…)'),
-      search: z.string().optional().describe('Texto en el título o el resumen'),
+      search: z
+        .string()
+        .optional()
+        .describe('Palabras en el título o el resumen, en cualquier orden'),
       sinceHours: z
         .number()
         .int()

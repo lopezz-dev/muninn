@@ -3,6 +3,7 @@ import {
   type AccountSession,
   createMemoryStore,
   createMuninn,
+  emptySnapshot,
   MEMORY_WRONG_MFA_CODE,
   type MemoryAccountSeed,
   sessionDeviceLabel,
@@ -59,6 +60,49 @@ describe('sesiones', () => {
     expect(await account.sessions.list()).toHaveLength(1)
     await account.sessions.signOut('global')
     expect(await account.sessions.list()).toHaveLength(0)
+  })
+
+  it('los avisos van con la sesión que los activó: cerrarla los quita (ADR-0074)', async () => {
+    const phone = session({})
+    const laptop = session({})
+    const here = session({ current: true })
+    const device = (n: number, sessionId: string | null) => ({
+      id: `d${n}`,
+      endpoint: `https://web.push.apple.com/d${n}`,
+      p256dh: 'p',
+      auth: 'a',
+      userAgent: null,
+      label: null,
+      sessionId,
+      lastSeenAt: '2026-10-20T08:00:00.000Z',
+      createdAt: '2026-10-20T08:00:00.000Z',
+      updatedAt: '2026-10-20T08:00:00.000Z',
+    })
+    const store = createMemoryStore(
+      {
+        ...emptySnapshot(),
+        pushDevices: [device(1, phone.id), device(2, laptop.id), device(3, null)],
+      },
+      { account: { sessions: [phone, laptop, here] } },
+    )
+    const m = createMuninn(store, { timeZone: 'UTC' })
+    const mine = await m.push.subscribe({
+      endpoint: 'https://web.push.apple.com/aqui',
+      keys: { p256dh: 'p', auth: 'a' },
+    })
+    expect(mine.sessionId).toBe(here.id)
+    const endpoints = async () => (await m.push.devices()).map((d) => d.endpoint).sort()
+
+    await m.account.sessions.revoke(phone.id)
+    expect(await endpoints()).not.toContain('https://web.push.apple.com/d1')
+    await m.account.sessions.signOut('others')
+    // Sin sesión conocida (guardada antes de la columna) no se toca.
+    expect(await endpoints()).toEqual([
+      'https://web.push.apple.com/aqui',
+      'https://web.push.apple.com/d3',
+    ])
+    await m.account.sessions.signOut('global')
+    expect(await endpoints()).toEqual(['https://web.push.apple.com/d3'])
   })
 
   it('valida el alcance de cerrar sesión', async () => {
@@ -127,6 +171,46 @@ describe('segundo factor', () => {
     expect(await account.mfa.active()).toBeNull()
     expect(await account.mfa.assurance()).toEqual({ current: 'aal1', next: 'aal1' })
     await expect(account.mfa.disable('654321')).rejects.toThrow(/No tienes/)
+  })
+})
+
+describe('códigos de recuperación', () => {
+  const withFactor = async () => {
+    const account = setup()
+    const { factorId } = await account.mfa.enroll()
+    await account.mfa.confirm(factorId, '123456')
+    return account
+  }
+
+  it('solo se generan con el segundo factor activado', async () => {
+    const account = setup()
+    expect(await account.mfa.recoveryCodes.status()).toBeNull()
+    await expect(account.mfa.recoveryCodes.generate()).rejects.toThrow(/actívalo antes/)
+  })
+
+  it('genera diez códigos de un solo uso y cuenta los que quedan', async () => {
+    const account = await withFactor()
+    const codes = await account.mfa.recoveryCodes.generate()
+    expect(codes).toHaveLength(10)
+    expect(new Set(codes).size).toBe(10)
+    for (const c of codes) expect(c).toMatch(/^[a-z2-7]{5}-[a-z2-7]{5}$/)
+    expect(await account.mfa.recoveryCodes.status()).toEqual({ total: 10, remaining: 10 })
+  })
+
+  it('generar otra vez sustituye los anteriores', async () => {
+    const account = await withFactor()
+    const first = await account.mfa.recoveryCodes.generate()
+    const second = await account.mfa.recoveryCodes.generate()
+    expect(second.some((c) => first.includes(c))).toBe(false)
+    expect(await account.mfa.recoveryCodes.status()).toEqual({ total: 10, remaining: 10 })
+  })
+
+  it('desactivar el segundo factor borra también los códigos', async () => {
+    const account = await withFactor()
+    await account.mfa.recoveryCodes.generate()
+    await account.mfa.disable('654321')
+    expect(await account.mfa.active()).toBeNull()
+    expect(await account.mfa.recoveryCodes.status()).toBeNull()
   })
 })
 

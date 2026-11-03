@@ -5,6 +5,7 @@ import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
 import { typingIn } from '../lib/keyboard'
+import { registerLinkMenuHost, useLinkAsk } from '../lib/link-menu'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import { settingsQuery } from '../lib/queries'
@@ -34,6 +35,8 @@ const ProjectDialog = lazy(() =>
 )
 // La hoja «Tu cuenta» del teléfono lleva el contenido de Ajustes: solo se descarga al abrirla.
 const AccountSheet = lazy(() => import('./AccountSheet').then((m) => ({ default: m.AccountSheet })))
+// El menú «Abrir · Copiar» de los enlaces externos (táctil, ADR-0073): se pide al primer toque en uno.
+const LinkMenu = lazy(() => import('./LinkMenu').then((m) => ({ default: m.LinkMenu })))
 
 /**
  * En el teléfono, un enlace a `/ajustes/<sección>` no cambia de pantalla: abre la hoja «Tu cuenta» en esa sección,
@@ -85,6 +88,8 @@ export function AppShell() {
   const sheetLoaded = useRef(false)
   if (sheet.open) sheetLoaded.current = true
   useSettingsLinksInSheet()
+  const linkAsk = useLinkAsk()
+  useEffect(registerLinkMenuHost, [])
   const modules = useEnabledModules()
   const settings = useQuery(settingsQuery(useMuninn())).data
   const reportOn =
@@ -209,6 +214,11 @@ export function AppShell() {
       {reportOn ? (
         <Suspense fallback={null}>
           <MorningReportRunner />
+        </Suspense>
+      ) : null}
+      {linkAsk ? (
+        <Suspense fallback={null}>
+          <LinkMenu key={linkAsk.url + linkAsk.rect.top} ask={linkAsk} />
         </Suspense>
       ) : null}
       {sheetLoaded.current ? (

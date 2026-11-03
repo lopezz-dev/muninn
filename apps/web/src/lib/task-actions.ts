@@ -169,7 +169,12 @@ export async function createTask(
     const column = data?.columns.find((c) => c.id === task.columnId)
     created = {
       ...task,
-      column: { id: task.columnId, name: column?.name ?? '', kind: column?.kind ?? 'todo' },
+      column: {
+        id: task.columnId,
+        name: column?.name ?? '',
+        kind: column?.kind ?? 'todo',
+        color: column?.color ?? null,
+      },
     }
     if (data && column) {
       qc.setQueryData<BoardData>(keys.board(task.projectId), {
@@ -417,6 +422,42 @@ export async function setChecklistDone(
     description: item.title,
     id: `cl-${item.id}`,
     undo: () => setChecklistDone(m, qc, task, item, !done, { undoing: true }),
+  })
+  return true
+}
+
+/** Mueve una subtarea. `index` cuenta las demás (como `checklist.move`); «Deshacer» la devuelve a `from`. */
+export async function moveChecklistItem(
+  m: Muninn,
+  qc: QueryClient,
+  task: TaskRef,
+  item: ChecklistItem,
+  index: number,
+  opts: { undoing?: boolean } = {},
+): Promise<boolean> {
+  const key = keys.checklist(task.id)
+  const prev = qc.getQueryData<ChecklistItem[]>(key)
+  const from = prev?.findIndex((i) => i.id === item.id) ?? -1
+  if (from === index) return true
+  qc.setQueryData<ChecklistItem[]>(key, (items) => {
+    if (!items) return items
+    const rest = items.filter((i) => i.id !== item.id)
+    return [...rest.slice(0, index), item, ...rest.slice(index)]
+  })
+  try {
+    await m.checklist.move(item.id, index)
+  } catch (err) {
+    qc.setQueryData(key, prev)
+    fail('No se pudo mover la subtarea', err)
+    return false
+  }
+  refreshChecklist(qc, task)
+  if (opts.undoing || from < 0) return true
+  notifyUndo('Subtarea movida', {
+    icon: 'move',
+    description: item.title,
+    id: `cl-move-${item.id}`,
+    undo: () => moveChecklistItem(m, qc, task, item, from, { undoing: true }),
   })
   return true
 }

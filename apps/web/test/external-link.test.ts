@@ -17,6 +17,8 @@ const fakeDeps = (over: Partial<OpenerDeps> = {}): OpenerDeps => ({
   tauri: false,
   openUrl: vi.fn(async () => {}),
   open: vi.fn(),
+  coarse: () => false,
+  ask: vi.fn(() => true),
   ...over,
 })
 
@@ -26,6 +28,8 @@ const click = (mods: Partial<MouseEvent<HTMLElement>> = {}) =>
     metaKey: false,
     ctrlKey: false,
     shiftKey: false,
+    detail: 1,
+    currentTarget: { getBoundingClientRect: () => ({ left: 10, top: 20, width: 30, height: 18 }) },
     ...mods,
   }) as unknown as MouseEvent<HTMLElement>
 
@@ -73,7 +77,7 @@ describe('externalLink', () => {
   it('conserva href y rel, y el clic pasa por openExternal tras onOpen', () => {
     const deps = fakeDeps({ tauri: true })
     const onOpen = vi.fn()
-    const props = externalLink(URL_NEWS, onOpen, deps)
+    const props = externalLink(URL_NEWS, { onOpen }, deps)
     expect(props).toMatchObject({ href: URL_NEWS, target: '_blank', rel: 'noopener noreferrer' })
     const e = click()
     props.onClick(e)
@@ -86,7 +90,7 @@ describe('externalLink', () => {
     const deps = fakeDeps()
     const onOpen = vi.fn()
     const e = click({ ctrlKey: true })
-    externalLink(URL_NEWS, onOpen, deps).onClick(e)
+    externalLink(URL_NEWS, { onOpen }, deps).onClick(e)
     expect(e.preventDefault).not.toHaveBeenCalled()
     expect(onOpen).toHaveBeenCalledOnce()
     expect(deps.open).not.toHaveBeenCalled()
@@ -95,9 +99,43 @@ describe('externalLink', () => {
   it('en escritorio, Ctrl-clic también va al navegador del sistema', () => {
     const deps = fakeDeps({ tauri: true })
     const e = click({ ctrlKey: true })
-    externalLink(URL_NEWS, undefined, deps).onClick(e)
+    externalLink(URL_NEWS, {}, deps).onClick(e)
     expect(e.preventDefault).toHaveBeenCalled()
     expect(deps.openUrl).toHaveBeenCalledWith(URL_NEWS)
+  })
+
+  it('en táctil, un toque pide el menú «Abrir · Copiar» junto al enlace y no abre nada', () => {
+    const deps = fakeDeps({ coarse: () => true })
+    const onOpen = vi.fn()
+    const e = click()
+    externalLink(URL_NEWS, { onOpen }, deps).onClick(e)
+    expect(e.preventDefault).toHaveBeenCalled()
+    expect(deps.ask).toHaveBeenCalledWith({
+      url: URL_NEWS,
+      rect: { left: 10, top: 20, width: 30, height: 18 },
+      onOpen,
+    })
+    expect(onOpen).not.toHaveBeenCalled()
+    expect(deps.open).not.toHaveBeenCalled()
+  })
+
+  it('en táctil abre directo con `direct`, con el teclado o si no hay menú', () => {
+    for (const [opts, mods, ask] of [
+      [{ direct: true }, {}, true],
+      [{}, { detail: 0 }, true],
+      [{}, {}, false],
+    ] as const) {
+      const deps = fakeDeps({ coarse: () => true, ask: vi.fn(() => ask) })
+      externalLink(URL_NEWS, opts, deps).onClick(click(mods))
+      expect(deps.open).toHaveBeenCalledWith(URL_NEWS)
+    }
+  })
+
+  it('con ratón no hay menú', () => {
+    const deps = fakeDeps()
+    externalLink(URL_NEWS, {}, deps).onClick(click())
+    expect(deps.ask).not.toHaveBeenCalled()
+    expect(deps.open).toHaveBeenCalledWith(URL_NEWS)
   })
 })
 

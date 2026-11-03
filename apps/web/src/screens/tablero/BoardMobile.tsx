@@ -23,7 +23,7 @@ import { type BoardFilter, fullIndex } from '../../lib/board-filter'
 import { useBoardGroups } from '../../lib/board-groups'
 import { useMuninn } from '../../lib/muninn'
 import { completeTask, moveTask } from '../../lib/task-actions'
-import { AgentMark, ColumnCount, KIND_DOT } from './Column'
+import { AgentMark, ColumnCount, ColumnDot } from './Column'
 import { ColumnDialog } from './ColumnDialog'
 import { ColumnMenu } from './ColumnMenu'
 import { announcements, screenReaderInstructions, useBoardSensors } from './dnd'
@@ -67,7 +67,7 @@ function Tab({
         isOver && 'border-accent bg-accent-soft text-fg',
       )}
     >
-      <span aria-hidden="true" className={cn('size-2 rounded-xs', KIND_DOT[column.kind])} />
+      <ColumnDot column={column} />
       {column.name}
       <ColumnCount count={count} limit={column.wipLimit} />
     </button>

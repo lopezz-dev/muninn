@@ -1,11 +1,13 @@
 import { Button, Card, Icon, type IconName, notify } from '@muninn/ui'
 import type { OAuthAuthorizationDetails } from '@supabase/supabase-js'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi, Link, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { resetAuth } from '../lib/auth'
 import { useAuth } from '../lib/muninn'
 import {
   approveAppWithMfa,
   consentErrorMessage,
+  consentSecondFactor,
   decideConsent,
   getConsentRequest,
   redirectHost,
@@ -17,7 +19,8 @@ const route = getRouteApi('/oauth/consent')
 
 type State =
   | { kind: 'loading' }
-  | { kind: 'ask'; details: OAuthAuthorizationDetails }
+  | { kind: 'ask'; details: OAuthAuthorizationDetails; secondFactor: 'none' | 'passed' }
+  | { kind: 'mfa'; details: OAuthAuthorizationDetails }
   | { kind: 'leaving'; host: string }
   | { kind: 'error'; message: string }
 
@@ -28,6 +31,7 @@ type State =
 export function OAuthConsent() {
   const { authorization_id: id } = route.useSearch()
   const auth = useAuth()
+  const router = useRouter()
   const [state, setState] = useState<State>(
     id ? { kind: 'loading' } : { kind: 'error', message: 'Falta la solicitud de autorización.' },
   )
@@ -37,14 +41,17 @@ export function OAuthConsent() {
     document.title = 'Autorizar acceso · Muninn'
     if (!id) return
     let alive = true
-    getConsentRequest(id).then(
-      (req) => {
+    Promise.all([getConsentRequest(id), consentSecondFactor()]).then(
+      ([req, secondFactor]) => {
         if (!alive) return
         if (req.kind === 'redirect') {
           // Ya diste permiso a esta app: se vuelve sin preguntar.
           setState({ kind: 'leaving', host: redirectHost(req.url) })
           location.assign(req.url)
-        } else setState({ kind: 'ask', details: req.details })
+        } else if (secondFactor === 'pending') {
+          // La cuenta tiene segundo factor y esta sesión no lo ha pasado: sin él, la app no vería nada (ADR-0066).
+          setState({ kind: 'mfa', details: req.details })
+        } else setState({ kind: 'ask', details: req.details, secondFactor })
       },
       (err) => alive && setState({ kind: 'error', message: consentErrorMessage(err) }),
     )
@@ -53,19 +60,32 @@ export function OAuthConsent() {
     }
   }, [id])
 
+  // A /login, que con la sesión a medias pide el código y vuelve aquí (la solicitud sigue pendiente).
+  const writeCode = () => {
+    resetAuth()
+    void router.navigate({
+      to: '/login',
+      search: { redirect: `${location.pathname}${location.search}` },
+      replace: true,
+    })
+  }
+
   const decide = async (approve: boolean) => {
     if (!id || state.kind !== 'ask') return
     const app = state.details.client.name || 'La app'
     setBusy(approve ? 'approve' : 'deny')
     try {
-      // Antes de aprobar, que el servidor sepa que la aprobaste con el segundo factor (ADR-0066). Si falla, se aprueba
-      // igual: sin la fila, la app solo pierde acceso con el factor activado, y se avisa.
+      // Antes de aprobar, que el servidor sepa que la aprobaste con el segundo factor (ADR-0066). Si no queda apuntada
+      // (falla o devuelve `false`), se aprueba igual: sin la fila, la app solo pierde acceso con el factor activado, y se avisa.
       let mfaFailed = false
-      if (approve && auth.kind === 'user')
-        await approveAppWithMfa(state.details.authorization_id, auth.account.id).catch((err) => {
+      if (approve && state.secondFactor === 'passed' && auth.kind === 'user')
+        mfaFailed = !(await approveAppWithMfa(
+          state.details.authorization_id,
+          auth.account.id,
+        ).catch((err) => {
           console.warn('No se pudo apuntar la aprobación con el segundo factor', err)
-          mfaFailed = true
-        })
+          return false
+        }))
       const url = await decideConsent(id, approve)
       const host = redirectHost(url)
       if (approve)
@@ -97,6 +117,19 @@ export function OAuthConsent() {
         <Card className="flex flex-col gap-5 p-6">
           {state.kind === 'ask' ? (
             <Ask details={state.details} busy={busy} onDecide={decide} />
+          ) : state.kind === 'mfa' ? (
+            <>
+              <Heading title="Falta un paso">
+                Tu cuenta tiene segundo factor. Escribe el código de tu app antes de dar acceso a{' '}
+                <span className="font-medium text-fg">
+                  {state.details.client.name || 'esta app'}
+                </span>
+                .
+              </Heading>
+              <Button variant="primary" size="lg" className="font-semibold" onClick={writeCode}>
+                Escribir el código
+              </Button>
+            </>
           ) : state.kind === 'error' ? (
             <>
               <Heading title="No se puede autorizar">{state.message}</Heading>
