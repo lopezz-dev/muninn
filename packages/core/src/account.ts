@@ -131,10 +131,29 @@ export function createAccount({ store, parse }: AccountContext) {
     const factor = await active()
     if (!factor) throw new Error('No tienes el segundo factor activado')
     await auth().mfa.verify(factor.id, token)
+    // Antes que la app: los códigos de recuperación no pueden quedarse como único factor (Supabase lo rechaza con
+    // `mfa_recovery_codes_sole_factor`) y, sin `aal2`, ya no se podrían borrar.
+    if (await auth().mfa.recoveryCodes.status()) await auth().mfa.recoveryCodes.remove()
     await auth().mfa.unenroll(factor.id)
   }
 
   const assurance = () => auth().mfa.assurance()
+
+  // ─── Códigos de recuperación (ADR-0075) ──────────────────────────────────
+
+  /** Cuántos códigos hay y cuántos quedan sin usar; `null` si aún no se han generado. */
+  const recoveryStatus = () => auth().mfa.recoveryCodes.status()
+
+  /**
+   * Genera diez códigos de un solo uso para entrar sin la app (si se pierde el móvil). Los anteriores dejan de valer. Solo
+   * con el segundo factor activado, y es la única vez que se ven: hay que guardarlos ya. No hay «Deshacer»: los anteriores
+   * no se pueden recuperar.
+   */
+  async function generateRecoveryCodes() {
+    if (!(await active()))
+      throw new Error('Los códigos de recuperación son para el segundo factor: actívalo antes')
+    return auth().mfa.recoveryCodes.generate()
+  }
 
   // ─── Apps con acceso (OAuth) ─────────────────────────────────────────────
 
@@ -169,7 +188,15 @@ export function createAccount({ store, parse }: AccountContext) {
   return {
     available,
     sessions: { list: sessions, revoke: revokeSession, signOut },
-    mfa: { factors, active, enroll, confirm, disable, assurance },
+    mfa: {
+      factors,
+      active,
+      enroll,
+      confirm,
+      disable,
+      assurance,
+      recoveryCodes: { status: recoveryStatus, generate: generateRecoveryCodes },
+    },
     apps: { list: apps, approveWithMfa: approveAppWithMfa, revoke: revokeApp },
   }
 }

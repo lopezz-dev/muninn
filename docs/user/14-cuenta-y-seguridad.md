@@ -27,16 +27,25 @@ En **Segundo factor**, pulsa **Activar**. Se abre una ventana (en el móvil, des
    puede sugerir. En cuanto está completo, Muninn lo comprueba: si no es correcto, se borra para que escribas el que
    sale ahora (cambia cada 30 segundos).
 
-Al acabar verás un check verde: ya está activado. Si cierras la ventana antes de confirmar, no se activa nada; puedes
-volver a empezar cuando quieras (con un QR nuevo).
+Al acabar verás un check verde y tus **códigos de recuperación**: diez códigos de un solo uso para entrar si un día no
+tienes el móvil. Pulsa **Copiar todos** y guárdalos en tu gestor de contraseñas: **no los volverás a ver**. Si cierras la
+ventana antes de confirmar, no se activa nada; puedes volver a empezar cuando quieras (con un QR nuevo).
 
-**Guarda la clave de configuración.** Si pierdes el móvil, con ella añades Muninn a la app de otro móvil. Muninn aún no
-tiene códigos de recuperación.
+**Guarda también la clave de configuración.** Si pierdes el móvil, con ella añades Muninn a la app de otro móvil.
+
+## Códigos de recuperación
+
+Con el segundo factor activado, en **Códigos de recuperación** ves cuántos te quedan. Cada código vale una sola vez.
+Si te quedan pocos, o crees que alguien los ha visto, pulsa **Generar nuevos**: te da otros diez y los anteriores
+dejan de valer, también los que no habías usado. No se puede deshacer, así que ten a mano dónde guardarlos.
 
 ## Entrar con el segundo factor
 
 Entra como siempre, con el código del correo o con GitHub. Después, Muninn te pide el código de tu app: escríbelo y
 listo. Si te equivocas de cuenta, pulsa **Usar otra cuenta**.
+
+¿No tienes el móvil a mano? Pulsa **Usa un código de recuperación** y escribe uno de los que guardaste. Después, en
+Ajustes › Cuenta, mira cuántos te quedan.
 
 Cada vez que entras en un dispositivo nuevo te lo pide; mientras la sesión siga abierta en ese dispositivo, no.
 
@@ -48,8 +57,8 @@ tus datos, quítale el acceso en **Apps con acceso** y vuelve a conectarla.
 
 Pulsa **Desactivar**: se abre una ventana que te pide el código que sale en ese momento en tu app. Escríbelo y pulsa
 **Desactivar**. Desde entonces, para entrar basta con el
-código del correo o con GitHub. No se puede deshacer: para volver a activarlo, tendrás que añadir Muninn otra vez a tu
-app (con una clave nueva). Puedes borrar la cuenta vieja de Muninn de tu app.
+código del correo o con GitHub, y tus códigos de recuperación dejan de valer. No se puede deshacer: para volver a
+activarlo, tendrás que añadir Muninn otra vez a tu app (con una clave nueva) y guardar códigos nuevos. Puedes borrar la cuenta vieja de Muninn de tu app.
 
 Con el segundo factor activado, el servidor no deja leer ni cambiar tus datos a ninguna sesión que no haya pasado el
 código, aunque alguien consiga el del correo.

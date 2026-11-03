@@ -352,7 +352,8 @@ más o menos en este orden:
   código ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md)). Montado y con tests del core; la prueba real, en la fase final (4d)
   - [x] Exigirlo en el servidor (RLS, también en las funciones de sesiones) y para conectar GitHub
     ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)). Finanzas, cuando conecte algo externo. La prueba real, en la fase final (4d)
-  - [ ] Códigos de recuperación (en supabase-js aún experimentales)
+  - [x] Códigos de recuperación: diez al activarlo, «Generar nuevos» en Ajustes y «Usa un código de recuperación» al entrar
+    ([ADR-0075](adr/0075-codigos-de-recuperacion-del-segundo-factor.md); API experimental de supabase-js). La prueba real, en la fase final (4d)
 - [x] **Apps con acceso** en Ajustes › Cuenta: ver y quitar los permisos OAuth dados a otras apps, como claude.ai
   ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md); venía del Backlog). La prueba real, en la fase final (4d)
 - [x] **Sesiones y dispositivos** en Ajustes › Cuenta: ver dónde tienes la sesión abierta y cerrarla en uno

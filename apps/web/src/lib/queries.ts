@@ -32,6 +32,7 @@ export const keys = {
   /** Ajustes › Cuenta (ADR-0061): sesiones, segundo factor y apps. Es Auth, no datos: no se guarda sin conexión. */
   accountSessions: ['account', 'sessions'] as const,
   accountMfa: ['account', 'mfa'] as const,
+  accountRecoveryCodes: ['account', 'mfa', 'recovery'] as const,
   accountApps: ['account', 'apps'] as const,
 }
 

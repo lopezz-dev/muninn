@@ -4,7 +4,9 @@ import { type FormEvent, useState } from 'react'
 import { type Account, safeRedirect } from '../../lib/auth'
 import {
   abandonSecondFactor,
+  recoveryCodeErrorMessage,
   secondFactorErrorMessage,
+  verifyRecoveryCode,
   verifySecondFactor,
 } from '../../lib/second-factor'
 import { usePageMeta } from '../../lib/seo'
@@ -26,26 +28,38 @@ function SecondFactor({ account }: { account: Account }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<'verify' | 'leave' | null>(null)
+  // Sin el móvil: un código de recuperación en lugar del de la app (ADR-0075).
+  const [recovery, setRecovery] = useState(false)
 
   usePageMeta({ title: 'Segundo factor', description: 'Escribe el código de tu app de códigos.' })
 
   const verify = async (e: FormEvent) => {
     e.preventDefault()
-    const token = code.replace(/\D/g, '')
-    if (token.length !== 6) {
-      setError('Escribe las 6 cifras que salen ahora en tu app.')
+    const token = recovery ? code.trim() : code.replace(/\D/g, '')
+    if (recovery ? token.length < 6 : token.length !== 6) {
+      setError(
+        recovery
+          ? 'Escribe uno de los códigos de recuperación que guardaste.'
+          : 'Escribe las 6 cifras que salen ahora en tu app.',
+      )
       return
     }
     setError(null)
     setBusy('verify')
     try {
-      await verifySecondFactor(token)
-      notify.success('Sesión iniciada', { icon: 'user', description: account.name })
+      if (recovery) await verifyRecoveryCode(token)
+      else await verifySecondFactor(token)
+      notify.success('Sesión iniciada', {
+        icon: 'user',
+        description: recovery
+          ? 'Ese código ya no vale. En Ajustes › Cuenta puedes ver cuántos te quedan.'
+          : account.name,
+      })
       forgetUserData()
       await router.invalidate()
       await router.navigate({ href: safeRedirect(search.redirect), replace: true })
     } catch (err) {
-      const message = secondFactorErrorMessage(err)
+      const message = recovery ? recoveryCodeErrorMessage(err) : secondFactorErrorMessage(err)
       setError(message)
       notify.error('No se pudo comprobar el código', { description: message })
       setCode('')
@@ -78,35 +92,65 @@ function SecondFactor({ account }: { account: Account }) {
         </div>
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[26px] font-semibold tracking-[-0.02em]">Falta un paso</h1>
-          <p className="text-base text-fg-subtle">
-            Tu cuenta tiene segundo factor. Abre tu app de códigos y escribe el de{' '}
-            <span className="font-medium text-fg">Muninn</span>
-            {account.email ? (
-              <>
-                {' '}
-                para <span className="font-medium text-fg">{account.email}</span>
-              </>
-            ) : null}
-            .
-          </p>
+          {recovery ? (
+            <p className="text-base text-fg-subtle">
+              Escribe uno de los códigos de recuperación que guardaste al activar el segundo factor.
+              Cada uno vale una sola vez.
+            </p>
+          ) : (
+            <p className="text-base text-fg-subtle">
+              Tu cuenta tiene segundo factor. Abre tu app de códigos y escribe el de{' '}
+              <span className="font-medium text-fg">Muninn</span>
+              {account.email ? (
+                <>
+                  {' '}
+                  para <span className="font-medium text-fg">{account.email}</span>
+                </>
+              ) : null}
+              .
+            </p>
+          )}
         </div>
-        <TextField
-          label="Código de la app"
-          autoFocus
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          placeholder="123456"
-          maxLength={7}
-          size="lg"
-          className="[&_input]:font-mono [&_input]:tracking-[0.3em]"
-          value={code}
-          onChange={(e) => {
-            setCode(e.target.value.replace(/\D/g, ''))
-            if (error) setError(null)
-          }}
-          error={error}
-          disabled={busy !== null}
-        />
+        {recovery ? (
+          <TextField
+            key="recuperacion"
+            label="Código de recuperación"
+            autoFocus
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="abcde-12345"
+            maxLength={40}
+            size="lg"
+            className="[&_input]:font-mono [&_input]:tracking-[0.08em]"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value)
+              if (error) setError(null)
+            }}
+            error={error}
+            disabled={busy !== null}
+          />
+        ) : (
+          <TextField
+            key="app"
+            label="Código de la app"
+            autoFocus
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="123456"
+            maxLength={7}
+            size="lg"
+            className="[&_input]:font-mono [&_input]:tracking-[0.3em]"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, ''))
+              if (error) setError(null)
+            }}
+            error={error}
+            disabled={busy !== null}
+          />
+        )}
         <Button
           type="submit"
           variant="primary"
@@ -126,8 +170,40 @@ function SecondFactor({ account }: { account: Account }) {
           Usar otra cuenta
         </button>
         <p className="text-[12.5px] leading-normal text-fg-faint">
-          ¿Sin el móvil de la app? Añade Muninn a otra app de códigos con la clave de configuración
-          que guardaste al activarlo.
+          {recovery ? (
+            <>
+              ¿Tienes el móvil?{' '}
+              <button
+                type="button"
+                className="cursor-pointer font-medium text-accent hover:underline"
+                onClick={() => {
+                  setRecovery(false)
+                  setCode('')
+                  setError(null)
+                }}
+                disabled={busy !== null}
+              >
+                Usar el código de la app
+              </button>
+            </>
+          ) : (
+            <>
+              ¿Sin el móvil de la app?{' '}
+              <button
+                type="button"
+                className="cursor-pointer font-medium text-accent hover:underline"
+                onClick={() => {
+                  setRecovery(true)
+                  setCode('')
+                  setError(null)
+                }}
+                disabled={busy !== null}
+              >
+                Usa un código de recuperación
+              </button>{' '}
+              o añade Muninn a otra app con la clave de configuración que guardaste.
+            </>
+          )}
         </p>
       </form>
     </div>
