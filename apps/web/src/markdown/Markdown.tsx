@@ -154,6 +154,21 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
   }
 }
 
+/** Hasta cuántos caracteres una columna se considera corta: cabe una fecha, un código o un importe. */
+const FIT_MAX = 24
+
+/**
+ * Qué columnas de una tabla se ajustan a su contenido: aquellas cuya celda más larga (cabecera
+ * incluida) no pasa de `FIT_MAX` caracteres. El resto es texto largo y se reparte el ancho.
+ */
+export function fitColumns(table: Pick<Tokens.Table, 'header' | 'rows'>): boolean[] {
+  return table.header.map((h, i) =>
+    [h, ...table.rows.map((row) => row[i])].every(
+      (c) => !c || plainText(decodeEntities(c.text), 200).length <= FIT_MAX,
+    ),
+  )
+}
+
 const HEADINGS = {
   1: 'mt-2 text-2xl font-semibold tracking-tight text-fg',
   2: 'mt-2 text-xl font-semibold tracking-tight text-fg',
@@ -294,13 +309,21 @@ function block(t: Token, ctx: Ctx): ReactNode {
       const tk = t as Tokens.Table
       const align = (a: string | null) =>
         a === 'center' ? 'text-center' : a === 'right' ? 'text-right' : 'text-left'
+      const fit = fitColumns(tk)
+      // Las columnas cortas (fechas, códigos, versiones) se ajustan a su contenido sin partirse
+      // (`w-px` + `nowrap`); las de texto largo se quedan el ancho sobrante y parten líneas, con un
+      // mínimo para que en el teléfono la tabla haga scroll dentro de su caja y no se aplaste.
+      const cell = (i: number, a: string | null) =>
+        cn('px-3 py-2', align(a), fit[i] && 'w-px whitespace-nowrap')
+      const body = (i: number, content: ReactNode) =>
+        fit[i] ? content : <div className="min-w-48">{content}</div>
       return (
-        <div className="overflow-x-auto rounded-lg border border-border">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-border">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-surface text-xs font-semibold text-fg-subtle">
               <tr>
                 {tk.header.map((c, i) => (
-                  <th key={i} className={cn('px-3 py-2', align(c.align))}>
+                  <th key={i} className={cell(i, c.align)}>
                     {inline(c.tokens, ctx)}
                   </th>
                 ))}
@@ -310,8 +333,8 @@ function block(t: Token, ctx: Ctx): ReactNode {
               {tk.rows.map((row, r) => (
                 <tr key={r} className="border-t border-border-subtle">
                   {row.map((c, i) => (
-                    <td key={i} className={cn('px-3 py-2 align-top', align(c.align))}>
-                      {inline(c.tokens, ctx)}
+                    <td key={i} className={cn(cell(i, c.align), 'align-top')}>
+                      {body(i, inline(c.tokens, ctx))}
                     </td>
                   ))}
                 </tr>

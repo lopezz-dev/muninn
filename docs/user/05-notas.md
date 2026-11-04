@@ -49,6 +49,10 @@ del campo, al cambiar de nota y al ocultar la ventana. Si falla, te avisa y pued
 Títulos (`##`), **negrita**, *cursiva*, ~~tachado~~, listas con viñetas o numeradas, listas de tareas (`- [ ]`), citas
 (`>`), código en línea y en bloque, tablas, separadores y enlaces.
 
+En las **tablas**, las columnas cortas (fechas, códigos, versiones) se ajustan a lo que ocupan y no se
+parten; la de texto largo se reparte el ancho que queda. Si la tabla no cabe (en el móvil, por ejemplo), se desliza
+de lado dentro de la nota.
+
 Por seguridad:
 
 - El **HTML** que escribas se muestra tal cual, como texto: no se interpreta.
