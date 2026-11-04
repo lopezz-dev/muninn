@@ -170,16 +170,18 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > recompilados. La función `mcp` se redesplegó el 26 de octubre.
 - [x] Redesplegar la función `mcp` para que el MCP remoto tenga Finanzas: `pnpm --filter @muninn/mcp build:edge` y
   `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` ([gotchas/mcp](gotchas/mcp.md))
-- [ ] Con tu sesión (en el 5174): activar Finanzas, crear una cuenta «Prueba F3 …», apuntar, editar y archivar con «Deshacer», y
-  archivar la cuenta al acabar. En la demo (5175) y con SQL dentro de `rollback` pasa el 21 de octubre; con tu sesión no se pudo porque
-  el 5174 lo tenía ocupado otra sesión
-- [ ] En el iPhone: la hoja «Nuevo movimiento» se abre desde abajo, el importe saca el teclado decimal y no hace zoom; con dos
-  dispositivos, lo apuntado en uno aparece en el otro sin recargar
-- [ ] Suscripciones con tu sesión: crear «Prueba F3 …» con el cobro mañana; sale en Inicio › «Próximos cobros»; «Apuntar» crea el gasto
+- [x] Con tu sesión (en el 5174): activar Finanzas, crear una cuenta «Prueba F3 …», apuntar, editar y archivar con «Deshacer», y
+  archivar la cuenta al acabar. En la demo (5175) y con SQL dentro de `rollback` pasa el 21 de octubre. *(4 de noviembre, con tu sesión:
+  100 − 24,90 = 75,10 €, editar a 30 €, archivar y «Deshacer» lo devuelve; todo archivado al acabar.)*
+- [x] En el iPhone: la hoja «Nuevo movimiento» se abre desde abajo, el importe saca el teclado decimal y no hace zoom; con dos
+  dispositivos, lo apuntado en uno aparece en el otro sin recargar *(29 de octubre. Fallo: el asa de la hoja no la cerraba al
+  arrastrar; arreglado para todas las hojas inferiores en `@muninn/ui` el 4 de noviembre, falta verlo en el iPhone.)*
+- [x] Suscripciones con tu sesión: crear «Prueba F3 …» con el cobro mañana; sale en Inicio › «Próximos cobros»; «Apuntar» crea el gasto
   con el icono de repetición y «Deshacer» lo quita; archivarla al acabar. En la demo pasa el 22 de octubre, y la unicidad del cobro en SQL
-  (`rollback`)
-- [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
-  gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
+  (`rollback`). *(4 de noviembre: sale en Inicio; «Apuntar» lleva el cobro al mes siguiente y «Deshacer» lo devuelve a pendiente.)*
+- [x] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
+  gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app *(4 de noviembre, con el
+  conector remoto de claude.ai, que usa el mismo catálogo: −8,53 € en el MCP y en la app.)*
 
 ### F3 · Avisos push (fase final)
 > Montado el 28 de octubre sin desplegar: falta todo lo de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales)
@@ -233,7 +235,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
 - [x] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
 - [x] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
-- [ ] Sin conexión, al abrir no sale ningún aviso
+- [x] Sin conexión, al abrir no sale ningún aviso *(4 de noviembre, con la v0.9.0 instalada y sin salida a internet: ni aviso ni error.)*
 
 ### Enlaces externos (`tauri-plugin-opener`)
 > Antes, en escritorio ningún enlace externo abría nada (`target="_blank"` no hace nada en Tauri). Ahora todos pasan por `openExternal`.

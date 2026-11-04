@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import { cn } from '../cn'
 
 export const buttonVariants = cva(
@@ -52,6 +52,8 @@ export interface IconButtonProps
   icon: ReactNode
   size?: keyof typeof iconButtonSizes
   asChild?: boolean
+  /** React 19: llega como prop y se pasa al botón con el resto. */
+  ref?: Ref<HTMLButtonElement>
 }
 
 export function IconButton({

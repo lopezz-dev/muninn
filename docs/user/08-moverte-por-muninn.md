@@ -55,6 +55,9 @@ Cada ajuste se abre dentro de la misma hoja; **‹** te devuelve a la lista. Par
 arriba hacia abajo o pulsa la **X**: sigues en la pantalla en la que estabas. Si abres un enlace a un ajuste (por ejemplo, el
 botón «Ir a Módulos»), se abre la hoja ya en ese ajuste, encima de lo que estabas viendo.
 
+Todas las hojas que suben desde abajo (un movimiento nuevo, los filtros, cambiar una fecha…) se cierran igual: arrastra la
+rayita de arriba hacia abajo, toca fuera o pulsa la **X**. Si la sueltas antes de bajarla lo bastante, vuelve a su sitio.
+
 ### Elegir las pestañas de abajo
 
 En **Ajustes › Barra de abajo** (en la hoja de tu cuenta) eliges qué pestañas quieres y en qué orden:
