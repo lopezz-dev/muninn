@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import './setup-dom'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -21,6 +21,7 @@ import {
   MenuTrigger,
   ProgressBar,
   SegmentedControl,
+  SheetContent,
   Switch,
   TextField,
 } from '../src'
@@ -159,6 +160,62 @@ describe('overlays', () => {
     expect(screen.queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
     await userEvent.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  describe('hoja inferior: arrastrar el asa', () => {
+    // jsdom no trae `PointerEvent`: sin él, `fireEvent` crea un `Event` sin `clientY`.
+    if (!('PointerEvent' in window)) {
+      Object.assign(window, { PointerEvent: class extends MouseEvent {} })
+    }
+    const drag = (dy: number) => {
+      const handle = document.querySelector('[data-sheet-handle]') as HTMLElement
+      fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 })
+      fireEvent.pointerMove(handle, { clientY: 100 + dy, pointerId: 1 })
+      fireEvent.pointerUp(handle, { clientY: 100 + dy, pointerId: 1 })
+    }
+    const Hoja = (props: { onDragClose?: () => void; onOpenChange?: (o: boolean) => void }) => {
+      const [open, setOpen] = useState(true)
+      return (
+        <Dialog
+          open={open}
+          onOpenChange={(o) => {
+            props.onOpenChange?.(o)
+            setOpen(o)
+          }}
+        >
+          <SheetContent side="bottom" title="Nuevo movimiento" onDragClose={props.onDragClose}>
+            <p>Formulario</p>
+          </SheetContent>
+        </Dialog>
+      )
+    }
+
+    it('cierra sin `onDragClose`, como la X, si baja lo bastante', () => {
+      const onOpenChange = vi.fn()
+      render(<Hoja onOpenChange={onOpenChange} />)
+      drag(40)
+      expect(screen.getByRole('dialog', { name: 'Nuevo movimiento' })).toBeInTheDocument()
+      drag(200)
+      expect(onOpenChange).toHaveBeenCalledWith(false)
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('con `onDragClose`, llama a ese en lugar de cerrar', () => {
+      const onDragClose = vi.fn()
+      render(<Hoja onDragClose={onDragClose} />)
+      drag(200)
+      expect(onDragClose).toHaveBeenCalledOnce()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+
+    it('el panel lateral no tiene asa', () => {
+      render(
+        <Dialog defaultOpen>
+          <SheetContent title="Detalle">x</SheetContent>
+        </Dialog>,
+      )
+      expect(document.querySelector('[data-sheet-handle]')).toBeNull()
+    })
   })
 
   it('Menu se abre con teclado y ejecuta la acción', async () => {

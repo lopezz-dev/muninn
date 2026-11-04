@@ -217,8 +217,9 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
 - [ ] Aplicar después `20261029170000_sesiones_con_app` (nombre de la app OAuth en la lista). Comprobar en el editor SQL, con el
   `sub` y `session_id` de tu usuario, que `select * from list_my_sessions()` trae `app_name` = «Claude» en las de claude.ai y que
   `list_my_sessions` sigue con `execute` solo para `authenticated`. En la app, esas sesiones salen como **Claude · app conectada**.
-- [ ] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
-  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge».
+- [x] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
+  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge». *(4 de noviembre: las dos sesiones de
+  escritorio salen como «Muninn para Windows».)*
 - [x] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
   última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
   `select * from list_my_sessions()` con otro `sub` devuelve 0 filas). *(Sí; lo de otro usuario lo cubre la prueba SQL. Fallo: la app de
@@ -402,7 +403,8 @@ actualizaciones.
 7. **Probar la actualización**, cuando salga la siguiente versión (cualquier `fix` que llegue a `main` y su Release PR):
    - [ ] Al abrir Muninn sale «Hay una versión nueva · Reiniciar» con el número nuevo. Pulsa **Reiniciar**: se instala sin pedir
      administrador, Muninn se vuelve a abrir y la barra lateral enseña la versión nueva. Sigues con la sesión iniciada.
-   - [ ] Sin conexión, al abrir no sale ningún aviso ni error.
+   - [x] Sin conexión, al abrir no sale ningún aviso ni error. *(4 de noviembre, v0.9.0: Muninn abierto sin salida a internet, con un
+     proxy cerrado para el actualizador y el WebView2. Así el navegador cree que hay red, que es el peor caso.)*
 
 ## Después (trabajo de código que necesita lo anterior)
 

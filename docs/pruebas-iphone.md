@@ -59,6 +59,7 @@ proyecto de Muninn con la etiqueta `iphone`.
 | Hoja «Tu cuenta» › una sección de Ajustes | Se abre dentro de la hoja y «‹ Tu cuenta» vuelve a la lista; el contenido hace scroll sin mover la pantalla de detrás |
 | Abrir un enlace a `/ajustes/notificaciones` (pegado en Safari, o desde la app instalada) | Se abre Inicio con la hoja ya en Notificaciones |
 | Finanzas › Movimientos: el botón de filtro | Se abre una hoja con tipo, categorías y cuenta; la búsqueda y el botón caben en una línea |
+| Finanzas › «Movimiento» y el filtro: arrastrar la rayita de la hoja hacia abajo | La hoja se cierra al soltar; si la sueltas antes, vuelve a su sitio (antes solo cerraba la X) |
 
 ## 5. Sin conexión y tiempo real
 

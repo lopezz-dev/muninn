@@ -118,7 +118,10 @@ export interface SheetContentProps extends Omit<ComponentProps<typeof RDialog.Co
   /** Delante del título, en la cabecera: un «‹ Volver» si la hoja navega por dentro. */
   leading?: ReactNode
   footer?: ReactNode
-  /** Hoja inferior: arrastrar el asa hacia abajo la cierra (llama a esto). Sin él, el asa es solo decorativa. */
+  /**
+   * Hoja inferior: qué hacer al arrastrar el asa hacia abajo. Por defecto, cerrarla como su botón de cerrar
+   * (`onOpenChange(false)` del `Dialog`); pásalo solo si cerrar arrastrando debe hacer otra cosa.
+   */
   onDragClose?: () => void
 }
 
@@ -176,7 +179,11 @@ export function SheetContent({
   ...props
 }: SheetContentProps) {
   const Close = icons.close
-  const drag = useDragToClose(side === 'bottom' ? onDragClose : undefined)
+  // Sin `onDragClose`, el asa pulsa el botón de cerrar: así cierra igual que la X y avisa al `Dialog`.
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const drag = useDragToClose(
+    side === 'bottom' ? (onDragClose ?? (() => closeRef.current?.click())) : undefined,
+  )
   return (
     <RDialog.Portal>
       <RDialog.Overlay className={overlay} />
@@ -192,22 +199,16 @@ export function SheetContent({
         )}
         {...props}
       >
-        {side === 'bottom' ? (
-          drag.handle ? (
-            // Zona de agarre más grande que el asa que se ve, para el dedo.
-            <div
-              aria-hidden="true"
-              className="flex shrink-0 cursor-grab touch-none justify-center pt-2 pb-1 active:cursor-grabbing"
-              {...drag.handle}
-            >
-              <span className="h-1 w-9 rounded-full bg-border-strong" />
-            </div>
-          ) : (
-            <span
-              aria-hidden="true"
-              className="mx-auto mt-2 h-1 w-9 rounded-full bg-border-strong"
-            />
-          )
+        {drag.handle ? (
+          // Zona de agarre más grande que el asa que se ve, para el dedo.
+          <div
+            aria-hidden="true"
+            data-sheet-handle=""
+            className="flex shrink-0 cursor-grab touch-none justify-center pt-2 pb-1 active:cursor-grabbing"
+            {...drag.handle}
+          >
+            <span className="h-1 w-9 rounded-full bg-border-strong" />
+          </div>
         ) : null}
         <div
           className={cn(
@@ -224,7 +225,7 @@ export function SheetContent({
           <div className="ml-auto flex items-center gap-1">
             {toolbar}
             <RDialog.Close asChild>
-              <IconButton aria-label="Cerrar" icon={<Close />} />
+              <IconButton ref={closeRef} aria-label="Cerrar" icon={<Close />} />
             </RDialog.Close>
           </div>
         </div>
