@@ -29,6 +29,13 @@ import { useNoteDraft } from './use-note-draft'
 
 type Mode = 'edit' | 'preview'
 
+/** Si hay texto seleccionado dentro de `el`: el clic que acaba una selección no debe pasar a editar. */
+export function isSelecting(el: HTMLElement): boolean {
+  const sel = el.ownerDocument.getSelection()
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false
+  return el.contains(sel.getRangeAt(0).commonAncestorContainer)
+}
+
 /** Botones de la barra de formato; su nombre sale de `tools.<command>`, en el idioma activo. */
 interface Tool {
   command: FormatCommand
@@ -360,12 +367,15 @@ export function NoteEditor({ note, desktop }: EditorProps) {
             className="min-h-[55dvh] w-full resize-none bg-transparent font-mono text-[16px] leading-relaxed text-fg outline-none [field-sizing:content] placeholder:text-fg-faint md:min-h-[40dvh] md:text-sm"
           />
         ) : draft.content.trim() ? (
-          // Un clic en el texto (no en un enlace ni en una casilla) pasa a editar.
+          // Un clic en el texto (no en un enlace ni en una casilla) pasa a editar, salvo si termina una
+          // selección: seleccionar para copiar es leer, no editar.
           // biome-ignore lint/a11y/useKeyWithClickEvents: el botón «Editar» del modo es la vía de teclado
           // biome-ignore lint/a11y/noStaticElementInteractions: ver arriba
           <div
             onClick={(e) => {
-              if (!(e.target as HTMLElement).closest('a, input, button')) edit()
+              if ((e.target as HTMLElement).closest('a, input, button')) return
+              if (isSelecting(e.currentTarget)) return
+              edit()
             }}
             className="min-h-[40dvh] cursor-text"
           >

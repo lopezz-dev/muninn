@@ -36,7 +36,7 @@ La nota tiene dos modos, arriba a la derecha:
   **negrita**, *cursiva*, lista, lista de tareas, código y enlace. Selecciona un texto antes de pulsar un botón para
   aplicárselo; si ya lo tiene, se quita. En el ordenador, **Ctrl B** y **Ctrl I** (⌘ en Mac) ponen negrita y cursiva.
 - **Vista previa:** la nota ya con su formato. Las casillas de las listas de tareas se pueden marcar aquí mismo. Pulsa sobre el
-  texto para volver a editar.
+  texto para volver a editar; si seleccionas un trozo para copiarlo, la nota sigue en vista previa.
 
 Al pulsar **Intro** dentro de una lista, la siguiente línea ya empieza con su viñeta, su número o su casilla; **Intro** sobre
 un elemento vacío termina la lista. **Esc** pasa a la vista previa. Ctrl/⌘ Z deshace lo último que escribiste.
