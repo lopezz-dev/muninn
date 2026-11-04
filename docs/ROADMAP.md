@@ -40,6 +40,11 @@
   proyectos archivados ([ADR-0067](adr/0067-eliminar-tareas-archivadas.md); sale del backlog)
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
+- [ ] **Notas como Claude Docs** (0.11, del 16 al 27-11): en el ordenador, editor en sitio que guarda Markdown
+  ([ADR-0078](adr/0078-editor-de-notas-en-sitio-con-tiptap.md), propuesto); en el teléfono, leer y comentar. Comentarios anclados a una
+  cita, con hilo, «Resolver» y «Para Claude», que Claude atiende por el MCP ([ADR-0079](adr/0079-comentarios-anclados-en-las-notas.md),
+  propuesto). Tablas con las columnas cortas ajustadas ([#129](https://github.com/lopezz-dev/muninn/pull/129)) y seleccionar sin pasar a
+  editar ([#130](https://github.com/lopezz-dev/muninn/pull/130)), ya en PR
 - [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
   estado, índice de la página; [ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md))
   - [x] Rediseño: portada con las guías por grupos e iconos, guía centrada en pantallas anchas, búsqueda que lleva al
