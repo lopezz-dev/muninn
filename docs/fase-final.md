@@ -217,6 +217,13 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
 - [ ] Aplicar después `20261029170000_sesiones_con_app` (nombre de la app OAuth en la lista). Comprobar en el editor SQL, con el
   `sub` y `session_id` de tu usuario, que `select * from list_my_sessions()` trae `app_name` = «Claude» en las de claude.ai y que
   `list_my_sessions` sigue con `execute` solo para `authenticated`. En la app, esas sesiones salen como **Claude · app conectada**.
+- [ ] **Nombre de las sesiones ([ADR-0082](adr/0082-nombre-puesto-a-mano-en-cada-sesion.md)):** aplicar
+  `20261105150000_nombre_de_sesion` (después de `sesiones_con_app`; vuelve a crear `list_my_sessions`). En **Sesiones y dispositivos**,
+  el lápiz de la fila de este navegador: «Portátil del curro» → la fila se llama así y debajo sigue «Windows · Chrome»; «Deshacer» lo
+  quita. Pon nombre a otra fila desde aquí y mira que en ese dispositivo sale igual. Cierra sesión y vuelve a entrar en este navegador: la
+  sesión nueva recupera el nombre sola. `select * from session_names` solo tiene filas de sesiones abiertas.
+- [ ] **Escritorio con el nombre del equipo ([ADR-0081](adr/0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md)):** con la 0.10
+  instalada, cierra sesión y vuelve a entrar en la app: sale «<nombre del equipo> · Muninn para Windows» (o Mac).
 - [x] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
   la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge». *(4 de noviembre: las dos sesiones de
   escritorio salen como «Muninn para Windows».)*

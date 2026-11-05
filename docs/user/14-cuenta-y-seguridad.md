@@ -83,13 +83,23 @@ lleva la marca **Este** es el dispositivo que tienes delante.
 - La app de escritorio sale con el nombre de tu ordenador, como «PC-ALEX · Muninn para Windows» (en Windows, el nombre del
   equipo; en el Mac, el de Ajustes › General › Información). Si entraste con una versión anterior a la 0.10, sale sin el nombre
   («Muninn para Windows») hasta que vuelvas a entrar.
-- En el navegador no se puede saber el nombre del equipo: sale el sistema y el navegador («Windows · Chrome»).
+- En el navegador no se puede saber el nombre del equipo: sale el sistema y el navegador («Windows · Chrome»). Para saber cuál es
+  cuál, **ponle nombre** (abajo).
 - Las apps que conectaste a tu cuenta van en **una fila por app**, como «Claude · app conectada», con cuántas sesiones tiene
   abiertas: cada vez que se reconecta abre una nueva. **Cerrar todas** las cierra, pero si la app sigue teniendo acceso volverá a
   conectarse sola. Para cortarla del todo, usa **Apps con acceso** (más abajo).
 - «Programa o servidor» es algo que entra sin navegador, como un script tuyo o el MCP de Muninn en tu ordenador.
 
 Si ves una que no reconoces, ciérrala.
+
+## Ponerle nombre a una sesión
+
+Pulsa el **lápiz** de cualquier fila y escribe un nombre que reconozcas, como «Portátil del curro» o «iPhone» (hasta 40
+caracteres). La fila pasa a llamarse así y debajo sigue saliendo qué es («Windows · Chrome»). Para quitarlo, déjalo vacío.
+Puedes deshacerlo desde el aviso.
+
+- El nombre va con esa sesión: si se cierra, se va con ella.
+- El de **este** dispositivo, además, lo recuerda el navegador: cuando vuelvas a entrar aquí, la sesión nueva lo recupera sola.
 
 ## Cerrar la sesión en otro dispositivo
 

@@ -323,7 +323,11 @@
   navegador. Por eso `list_my_sessions()` devuelve también `app_name` (`auth.oauth_clients.client_name` por
   `auth.sessions.oauth_client_id`, migración `20261029170000_sesiones_con_app`); para cambiar sus columnas hay que hacer
   `drop function` + `create` y volver a dar los permisos. La app de escritorio se reconoce por `Muninn/<versión>` en el user agent,
-  que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual).
+  que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual); desde la 0.10 lleva también el nombre del
+  equipo, `Muninn/<versión> (PC-ALEX)` ([ADR-0081](../adr/0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md)).
+- **Ojo:** el nombre puesto a mano ([ADR-0082](../adr/0082-nombre-puesto-a-mano-en-cada-sesion.md)) vive en `session_names` y llega
+  como `device_name` (migración `20261105150000_nombre_de_sesion`, que vuelve a crear `list_my_sessions`). Sin ella, la lista carga
+  pero el lápiz falla con `Could not find the function public.name_my_session`. Aplícala **después** de `sesiones_con_app`.
 - **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
 
 ### Avisos push: la sesión la pone un trigger y cerrarla borra la fila

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
+import { restoreDeviceName } from '../lib/device-name'
 import { typingIn } from '../lib/keyboard'
 import { registerLinkMenuHost, useLinkAsk } from '../lib/link-menu'
 import { useEnabledModules } from '../lib/modules'
@@ -90,8 +91,13 @@ export function AppShell() {
   useSettingsLinksInSheet()
   const linkAsk = useLinkAsk()
   useEffect(registerLinkMenuHost, [])
+  const m = useMuninn()
+  // El nombre que le pusiste a este dispositivo vuelve a la sesión nueva al entrar (ADR-0082).
+  useEffect(() => {
+    void restoreDeviceName(m)
+  }, [m])
   const modules = useEnabledModules()
-  const settings = useQuery(settingsQuery(useMuninn())).data
+  const settings = useQuery(settingsQuery(m)).data
   const reportOn =
     (settings?.preferences.morningReport as { enabled?: unknown } | undefined)?.enabled === true
   const tasksOn = sectionEnabled('projects', modules)

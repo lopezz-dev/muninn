@@ -20,6 +20,7 @@ const session = (over: Partial<AccountSession>): AccountSession => ({
   aal: 'aal1',
   current: false,
   appName: null,
+  deviceName: null,
   ...over,
 })
 
@@ -53,6 +54,29 @@ describe('sesiones', () => {
     expect(await account.sessions.revoke(other.id)).toBe(false)
     await expect(account.sessions.revoke(here.id)).rejects.toThrow(/Cerrar sesión/)
     expect((await account.sessions.list()).map((s) => s.id)).toEqual([here.id])
+  })
+
+  it('pone nombre a una sesión (también a la de este dispositivo), lo quita con vacío y devuelve el anterior', async () => {
+    const other = session({})
+    const here = session({ current: true })
+    const account = setup({ sessions: [other, here] })
+    expect(await account.sessions.rename(here.id, '  Portátil del curro  ')).toBeNull()
+    expect(await account.sessions.rename(other.id, 'iPhone')).toBeNull()
+    const named = await account.sessions.list()
+    expect(named.map((s) => s.deviceName)).toEqual(['Portátil del curro', 'iPhone'])
+    expect(await account.sessions.rename(other.id, '   ')).toBe('iPhone')
+    expect((await account.sessions.list())[1]?.deviceName).toBeNull()
+  })
+
+  it('el nombre tiene 40 caracteres como mucho y la sesión tiene que existir', async () => {
+    const account = setup({ sessions: [session({ current: true })] })
+    const [here] = await account.sessions.list()
+    await expect(account.sessions.rename(here?.id ?? '', 'x'.repeat(41))).rejects.toBeInstanceOf(
+      ValidationError,
+    )
+    await expect(account.sessions.rename(crypto.randomUUID(), 'Otro')).rejects.toThrow(
+      /ya no está abierta/,
+    )
   })
 
   it('cerrar en los demás deja solo esta; en todos, ninguna', async () => {
