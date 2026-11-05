@@ -1,10 +1,39 @@
 // @vitest-environment jsdom
 import './setup-dom'
-import { render, screen } from '@testing-library/react'
+import { render as rtlRender, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
+import { type ReactElement, type ReactNode, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { Calendar, DateField, formatDateShort, MonthCalendar } from '../src'
+import {
+  Calendar,
+  DateField,
+  formatDateShort,
+  MonthCalendar,
+  type UiLocale,
+  UiLocaleProvider,
+} from '../src'
+
+/** Lo que pone la app en español (los textos de verdad salen de sus `locales`). */
+const ES: UiLocale = {
+  locale: 'es-ES',
+  labels: {
+    today: 'Hoy',
+    clearDate: 'Quitar fecha',
+    thisMonth: 'Este mes',
+    noDate: 'Sin fecha',
+    prevMonth: 'Mes anterior',
+    nextMonth: 'Mes siguiente',
+    prevYear: 'Año anterior',
+    nextYear: 'Año siguiente',
+    close: 'Cerrar',
+    closeNotification: 'Cerrar notificación',
+    monthOfYear: (month, year) => `${month} de ${year}`,
+  },
+}
+const Spanish = ({ children }: { children: ReactNode }) => (
+  <UiLocaleProvider value={ES}>{children}</UiLocaleProvider>
+)
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: Spanish })
 
 describe('Calendar', () => {
   it('empieza la semana en lunes y marca hoy y el día elegido', () => {
@@ -69,8 +98,9 @@ describe('DateField', () => {
   })
 })
 
-it('formatDateShort da una fecha corta en español, sin puntos', () => {
-  expect(formatDateShort('2026-02-09')).toBe('lun, 9 feb 2026')
+it('formatDateShort da una fecha corta en el idioma pedido, sin puntos (inglés por defecto)', () => {
+  expect(formatDateShort('2026-02-09', 'es-ES')).toBe('lun, 9 feb 2026')
+  expect(formatDateShort('2026-02-09')).toBe('Mon, 9 Feb 2026')
 })
 
 describe('MonthCalendar', () => {
@@ -96,5 +126,34 @@ describe('MonthCalendar', () => {
     expect(onSelect).toHaveBeenLastCalledWith('2024-09')
     await userEvent.click(screen.getByRole('button', { name: 'Este mes' }))
     expect(onSelect).toHaveBeenLastCalledWith('2026-10')
+  })
+})
+
+describe('sin proveedor, en inglés (ADR-0077)', () => {
+  it('el calendario, sus días y sus botones', () => {
+    rtlRender(
+      <Calendar value="2026-10-01" today="2026-10-27" onSelect={() => {}} onClear={() => {}} />,
+    )
+    expect(screen.getByText('October 2026')).toBeInTheDocument()
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
+      'M',
+      'T',
+      'W',
+      'T',
+      'F',
+      'S',
+      'S',
+    ])
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Clear date' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Thursday, 1 October 2026' })).toBeInTheDocument()
+  })
+
+  it('el selector de meses y el campo vacío', () => {
+    rtlRender(<MonthCalendar value="2026-10" current="2026-10" onSelect={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Previous year' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'October 2026' })).toHaveTextContent('Oct')
+    expect(screen.getByRole('button', { name: 'This month' })).toBeInTheDocument()
   })
 })
