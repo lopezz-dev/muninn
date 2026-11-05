@@ -37,7 +37,12 @@ export function sessionDeviceLabel(ua: string | null | undefined, appName?: stri
               : null
   // La app de escritorio (Tauri añade `Muninn/<versión>` al de WebView2 o WKWebView) y clientes que no son un navegador
   // (el MCP, scripts, servidores OAuth como el de claude.ai).
-  if (/\bMuninn\/|Tauri/i.test(ua)) return os ? `Muninn para ${os}` : 'Muninn de escritorio'
+  // Desde la 0.10, la app añade el nombre del equipo: `Muninn/0.10.0 (PC-ALEX)` (ADR-0081).
+  if (/\bMuninn\/|Tauri/i.test(ua)) {
+    const app = os ? `Muninn para ${os}` : 'Muninn de escritorio'
+    const name = /\bMuninn\/\S+ \(([^()]{1,40})\)/.exec(ua)?.[1]?.trim()
+    return name ? `${name} · ${app}` : app
+  }
   if (/^node|undici|Deno|supabase-js-node|curl|python-httpx|python-requests|aiohttp/i.test(ua))
     return 'Programa o servidor'
   const browser = /Edg\//.test(ua)
@@ -51,6 +56,38 @@ export function sessionDeviceLabel(ua: string | null | undefined, appName?: stri
           : null
   if (os && browser) return `${os} · ${browser}`
   return os ?? browser ?? 'Dispositivo desconocido'
+}
+
+/** Las sesiones de una app conectada por OAuth, juntas en una sola fila (ADR-0081). */
+export interface AppSessions {
+  appName: string
+  sessions: AccountSession[]
+  /** La más reciente de sus sesiones. */
+  lastActiveAt: string
+}
+
+/**
+ * Separa las sesiones de tus dispositivos de las de apps conectadas (claude.ai, Claude Code…). Cada reconexión de una
+ * app abre una sesión nueva, y en la lista salían como filas iguales que no decían nada: aquí van agrupadas por app,
+ * de la más reciente a la más antigua. Los dispositivos conservan el orden que traen.
+ */
+export function groupSessions(list: AccountSession[]): {
+  devices: AccountSession[]
+  apps: AppSessions[]
+} {
+  const devices: AccountSession[] = []
+  const byApp = new Map<string, AccountSession[]>()
+  for (const s of list) {
+    if (s.appName && !s.current) byApp.set(s.appName, [...(byApp.get(s.appName) ?? []), s])
+    else devices.push(s)
+  }
+  const apps = [...byApp].map(([appName, sessions]) => ({
+    appName,
+    sessions,
+    lastActiveAt: sessions.map((s) => s.lastActiveAt).reduce((a, b) => (a > b ? a : b)),
+  }))
+  apps.sort((a, b) => b.lastActiveAt.localeCompare(a.lastActiveAt))
+  return { devices, apps }
 }
 
 /**

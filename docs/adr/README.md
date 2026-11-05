@@ -73,6 +73,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
 - [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -185,6 +186,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0077](0077-i18n-ingles-por-defecto-con-i18next.md) — La app en varios idiomas con i18next: inglés por defecto, español con prefijo `/es` y rutas en inglés
 - [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar *(propuesto)*
 - [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -194,6 +196,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0057](0057-lector-de-noticias-integrado.md) — Lector de noticias integrado: modo lectura con el contenido del feed, sin iframe *(propuesto)*
 - [ADR-0059](0059-deep-links-para-oauth-en-escritorio.md) — GitHub OAuth en escritorio con el deep link `muninn://auth/callback`
 - [ADR-0060](0060-captcha-con-turnstile-en-la-entrada.md) — CAPTCHA de la entrada con Cloudflare Turnstile, invisible y opcional por variable
+- [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 
 ### ci
 - [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please *(el repo privado y el updater pendiente, reemplazados por ADR-0046 y ADR-0047)*

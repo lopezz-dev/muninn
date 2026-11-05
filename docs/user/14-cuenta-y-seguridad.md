@@ -80,10 +80,13 @@ En **Sesiones y dispositivos** sale cada sitio donde has entrado con tu cuenta: 
 («Mac · Chrome», «iPhone · Safari», «Muninn para Windows»), cuándo se usó por última vez y cuándo entraste. La que
 lleva la marca **Este** es el dispositivo que tienes delante.
 
-- La app de escritorio sale como «Muninn para Windows» o «Muninn para Mac». Si entraste con una versión anterior, sale como
-  el navegador («Windows · Edge», «Mac · Safari») hasta que vuelvas a entrar.
-- Las apps que conectaste a tu cuenta salen con su nombre, como «Claude · app conectada» para claude.ai. Para quitarles el
-  acceso, usa **Apps con acceso** (más abajo).
+- La app de escritorio sale con el nombre de tu ordenador, como «PC-ALEX · Muninn para Windows» (en Windows, el nombre del
+  equipo; en el Mac, el de Ajustes › General › Información). Si entraste con una versión anterior a la 0.10, sale sin el nombre
+  («Muninn para Windows») hasta que vuelvas a entrar.
+- En el navegador no se puede saber el nombre del equipo: sale el sistema y el navegador («Windows · Chrome»).
+- Las apps que conectaste a tu cuenta van en **una fila por app**, como «Claude · app conectada», con cuántas sesiones tiene
+  abiertas: cada vez que se reconecta abre una nueva. **Cerrar todas** las cierra, pero si la app sigue teniendo acceso volverá a
+  conectarse sola. Para cortarla del todo, usa **Apps con acceso** (más abajo).
 - «Programa o servidor» es algo que entra sin navegador, como un script tuyo o el MCP de Muninn en tu ordenador.
 
 Si ves una que no reconoces, ciérrala.

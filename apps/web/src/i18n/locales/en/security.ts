@@ -28,6 +28,12 @@ export const security = {
     signedOut: 'Signed out on “{{device}}”',
     leavesSoon:
       'It’ll be signed out within an hour and won’t get your notifications anymore. To come back, it’ll have to sign in again.',
+    appSessions_one: '1 session · last active {{time}}',
+    appSessions_other: '{{count}} sessions · last active {{time}}',
+    signOutAll: 'Sign out all',
+    appSignedOut: 'Signed out of «{{device}}»',
+    appSignedOutHint:
+      'It will reconnect on its own if it still has access. To stop it for good, remove it in Apps with access.',
     signOutFailed: 'Couldn’t sign out of the session',
     othersTitle: 'Sign out of other devices',
     othersDescription: 'Everywhere includes this one: you’ll have to sign in here again.',
