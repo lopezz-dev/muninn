@@ -31,6 +31,12 @@ export const security: Messages<typeof en> = {
     signedOut: 'Sesión cerrada en «{{device}}»',
     leavesSoon:
       'Saldrá en menos de una hora y ya no le llegan tus avisos. Para volver, tendrá que entrar de nuevo.',
+    appSessions_one: '1 sesión · última actividad {{time}}',
+    appSessions_other: '{{count}} sesiones · última actividad {{time}}',
+    signOutAll: 'Cerrar todas',
+    appSignedOut: 'Sesiones cerradas en «{{device}}»',
+    appSignedOutHint:
+      'Si sigue teniendo acceso, volverá a conectarse sola. Para cortarla del todo, quítala en Apps con acceso.',
     signOutFailed: 'No se pudo cerrar la sesión',
     othersTitle: 'Cerrar en otros dispositivos',
     othersDescription: 'En todos, también en este: tendrás que volver a entrar aquí.',

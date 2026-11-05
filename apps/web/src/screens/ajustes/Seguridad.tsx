@@ -1,4 +1,9 @@
-import { type AccountSession, sessionDeviceLabel } from '@muninn/core'
+import {
+  type AccountSession,
+  type AppSessions,
+  groupSessions,
+  sessionDeviceLabel,
+} from '@muninn/core'
 import { Button, notify } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -68,6 +73,51 @@ function SessionRow({ session }: { session: AccountSession }) {
   )
 }
 
+/**
+ * Todas las sesiones de una app conectada (claude.ai, Claude Code…) en una fila (ADR-0081): cada reconexión abre una
+ * sesión nueva y, una a una, eran filas iguales que no decían nada. «Cerrar todas» las cierra; para que la app no
+ * vuelva a entrar está «Quitar acceso» en Apps con acceso.
+ */
+function AppSessionsRow({ group }: { group: AppSessions }) {
+  const { t } = useTranslation('security')
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState(false)
+  const label = sessionDeviceLabel(null, group.appName)
+  const revokeAll = async () => {
+    setBusy(true)
+    try {
+      for (const s of group.sessions) await m.account.sessions.revoke(s.id)
+      notify.success(t('sessions.appSignedOut', { device: label }), {
+        icon: 'user',
+        description: t('sessions.appSignedOutHint'),
+      })
+    } catch (err) {
+      fail(t('sessions.signOutFailed'), err)
+    }
+    setBusy(false)
+    void qc.invalidateQueries({ queryKey: keys.accountSessions })
+  }
+  return (
+    <PrefRow
+      icon="link"
+      title={label}
+      description={t('sessions.appSessions', {
+        count: group.sessions.length,
+        time: timeAgo(group.lastActiveAt),
+      })}
+    >
+      <Button size="sm" onClick={() => void revokeAll()} disabled={busy}>
+        {busy
+          ? t('sessions.signingOut')
+          : group.sessions.length > 1
+            ? t('sessions.signOutAll')
+            : t('sessions.signOut')}
+      </Button>
+    </PrefRow>
+  )
+}
+
 /** Dónde está abierta la sesión, y cerrarla en uno, en los demás o en todos. */
 export function Sesiones() {
   const { t } = useTranslation('security')
@@ -112,7 +162,19 @@ export function Sesiones() {
         ) : sessions.isError ? (
           <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">{t('sessions.loadError')}</p>
         ) : (
-          sessions.data.map((s) => <SessionRow key={s.id} session={s} />)
+          (() => {
+            const { devices, apps } = groupSessions(sessions.data)
+            return (
+              <>
+                {devices.map((s) => (
+                  <SessionRow key={s.id} session={s} />
+                ))}
+                {apps.map((g) => (
+                  <AppSessionsRow key={g.appName} group={g} />
+                ))}
+              </>
+            )
+          })()
         )}
       </div>
       <PrefRow
