@@ -85,6 +85,10 @@ asistentes de IA tampoco.
 Claude y otros [asistentes](06-asistentes-ia.md) pueden crear, leer, buscar y editar tus notas por ti; lo que escriben
 aparece aquí igual que lo tuyo.
 
+También pueden **colgar una nota de otra** (una nota madre con sus hijas) y moverlas, para repartir un texto largo en
+partes. La pantalla de Notas todavía las enseña en una lista, sin el árbol: llega en la próxima versión, con carpetas y
+arrastrar para ordenarlas.
+
 Si activas el [informe de la mañana](11-asistente.md#informe-de-la-mañana), cada día te deja una **nota fijada** con tus
 tareas, los cobros próximos y el resumen de noticias.
 
