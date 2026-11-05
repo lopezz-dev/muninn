@@ -4,11 +4,13 @@ import {
   groupSessions,
   sessionDeviceLabel,
 } from '@muninn/core'
-import { Button, notify } from '@muninn/ui'
+import { Button, Dialog, DialogContent, IconButton, icons, notify, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { timeAgo } from '../../lib/dates'
+import { rememberDeviceName } from '../../lib/device-name'
+import { notifyUndo } from '../../lib/feedback'
 import { useAuth, useMuninn } from '../../lib/muninn'
 import { fail } from '../../lib/mutations'
 import { keys } from '../../lib/queries'
@@ -20,12 +22,98 @@ import { PrefGroup, PrefRow } from './ui'
  * entrar en ese dispositivo): en lugar de «Deshacer», el aviso dice qué pasa.
  */
 
+/**
+ * Ponerle nombre a una sesión («Portátil del curro», ADR-0082): en el navegador no se puede saber qué equipo es. El de
+ * este dispositivo, además, lo recuerda el navegador para la próxima vez que entres. Con «Deshacer».
+ */
+function RenameDialog({
+  session,
+  open,
+  onOpenChange,
+}: {
+  session: AccountSession
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useTranslation('security')
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const [value, setValue] = useState(session.deviceName ?? '')
+  const [busy, setBusy] = useState(false)
+
+  const apply = async (name: string | null, undoing = false): Promise<boolean> => {
+    let before: string | null
+    try {
+      before = await m.account.sessions.rename(session.id, name)
+    } catch (err) {
+      fail(t('sessions.renameFailed'), err)
+      return false
+    } finally {
+      void qc.invalidateQueries({ queryKey: keys.accountSessions })
+    }
+    const saved = name?.trim() || null
+    if (session.current) rememberDeviceName(saved)
+    if (!undoing)
+      notifyUndo(saved ? t('sessions.renamed', { name: saved }) : t('sessions.nameRemoved'), {
+        icon: 'edit',
+        undo: () => apply(before, true),
+      })
+    return true
+  }
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    if (await apply(value)) onOpenChange(false)
+    setBusy(false)
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (o) setValue(session.deviceName ?? '')
+        onOpenChange(o)
+      }}
+    >
+      <DialogContent
+        title={t('sessions.renameTitle')}
+        description={t('sessions.renameDescription', {
+          device: sessionDeviceLabel(session.userAgent, session.appName),
+        })}
+      >
+        <form onSubmit={(e) => void save(e)} className="flex flex-col gap-4">
+          <TextField
+            label={t('sessions.nameLabel')}
+            hint={session.current ? t('sessions.nameHintHere') : t('sessions.nameHint')}
+            placeholder={t('sessions.namePlaceholder')}
+            value={value}
+            maxLength={40}
+            autoFocus
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" onClick={() => onOpenChange(false)}>
+              {t('sessions.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" disabled={busy}>
+              {t('sessions.saveName')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function SessionRow({ session }: { session: AccountSession }) {
   const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
-  const label = sessionDeviceLabel(session.userAgent, session.appName)
+  const [renaming, setRenaming] = useState(false)
+  const kind = sessionDeviceLabel(session.userAgent, session.appName)
+  const label = session.deviceName ?? kind
   const revoke = async () => {
     setBusy(true)
     try {
@@ -41,6 +129,7 @@ function SessionRow({ session }: { session: AccountSession }) {
     void qc.invalidateQueries({ queryKey: keys.accountSessions })
   }
   const details = [
+    session.deviceName ? kind : null,
     session.current
       ? t('sessions.activeNow')
       : t('sessions.lastActive', { time: timeAgo(session.lastActiveAt) }),
@@ -64,11 +153,20 @@ function SessionRow({ session }: { session: AccountSession }) {
       }
       description={details.join(' · ')}
     >
-      {session.current ? null : (
-        <Button size="sm" onClick={() => void revoke()} disabled={busy}>
-          {busy ? t('sessions.signingOut') : t('sessions.signOut')}
-        </Button>
-      )}
+      <div className="flex items-center gap-1">
+        <IconButton
+          aria-label={t('sessions.renameOf', { device: label })}
+          icon={<icons.edit size={16} />}
+          size="sm"
+          onClick={() => setRenaming(true)}
+        />
+        {session.current ? null : (
+          <Button size="sm" onClick={() => void revoke()} disabled={busy}>
+            {busy ? t('sessions.signingOut') : t('sessions.signOut')}
+          </Button>
+        )}
+      </div>
+      <RenameDialog session={session} open={renaming} onOpenChange={setRenaming} />
     </PrefRow>
   )
 }

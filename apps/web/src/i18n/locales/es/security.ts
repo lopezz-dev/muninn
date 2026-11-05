@@ -37,6 +37,20 @@ export const security: Messages<typeof en> = {
     appSignedOut: 'Sesiones cerradas en «{{device}}»',
     appSignedOutHint:
       'Si sigue teniendo acceso, volverá a conectarse sola. Para cortarla del todo, quítala en Apps con acceso.',
+    renameOf: 'Poner nombre a «{{device}}»',
+    renameTitle: 'Ponle nombre a esta sesión',
+    renameDescription: '{{device}}. Con un nombre sabrás qué dispositivo es en esta lista.',
+    nameLabel: 'Nombre',
+    namePlaceholder: 'Portátil del curro, iPhone…',
+    nameHint:
+      'Hasta 40 caracteres. Déjalo vacío para quitarlo. Se va cuando se cierra esta sesión.',
+    nameHintHere:
+      'Hasta 40 caracteres. Déjalo vacío para quitarlo. Este navegador lo recuerda y se lo vuelve a poner cuando entres otra vez.',
+    saveName: 'Guardar',
+    cancel: 'Cancelar',
+    renamed: 'Ahora se llama «{{name}}»',
+    nameRemoved: 'Nombre quitado',
+    renameFailed: 'No se pudo guardar el nombre',
     signOutFailed: 'No se pudo cerrar la sesión',
     othersTitle: 'Cerrar en otros dispositivos',
     othersDescription: 'En todos, también en este: tendrás que volver a entrar aquí.',

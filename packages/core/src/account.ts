@@ -6,6 +6,7 @@ import {
   mfaCode,
   mfaFactorName,
   type SignOutScope,
+  sessionName,
   signOutScope,
 } from './schemas'
 import type { AccountStore, Store } from './store'
@@ -125,6 +126,18 @@ export function createAccount({ store, parse }: AccountContext) {
     return auth().revokeSession(id)
   }
 
+  /**
+   * Pone nombre a una sesión tuya («Portátil del curro», ADR-0082), también a la de este dispositivo; vacío lo quita.
+   * Devuelve el nombre que tenía, para «Deshacer». Lanza si la sesión ya no existe.
+   */
+  async function renameSession(id: string, name: string | null): Promise<string | null> {
+    const clean = parse(sessionName, name)
+    const before = (await auth().sessions()).find((s) => s.id === id)
+    if (!before || !(await auth().renameSession(id, clean)))
+      throw new Error('Esa sesión ya no está abierta')
+    return before.deviceName
+  }
+
   /** Cierra la sesión en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
   const signOut = async (scope: SignOutScope) => auth().signOut(parse(signOutScope, scope))
 
@@ -224,7 +237,7 @@ export function createAccount({ store, parse }: AccountContext) {
 
   return {
     available,
-    sessions: { list: sessions, revoke: revokeSession, signOut },
+    sessions: { list: sessions, revoke: revokeSession, rename: renameSession, signOut },
     mfa: {
       factors,
       active,

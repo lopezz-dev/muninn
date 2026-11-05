@@ -34,6 +34,20 @@ export const security = {
     appSignedOut: 'Signed out of «{{device}}»',
     appSignedOutHint:
       'It will reconnect on its own if it still has access. To stop it for good, remove it in Apps with access.',
+    renameOf: 'Name «{{device}}»',
+    renameTitle: 'Name this session',
+    renameDescription: '{{device}}. A name helps you tell your devices apart in this list.',
+    nameLabel: 'Name',
+    namePlaceholder: 'Work laptop, iPhone…',
+    nameHint:
+      'Up to 40 characters. Leave it empty to remove it. It goes away when this session is signed out.',
+    nameHintHere:
+      'Up to 40 characters. Leave it empty to remove it. This browser remembers it and puts it back when you sign in again.',
+    saveName: 'Save',
+    cancel: 'Cancel',
+    renamed: 'Named «{{name}}»',
+    nameRemoved: 'Name removed',
+    renameFailed: 'Couldn’t save the name',
     signOutFailed: 'Couldn’t sign out of the session',
     othersTitle: 'Sign out of other devices',
     othersDescription: 'Everywhere includes this one: you’ll have to sign in here again.',
