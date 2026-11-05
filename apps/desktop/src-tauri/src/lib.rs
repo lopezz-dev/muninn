@@ -43,7 +43,8 @@ pub fn run() {
 }
 
 /// Deja el nombre del equipo en algo seguro dentro de un user agent: letras, números, espacios y `-_.'`, sin el
-/// `.local` de macOS y con 40 caracteres como mucho. Vacío → `None`.
+/// `.local` de macOS y con 40 caracteres como mucho. Vacío → `None`. En Linux no hay marca (y clippy lo daría por muerto).
+#[cfg(any(windows, target_os = "macos", test))]
 fn clean_device_name(raw: &str) -> Option<String> {
     let raw = raw.trim().trim_end_matches(".local");
     let name: String = raw
