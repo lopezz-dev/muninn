@@ -25,14 +25,18 @@ export function rememberDeviceName(name: string | null) {
 
 /**
  * Al arrancar con cuenta: si este navegador recuerda un nombre y la sesión de ahora no tiene, se lo pone. Silencioso:
- * si falla (sin red, falta el segundo factor), se reintenta en el siguiente arranque.
+ * si falla (sin red, falta el segundo factor), se reintenta en el siguiente arranque. `onRestored` refresca la lista si ya
+ * se había pedido (si no, en la primera carga salía sin el nombre).
  */
-export async function restoreDeviceName(m: Muninn) {
+export async function restoreDeviceName(m: Muninn, onRestored: () => void = () => {}) {
   const name = rememberedDeviceName()
   if (!name || !m.account.available()) return
   try {
     const here = (await m.account.sessions.list()).find((s) => s.current)
-    if (here && !here.deviceName) await m.account.sessions.rename(here.id, name)
+    if (here && !here.deviceName) {
+      await m.account.sessions.rename(here.id, name)
+      onRestored()
+    }
   } catch {
     // Nada que avisar: no es algo que hayas pedido ahora.
   }

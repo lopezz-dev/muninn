@@ -1,6 +1,6 @@
 import type { Project } from '@muninn/core'
 import { cn } from '@muninn/ui'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
@@ -9,7 +9,7 @@ import { typingIn } from '../lib/keyboard'
 import { registerLinkMenuHost, useLinkAsk } from '../lib/link-menu'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
-import { settingsQuery } from '../lib/queries'
+import { keys, settingsQuery } from '../lib/queries'
 import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
@@ -92,10 +92,11 @@ export function AppShell() {
   const linkAsk = useLinkAsk()
   useEffect(registerLinkMenuHost, [])
   const m = useMuninn()
+  const qc = useQueryClient()
   // El nombre que le pusiste a este dispositivo vuelve a la sesión nueva al entrar (ADR-0082).
   useEffect(() => {
-    void restoreDeviceName(m)
-  }, [m])
+    void restoreDeviceName(m, () => qc.invalidateQueries({ queryKey: keys.accountSessions }))
+  }, [m, qc])
   const modules = useEnabledModules()
   const settings = useQuery(settingsQuery(m)).data
   const reportOn =
