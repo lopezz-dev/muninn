@@ -76,6 +76,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
 - [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -102,6 +103,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
 - [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -113,6 +115,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
 - [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### ui
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
@@ -192,6 +195,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
 - [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
