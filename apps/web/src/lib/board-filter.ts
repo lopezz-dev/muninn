@@ -1,4 +1,5 @@
 import type { TaskPriority, TaskSource, TaskWithColumn } from '@muninn/core'
+import { currentLocale, t } from '../i18n'
 import { addDays } from './dates'
 import { matchesAll, words } from './text'
 
@@ -25,20 +26,24 @@ export const NO_FILTER: BoardFilter = {
   due: [],
 }
 
-export const DUE_OPTIONS: { value: DueBucket; label: string }[] = [
-  { value: 'overdue', label: 'Vencidas' },
-  { value: 'today', label: 'Hoy' },
-  { value: 'week', label: 'Próximos 7 días' },
-  { value: 'later', label: 'Más adelante' },
-  { value: 'none', label: 'Sin fecha' },
-]
+/** Opciones de vencimiento y de origen, con la etiqueta como *getter*: se lee al pintar, en el idioma activo (ADR-0077). */
+export const DUE_OPTIONS: { value: DueBucket; label: string }[] = (
+  ['overdue', 'today', 'week', 'later', 'none'] as const
+).map((value) => ({
+  value,
+  get label() {
+    return t(`filter.due.${value}`, { ns: 'board' })
+  },
+}))
 
-export const SOURCE_OPTIONS: { value: TaskSource; label: string }[] = [
-  { value: 'manual', label: 'Manual' },
-  { value: 'mcp', label: 'Asistente' },
-  { value: 'github', label: 'GitHub' },
-  { value: 'agent', label: 'Agente' },
-]
+export const SOURCE_OPTIONS: { value: TaskSource; label: string }[] = (
+  ['manual', 'mcp', 'github', 'agent'] as const
+).map((value) => ({
+  value,
+  get label() {
+    return t(`filter.source.${value}`, { ns: 'board' })
+  },
+}))
 
 /** Cuántos grupos hay con algo elegido (el texto cuenta como uno). */
 export const activeGroups = (f: BoardFilter) =>
@@ -83,7 +88,7 @@ export function labelsOf(tasks: Pick<TaskWithColumn, 'labels'>[]): string[] {
   for (const t of tasks) {
     for (const l of t.labels) if (!seen.has(l.toLowerCase())) seen.set(l.toLowerCase(), l)
   }
-  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'))
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, currentLocale()))
 }
 
 /** La lista con `value` añadido o quitado. */

@@ -6,6 +6,7 @@ import type {
   TaskWithColumn,
 } from '@muninn/core'
 import { issueNumber } from '../components/task-meta'
+import { currentLocale, t } from '../i18n'
 import { sameRepo } from './text'
 
 /**
@@ -89,14 +90,16 @@ export function projectChoices(
   projects: ProjectLink[],
 ): { value: string; options: ProjectChoice[] } {
   const current = projects.find((p) => p.githubRepo && sameRepo(p.githubRepo, repo))
-  const options: ProjectChoice[] = [{ value: '', label: 'Sin vincular', tone: 'text-fg-muted' }]
+  const options: ProjectChoice[] = [
+    { value: '', label: t('repos.unlinked', { ns: 'github' }), tone: 'text-fg-muted' },
+  ]
   for (const p of projects) {
     const other = p.githubRepo && !sameRepo(p.githubRepo, repo) ? p.githubRepo : null
     options.push({
       value: p.id,
       label: p.name,
       dot: p.color,
-      hint: other ? `con ${other}` : undefined,
+      hint: other ? t('repos.withRepo', { ns: 'github', repo: other }) : undefined,
       disabled: Boolean(other),
     })
   }
@@ -208,14 +211,12 @@ export function readSyncResult(data: unknown): SyncResult | null {
   return result
 }
 
-/** «2 issues nuevas y 1 cambiada», o «Todo estaba al día». */
+/** «2 issues nuevas y 1 cambiada», o «Todo estaba al día» (la lista, unida en el idioma activo). */
 export function describeSync(r: SyncResult): string {
   const parts: string[] = []
-  if (r.created) parts.push(`${r.created} ${r.created === 1 ? 'issue nueva' : 'issues nuevas'}`)
-  if (r.updated) parts.push(`${r.updated} ${r.updated === 1 ? 'cambiada' : 'cambiadas'}`)
-  if (r.archived) parts.push(`${r.archived} ${r.archived === 1 ? 'archivada' : 'archivadas'}`)
-  if (parts.length === 0) return 'Todo estaba al día'
-  return parts.length === 1
-    ? (parts[0] as string)
-    : `${parts.slice(0, -1).join(', ')} y ${parts.at(-1)}`
+  if (r.created) parts.push(t('sync.created', { ns: 'github', count: r.created }))
+  if (r.updated) parts.push(t('sync.updated', { ns: 'github', count: r.updated }))
+  if (r.archived) parts.push(t('sync.archived', { ns: 'github', count: r.archived }))
+  if (parts.length === 0) return t('sync.upToDate', { ns: 'github' })
+  return new Intl.ListFormat(currentLocale(), { type: 'conjunction' }).format(parts)
 }

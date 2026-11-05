@@ -5,8 +5,9 @@ import type {
   UpdateSubscriptionInput,
 } from '@muninn/core'
 import type { QueryClient } from '@tanstack/react-query'
+import { t } from '../i18n'
 import { notifyUndo } from './feedback'
-import { amountText } from './finance'
+import { amountText, numericDate } from './finance'
 import { FINANCE_QUEUE, settleFinance } from './finance-actions'
 import { financeKeys } from './finance-queries'
 import { fail, serial } from './mutations'
@@ -34,7 +35,7 @@ export async function chargeSubscription(m: Muninn, qc: QueryClient, s: Subscrip
   try {
     const res = await run(() => m.finance.subscriptions.charge(s.id, { expected: s.nextDate }))
     settleFinance(qc)
-    notifyUndo(`Cobro de «${s.name}» apuntado`, {
+    notifyUndo(t('toast.chargeLogged', { ns: 'finance', name: s.name }), {
       icon: 'recurring',
       description: amountText(res.transaction.amount, 'none'),
       undo: () =>
@@ -44,13 +45,13 @@ export async function chargeSubscription(m: Muninn, qc: QueryClient, s: Subscrip
             transactionId: res.transaction.id,
           }),
         ).finally(() => settleFinance(qc)),
-      undone: 'Cobro deshecho',
-      failTitle: 'No se pudo deshacer el cobro',
+      undone: t('toast.chargeUndone', { ns: 'finance' }),
+      failTitle: t('toast.chargeUndoFailed', { ns: 'finance' }),
     })
     return true
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.upcoming, prev)
-    fail('No se pudo apuntar el cobro', err)
+    fail(t('toast.chargeFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return false
   }
@@ -61,19 +62,19 @@ export async function skipSubscription(m: Muninn, qc: QueryClient, s: Subscripti
   try {
     const res = await run(() => m.finance.subscriptions.skip(s.id, { expected: s.nextDate }))
     settleFinance(qc)
-    notifyUndo(`Cobro de «${s.name}» saltado`, {
+    notifyUndo(t('toast.chargeSkipped', { ns: 'finance', name: s.name }), {
       icon: 'move',
-      description: 'sin apuntar gasto',
+      description: t('toast.chargeSkippedHint', { ns: 'finance' }),
       undo: () =>
         run(() => m.finance.subscriptions.revert(s.id, { previousDate: res.previousDate })).finally(
           () => settleFinance(qc),
         ),
-      undone: 'Vuelve a estar pendiente',
+      undone: t('toast.pendingAgain', { ns: 'finance' }),
     })
     return true
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.upcoming, prev)
-    fail('No se pudo saltar el cobro', err)
+    fail(t('toast.skipFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return false
   }
@@ -99,22 +100,26 @@ export async function createSubscription(
     settleFinance(qc)
     notifyUndo(
       opts.chargeNow
-        ? `Gasto y suscripción «${sub.name}» guardados`
-        : `Suscripción «${sub.name}» creada`,
+        ? t('toast.subWithExpense', { ns: 'finance', name: sub.name })
+        : t('toast.subCreated', { ns: 'finance', name: sub.name }),
       {
         icon: 'recurring',
-        description: `${amountText(sub.amount, 'none')} · próximo cobro ${sub.nextDate.split('-').reverse().join('/')}`,
+        description: t('toast.subDesc', {
+          ns: 'finance',
+          amount: amountText(sub.amount, 'none'),
+          date: numericDate(sub.nextDate),
+        }),
         undo: () =>
           run(async () => {
             if (txId) await m.finance.transactions.archive(txId)
             await m.finance.subscriptions.archive(sub.id)
           }).finally(() => settleFinance(qc)),
-        undone: ['Deshecho', { icon: 'archive' }],
+        undone: [t('toast.undone', { ns: 'finance' }), { icon: 'archive' }],
       },
     )
     return sub
   } catch (err) {
-    fail('No se pudo crear la suscripción', err)
+    fail(t('toast.subCreateFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return null
   }
@@ -140,7 +145,7 @@ export async function updateSubscription(
         nextDate: before.nextDate,
         remindDays: before.remindDays,
       }
-      notifyUndo('Suscripción guardada', {
+      notifyUndo(t('toast.subSaved', { ns: 'finance' }), {
         icon: 'check',
         id: `subscription-${before.id}`,
         undo: async () =>
@@ -149,7 +154,7 @@ export async function updateSubscription(
     }
     return saved
   } catch (err) {
-    fail('No se pudo guardar la suscripción', err)
+    fail(t('toast.subSaveFailed', { ns: 'finance' }), err)
     return null
   }
 }
@@ -166,17 +171,17 @@ export async function archiveSubscription(m: Muninn, qc: QueryClient, s: Subscri
     await run(() => m.finance.subscriptions.archive(s.id))
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.subscriptions, prev)
-    fail('No se pudo archivar la suscripción', err)
+    fail(t('toast.subArchiveFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return false
   }
   settleFinance(qc)
-  notifyUndo(`«${s.name}» archivada`, {
+  notifyUndo(t('toast.subArchived', { ns: 'finance', name: s.name }), {
     icon: 'archive',
-    description: 'ya no avisará; sus cobros se conservan',
+    description: t('toast.subArchivedHint', { ns: 'finance' }),
     undo: () => run(() => m.finance.subscriptions.restore(s.id)).finally(() => settleFinance(qc)),
-    undone: `«${s.name}» recuperada`,
-    failTitle: 'No se pudo recuperar la suscripción',
+    undone: t('toast.subRestored', { ns: 'finance', name: s.name }),
+    failTitle: t('toast.subRestoreFailed', { ns: 'finance' }),
   })
   return true
 }

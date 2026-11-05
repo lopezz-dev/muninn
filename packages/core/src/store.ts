@@ -306,6 +306,8 @@ export interface AccountStore {
   sessions(): Promise<AccountSession[]>
   /** Cierra una sesión de la cuenta; devuelve si existía. */
   revokeSession(id: string): Promise<boolean>
+  /** Pone (o quita, con `null`) el nombre de una sesión de la cuenta; devuelve si existía (ADR-0082). */
+  renameSession(id: string, name: string | null): Promise<boolean>
   signOut(scope: SignOutScope): Promise<void>
   mfa: MfaStore
   oauthGrants: OAuthGrantStore

@@ -21,6 +21,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { type FormEvent, type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PRIORITY_TEXT } from '../../components/task-meta'
 import { useAgentColumn } from '../../lib/agent'
 import { priorityLabel } from '../../lib/board'
@@ -34,11 +35,12 @@ import { CardBody, type Progress } from './TaskCard'
 
 /** Lo que dnd-kit necesita de una tarea arrastrable del calendario: enlace al detalle y asa a la vez. */
 function useTaskDrag(task: TaskWithColumn, disabled: boolean) {
+  const { t } = useTranslation('board')
   return useDraggable({
     id: task.id,
     disabled,
     // Enter abre la tarea (es un enlace); Espacio la recoge para moverla con las flechas.
-    attributes: { role: 'link', roleDescription: 'tarea arrastrable', tabIndex: 0 },
+    attributes: { role: 'link', roleDescription: t('calendar.draggable'), tabIndex: 0 },
   })
 }
 
@@ -64,6 +66,7 @@ export function TaskPill({
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useTaskDrag(task, disabled)
   const dragging = useDndContext().active !== null
+  const { t } = useTranslation('board')
   const done = task.column.kind === 'done'
   const overdue = isOverdue(task, today)
   const flag = !done && task.priority !== 'none' && task.priority !== 'low'
@@ -85,17 +88,24 @@ export function TaskPill({
       )}
     >
       {done ? (
-        <icons.check size={12} weight="bold" className="shrink-0 text-success" aria-label="Hecha" />
+        <icons.check
+          size={12}
+          weight="bold"
+          className="shrink-0 text-success"
+          aria-label={t('calendar.done')}
+        />
       ) : (
         <ColumnDot column={task.column} />
       )}
       <span className={cn('min-w-0 flex-1 truncate', done && 'line-through')}>{task.title}</span>
-      {overdue ? <span className="sr-only">(vencida)</span> : null}
+      {overdue ? <span className="sr-only">{t('calendar.overdueSr')}</span> : null}
       {flag ? (
         <icons.flag
           size={12}
           className={cn('shrink-0', PRIORITY_TEXT[task.priority])}
-          aria-label={`Prioridad ${priorityLabel(task.priority).toLowerCase()}`}
+          aria-label={t('calendar.priority', {
+            priority: priorityLabel(task.priority).toLowerCase(),
+          })}
         />
       ) : null}
     </Link>
@@ -132,6 +142,7 @@ export function CompactBody({
   progress?: Progress
   large?: boolean
 }) {
+  const { t } = useTranslation('board')
   const done = task.column.kind === 'done'
   const overdue = isOverdue(task, today)
   const flag = !done && (task.priority === 'high' || task.priority === 'urgent')
@@ -170,7 +181,7 @@ export function CompactBody({
       {subtasks ? (
         <ProgressBar
           value={subtasks.done / subtasks.total}
-          label={`Subtareas de «${task.title}»`}
+          label={t('card.subtasks', { title: task.title })}
           className="h-[3px]"
         />
       ) : null}
@@ -194,7 +205,7 @@ export function CompactBody({
         {overdue ? (
           <span className="inline-flex shrink-0 items-center gap-1 font-medium text-danger">
             <icons.clock size={12} aria-hidden="true" />
-            Vencida
+            {t('calendar.overdue')}
           </span>
         ) : null}
         {subtasks ? (
@@ -213,7 +224,9 @@ export function CompactBody({
             {large ? (
               priorityLabel(task.priority)
             ) : (
-              <span className="sr-only">{`Prioridad ${priorityLabel(task.priority).toLowerCase()}`}</span>
+              <span className="sr-only">
+                {t('calendar.priority', { priority: priorityLabel(task.priority).toLowerCase() })}
+              </span>
             )}
           </span>
         ) : null}
@@ -288,6 +301,7 @@ export function AddTaskPopover({
   const m = useMuninn()
   const qc = useQueryClient()
   const shell = useShell()
+  const { t } = useTranslation('board')
   const agent = useAgentColumn(projectId).columnId
   const choices = columns.filter((c) => c.kind !== 'done' && c.id !== agent)
   const [title, setTitle] = useState('')
@@ -321,16 +335,18 @@ export function AddTaskPopover({
     if (task) setTitle('')
   }
 
-  const label = date ? `Nueva tarea el ${dayShort(date)}` : 'Nueva tarea sin fecha'
+  const label = date
+    ? t('calendar.newTaskOn', { date: dayShort(date) })
+    : t('calendar.newTaskUndated')
   return (
     <Popover open={open} onOpenChange={change}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-3" aria-label={label}>
         <form onSubmit={submit} className="flex flex-col gap-2.5">
           <TextField
-            label="Título de la nueva tarea"
+            label={t('quickAdd.label')}
             hideLabel
-            placeholder="Título de la tarea"
+            placeholder={t('quickAdd.placeholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={300}
@@ -341,13 +357,17 @@ export function AddTaskPopover({
             <DatePicker value={due} onChange={setDue} clearable today={today}>
               <Button type="button" size="sm" className={cn(due && 'text-accent')}>
                 <Icon name="calendar" size={13} />
-                {due ? dayShort(due) : 'Sin fecha'}
+                {due ? dayShort(due) : t('calendar.noDate')}
               </Button>
             </DatePicker>
             {choices.length > 1 ? (
               <Menu>
                 <MenuTrigger asChild>
-                  <Button type="button" size="sm" aria-label={`Columna: ${column?.name ?? ''}`}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    aria-label={t('calendar.columnLabel', { name: column?.name ?? '' })}
+                  >
                     {column ? <ColumnDot column={column} /> : null}
                     {column?.name}
                     <icons.chevronDown size={11} aria-hidden="true" />
@@ -367,7 +387,7 @@ export function AddTaskPopover({
             ) : null}
           </div>
           <div className="flex items-center gap-2 text-xs text-fg-subtle">
-            Enter crea · Esc cierra
+            {t('calendar.addHint')}
             <button
               type="button"
               className="ml-auto cursor-pointer font-medium text-accent hover:underline"
@@ -381,7 +401,7 @@ export function AddTaskPopover({
                 })
               }}
             >
-              Más opciones…
+              {t('calendar.moreOptions')}
             </button>
           </div>
         </form>
@@ -402,6 +422,7 @@ export function OverdueToggle({
   onFilterChange: (next: BoardFilter) => void
   touch?: boolean
 }) {
+  const { t } = useTranslation('board')
   if (count === 0) return null
   const on = filter.due.includes('overdue')
   return (
@@ -416,7 +437,7 @@ export function OverdueToggle({
       )}
     >
       <icons.clock size={touch ? 15 : 13} aria-hidden="true" />
-      {count === 1 ? '1 vencida' : `${count} vencidas`}
+      {t('calendar.overdueCount', { count })}
     </button>
   )
 }

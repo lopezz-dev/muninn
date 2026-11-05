@@ -2,6 +2,7 @@ import type { Note } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { t } from '../../i18n'
 import { useMuninn } from '../../lib/muninn'
 import { reason } from '../../lib/mutations'
 import { saveNoteText } from '../../lib/note-actions'
@@ -53,9 +54,9 @@ export function useNoteDraft(note: Note) {
     } catch (err) {
       inFlight.current = false
       setStatus('error')
-      notify.error('No se pudo guardar la nota', {
+      notify.error(t('toast.saveFailed', { ns: 'notes' }), {
         description: reason(err),
-        action: { label: 'Reintentar', onClick: () => void save() },
+        action: { label: t('toast.retry', { ns: 'notes' }), onClick: () => void save() },
       })
       return false
     }

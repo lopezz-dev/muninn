@@ -2,6 +2,7 @@ import { Button } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../components/Page'
 import { useMuninn } from '../lib/muninn'
 import { restoreNote } from '../lib/note-actions'
@@ -14,6 +15,7 @@ const route = getRouteApi('/_app/notas/$noteId')
 
 /** La nota abierta. Una sola ruta (`/notas/$noteId`) con enlace compartible; `Notas.tsx` decide dónde se pinta. */
 export function NotaDetalle() {
+  const { t } = useTranslation('notes')
   const { noteId } = route.useParams()
   const m = useMuninn()
   const qc = useQueryClient()
@@ -28,16 +30,15 @@ export function NotaDetalle() {
     return (
       <EmptyState
         icon="notes"
-        title="No encontramos esta nota"
+        title={t('detail.notFoundTitle')}
         className="mt-10"
         actions={
           <Button asChild variant="primary">
-            <Link to="/notas">Ver notas</Link>
+            <Link to="/notas">{t('detail.seeNotes')}</Link>
           </Button>
         }
       >
-        Puede que sea de otra cuenta o que ya no exista. En modo demo las notas se pierden al
-        recargar.
+        {t('detail.notFoundText')}
       </EmptyState>
     )
   }
@@ -47,20 +48,20 @@ export function NotaDetalle() {
     return (
       <EmptyState
         icon="archive"
-        title="Esta nota está archivada"
+        title={t('detail.archivedTitle')}
         className="mt-10"
         actions={
           <>
             <Button variant="primary" onClick={() => restoreNote(m, qc, noteId)}>
-              Recuperar nota
+              {t('detail.restore')}
             </Button>
             <Button asChild variant="secondary">
-              <Link to="/notas">Ver notas</Link>
+              <Link to="/notas">{t('detail.seeNotes')}</Link>
             </Button>
           </>
         }
       >
-        «{noteTitle(note.data)}» no aparece en la lista. Recupérala para volver a verla y editarla.
+        {t('detail.archivedText', { title: noteTitle(note.data) })}
       </EmptyState>
     )
   }

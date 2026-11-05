@@ -1,6 +1,6 @@
 ---
 title: Cuenta y seguridad
-description: Protege tu cuenta con un segundo factor, cierra la sesión en los dispositivos que ya no uses y quita el acceso a otras apps.
+description: Protege tu cuenta con un segundo factor, recibe un aviso cuando se entra desde un dispositivo nuevo, cierra la sesión en los que ya no uses y quita el acceso a otras apps.
 order: 14
 status: disponible
 group: cuenta
@@ -80,13 +80,26 @@ En **Sesiones y dispositivos** sale cada sitio donde has entrado con tu cuenta: 
 («Mac · Chrome», «iPhone · Safari», «Muninn para Windows»), cuándo se usó por última vez y cuándo entraste. La que
 lleva la marca **Este** es el dispositivo que tienes delante.
 
-- La app de escritorio sale como «Muninn para Windows» o «Muninn para Mac». Si entraste con una versión anterior, sale como
-  el navegador («Windows · Edge», «Mac · Safari») hasta que vuelvas a entrar.
-- Las apps que conectaste a tu cuenta salen con su nombre, como «Claude · app conectada» para claude.ai. Para quitarles el
-  acceso, usa **Apps con acceso** (más abajo).
+- La app de escritorio sale con el nombre de tu ordenador, como «PC-ALEX · Muninn para Windows» (en Windows, el nombre del
+  equipo; en el Mac, el de Ajustes › General › Información). Si entraste con una versión anterior a la 0.10, sale sin el nombre
+  («Muninn para Windows») hasta que vuelvas a entrar.
+- En el navegador no se puede saber el nombre del equipo: sale el sistema y el navegador («Windows · Chrome»). Para saber cuál es
+  cuál, **ponle nombre** (abajo).
+- Las apps que conectaste a tu cuenta van en **una fila por app**, como «Claude · app conectada», con cuántas sesiones tiene
+  abiertas: cada vez que se reconecta abre una nueva. **Cerrar todas** las cierra, pero si la app sigue teniendo acceso volverá a
+  conectarse sola. Para cortarla del todo, usa **Apps con acceso** (más abajo).
 - «Programa o servidor» es algo que entra sin navegador, como un script tuyo o el MCP de Muninn en tu ordenador.
 
 Si ves una que no reconoces, ciérrala.
+
+## Ponerle nombre a una sesión
+
+Pulsa el **lápiz** de cualquier fila y escribe un nombre que reconozcas, como «Portátil del curro» o «iPhone» (hasta 40
+caracteres). La fila pasa a llamarse así y debajo sigue saliendo qué es («Windows · Chrome»). Para quitarlo, déjalo vacío.
+Puedes deshacerlo desde el aviso.
+
+- El nombre va con esa sesión: si se cierra, se va con ella.
+- El de **este** dispositivo, además, lo recuerda el navegador: cuando vuelvas a entrar aquí, la sesión nueva lo recupera sola.
 
 ## Cerrar la sesión en otro dispositivo
 
@@ -106,6 +119,25 @@ Al final de la lista, en **Cerrar en otros dispositivos**:
 
 En los dos casos, los demás dispositivos dejan de recibir tus avisos al momento y salen en menos de una hora. Si vuelves
 a entrar en uno de ellos y quieres los avisos, actívalos otra vez en **Ajustes › Notificaciones**.
+
+## Aviso de dispositivo nuevo
+
+Cuando alguien entra en tu cuenta desde un dispositivo que Muninn no reconoce, te llega un correo unos minutos después. Dice
+qué dispositivo era, cuándo y desde qué dirección IP. Si no fuiste tú, ciérrala en **Sesiones y dispositivos** (el correo
+trae el enlace) y activa el segundo factor.
+
+Muninn reconoce un dispositivo por su **nombre**: el de tu ordenador en la app de escritorio, el que le pusiste con el lápiz
+(ver «Ponerle nombre a una sesión») o el de una app conectada, como claude.ai. Por eso:
+
+- Una sesión **sin nombre** avisa siempre: quien entra sin permiso no tiene ninguno.
+- Si fuiste tú, **ponle nombre** a esa sesión y no te volveremos a avisar de ella. El navegador lo recuerda, así que la
+  próxima vez que entres desde ahí tampoco avisa.
+- Volver a conectar una app que ya usabas no avisa cada vez.
+- Te mandamos **como mucho un correo al día**. Si entran varias veces el mismo día, van en el mismo correo; lo que llegue
+  después solo se ve en la lista.
+
+Está activado por defecto. Lo desactivas en **Avisos de inicio de sesión › Avisarme de dispositivos nuevos**; mientras
+está desactivado, Muninn sigue apuntando tus dispositivos, así que al volver a activarlo no te llegan avisos atrasados.
 
 ## Quitar el acceso a una app
 

@@ -323,7 +323,11 @@
   navegador. Por eso `list_my_sessions()` devuelve también `app_name` (`auth.oauth_clients.client_name` por
   `auth.sessions.oauth_client_id`, migración `20261029170000_sesiones_con_app`); para cambiar sus columnas hay que hacer
   `drop function` + `create` y volver a dar los permisos. La app de escritorio se reconoce por `Muninn/<versión>` en el user agent,
-  que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual).
+  que añade `apps/desktop/src-tauri/src/lib.rs` (WebView2 manda el de Edge tal cual); desde la 0.10 lleva también el nombre del
+  equipo, `Muninn/<versión> (PC-ALEX)` ([ADR-0081](../adr/0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md)).
+- **Ojo:** el nombre puesto a mano ([ADR-0082](../adr/0082-nombre-puesto-a-mano-en-cada-sesion.md)) vive en `session_names` y llega
+  como `device_name` (migración `20261105150000_nombre_de_sesion`, que vuelve a crear `list_my_sessions`). Sin ella, la lista carga
+  pero el lápiz falla con `Could not find the function public.name_my_session`. Aplícala **después** de `sesiones_con_app`.
 - **Ref:** [ADR-0061](../adr/0061-seguridad-de-la-cuenta.md)
 
 ### Avisos push: la sesión la pone un trigger y cerrarla borra la fila
@@ -363,3 +367,38 @@
   ventana privada): si no, el consentimiento se aprueba (200 en los logs de Auth) pero claude.ai nunca canjea el código y dice «Error
   Starting Authentication». MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por
   defecto); quitar un factor confirmado exige una sesión `aal2`, por eso «Desactivar» pide un código antes.
+
+### Aviso de dispositivo nuevo (pasos manuales)
+
+- **Síntoma:** entras desde otro dispositivo y no llega ningún correo, o la función `security` responde 500 con «Faltan los secretos…».
+- **Causa:** el aviso ([ADR-0080](../adr/0080-aviso-por-correo-de-dispositivo-nuevo.md)) necesita la migración, la Edge Function
+  `security`, tres secretos y un cron. Sin el cron no se mira ninguna sesión: no hay *trigger* en `auth.sessions`, a propósito.
+- **Solución,** en este orden:
+  1. **Migración:** aplica `supabase/migrations/20261105180000_aviso_dispositivo_nuevo.sql` (SQL Editor o `npx supabase@2 db push`). Si
+     usas `apply_migration` del MCP de Supabase, alinea la versión (arriba).
+  2. **Secretos** (Supabase › **Edge Functions › Secrets**): `RESEND_API_KEY` (la misma clave de Resend que la contraseña del SMTP;
+     necesita *Sending access*), `MUNINN_MAIL_FROM` (p. ej. `Muninn <avisos@send.<dominio>>`, del dominio verificado en Resend) y
+     `MUNINN_APP_URL` (la URL publicada, sin barra final). Reutiliza `MUNINN_SYNC_SECRET` y, opcional, `MUNINN_TIME_ZONE`.
+  3. **Desplegar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/security/_core/muninn.js`, fuera de git) y
+     `npx supabase@2 functions deploy security --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`.
+  4. **Cron cada 5 minutos** (SQL Editor):
+     ```sql
+     select cron.schedule('muninn-login-alerts', '*/5 * * * *', $$
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/security/login-alerts',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 30000
+       );
+     $$);
+     ```
+  5. **Comprobar:** la primera pasada apunta en silencio tus dispositivos con nombre de las últimas 24 h (`select * from
+     known_devices`). Entra desde un navegador sin nombre (otro navegador, una ventana privada): entre 2 y 7 minutos después llega el
+     correo, y `login_alert_log.emailed_at` tiene fecha. Ponle nombre a esa sesión y vuelve a entrar desde ahí: no avisa. La respuesta de
+     la función está en `net._http_response`.
+- **Ojo:** como mucho un correo al día por cuenta (Resend gratuito): para repetir la prueba el mismo día, borra el `emailed_at` de tu
+  última fila en `login_alert_log`. Una sesión de hace más de 24 h que no se miró (cron parado) ya no se avisa nunca.

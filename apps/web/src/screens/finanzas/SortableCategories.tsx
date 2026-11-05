@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { FinanceCategory } from '@muninn/core'
 import { ColorDot, cn, IconButton, icons, projectColor } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { archiveCategory, moveCategory } from '../../lib/finance-actions'
 import { useMuninn } from '../../lib/muninn'
 
@@ -36,6 +37,7 @@ interface Props {
  * Espacio). Al soltar se escribe una vez (`categories.move`) con «Deshacer».
  */
 export function SortableCategories({ list, onEdit }: Props) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const sensors = useSensors(
@@ -45,7 +47,7 @@ export function SortableCategories({ list, onEdit }: Props) {
   )
   const name = (id: unknown) => list.find((c) => c.id === id)?.name ?? ''
   const place = (id: unknown) =>
-    `posición ${list.findIndex((c) => c.id === id) + 1} de ${list.length}`
+    t('categories.dndPlace', { n: list.findIndex((c) => c.id === id) + 1, total: list.length })
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
@@ -63,16 +65,20 @@ export function SortableCategories({ list, onEdit }: Props) {
       onDragEnd={onDragEnd}
       accessibility={{
         screenReaderInstructions: {
-          draggable:
-            'Para mover, pulsa Espacio. Con las flechas eliges el sitio, con Espacio sueltas y con Escape cancelas.',
+          draggable: t('categories.dndInstructions'),
         },
         announcements: {
-          onDragStart: ({ active }) => `Has cogido «${name(active.id)}», ${place(active.id)}.`,
+          onDragStart: ({ active }) =>
+            t('categories.dndStart', { name: name(active.id), place: place(active.id) }),
           onDragOver: ({ active, over }) =>
-            over ? `«${name(active.id)}» irá a la ${place(over.id)}.` : undefined,
+            over
+              ? t('categories.dndOver', { name: name(active.id), place: place(over.id) })
+              : undefined,
           onDragEnd: ({ active, over }) =>
-            over ? `«${name(active.id)}» queda en la ${place(over.id)}.` : undefined,
-          onDragCancel: ({ active }) => `Cancelado: «${name(active.id)}» no se mueve.`,
+            over
+              ? t('categories.dndEnd', { name: name(active.id), place: place(over.id) })
+              : undefined,
+          onDragCancel: ({ active }) => t('categories.dndCancel', { name: name(active.id) }),
         },
       }}
     >
@@ -99,6 +105,7 @@ function Row({
   onEdit: () => void
   onArchive: () => void
 }) {
+  const { t } = useTranslation('finance')
   const {
     attributes,
     listeners,
@@ -120,7 +127,7 @@ function Row({
       <button
         ref={setActivatorNodeRef}
         type="button"
-        aria-label={`Mover ${c.name}`}
+        aria-label={t('categories.move', { name: c.name })}
         className="grid size-11 shrink-0 cursor-grab touch-none place-items-center rounded-sm text-fg-faint outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent active:cursor-grabbing md:size-7"
         {...attributes}
         {...listeners}
@@ -130,14 +137,14 @@ function Row({
       <button
         type="button"
         onClick={onEdit}
-        aria-label={`Editar ${c.name}`}
+        aria-label={t('edit', { name: c.name })}
         className="flex min-h-11 flex-1 cursor-pointer items-center gap-2.5 text-left text-base outline-none hover:text-fg focus-visible:underline md:min-h-8"
       >
         <ColorDot color={projectColor(c.color)} />
         <span className="truncate">{c.name}</span>
       </button>
       <IconButton
-        aria-label={`Archivar ${c.name}`}
+        aria-label={t('archive', { name: c.name })}
         icon={<icons.archive />}
         onClick={onArchive}
         className="size-11 md:size-8"

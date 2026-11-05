@@ -11,42 +11,39 @@ import {
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SelectMenu } from '../../components/SelectMenu'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
+import { t } from '../../i18n'
 import { KIND_LABEL } from '../../lib/board'
 import { createColumn, updateColumn } from '../../lib/column-actions'
 import { useMuninn } from '../../lib/muninn'
 
-const KIND_OPTIONS = (Object.keys(KIND_LABEL) as ColumnKind[]).map((k) => ({
-  value: k,
-  label: KIND_LABEL[k],
-  dot: columnKinds[k],
-}))
+/** Tipos de columna, con la etiqueta en el idioma activo: se piden al pintar (ADR-0077). */
+const kindOptions = () =>
+  (Object.keys(KIND_LABEL) as ColumnKind[]).map((k) => ({
+    value: k,
+    label: KIND_LABEL[k],
+    dot: columnKinds[k],
+  }))
 
 /** «Automático» = sin color propio (`null`): el punto usa el del tipo. */
 type ColumnColor = 'auto' | PaletteColor
 
-const COLOR_LABEL: Record<PaletteColor, string> = {
-  blue: 'Azul',
-  violet: 'Violeta',
-  teal: 'Verde azulado',
-  pink: 'Rosa',
-  green: 'Verde',
-  amber: 'Ámbar',
-  gray: 'Gris',
-}
+/** Colores propios de la paleta, en su orden. La etiqueta se lee al pintar, en el idioma activo. */
+const COLORS: readonly PaletteColor[] = ['blue', 'violet', 'teal', 'pink', 'green', 'amber', 'gray']
 
 const colorOptions = (kind: ColumnKind): Swatch<ColumnColor>[] => [
-  { value: 'auto', label: 'Automático (el del tipo)', color: columnKinds[kind] },
-  ...(Object.keys(COLOR_LABEL) as PaletteColor[]).map((c) => ({
+  { value: 'auto', label: t('columnDialog.colorAuto', { ns: 'board' }), color: columnKinds[kind] },
+  ...COLORS.map((c) => ({
     value: c,
-    label: COLOR_LABEL[c],
+    label: t(`columnDialog.colors.${c}`, { ns: 'board' }),
     color: palette[c],
   })),
 ]
 
 const asColor = (c: string | null | undefined): ColumnColor =>
-  c && c in COLOR_LABEL ? (c as PaletteColor) : 'auto'
+  c && (COLORS as readonly string[]).includes(c) ? (c as PaletteColor) : 'auto'
 
 interface ColumnDialogProps {
   projectId: string
@@ -59,6 +56,7 @@ interface ColumnDialogProps {
 export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const editing = target && target !== 'new' ? target : null
   const [name, setName] = useState('')
   const [kind, setKind] = useState<ColumnKind>('todo')
@@ -80,12 +78,10 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const clean = name.trim()
-    if (!clean) return setError('Ponle un nombre a la columna')
+    if (!clean) return setError(t('columnDialog.nameRequired'))
     const limit = wip.trim() === '' ? null : Number(wip)
     if (limit !== null && (!Number.isInteger(limit) || limit < 1)) {
-      return setError(
-        'El límite es un número entero de 1 en adelante, o vacío para no tener límite',
-      )
+      return setError(t('columnDialog.limitInvalid'))
     }
     const newColor = color === 'auto' ? null : color
     setSaving(true)
@@ -104,7 +100,9 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
           qc,
           editing,
           patch,
-          renamedOnly ? `Columna renombrada a «${clean}»` : `Columna «${clean}» actualizada`,
+          renamedOnly
+            ? t('columnDialog.renamed', { name: clean })
+            : t('columnDialog.updated', { name: clean }),
         ))
       setSaving(false)
       if (ok) onClose()
@@ -124,12 +122,12 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
   return (
     <Dialog open={target !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        title={editing ? 'Editar columna' : 'Nueva columna'}
-        description="El tipo dice qué significa la columna aunque la llames como quieras: «Hecho» completa las tareas que entren."
+        title={editing ? t('columnDialog.editTitle') : t('header.newColumn')}
+        description={t('columnDialog.description')}
       >
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <TextField
-            label="Nombre"
+            label={t('columnDialog.name')}
             value={name}
             onChange={(e) => {
               setName(e.target.value)
@@ -140,19 +138,24 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
             autoFocus
           />
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-fg-muted">Tipo</span>
-            <SelectMenu label="Tipo" value={kind} options={KIND_OPTIONS} onChange={setKind} />
+            <span className="text-xs font-medium text-fg-muted">{t('columnDialog.kind')}</span>
+            <SelectMenu
+              label={t('columnDialog.kind')}
+              value={kind}
+              options={kindOptions()}
+              onChange={setKind}
+            />
           </div>
           <SwatchPicker
-            legend="Color"
+            legend={t('columnDialog.color')}
             name="column-color"
             value={color}
             options={colorOptions(kind)}
             onChange={setColor}
           />
           <TextField
-            label="Límite de tareas"
-            hint="Vacío = sin límite. Al superarlo te avisamos, pero no te lo impedimos."
+            label={t('columnDialog.limit')}
+            hint={t('columnDialog.limitHint')}
             type="number"
             inputMode="numeric"
             min={1}
@@ -166,10 +169,10 @@ export function ColumnDialog({ projectId, target, onClose }: ColumnDialogProps) 
           />
           <div className="flex justify-end gap-2 pt-1">
             <DialogClose asChild>
-              <Button variant="ghost">Cancelar</Button>
+              <Button variant="ghost">{t('cancel')}</Button>
             </DialogClose>
             <Button type="submit" variant="primary" disabled={saving}>
-              {editing ? 'Guardar' : 'Crear columna'}
+              {editing ? t('save') : t('columnDialog.create')}
             </Button>
           </div>
         </form>

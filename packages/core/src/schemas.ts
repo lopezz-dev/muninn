@@ -707,7 +707,17 @@ export interface AccountSession {
   current: boolean
   /** La app que la abrió por OAuth (p. ej. «Claude»); `null` si se entró desde Muninn. */
   appName: string | null
+  /** El nombre que le pusiste en la lista («Portátil del curro», ADR-0082); `null` si no tiene. */
+  deviceName: string | null
 }
+
+/** Nombre de una sesión: hasta 40 caracteres; vacío lo quita (`null`). */
+export const sessionName = z
+  .string()
+  .trim()
+  .max(40)
+  .nullable()
+  .transform((s) => (s ? s : null))
 
 /** Cerrar en los demás dispositivos (`others`) o en todos, este incluido (`global`). */
 export const signOutScope = z.enum(['others', 'global'])

@@ -1,7 +1,9 @@
 import { Avatar, Button, cn, Dialog, Icon, icons, notify, SheetContent } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppIcon } from '../components/AppIcon'
+import { t } from '../i18n'
 import { accountSheet, useAccountSheet } from '../lib/account-sheet'
 import { isTauri } from '../lib/auth'
 import { useDockTabs } from '../lib/dock'
@@ -10,9 +12,10 @@ import { useAuth } from '../lib/muninn'
 import { useEndSession } from '../lib/session'
 import { bySection, useChangedPrefs } from '../lib/settings-changes'
 import { useSectionHints } from '../screens/ajustes/Ajustes'
-import { RESET_LABEL, SectionContent, useReset } from '../screens/ajustes/Seccion'
+import { SectionContent, useReset } from '../screens/ajustes/Seccion'
 import {
   ABOUT_SECTION,
+  resetSectionLabel,
   type SettingsSection,
   sectionsByGroup,
   settingsSection,
@@ -81,6 +84,7 @@ function Root() {
   const tabs = useDockTabs()
   const hints = useSectionHints()
   const changed = bySection(useChangedPrefs())
+  const { t } = useTranslation()
   const goTo = GO_TO.filter(
     (s) => !(tabs as readonly string[]).includes(s.id) && sectionEnabled(s.id, modules),
   )
@@ -101,7 +105,7 @@ function Root() {
         )}
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-md font-semibold">
-            {auth.kind === 'user' ? auth.account.name : 'Modo demo'}
+            {auth.kind === 'user' ? auth.account.name : t('account.demo')}
           </span>
           <span className="flex items-center gap-1.5 text-sm text-fg-subtle">
             <span
@@ -111,7 +115,7 @@ function Root() {
                 auth.kind === 'user' ? 'bg-success' : 'bg-fg-faint',
               )}
             />
-            {auth.kind === 'user' ? 'Guardado en tu cuenta' : 'Datos sin guardar'}
+            {auth.kind === 'user' ? t('account.savedToAccount') : t('account.notSaved')}
           </span>
         </span>
         <icons.chevronRight aria-hidden="true" className="text-fg-faint" />
@@ -119,7 +123,7 @@ function Root() {
 
       <section aria-labelledby="hoja-ir-a" className="flex flex-col gap-2">
         <MicroTitle className="px-1">
-          <span id="hoja-ir-a">Ir a</span>
+          <span id="hoja-ir-a">{t('account.goTo')}</span>
         </MicroTitle>
         <div className="grid grid-cols-4 gap-2">
           {goTo.map((s) => (
@@ -131,7 +135,7 @@ function Root() {
             >
               <Tile
                 icon={s.id}
-                label={s.id === 'docs' ? 'Docs' : SECTIONS[s.id].label}
+                label={s.id === 'docs' ? t('nav.docs') : SECTIONS[s.id].label}
                 tile={s.tile}
               />
             </Link>
@@ -145,7 +149,7 @@ function Root() {
                 shell.openPalette()
               }}
             >
-              <Tile icon="search" label="Buscar" tile="bg-surface-raised text-fg-muted" />
+              <Tile icon="search" label={t('nav.search')} tile="bg-surface-raised text-fg-muted" />
             </button>
           )}
           {isTauri ? (
@@ -153,7 +157,7 @@ function Root() {
               <span className="grid size-[34px] place-items-center rounded-md bg-project-amber/15 text-project-amber">
                 <Icon name="assistant" size={19} />
               </span>
-              Asistente
+              {t('nav.assistant')}
             </Link>
           ) : (
             // En el móvil aún no contesta (no hay modelo): atenuado, y al tocarlo se explica.
@@ -162,8 +166,8 @@ function Root() {
               aria-disabled="true"
               className={cn(tileClass, 'cursor-pointer opacity-50')}
               onClick={() =>
-                notify.info('El Asistente funciona en el ordenador', {
-                  description: 'Usa el modelo de tu ordenador. En el móvil llegará más adelante',
+                notify.info(t('account.assistantDesktopOnly'), {
+                  description: t('account.assistantDesktopOnlyHint'),
                 })
               }
             >
@@ -171,8 +175,8 @@ function Root() {
                 <Icon name="assistant" size={19} />
               </span>
               <span className="flex flex-col leading-tight">
-                Asistente
-                <span className="text-2xs text-fg-faint">En el ordenador</span>
+                {t('nav.assistant')}
+                <span className="text-2xs text-fg-faint">{t('account.assistantOnDesktop')}</span>
               </span>
             </button>
           )}
@@ -200,7 +204,7 @@ function Root() {
           <span className="grid size-[30px] shrink-0 place-items-center rounded-md bg-project-blue/15 text-project-blue">
             <Icon name="docs" size={17} />
           </span>
-          <span className="min-w-0 flex-1 truncate">Documentación</span>
+          <span className="min-w-0 flex-1 truncate">{t('nav.docsLong')}</span>
           <icons.chevronRight aria-hidden="true" className="text-fg-faint" />
         </Link>
         <SectionRow section={ABOUT_SECTION} hint={hints.acerca} />
@@ -215,6 +219,7 @@ function SectionView({ section }: { section: SettingsSection }) {
   const endSession = useEndSession()
   const [busy, setBusy] = useState(false)
   const { changed, reset } = useReset(section.id)
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-5">
       <header className="flex items-start gap-3">
@@ -230,12 +235,10 @@ function SectionView({ section }: { section: SettingsSection }) {
         <Button
           size="sm"
           className="self-start"
-          onClick={() =>
-            reset(changed, RESET_LABEL[section.id] ?? `${section.label}: valores de fábrica`)
-          }
+          onClick={() => reset(changed, resetSectionLabel(section))}
         >
           <AppIcon name="reset" size={13} />
-          Restablecer sección
+          {t('account.resetSection')}
         </Button>
       ) : null}
       <SectionContent section={section} />
@@ -252,7 +255,7 @@ function SectionView({ section }: { section: SettingsSection }) {
           }}
         >
           <Icon name="signOut" />
-          {busy ? 'Cerrando…' : 'Cerrar sesión'}
+          {busy ? t('account.signingOut') : t('account.signOut')}
         </Button>
       ) : null}
     </div>
@@ -260,7 +263,9 @@ function SectionView({ section }: { section: SettingsSection }) {
 }
 
 const viewTitle = (view: string) =>
-  view === 'root' ? 'Tu cuenta' : (settingsSection(view)?.label ?? 'Tu cuenta')
+  view === 'root'
+    ? t('account.yourAccount')
+    : (settingsSection(view)?.label ?? t('account.yourAccount'))
 
 /**
  * Hoja «Tu cuenta» del teléfono (ADR-0072): se abre con tu avatar, abajo a la derecha, o con un enlace a
@@ -268,6 +273,8 @@ const viewTitle = (view: string) =>
  * pantalla en la que estabas. Diseño: lienzo «Dock y cuenta».
  */
 export function AccountSheet() {
+  // Las etiquetas de las secciones (`sections.ts`) son del namespace `settings`: que esté cargado al pintarlas.
+  useTranslation('settings')
   const { open, stack } = useAccountSheet()
   const view = stack.at(-1) ?? 'root'
   const parent = stack.at(-2)

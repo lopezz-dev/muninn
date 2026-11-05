@@ -163,6 +163,14 @@
   `tooltip.tsx`, `toggles.tsx`, `segmented-control.tsx`). `package.json` declara `"sideEffects": ["*.css"]`
   para que lo no usado se pueda descartar.
 
+### Lo que flota va con `glass-floating`, no con `glass-raised`
+
+- **Síntoma:** con el cristal activado, un menú o el calendario de un campo de fecha abierto encima de un diálogo deja ver lo de
+  detrás (el botón naranja «Crear tarea») y se lee peor.
+- **Causa:** `surface-raised` en cristal está al 74 %: dos capas así una encima de otra no tapan lo suficiente.
+- **Solución:** menús, popovers y el calendario usan `glass-floating` (`surface-floating`, al 93 % en cristal e igual que
+  `surface-raised` en sólido). Los diálogos y las hojas siguen con `glass-raised`.
+
 ### Selección sobre cristal: `bg-fg/[0.07]`, no `bg-surface-raised`
 
 - **Síntoma:** con el cristal activado, la opción seleccionada de una lista dentro de un panel `glass-raised`
@@ -237,4 +245,16 @@
 - **Solución:** envuélvelo en un `<span ref={setNodeRef} className="flex">` (así lo hacen las flechas ‹ › del calendario, que reciben
   tareas arrastradas). Para un `Tooltip` sobre algo que se arrastra, pásale `disabled` mientras haya un arrastre: así no se queda abierto,
   y el disparador no se vuelve a montar (desmontarlo cortaría el arrastre).
+
+### Textos: nunca fijos en un componente, siempre de `useUiLocale()`
+
+- **Síntoma:** con la app en inglés, el selector de fecha, el «Cerrar» de un diálogo o el de un aviso salen en español.
+- **Causa:** `@muninn/ui` no usa i18next ([ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)). Un texto escrito tal cual
+  en el componente (o un `Intl.DateTimeFormat('es-ES')`) no cambia con el idioma.
+- **Solución:** etiqueta nueva → campo en `UiLabels` (`src/locale.tsx`) con su respaldo en inglés en `UI_LOCALE_EN`, y la traducción
+  en la app (`apps/web/src/i18n/locales/*/common.ts` › `ui`, y `uiLocale()` en `src/i18n/ui-locale.tsx`). En el componente,
+  `const { locale, labels } = useUiLocale()` **al principio** (es un hook: nada de llamarlo dentro del JSX). Fechas y números con
+  `Intl` y ese `locale`, guardando el formateador por idioma. `test/locale.test.tsx` monta los componentes sin proveedor y falla si
+  encuentra español en el texto, los `aria-label`, los `title` o los `placeholder`: añade ahí cada componente nuevo con texto.
+- **Ojo:** `AmountField` aún recibe `locale` por prop (`es-ES` por defecto); pasarlo al contexto queda para cuando se toque.
 

@@ -1,6 +1,7 @@
 import { useDndContext } from '@dnd-kit/core'
 import { cn, icons } from '@muninn/ui'
 import { type ReactNode, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Desliza a la izquierda para completar (solo con el dedo). Si hay un arrastre en curso no hace
@@ -17,6 +18,7 @@ export function SwipeToComplete({
   children: ReactNode
 }) {
   const { active } = useDndContext()
+  const { t } = useTranslation('board')
   const [dx, setDx] = useState(0)
   const start = useRef<{ x: number; y: number } | null>(null)
   const axis = useRef<'x' | 'y' | null>(null)
@@ -38,7 +40,7 @@ export function SwipeToComplete({
         )}
       >
         <icons.check size={16} weight="bold" />
-        Hecho
+        {t('swipeDone')}
       </div>
       <div
         className="relative"

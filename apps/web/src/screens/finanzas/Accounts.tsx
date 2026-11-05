@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  formatAmount,
   Icon,
   IconButton,
   icons,
@@ -24,9 +25,11 @@ import {
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SelectMenu } from '../../components/SelectMenu'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
-import { ACCOUNT_KIND_LABEL, amountText } from '../../lib/finance'
+import { intlLocale, t as tr } from '../../i18n'
+import { ACCOUNT_KINDS, accountKindLabel, amountText, percentText } from '../../lib/finance'
 import {
   archiveAccount,
   createAccount,
@@ -37,28 +40,31 @@ import {
 import { useMuninn } from '../../lib/muninn'
 import { SortableCategories } from './SortableCategories'
 
-export const COLORS: Swatch<FinanceColor>[] = [
-  { value: 'blue', label: 'Azul', color: palette.blue },
-  { value: 'violet', label: 'Violeta', color: palette.violet },
-  { value: 'teal', label: 'Verde azulado', color: palette.teal },
-  { value: 'pink', label: 'Rosa', color: palette.pink },
-  { value: 'green', label: 'Verde', color: palette.green },
-  { value: 'amber', label: 'Ámbar', color: palette.amber },
-  { value: 'gray', label: 'Gris', color: palette.gray },
-]
+const COLOR_IDS: FinanceColor[] = ['blue', 'violet', 'teal', 'pink', 'green', 'amber', 'gray']
+
+/** Colores con su nombre como *getter*: se lee al pintar, en el idioma activo (ADR-0077). */
+export const COLORS: Swatch<FinanceColor>[] = COLOR_IDS.map((value) => ({
+  value,
+  color: palette[value],
+  get label() {
+    return tr(`colors.${value}`, { ns: 'finance' })
+  },
+}))
 
 const asColor = (c: string): FinanceColor =>
   COLORS.some((s) => s.value === c) ? (c as FinanceColor) : 'gray'
-
-const KINDS = Object.keys(ACCOUNT_KIND_LABEL) as AccountKind[]
 
 /** Línea secundaria de una cuenta: el tipo, o el objetivo de una hucha con su progreso. */
 export function accountDetail(a: AccountWithBalance) {
   if (a.goal) {
     const pct = Math.max(0, Math.min(100, Math.round((a.balance / a.goal) * 100)))
-    return `Objetivo ${amountText(a.goal, 'none')} · ${pct} %`
+    return tr('accounts.goal', {
+      ns: 'finance',
+      amount: amountText(a.goal, 'none'),
+      pct: percentText(pct / 100),
+    })
   }
-  return ACCOUNT_KIND_LABEL[a.kind]
+  return accountKindLabel(a.kind)
 }
 
 /** Alta y edición de una cuenta. */
@@ -71,15 +77,12 @@ export function AccountDialog({
   onOpenChange: (open: boolean) => void
   editing?: AccountWithBalance
 }) {
+  const { t } = useTranslation('finance')
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        title={editing ? `Editar «${editing.name}»` : 'Nueva cuenta'}
-        description={
-          editing
-            ? 'El saldo sale del saldo inicial y de los movimientos.'
-            : 'Una cuenta corriente, una hucha, un fondo o el efectivo.'
-        }
+        title={editing ? t('editQuoted', { name: editing.name }) : t('accounts.dialogNew')}
+        description={editing ? t('accounts.descEdit') : t('accounts.descNew')}
       >
         {open ? (
           <AccountForm
@@ -94,6 +97,7 @@ export function AccountDialog({
 }
 
 function AccountForm({ editing, onDone }: { editing?: AccountWithBalance; onDone: () => void }) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const [name, setName] = useState(editing?.name ?? '')
@@ -110,7 +114,7 @@ function AccountForm({ editing, onDone }: { editing?: AccountWithBalance; onDone
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const clean = name.trim()
-    if (!clean) return setError('Ponle un nombre a la cuenta')
+    if (!clean) return setError(t('accounts.nameRequired'))
     setSaving(true)
     const fields = {
       name: clean,
@@ -129,7 +133,7 @@ function AccountForm({ editing, onDone }: { editing?: AccountWithBalance; onDone
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <TextField
-        label="Nombre"
+        label={t('name')}
         value={name}
         maxLength={80}
         onChange={(e) => {
@@ -137,42 +141,44 @@ function AccountForm({ editing, onDone }: { editing?: AccountWithBalance; onDone
           setError(undefined)
         }}
         error={error}
-        placeholder="Imagin · cuenta"
+        placeholder={t('accounts.namePlaceholder')}
         autoComplete="off"
         autoFocus
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-fg-muted">Tipo</span>
+          <span className="text-xs font-medium text-fg-muted">{t('type')}</span>
           <SelectMenu
-            label="Tipo"
+            label={t('type')}
             value={kind}
             onChange={setKind}
-            options={KINDS.map((k) => ({ value: k, label: ACCOUNT_KIND_LABEL[k] }))}
+            options={ACCOUNT_KINDS.map((k) => ({ value: k, label: accountKindLabel(k) }))}
           />
         </div>
         <AmountField
-          label="Saldo inicial"
+          locale={intlLocale()}
+          label={t('accounts.initialBalance')}
           valueCents={initial}
           onValueChange={setInitial}
-          placeholder="0,00"
-          hint={editing ? undefined : 'Lo que hay hoy en la cuenta.'}
+          placeholder={formatAmount(0, intlLocale())}
+          hint={editing ? undefined : t('accounts.initialHint')}
         />
       </div>
       <div className="flex items-center gap-2.5 text-sm text-fg-muted">
         <Checkbox id="account-negative" checked={negative} onCheckedChange={setNegative} touch />
-        <label htmlFor="account-negative">Empieza en negativo (descubierto)</label>
+        <label htmlFor="account-negative">{t('accounts.negative')}</label>
       </div>
       {kind === 'savings' ? (
         <AmountField
-          label="Objetivo (opcional)"
+          locale={intlLocale()}
+          label={t('accounts.goalOptional')}
           valueCents={goal}
           onValueChange={setGoal}
-          placeholder="12.000,00"
+          placeholder={formatAmount(1_200_000, intlLocale())}
         />
       ) : null}
       <SwatchPicker
-        legend="Color"
+        legend={t('color')}
         name="account-color"
         value={color}
         options={COLORS}
@@ -180,10 +186,10 @@ function AccountForm({ editing, onDone }: { editing?: AccountWithBalance; onDone
       />
       <div className="flex justify-end gap-2 pt-1">
         <DialogClose asChild>
-          <Button variant="ghost">Cancelar</Button>
+          <Button variant="ghost">{t('cancel')}</Button>
         </DialogClose>
         <Button type="submit" variant="primary" disabled={saving}>
-          {editing ? 'Guardar' : 'Crear cuenta'}
+          {editing ? t('save') : t('accounts.create')}
         </Button>
       </div>
     </form>
@@ -202,6 +208,7 @@ function CategoryDialog({
   editing?: FinanceCategory
   kind: CategoryKind
 }) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const [name, setName] = useState('')
@@ -221,7 +228,7 @@ function CategoryDialog({
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const clean = name.trim()
-    if (!clean) return setError('Ponle un nombre')
+    if (!clean) return setError(t('nameIt'))
     const ok = editing
       ? await updateCategory(m, qc, editing, { name: clean, color })
       : await createCategory(m, qc, { name: clean, kind, color })
@@ -233,15 +240,15 @@ function CategoryDialog({
       <DialogContent
         title={
           editing
-            ? `Editar «${editing.name}»`
+            ? t('editQuoted', { name: editing.name })
             : kind === 'expense'
-              ? 'Nueva categoría de gastos'
-              : 'Nueva categoría de ingresos'
+              ? t('categories.newExpense')
+              : t('categories.newIncome')
         }
       >
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <TextField
-            label="Nombre"
+            label={t('name')}
             value={name}
             maxLength={60}
             onChange={(e) => {
@@ -253,7 +260,7 @@ function CategoryDialog({
             autoFocus
           />
           <SwatchPicker
-            legend="Color"
+            legend={t('color')}
             name="category-color"
             value={color}
             options={COLORS}
@@ -261,10 +268,10 @@ function CategoryDialog({
           />
           <div className="flex justify-end gap-2 pt-1">
             <DialogClose asChild>
-              <Button variant="ghost">Cancelar</Button>
+              <Button variant="ghost">{t('cancel')}</Button>
             </DialogClose>
             <Button type="submit" variant="primary">
-              {editing ? 'Guardar' : 'Crear categoría'}
+              {editing ? t('save') : t('categories.create')}
             </Button>
           </div>
         </form>
@@ -274,11 +281,12 @@ function CategoryDialog({
 }
 
 function CategoryList({ kind, categories }: { kind: CategoryKind; categories: FinanceCategory[] }) {
+  const { t } = useTranslation('finance')
   const [dialog, setDialog] = useState<{ open: boolean; editing?: FinanceCategory }>({
     open: false,
   })
   const list = categories.filter((c) => c.kind === kind && !c.archivedAt)
-  const title = kind === 'expense' ? 'Categorías de gastos' : 'Categorías de ingresos'
+  const title = kind === 'expense' ? t('categories.expenseTitle') : t('categories.incomeTitle')
   return (
     <Card className="flex flex-col">
       <CardHeader
@@ -286,7 +294,7 @@ function CategoryList({ kind, categories }: { kind: CategoryKind; categories: Fi
         action={
           <Button size="sm" onClick={() => setDialog({ open: true })}>
             <Icon name="plus" />
-            Nueva
+            {t('new')}
           </Button>
         }
       />
@@ -294,7 +302,7 @@ function CategoryList({ kind, categories }: { kind: CategoryKind; categories: Fi
         <SortableCategories list={list} onEdit={(c) => setDialog({ open: true, editing: c })} />
         {list.length === 0 ? (
           <li className="border-t border-border-subtle px-4 py-4 text-sm text-fg-subtle">
-            Sin categorías: los movimientos irán «Sin categoría».
+            {t('categories.empty')}
           </li>
         ) : null}
       </ul>
@@ -320,6 +328,7 @@ export function Accounts({
   onNewAccount: () => void
   onEditAccount: (a: AccountWithBalance) => void
 }) {
+  const { t } = useTranslation('finance')
   const m = useMuninn()
   const qc = useQueryClient()
   const open = accounts.filter((a) => !a.archivedAt)
@@ -328,12 +337,14 @@ export function Accounts({
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader
-          title="Cuentas"
-          description={`Total ${amountText(total, 'none')}${total < 0 ? ' en negativo' : ''}`}
+          title={t('accounts.title')}
+          description={t(total < 0 ? 'accounts.totalNegative' : 'accounts.total', {
+            amount: amountText(total, 'none'),
+          })}
           action={
             <Button size="sm" variant="primary" onClick={onNewAccount}>
               <Icon name="plus" />
-              Nueva cuenta
+              {t('accounts.newAccount')}
             </Button>
           }
         />
@@ -346,7 +357,7 @@ export function Accounts({
               <button
                 type="button"
                 onClick={() => onEditAccount(a)}
-                aria-label={`Editar ${a.name}`}
+                aria-label={t('edit', { name: a.name })}
                 className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 text-left outline-none focus-visible:underline"
               >
                 <span
@@ -363,7 +374,7 @@ export function Accounts({
                     <ProgressBar
                       value={Math.max(0, Math.min(1, a.balance / a.goal))}
                       color={projectColor(a.color)}
-                      label={`Progreso hacia el objetivo de ${a.name}`}
+                      label={t('accounts.goalProgress', { name: a.name })}
                       className="max-w-60"
                     />
                   ) : null}
@@ -375,7 +386,7 @@ export function Accounts({
                 </span>
               </button>
               <IconButton
-                aria-label={`Archivar ${a.name}`}
+                aria-label={t('archive', { name: a.name })}
                 icon={<icons.archive />}
                 onClick={() => archiveAccount(m, qc, a)}
                 className="size-11 md:size-8"

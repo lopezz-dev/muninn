@@ -679,8 +679,10 @@
     `twitter:*` y la canónica (la ruta sin `?…` ni `#…`), y al salir los devuelve a como estaban. Eso lo leen Google y los
     buscadores que ejecutan JavaScript.
   - Las pantallas privadas siguen con `PageHeader`, que solo cambia el título.
-  - Que las tarjetas lleven el título de la guía necesitaría prerender (propuesta del ADR-0045).
-  - El dominio de producción está escrito a mano en el repo: si cambia, sigue [Cambiar el dominio de la web](#cambiar-el-dominio-de-la-web-lista-completa).
+  - Las guías llevan además su HTML prerenderizado con las metas ya puestas (ADR-0076): las tarjetas las leen sin JavaScript.
+    `applyPageMeta` quita la canónica que trae ese HTML antes de poner la suya: una sola por página.
+  - Una página que no existe llama a `useNoIndex()`: la app responde 200 en cualquier ruta y, sin él, se indexaría.
+  - El dominio de producción sale de `SITE_URL` (`vite/seo.ts`): si cambia, sigue [Cambiar el dominio de la web](#cambiar-el-dominio-de-la-web-lista-completa).
 - **Ojo en tests:** en jsdom, `document.head.innerHTML = …` también borra el `<title>`; pon `document.title` después.
 - **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md)
 
@@ -688,13 +690,12 @@
 
 - **Síntoma:** tras pasar a un dominio propio (o a otro `*.vercel.app`), la tarjeta al compartir enseña la URL vieja, los buscadores
   siguen el sitemap viejo, entrar con GitHub vuelve al dominio anterior o el Asistente de la web no llega a Ollama.
-- **Causa:** la URL de producción (hoy `https://muninn-sepia.vercel.app`) no sale de una variable. Las tarjetas y los buscadores no
-  ejecutan JavaScript, así que va escrita a mano en el repo; y además está configurada en varios servicios.
+- **Causa:** la URL de producción (hoy `https://muninn-sepia.vercel.app`) tiene que estar en el HTML, porque las tarjetas y los
+  buscadores no ejecutan JavaScript; y además está configurada en varios servicios.
 - **Solución:** al cambiarla, repasa todo esto (y busca la vieja con `git grep muninn-sepia`).
   - **En el repo**, en un PR a `develop`:
-    - `apps/web/index.html`: `og:url`, `og:image` y `twitter:image`;
-    - `apps/web/public/robots.txt`: la línea `Sitemap:`;
-    - `apps/web/public/sitemap.xml`: cada `<loc>`;
+    - `SITE_URL` en `apps/web/vite/seo.ts` (o la variable `MUNINN_SITE_URL` en Vercel): de ahí salen las metas de `index.html`
+      (`%SITE_URL%`), `robots.txt`, `sitemap.xml` y las guías prerenderizadas (ADR-0076);
     - la URL en los docs que la citan: `ROADMAP.md`, `fase-final.md`, ADR-0040 y la entrada «Vercel: qué URL es pública» de aquí.
   - **Fuera del repo** (a mano, cada uno en su panel):
     - Vercel › *Settings › Domains*: añadir el dominio (el `*.vercel.app` puede quedarse como alias);
@@ -709,16 +710,37 @@
     - Cloudflare › Turnstile: añadir el dominio a los *hostnames* del widget del CAPTCHA (ADR-0060), o el login fallará.
   - **Comprueba** después: pega la URL nueva en un chat (sale la tarjeta), abre `/robots.txt` y `/sitemap.xml`, y entra con GitHub.
     Las apps instaladas (PWA) de la URL vieja no se mudan solas: hay que instalarlas otra vez desde la nueva.
-- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)
+- **Ref:** [ADR-0045](../adr/0045-seo-de-la-web-sin-ssr.md), [ADR-0076](../adr/0076-guias-publicas-prerenderizadas-y-url-unica.md),
+  [ADR-0040](../adr/0040-pwa-instalable-y-web-push.md)
 
-### Ajustes: un ajuste nuevo se da de alta en dos sitios
+### Guías prerenderizadas: lo que hay que saber
+
+- **Síntoma:** en Vercel, `/documentacion/notas` sale como la app vacía o con 404; o en `pnpm preview` se ve la app y no el HTML
+  prerenderizado; o el texto de una guía aparece un instante sin estilo antes de pintarse la pantalla.
+- **Causa:** el plugin `vite/seo.ts` escribe, al cerrar el build, `dist/documentacion/<guía>/index.html` (y `robots.txt`,
+  `sitemap.xml` y `404.html`). Vercel los sirve por las *rewrites* de `vercel.json`; `vite preview` no resuelve
+  `/documentacion/notas` sin la barra final y cae en el `index.html` normal, y el *service worker* siempre sirve el `index.html`
+  (las páginas prerenderizadas no se precachean, a propósito). El texto prerenderizado está dentro de `#root` y React lo
+  sustituye al arrancar.
+- **Solución:**
+  - Para ver el HTML que lee un buscador, pídelo sin *service worker*: `curl -s http://localhost:4173/documentacion/notas/`.
+  - Si cambias la ruta `/documentacion`, cambia también las *rewrites* de `vercel.json`, el `globIgnores` del PWA
+    (`vite.config.ts`) e `isPublicPath` (`router.tsx`).
+  - Las metas que cambia el prerender (`description`, `og:*`, `twitter:title`, `twitter:description`) tienen que seguir en
+    `index.html`: si falta una, el build falla con «index.html no tiene la meta …».
+  - Sin sesión, `_app` pinta `PublicShell` y su loader devuelve `null`: una pantalla de la documentación no puede usar `useMuninn()`.
+- **Ref:** [ADR-0076](../adr/0076-guias-publicas-prerenderizadas-y-url-unica.md)
+
+### Ajustes: un ajuste nuevo se da de alta en tres sitios
 
 - **Síntoma:** un ajuste nuevo no sale en el buscador de Ajustes, o cambia su valor y no aparece el punto de «cambiado»
   ni el botón de restablecer.
 - **Causa:** el buscador no recorre las filas pintadas (obligaría a montar todas las secciones): lee `SETTINGS_INDEX`
   de `lib/settings-search.ts`. Y la marca de «cambiado» solo conoce las preferencias de `changedPrefs`
   (`lib/settings-changes.ts`).
-- **Solución:** añade la entrada al índice con el mismo `id` que la fila (`<PrefRow id="…">` pinta `id="ajuste-…"`).
+- **Solución:** añade la entrada al índice con el mismo `id` que la fila (`<PrefRow id="…">` pinta `id="ajuste-…"`), y
+  sus textos en `index.<id>` (`label`, `description` y `keywords`) de `locales/en/settings.ts` y `locales/es/settings.ts`
+  (ADR-0077): las palabras clave van en cada idioma, no traducidas palabra a palabra.
   Si el ajuste tiene un valor de fábrica claro, añádelo también a `PrefKey`, `PREF_SECTION`, `changedPrefs` y
   `resetPrefs`. `test/settings.test.ts` falla si una entrada apunta a una sección que no existe o repite fila.
 - **Al saltar a un ajuste** desde los resultados, la sección se monta en el mismo render en que cambia la dirección: el
@@ -806,3 +828,43 @@
 - **Solución:** todo enlace externo con `{...externalLink(url)}`; `onOpen` para lo que hace al abrirse y `direct: true` solo si el
   texto del control ya dice que abre fuera («Abrir»). Para probarlo en el navegador integrado, el preset `mobile` de
   `resize_window` emula `pointer: coarse`.
+
+### Idioma (i18n): textos con `t()`, y la app se vuelve a montar al cambiarlo
+
+- **Síntoma:** una etiqueta se queda en el idioma anterior tras cambiarlo; un test que buscaba un texto en español lo encuentra
+  en inglés; o una clave nueva no compila.
+- **Causa:**
+  - Al cambiar de idioma, `LanguageRoot` (`main.tsx`) vuelve a montar la app entera (`key` con el idioma). Por eso lo que lee
+    `t()` fuera de un componente (las etiquetas de `nav.ts` son *getters*) sale bien. Lo que esté fuera de ese árbol no se
+    rehace: el `<Toaster />` está fuera a propósito, para que el aviso «Idioma: …» sobreviva al cambio.
+  - Un texto calculado y guardado *antes* del cambio (en una constante de módulo o en `undone` de `notifyUndo`) queda en el
+    idioma de entonces. Por eso el «Deshacer» del idioma avisa él mismo y devuelve `false`.
+  - Las claves se tipan con `CustomTypeOptions` (`src/i18n/i18next.d.ts`) desde los diccionarios en inglés; `Messages<…>` obliga
+    a que el español tenga las mismas. `test/i18n.test.ts` comprueba además las variables `{{…}}`.
+  - En los tests, jsdom dice `en-US`: `test/setup.ts` fija el español para que los tests de siempre sigan valiendo.
+- **Solución:**
+  - Texto nuevo: clave en `src/i18n/locales/en/<ns>.ts` y su traducción en `es/<ns>.ts`. En componentes, `useTranslation()`;
+    fuera, `t` de `src/i18n`. Nunca un texto calculado en una constante de módulo: un *getter* o una función.
+  - Un namespace de pantalla nuevo: su fichero en `en/` y `es/` con un `export const <ns>`, y añadirlo a `resources` de
+    `i18next.d.ts`. Se pide solo al usarlo (`useTranslation('<ns>')`, que suspende hasta tenerlo).
+  - Un test que quiera el inglés hace `await i18n.changeLanguage('en')` y lo devuelve al acabar. `test/setup.ts` precarga
+    todos los `NAMESPACES`: un componente con namespace diferido no suspende en mitad de un test.
+  - Un texto de `lib/` que sale en varias pantallas (avisos de sesión, errores del segundo factor, prioridades…) va en
+    `common`, que siempre está cargado. Si una función de `lib/` usa un namespace diferido (`setModuleEnabled` con
+    `settings`), lo carga antes con `i18n.loadNamespaces`: si no, el aviso sale con la clave en crudo.
+  - Fechas, números y dinero: `Intl` con `intlLocale()` (`src/i18n`), nunca `'es-ES'` fijo. Los formateadores se guardan
+    por idioma (`lib/dates.ts`, `lib/calendar.ts`, `lib/finance.ts`): crearlos en cada llamada es caro. `AmountField` recibe
+    `locale={intlLocale()}`; sin él, enseña el importe a la española.
+  - Los componentes de `@muninn/ui` (fecha, «Cerrar» de diálogos y hojas, avisos) no usan i18next: sus textos llegan por
+    `<AppUiLocale>` (`src/i18n/ui-locale.tsx`, en `main.tsx`), que los saca de `common` › `ui.*` y envuelve también al
+    `<Toaster />`. Sin él, salen en inglés: un test de la web que busque «Hoy» o «Cerrar» tiene que envolver con
+    `UiLocaleProvider value={uiLocale()}`. `formatDateShort` pide el idioma: `formatDateShort(iso, intlLocale())`.
+  - Una pantalla que pinta piezas de otra (las tarjetas usan `SourceBadge` de `task`; Inicio, `UpcomingCharges` de
+    `finance`) pide los dos namespaces en su `useTranslation([...])`: así suspende una sola vez y no a trozos.
+  - En Git Bash, un *heredoc* con comillas tipográficas (’ “ ») corta el comando («unexpected EOF»). Para scripts de
+    traducción, escríbelos en un fichero y ejecútalo.
+  - Al traducir, cuidado con el género en español: «{{name}} activado» falla con «Notas». Pon el nombre aparte
+    («Módulo activado: Notas»).
+  - La preferencia vive en `preferences.locale` de la cuenta (`auto`, `en` o `es`) y en `localStorage['muninn.locale']`
+    para el primer pintado (`lib/locale-pref.ts`, como la apariencia).
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

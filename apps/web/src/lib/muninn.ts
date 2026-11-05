@@ -3,6 +3,7 @@ import { useLoaderData, useRouteContext } from '@tanstack/react-router'
 import { connectAppearance } from './appearance'
 import type { AppAuthState } from './auth'
 import { loadSupabase } from './auth'
+import { connectLocale } from './locale-pref'
 import { keys } from './queries'
 import { queryClient } from './query-client'
 
@@ -21,6 +22,7 @@ async function create(auth: AppAuthState): Promise<Muninn> {
   if (auth.kind === 'demo') {
     const { createMemoryStore, createMuninn } = await import('@muninn/core')
     connectAppearance(null)
+    connectLocale(null)
     const demo = createMuninn(createMemoryStore(), { timeZone })
     queryClient.setQueryData(keys.settings, await demo.settings.get())
     return demo
@@ -42,6 +44,11 @@ async function create(auth: AppAuthState): Promise<Muninn> {
   connectAppearance(
     (appearance) => m.settings.update({ preferences: { appearance: { ...appearance } } }),
     settings?.preferences.appearance,
+  )
+  // El idioma de la cuenta manda (ADR-0077); si no hay, se sube el de este dispositivo.
+  connectLocale(
+    (locale) => m.settings.update({ preferences: { locale } }),
+    settings?.preferences.locale,
   )
   // Cambios de otros dispositivos al momento.
   teardown.push(sync.startSync(client, auth.account.id, queryClient))
@@ -77,8 +84,11 @@ export function resetMuninn() {
   stopBackground()
 }
 
-/** Acceso a la API de dominio desde cualquier componente. Toda lectura y escritura pasa por aquí. */
-export const useMuninn = (): Muninn => useLoaderData({ from: '/_app' })
+/**
+ * Acceso a la API de dominio desde cualquier componente. Toda lectura y escritura pasa por aquí. Solo es `null` en la
+ * documentación pública (sin sesión, ADR-0076), cuyas pantallas no lo llaman.
+ */
+export const useMuninn = (): Muninn => useLoaderData({ from: '/_app' }) as Muninn
 
 /** Quién está usando la app (o el modo demo), desde el contexto de la ruta raíz. */
 export const useAuth = () =>

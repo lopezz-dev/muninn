@@ -2,6 +2,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import type { BoardColumn, TaskWithColumn } from '@muninn/core'
 import { cn, IconButton, icons, projectColor, Tooltip } from '@muninn/ui'
+import { useTranslation } from 'react-i18next'
 import { useAgentColumn } from '../../lib/agent'
 import { colKey } from '../../lib/board'
 import { useShell } from '../../shell/shell-context'
@@ -44,9 +45,10 @@ export function ColumnDot({ column, className }: { column: DotColumn; className?
 export function ColumnCount({ count, limit }: { count: number; limit: number | null }) {
   const over = limit !== null && count > limit
   const full = limit !== null && count === limit
+  const { t } = useTranslation('board')
   return (
     <span
-      title={over ? 'Límite superado' : full ? 'Límite alcanzado' : undefined}
+      title={over ? t('column.overLimit') : full ? t('column.atLimit') : undefined}
       className={cn(
         'shrink-0 text-xs whitespace-nowrap tabular',
         over ? 'font-semibold text-danger' : full ? 'font-semibold text-accent' : 'text-fg-subtle',
@@ -54,7 +56,7 @@ export function ColumnCount({ count, limit }: { count: number; limit: number | n
     >
       {limit ? `${count} / ${limit}` : count}
       {over || full ? (
-        <span className="sr-only"> {over ? 'límite superado' : 'límite alcanzado'}</span>
+        <span className="sr-only"> {over ? t('column.overLimitSr') : t('column.atLimitSr')}</span>
       ) : null}
     </span>
   )
@@ -62,11 +64,12 @@ export function ColumnCount({ count, limit }: { count: number; limit: number | n
 
 /** Marca de la columna «Para el agente» (ADR-0032), junto a su nombre. */
 export function AgentMark({ className }: { className?: string }) {
+  const { t } = useTranslation('board')
   return (
-    <Tooltip content="Para el agente: lo que muevas aquí desde GitHub lo resuelve en un PR">
+    <Tooltip content={t('column.agentHint')}>
       <span className={cn('inline-flex shrink-0 text-accent', className)}>
         <icons.agent size={14} aria-hidden="true" />
-        <span className="sr-only">(columna del agente)</span>
+        <span className="sr-only">{t('column.agentSr')}</span>
       </span>
     </Tooltip>
   )
@@ -97,6 +100,7 @@ export function Column({
   onEdit,
 }: ColumnProps) {
   const shell = useShell()
+  const { t } = useTranslation('board')
   const isAgent = useAgentColumn(projectId).columnId === column.id
   const {
     attributes,
@@ -109,7 +113,7 @@ export function Column({
   } = useSortable({
     id: colKey(column.id),
     data: { type: 'column', hasCards: tasks.length > 0 },
-    attributes: { roleDescription: 'columna ordenable' },
+    attributes: { roleDescription: t('column.sortable') },
   })
 
   return (
@@ -125,11 +129,11 @@ export function Column({
       )}
     >
       <header className="flex h-8 items-center gap-1.5 px-1 text-sm font-semibold">
-        <Tooltip content="Arrastra para mover la columna">
+        <Tooltip content={t('column.dragHint')}>
           <button
             ref={setActivatorNodeRef}
             type="button"
-            aria-label={`Mover la columna ${column.name}`}
+            aria-label={t('column.move', { name: column.name })}
             className="grid size-6 shrink-0 cursor-grab touch-none place-items-center rounded-sm text-fg-faint outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent"
             {...attributes}
             {...listeners}
@@ -146,7 +150,7 @@ export function Column({
         <span className="ml-auto flex items-center">
           {column.kind === 'done' || isAgent ? null : (
             <IconButton
-              aria-label={`Añadir tarea en ${column.name}`}
+              aria-label={t('column.addTask', { name: column.name })}
               icon={<icons.plus size={16} />}
               size="sm"
               onClick={() => shell.openNewTask({ projectId, columnId: column.id })}
@@ -156,23 +160,23 @@ export function Column({
         </span>
       </header>
 
-      <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         {/* Las tarjetas hacen scroll dentro de la columna: la cabecera y «Añadir tarea» se quedan a la vista. */}
         <div className="-mx-1 flex min-h-10 flex-col gap-2 overflow-y-auto px-1 pb-0.5">
           {tasks.length === 0 ? (
             <p className="grid min-h-16 place-items-center rounded-md border border-dashed border-border-strong px-4 text-center text-xs text-fg-faint">
               {total > 0
-                ? 'Ninguna tarea cumple el filtro.'
+                ? t('column.noMatch')
                 : isAgent
-                  ? 'Arrastra aquí una tarea de GitHub para que la resuelva el agente.'
-                  : 'Sin tareas. Arrastra una aquí.'}
+                  ? t('column.emptyAgent')
+                  : t('column.empty')}
             </p>
           ) : null}
-          {tasks.map((t) => (
+          {tasks.map((task) => (
             <SortableTaskCard
-              key={t.id}
-              task={t}
-              progress={counts[t.id]}
+              key={task.id}
+              task={task}
+              progress={counts[task.id]}
               today={today}
               projectId={projectId}
             />

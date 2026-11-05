@@ -13,7 +13,9 @@ import {
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { AppIcon } from '../../components/AppIcon'
+import { t as tr } from '../../i18n'
 import { useMuninn } from '../../lib/muninn'
 import { useIsDesktop } from '../../lib/use-media'
 
@@ -24,7 +26,7 @@ import { useIsDesktop } from '../../lib/use-media'
  */
 
 const errorText = (err: unknown) =>
-  err instanceof Error ? err.message : 'Algo ha fallado. Inténtalo de nuevo.'
+  err instanceof Error ? err.message : tr('dialogs.genericError', { ns: 'security' })
 
 /** La clave de configuración en grupos de cuatro, para copiarla a mano sin perderse. */
 const secretGroups = (s: string) => s.match(/.{1,4}/g) ?? [s]
@@ -81,18 +83,20 @@ function Ventana({
 
 // ─── Activar ─────────────────────────────────────────────────────────────────
 
-const STEPS = ['Escanea', 'Guarda la clave', 'Confirma'] as const
+/** Claves de los pasos (en `security.dialogs`): se traducen al pintar. */
+const STEPS = ['stepScan', 'stepKey', 'stepConfirm'] as const
 
 /** Los tres pasos del alta, con el actual resaltado y los hechos con su check. En el teléfono, solo el nombre del actual. */
 function Steps({ current }: { current: number }) {
+  const { t } = useTranslation('security')
   return (
-    <ol aria-label="Pasos" className="flex items-center gap-2">
-      {STEPS.map((label, i) => {
+    <ol aria-label={t('dialogs.steps')} className="flex items-center gap-2">
+      {STEPS.map((step, i) => {
         const done = i < current
         const now = i === current
         return (
           <li
-            key={label}
+            key={step}
             aria-current={now ? 'step' : undefined}
             className="flex flex-1 items-center gap-2 last:flex-none"
           >
@@ -107,7 +111,7 @@ function Steps({ current }: { current: number }) {
               )}
             >
               {done ? <Icon name="check" size={13} weight="bold" /> : i + 1}
-              {done ? <span className="sr-only">Hecho:</span> : null}
+              {done ? <span className="sr-only">{t('dialogs.stepDone')}</span> : null}
             </span>
             <span
               className={cn(
@@ -115,7 +119,7 @@ function Steps({ current }: { current: number }) {
                 now ? 'font-medium text-fg' : 'text-fg-subtle max-sm:sr-only',
               )}
             >
-              {label}
+              {t(`dialogs.${step}`)}
             </span>
             {i < STEPS.length - 1 ? (
               <span
@@ -135,37 +139,31 @@ function Steps({ current }: { current: number }) {
 
 /** Paso 1: el QR, sobre fondo claro para que lo lea cualquier cámara. */
 function ScanStep({ enrollment, onManual }: { enrollment: MfaEnrollment; onManual: () => void }) {
+  const { t } = useTranslation('security')
   return (
     <>
-      <p className="text-sm text-fg-muted">
-        Abre tu app de códigos (Google Authenticator, 1Password, Authy…), añade una cuenta nueva y
-        escanea este código con la cámara.
-      </p>
+      <p className="text-sm text-fg-muted">{t('dialogs.scanIntro')}</p>
       <div className="flex justify-center py-1">
         {enrollment.qrCode ? (
           <div className="rounded-xl bg-fg p-3 shadow-popover">
-            <img
-              src={enrollment.qrCode}
-              alt="Código QR para añadir Muninn a tu app de códigos"
-              className="size-44"
-            />
+            <img src={enrollment.qrCode} alt={t('dialogs.qrAlt')} className="size-44" />
           </div>
         ) : (
           // La demo no genera QR (memory-account): se pasa directamente a la clave.
           <div className="flex size-50 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong p-4 text-center text-xs text-fg-subtle">
             <AppIcon name="qr" size={28} />
-            En la demo no hay código QR. Usa la clave del siguiente paso.
+            {t('dialogs.noQrDemo')}
           </div>
         )}
       </div>
       <p className="text-center text-xs text-fg-subtle">
-        ¿No puedes escanearlo?{' '}
+        {t('dialogs.cantScan')}{' '}
         <button
           type="button"
           onClick={onManual}
           className="cursor-pointer font-medium text-accent underline-offset-2 hover:underline"
         >
-          Escribe la clave a mano
+          {t('dialogs.enterKey')}
         </button>
       </p>
     </>
@@ -174,27 +172,25 @@ function ScanStep({ enrollment, onManual }: { enrollment: MfaEnrollment; onManua
 
 /** Paso 2: la clave, en grupos de cuatro y con «Copiar», y por qué guardarla. */
 function KeyStep({ secret }: { secret: string }) {
+  const { t } = useTranslation('security')
   const [copied, setCopied] = useState(false)
   useEffect(() => {
     if (!copied) return
-    const t = setTimeout(() => setCopied(false), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timer)
   }, [copied])
   const copy = async () => {
     if (await copyText(secret)) {
       setCopied(true)
-      notify.success('Clave copiada', { icon: 'check' })
-    } else notify.error('No se pudo copiar', { description: 'Cópiala a mano.' })
+      notify.success(t('dialogs.keyCopied'), { icon: 'check' })
+    } else notify.error(t('dialogs.copyFailed'), { description: t('dialogs.copyKeyManually') })
   }
   return (
     <>
-      <p className="text-sm text-fg-muted">
-        Si no has escaneado el QR, escribe esta clave en tu app. Y guárdala en un lugar seguro, como
-        tu gestor de contraseñas: si pierdes el móvil, con ella añades Muninn a otra app.
-      </p>
+      <p className="text-sm text-fg-muted">{t('dialogs.keyIntro')}</p>
       <div className="flex flex-col items-center gap-3 rounded-lg border border-border-strong bg-surface-sunken p-4">
         <span className="self-start text-xs font-medium text-fg-subtle">
-          Clave de configuración
+          {t('dialogs.setupKey')}
         </span>
         <code className="grid grid-cols-4 gap-x-4 gap-y-1.5 font-mono text-md tracking-[0.12em] text-fg select-all">
           {secretGroups(secret).map((group, i) => (
@@ -212,12 +208,12 @@ function KeyStep({ secret }: { secret: string }) {
           ) : (
             <AppIcon name="copy" size={14} />
           )}
-          {copied ? 'Copiada' : 'Copiar clave'}
+          {copied ? t('dialogs.copied') : t('dialogs.copyKey')}
         </Button>
       </div>
       <p className="flex gap-2 text-xs text-fg-subtle">
         <Icon name="info" size={14} className="mt-px shrink-0" />
-        Al terminar te daremos también códigos de recuperación, por si un día no tienes el móvil.
+        {t('dialogs.recoveryHint')}
       </p>
     </>
   )
@@ -228,6 +224,7 @@ const ENROLL_CODE = 'mfa-alta-codigo'
 
 /** Activar: escanear → guardar la clave → confirmar el código, y un final con el check. */
 export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [enrollment, setEnrollment] = useState<MfaEnrollment | null>(null)
@@ -266,9 +263,9 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
       // pueden generar luego desde Ajustes: la clave queda como copia.
       setRecoveryCodes(await m.account.mfa.recoveryCodes.generate().catch(() => null))
       setStep(3)
-      notify.success('Segundo factor activado', {
+      notify.success(t('dialogs.enabled'), {
         icon: 'user',
-        description: 'Al entrar, te pediremos un código de tu app.',
+        description: t('dialogs.enabledHint'),
       })
       // También las sesiones: la de este dispositivo pasa a «con segundo factor».
       void qc.invalidateQueries({ queryKey: ['account'] })
@@ -286,17 +283,17 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
 
   const back = (
     <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={busy}>
-      Atrás
+      {t('dialogs.back')}
     </Button>
   )
   const footer =
     step === 3 ? (
       <Button variant="primary" onClick={onClose}>
-        {recoveryCodes ? 'Los he guardado' : 'Hecho'}
+        {recoveryCodes ? t('dialogs.savedThem') : t('dialogs.done')}
       </Button>
     ) : !enrollment ? (
       <Button variant="ghost" onClick={onClose}>
-        Cancelar
+        {t('dialogs.cancel')}
       </Button>
     ) : step === 2 ? (
       <>
@@ -307,21 +304,21 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
           variant="primary"
           disabled={busy || code.length < 6}
         >
-          {busy ? 'Comprobando…' : 'Activar'}
+          {busy ? t('dialogs.checking') : t('dialogs.turnOn')}
         </Button>
       </>
     ) : (
       <>
         {step > 0 ? back : null}
         <Button variant="primary" onClick={() => setStep((s) => s + 1)}>
-          Siguiente
+          {t('dialogs.next')}
         </Button>
       </>
     )
 
   return (
     <Ventana
-      title="Activar el segundo factor"
+      title={t('dialogs.enableTitle')}
       footer={footer}
       onClose={onClose}
       // Con los códigos a la vista, un clic fuera no cierra: no se pueden volver a ver.
@@ -330,15 +327,15 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
       <Steps current={step} />
       {loadError ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <p className="text-sm text-danger">No se pudo preparar el alta. {loadError}</p>
+          <p className="text-sm text-danger">{t('dialogs.prepareFailed', { error: loadError })}</p>
           <Button size="sm" onClick={() => void begin()}>
-            Reintentar
+            {t('dialogs.retry')}
           </Button>
         </div>
       ) : !enrollment ? (
         <div className="flex flex-col items-center gap-3 py-12 text-sm text-fg-subtle">
           <span className="mn-spinner" aria-hidden="true" />
-          Preparando tu código…
+          {t('dialogs.preparing')}
         </div>
       ) : (
         // La clave hace que cada paso entre con su pequeño desplazamiento.
@@ -348,13 +345,16 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
           {step === 2 ? (
             <form id={ENROLL_FORM} onSubmit={submit} noValidate className="flex flex-col gap-4">
               <p className="text-sm text-fg-muted">
-                Escribe el código de seis cifras que te enseña ahora tu app para{' '}
-                <span className="font-medium text-fg">Muninn</span>. Al completarlo, lo comprobamos.
+                <Trans
+                  t={t}
+                  i18nKey="dialogs.confirmIntro"
+                  components={{ strong: <span className="font-medium text-fg" /> }}
+                />
               </p>
               <CodeField
                 id={ENROLL_CODE}
-                label="Código de la app"
-                hint="Cambia cada 30 segundos: si está a punto de cambiar, espera al siguiente."
+                label={t('dialogs.appCode')}
+                hint={t('dialogs.codeHint')}
                 autoFocus
                 value={code}
                 onChange={(v) => {
@@ -372,17 +372,16 @@ export function ActivarSegundoFactor({ onClose }: { onClose: () => void }) {
             <>
               <div className="flex items-center gap-3">
                 <SuccessMark />
-                <p className="text-md font-semibold">Activado. Ahora, guarda estos códigos</p>
+                <p className="text-md font-semibold">{t('dialogs.enabledSaveCodes')}</p>
               </div>
               <RecoveryCodesList codes={recoveryCodes} />
             </>
           ) : step === 3 ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
               <SuccessMark />
-              <p className="mt-2 text-lg font-semibold">Tu cuenta está más protegida</p>
+              <p className="mt-2 text-lg font-semibold">{t('dialogs.moreProtected')}</p>
               <p className="max-w-[340px] text-sm text-fg-muted">
-                Cuando entres en un dispositivo nuevo, después del correo o de GitHub te pediremos
-                un código de tu app.
+                {t('dialogs.moreProtectedHint')}
               </p>
             </div>
           ) : null}
@@ -399,6 +398,7 @@ const DISABLE_CODE = 'mfa-baja-codigo'
 
 /** Desactivar: pide un código actual y avisa de lo que supone. Sin envío automático: es lo que quita protección. */
 export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [code, setCode] = useState('')
@@ -412,9 +412,9 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
     setError(null)
     try {
       await m.account.mfa.disable(code)
-      notify.success('Segundo factor desactivado', {
+      notify.success(t('dialogs.disabled'), {
         icon: 'user',
-        description: 'Ya no te pediremos el código al entrar.',
+        description: t('dialogs.disabledHint'),
       })
       void qc.invalidateQueries({ queryKey: ['account'] })
       onClose()
@@ -428,13 +428,13 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
 
   return (
     <Ventana
-      title="Desactivar el segundo factor"
-      description="Para confirmarlo, escribe el código que sale ahora en tu app."
+      title={t('dialogs.disableTitle')}
+      description={t('dialogs.disableDescription')}
       onClose={onClose}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+            {t('dialogs.cancel')}
           </Button>
           <Button
             type="submit"
@@ -442,7 +442,7 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
             variant="danger"
             disabled={busy || code.length < 6}
           >
-            {busy ? 'Desactivando…' : 'Desactivar'}
+            {busy ? t('dialogs.disabling') : t('dialogs.turnOff')}
           </Button>
         </>
       }
@@ -450,7 +450,7 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
       <form id={DISABLE_FORM} onSubmit={submit} noValidate className="flex flex-col gap-4">
         <CodeField
           id={DISABLE_CODE}
-          label="Código de la app"
+          label={t('dialogs.appCode')}
           autoFocus
           value={code}
           onChange={(v) => {
@@ -463,10 +463,7 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
         />
         <div className="flex gap-2.5 rounded-lg bg-danger-soft p-3 text-sm text-fg-muted">
           <Icon name="warning" size={16} className="mt-0.5 shrink-0 text-danger" />
-          <p>
-            Para entrar bastará con el código del correo o con GitHub, y el servidor dejará de
-            exigir tu app. Para volver a activarlo, tendrás que añadir Muninn otra vez a tu app.
-          </p>
+          <p>{t('dialogs.disableWarning')}</p>
         </div>
       </form>
     </Ventana>
@@ -480,28 +477,31 @@ export function DesactivarSegundoFactor({ onClose }: { onClose: () => void }) {
  * cierra con un clic fuera.
  */
 export function RecoveryCodesList({ codes }: { codes: string[] }) {
+  const { t } = useTranslation('security')
   const [copied, setCopied] = useState(false)
   useEffect(() => {
     if (!copied) return
-    const t = setTimeout(() => setCopied(false), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timer)
   }, [copied])
   const copy = async () => {
-    if (await copyText(`Códigos de recuperación de Muninn\n\n${codes.join('\n')}\n`)) {
+    if (await copyText(`${t('dialogs.codesClipboard')}\n\n${codes.join('\n')}\n`)) {
       setCopied(true)
-      notify.success('Códigos copiados', { icon: 'check' })
-    } else notify.error('No se pudo copiar', { description: 'Cópialos a mano.' })
+      notify.success(t('dialogs.codesCopied'), { icon: 'check' })
+    } else notify.error(t('dialogs.copyFailed'), { description: t('dialogs.copyCodesManually') })
   }
   return (
     <>
       <p className="text-sm text-fg-muted">
-        Si un día no tienes el móvil, entra con uno de ellos en lugar del código de la app. Cada uno
-        vale una sola vez. Guárdalos en tu gestor de contraseñas:{' '}
-        <span className="font-medium text-fg">no los volverás a ver.</span>
+        <Trans
+          t={t}
+          i18nKey="dialogs.codesIntro"
+          components={{ strong: <span className="font-medium text-fg" /> }}
+        />
       </p>
       <div className="flex flex-col items-center gap-3 rounded-lg border border-border-strong bg-surface-sunken p-4">
         <ul
-          aria-label="Códigos de recuperación"
+          aria-label={t('dialogs.codesTitle')}
           className="grid grid-cols-2 gap-x-6 gap-y-1.5 font-mono text-md tracking-[0.06em] text-fg select-all"
         >
           {codes.map((c) => (
@@ -518,7 +518,7 @@ export function RecoveryCodesList({ codes }: { codes: string[] }) {
           ) : (
             <AppIcon name="copy" size={14} />
           )}
-          {copied ? 'Copiados' : 'Copiar todos'}
+          {copied ? t('dialogs.codesCopiedButton') : t('dialogs.copyAll')}
         </Button>
       </div>
     </>
@@ -536,6 +536,7 @@ export function GenerarCodigos({
   replacing: boolean
   onClose: () => void
 }) {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [codes, setCodes] = useState<string[] | null>(null)
@@ -547,9 +548,9 @@ export function GenerarCodigos({
     setError(null)
     try {
       setCodes(await m.account.mfa.recoveryCodes.generate())
-      notify.success(replacing ? 'Códigos nuevos generados' : 'Códigos generados', {
+      notify.success(replacing ? t('dialogs.codesRegenerated') : t('dialogs.codesGenerated'), {
         icon: 'user',
-        description: replacing ? 'Los anteriores ya no valen.' : 'Guárdalos antes de cerrar.',
+        description: replacing ? t('dialogs.codesRegeneratedHint') : t('dialogs.codesSaveFirst'),
       })
       void qc.invalidateQueries({ queryKey: ['account'] })
     } catch (err) {
@@ -560,21 +561,25 @@ export function GenerarCodigos({
 
   return (
     <Ventana
-      title="Códigos de recuperación"
+      title={t('dialogs.codesTitle')}
       onClose={onClose}
       keepOnOutsideClick={Boolean(codes)}
       footer={
         codes ? (
           <Button variant="primary" onClick={onClose}>
-            Los he guardado
+            {t('dialogs.savedThem')}
           </Button>
         ) : (
           <>
             <Button variant="ghost" onClick={onClose} disabled={busy}>
-              Cancelar
+              {t('dialogs.cancel')}
             </Button>
             <Button variant="primary" onClick={() => void generate()} disabled={busy}>
-              {busy ? 'Generando…' : replacing ? 'Generar nuevos' : 'Generar'}
+              {busy
+                ? t('dialogs.generating')
+                : replacing
+                  ? t('dialogs.generateNew')
+                  : t('dialogs.generate')}
             </Button>
           </>
         )
@@ -586,14 +591,11 @@ export function GenerarCodigos({
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-fg-muted">
-            Diez códigos de un solo uso para entrar si no tienes el móvil de la app. Solo los verás
-            una vez, así que ten a mano dónde guardarlos.
-          </p>
+          <p className="text-sm text-fg-muted">{t('dialogs.generateIntro')}</p>
           {replacing ? (
             <div className="flex gap-2.5 rounded-lg bg-accent-soft p-3 text-sm text-fg-muted">
               <Icon name="warning" size={16} className="mt-0.5 shrink-0 text-accent" />
-              <p>Los códigos que tienes ahora dejarán de valer, también los que no has usado.</p>
+              <p>{t('dialogs.replaceWarning')}</p>
             </div>
           ) : null}
           {error ? <p className="text-sm text-danger">{error}</p> : null}

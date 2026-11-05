@@ -1,0 +1,443 @@
+import type { Messages } from '../../types'
+import type { settings as en } from '../en/settings'
+
+/** Textos de `settings` en español. Mismas claves que `en/settings.ts`: si falta una, no compila. */
+export const settings: Messages<typeof en> = {
+  sectionsNav: 'Secciones de ajustes',
+  pageTitle: '{{section}} · Ajustes · Muninn',
+  groups: {
+    tu: 'Tú',
+    espacio: 'Espacio de trabajo',
+    asistente: 'Asistente',
+    integraciones: 'Integraciones',
+    datos: 'Datos',
+  },
+  sections: {
+    cuenta: {
+      label: 'Cuenta',
+      subtitle: 'Con qué entras, dónde está abierta tu sesión y qué apps usan tu cuenta.',
+    },
+    apariencia: {
+      label: 'Apariencia',
+      subtitle: 'Cómo se ve Muninn. Te sigue a todos tus dispositivos.',
+    },
+    barra: {
+      label: 'Barra de abajo',
+      subtitle:
+        'Las pestañas de abajo en el móvil: cuáles y en qué orden. Te sigue a todos tus dispositivos.',
+    },
+    atajos: {
+      label: 'Atajos de teclado',
+      subtitle: 'Todo lo que puedes hacer sin soltar el teclado.',
+    },
+    modulos: {
+      label: 'Módulos',
+      subtitle:
+        'Activa solo lo que uses. Lo desactivado sale del menú; tus datos siguen guardados.',
+    },
+    notificaciones: {
+      label: 'Notificaciones',
+      subtitle: 'Avisos en el móvil y en el ordenador, aunque Muninn esté cerrada.',
+    },
+    asistente: {
+      label: 'Modelo local',
+      subtitle: 'El modelo de tu ordenador que usa el Asistente, con Ollama.',
+    },
+    informe: {
+      label: 'Informe de la mañana',
+      subtitle: 'Cada día, una nota fijada con lo que tienes para hoy.',
+    },
+    integraciones: {
+      label: 'GitHub',
+      subtitle: 'Las issues de tus repositorios, como tareas de su proyecto.',
+    },
+    datos: {
+      label: 'Datos y sincronización',
+      subtitle: 'Dónde se guardan tus datos y cómo viajan entre dispositivos.',
+    },
+    acerca: {
+      label: 'Acerca de Muninn',
+      subtitle: 'Versión, documentación y código.',
+    },
+  },
+  docs: {
+    cuenta: {
+      title: 'Cuenta y seguridad',
+      text: 'El segundo factor, las sesiones abiertas y las apps con acceso a tu cuenta.',
+    },
+    apariencia: {
+      title: 'Moverte por Muninn › Apariencia',
+      text: 'Cristal y color de acento: qué cambia cada uno y dónde se guarda.',
+    },
+    barra: {
+      title: 'Moverte por Muninn › Barra de abajo',
+      text: 'Qué pestañas puedes poner, cuántas caben y dónde queda todo lo demás.',
+    },
+    atajos: {
+      title: 'Moverte por Muninn › Atajos',
+      text: 'Los atajos del buscador, del tablero y de los diálogos.',
+    },
+    modulos: {
+      title: 'Moverte por Muninn › Módulos',
+      text: 'Qué pasa al desactivar un módulo y cómo volver a activarlo.',
+    },
+    notificaciones: {
+      title: 'Notificaciones',
+      text: 'Cómo activar los avisos en el iPhone y qué te avisa Muninn.',
+    },
+    asistente: {
+      title: 'Asistente › Instalar Ollama',
+      text: 'Cómo instalar Ollama y el modelo recomendado, paso a paso.',
+    },
+    informe: {
+      title: 'Asistente › Informe de la mañana',
+      text: 'Qué incluye, cuándo se hace y qué pasa si el ordenador está apagado.',
+    },
+    integraciones: {
+      title: 'GitHub',
+      text: 'Cómo se sincronizan las issues y qué cambia en cada lado.',
+    },
+    datos: {
+      title: 'Tus datos y privacidad',
+      text: 'Dónde se guarda todo, quién puede verlo y qué queda sin conexión.',
+    },
+  },
+  hints: {
+    tabs_one: '{{count}} pestaña',
+    tabs_other: '{{count}} pestañas',
+    modules: '{{on}} de {{total}}',
+    notificationsOff: 'Sin activar',
+    devices_one: '{{count}} dispositivo',
+    devices_other: '{{count}} dispositivos',
+    reportOff: 'Apagado',
+  },
+  index: {
+    acceso: {
+      label: 'Método de acceso',
+      description: 'Entras con un código por correo o con GitHub. Sin contraseñas.',
+      keywords: 'login correo email',
+    },
+    sesion: {
+      label: 'Cerrar sesión',
+      description: 'Se cierra solo en este dispositivo.',
+      keywords: 'salir logout',
+    },
+    'segundo-factor': {
+      label: 'Segundo factor',
+      description: 'Un código de una app de tu móvil al entrar, además del correo o GitHub.',
+      keywords: 'mfa 2fa totp autenticador authenticator verificación dos pasos seguridad',
+    },
+    sesiones: {
+      label: 'Sesiones y dispositivos',
+      description: 'Dónde tienes la sesión abierta, con su última actividad.',
+      keywords: 'dispositivos navegadores seguridad',
+    },
+    'cerrar-sesiones': {
+      label: 'Cerrar sesión en otros dispositivos',
+      description: 'En los demás o en todos, también en este.',
+      keywords: 'salir logout todos seguridad',
+    },
+    'aviso-dispositivo-nuevo': {
+      label: 'Avisos de dispositivos nuevos',
+      description: 'Un correo cuando alguien entra desde un dispositivo que no habías usado.',
+      keywords: 'correo email aviso inicio sesión entrar seguridad dispositivo desconocido',
+    },
+    apps: {
+      label: 'Apps con acceso',
+      description:
+        'Las apps que usan tu cuenta por el MCP remoto, como claude.ai. Quita las que no uses.',
+      keywords: 'oauth permisos claude conectores mcp revocar',
+    },
+    idioma: {
+      label: 'Idioma',
+      description: 'El idioma de la app. Por defecto, el de tu navegador.',
+      keywords: 'language english inglés español traducción',
+    },
+    tema: {
+      label: 'Tema',
+      description: 'Oscuro. El claro llegará más adelante.',
+      keywords: 'modo oscuro claro',
+    },
+    cristal: {
+      label: 'Cristal',
+      description: 'Desenfoque translúcido en paneles y menús.',
+      keywords: 'transparencia desenfoque',
+    },
+    acento: {
+      label: 'Color de acento',
+      description: 'Botones, selección y la pestaña activa de la barra de abajo.',
+      keywords: 'color tema',
+    },
+    'barra-pestanas': {
+      label: 'Pestañas de la barra de abajo',
+      description: 'Elige de una a cuatro y su orden. Tu avatar queda siempre a la derecha.',
+      keywords: 'dock pestañas móvil navegación inicio buscar más',
+    },
+    'atajos-buscador': {
+      label: 'Atajos del buscador',
+      description: 'Abrirlo, moverte por los resultados y abrir uno.',
+      keywords: 'teclado ctrl k cmd',
+    },
+    'atajos-tablero': {
+      label: 'Atajos del tablero',
+      description: 'Nueva tarea y mover tarjetas con el teclado.',
+      keywords: 'teclado n espacio flechas',
+    },
+    'modulo-tasks': {
+      label: 'Tareas y proyectos',
+      description: 'Kanban por proyecto.',
+      keywords: 'modulo activar desactivar',
+    },
+    'modulo-notes': {
+      label: 'Notas',
+      description: 'Markdown vinculado a proyectos.',
+      keywords: 'modulo activar desactivar',
+    },
+    'modulo-finance': {
+      label: 'Finanzas',
+      description: 'Gastos, ingresos, ahorro, inversión y suscripciones.',
+      keywords: 'modulo activar desactivar dinero',
+    },
+    'modulo-github': {
+      label: 'GitHub',
+      description: 'Issues como tareas y agentes.',
+      keywords: 'modulo activar desactivar',
+    },
+    'modulo-news': {
+      label: 'Noticias',
+      description: 'RSS con resumen local.',
+      keywords: 'modulo activar desactivar rss',
+    },
+    avisos: {
+      label: 'Avisos en este dispositivo',
+      description: 'Actívalos para recibir avisos aunque Muninn esté cerrada.',
+      keywords: 'notificaciones push permiso iphone movil',
+    },
+    'avisos-cobros': {
+      label: 'Avisos antes de cada cobro',
+      description: 'En el móvil, antes de que te cobren una suscripción.',
+      keywords: 'notificaciones push suscripciones',
+    },
+    'avisos-dispositivos': {
+      label: 'Dispositivos con avisos',
+      description: 'Los que reciben tus avisos. Quita los que ya no uses.',
+      keywords: 'notificaciones push quitar movil',
+    },
+    ollama: {
+      label: 'Dirección de Ollama',
+      description: 'Dónde está Ollama en tu ordenador.',
+      keywords: 'servidor url local',
+    },
+    modelo: {
+      label: 'Modelo',
+      description: 'El modelo de Ollama que usa el Asistente.',
+      keywords: 'qwen ia llm',
+    },
+    'informe-activo': {
+      label: 'Informe de la mañana',
+      description: 'Cada día, una nota fijada con lo que tienes para hoy.',
+      keywords: 'resumen diario',
+    },
+    'informe-hora': {
+      label: 'Hora del informe',
+      description: 'A qué hora se prepara si el ordenador está encendido.',
+      keywords: 'hora',
+    },
+    'informe-ahora': {
+      label: 'Hacer ahora',
+      description: 'Genera el informe sin esperar a su hora.',
+      keywords: 'generar',
+    },
+    'github-estado': {
+      label: 'Sincronización de GitHub',
+      description: 'Si el módulo está activo y cuándo llegó la última issue.',
+      keywords: 'issues sincronizar',
+    },
+    repos: {
+      label: 'Repositorio de cada proyecto',
+      description: 'Vincula un repositorio de GitHub a cada proyecto.',
+      keywords: 'vincular issues repo',
+    },
+    donde: {
+      label: 'Dónde se guardan',
+      description: 'En tu cuenta, en un servidor de la Unión Europea.',
+      keywords: 'servidor privacidad europa',
+    },
+    dispositivos: {
+      label: 'Entre dispositivos',
+      description: 'Lo que cambias en uno aparece al momento en los demás.',
+      keywords: 'sincronizar tiempo real',
+    },
+    'sin-conexion': {
+      label: 'Sin conexión',
+      description: 'Lo último que viste se puede consultar sin red.',
+      keywords: 'offline cache',
+    },
+    version: {
+      label: 'Versión',
+      description: 'Qué versión de Muninn tienes.',
+      keywords: 'actualizar acerca',
+    },
+  },
+  search: {
+    placeholder: 'Buscar un ajuste',
+    title: 'Ajustes con «{{query}}»',
+    none: 'Ningún ajuste coincide. Prueba con otra palabra.',
+    settings_one: '{{count}} ajuste',
+    settings_other: '{{count}} ajustes',
+    sections_one: '{{count}} sección',
+    sections_other: '{{count}} secciones',
+    summary: '{{settings}} en {{sections}}. Pulsa uno para ir a él; Esc borra la búsqueda.',
+  },
+  soon: 'Próximamente',
+  changed: 'Cambiado',
+  changedCount_one: '{{count}} cambiado',
+  changedCount_other: '{{count}} cambiados',
+  resetToDefault: 'Volver al valor de fábrica',
+  help: {
+    inDocs: 'En la documentación',
+    openGuide: 'Abrir la guía',
+    changedMark: 'Marca de cambiado',
+    changedText:
+      'Los ajustes que no están en su valor de fábrica llevan un punto. El botón de la flecha devuelve uno; «Restablecer sección», todos, con Deshacer.',
+  },
+  reset: {
+    appearance: 'Apariencia restablecida',
+    report: 'Informe de la mañana restablecido',
+    section: '{{section}}: valores de fábrica',
+    failed: 'No se pudo restablecer',
+    done: 'Vuelven a su valor de fábrica',
+  },
+  savedToAccountFooter: 'Se guarda en tu cuenta: te sigue a todos tus dispositivos.',
+  account: {
+    demoTitle: 'Estás en modo demo',
+    signIn: 'Iniciar sesión',
+    leaveDemo: 'Salir del modo demo',
+    demoText:
+      'Tus datos viven en memoria y se pierden al recargar. Inicia sesión para guardarlos en tu cuenta y verlos en todos tus dispositivos.',
+    profile: 'Perfil',
+    access: 'Acceso',
+    method: 'Método de acceso',
+    methodText: 'Sin contraseñas: entras con un código o con GitHub.',
+    providerEmail: 'Código por correo',
+    session: 'Sesión',
+    sessionText: 'Se cierra solo en este dispositivo. Tus datos siguen en tu cuenta.',
+    signingOut: 'Cerrando…',
+    signOut: 'Cerrar sesión',
+  },
+  data: {
+    demoTitle: 'Datos en memoria',
+    demoText:
+      'Estás en modo demo: tus datos viven en memoria y se pierden al recargar. Con una cuenta se guardan en el servidor y los ves en todos tus dispositivos.',
+    title: 'Tus datos',
+    where: 'Dónde se guardan',
+    whereText:
+      'En tu cuenta de Muninn, en un servidor de la Unión Europea (París). Solo tú puedes verlos.',
+    saved: 'Guardado',
+    devices: 'Entre dispositivos',
+    devicesText:
+      'Entra con la misma cuenta y verás lo mismo. Lo que cambies en otro dispositivo aparece al momento, sin recargar.',
+    instant: 'Al momento',
+    offline: 'Sin conexión',
+    offlineText:
+      'La app guarda en este dispositivo lo último que viste: puedes abrirla y consultarlo sin red. Para cambiar algo necesitas conexión. Al cerrar sesión, se borra.',
+    readOnly: 'Solo lectura',
+  },
+  appearance: {
+    theme: 'Tema',
+    mode: 'Modo',
+    modeText: 'Muninn está pensado en oscuro. El tema claro llegará más adelante.',
+    dark: 'Oscuro',
+    lightSoon: 'Claro, próximamente',
+    glass: 'Cristal',
+    glassText: 'Desenfoque translúcido en paneles y menús de toda la app.',
+    glassReset: 'Cristal restablecido',
+    color: 'Color',
+    accent: 'Color de acento',
+    accentText: 'Botones, selección y la pestaña activa de la barra de abajo. Por defecto, ámbar.',
+    accentReset: 'Acento restablecido',
+    backToAmber: 'Volver a ámbar',
+    deviceFooter: 'Se guarda en este dispositivo. Cuando inicies sesión, te seguirá a todos.',
+    glassOn: 'Cristal activado',
+    glassOff: 'Cristal desactivado',
+    accentChanged: 'Acento {{name}}',
+    savedToAccount: 'Guardado en tu cuenta',
+    savedToDevice: 'Guardado en este dispositivo',
+    restored: 'Apariencia restaurada',
+    saveFailed: 'No se pudo guardar en tu cuenta',
+    saveFailedHint: 'El cambio se queda en este dispositivo',
+  },
+  accents: {
+    amber: 'Ámbar',
+    blue: 'Azul',
+    violet: 'Violeta',
+    teal: 'Verde azulado',
+    pink: 'Rosa',
+  },
+  shortcuts: {
+    search: 'Buscador',
+    openSearch: 'Abrir o cerrar el buscador',
+    moveResults: 'Moverse por los resultados',
+    openResult: 'Abrir el resultado elegido',
+    focusSearch: 'Ir al buscador de Ajustes o de la Documentación',
+    board: 'Tablero',
+    newTask: 'Nueva tarea (fuera de un campo de texto)',
+    space: 'Espacio',
+    pickUp: 'Con una tarjeta o columna enfocada, recogerla y soltarla',
+    moveItem: 'Con algo recogido, moverlo',
+    general: 'En toda la app',
+    accountMenu: 'Abrir el menú de tu cuenta, al pie de la barra lateral',
+    close: 'Cerrar un diálogo, un menú o el panel de una tarea',
+    nextControl: 'Pasar al siguiente control (el primero: «Saltar al contenido»)',
+  },
+  about: {
+    version: 'Versión',
+    versionDesktop:
+      'En el ordenador, Muninn busca versiones nuevas al abrirse y te avisa con «Reiniciar».',
+    versionWeb: 'En el navegador y en el móvil, la app se actualiza sola al volver a abrirla.',
+    docs: 'Documentación',
+    docsText: 'Guías de cada parte de Muninn: qué funciona ya y qué falta.',
+    open: 'Abrir',
+    code: 'Código',
+    codeText: 'Muninn es de código abierto, con licencia MIT.',
+  },
+  dock: {
+    inBar: 'En la barra',
+    outOfBar: 'Fuera de la barra',
+    outOfBarText: 'Lo que no está abajo sigue a un toque en tu avatar, en «Ir a».',
+    moduleOffHidden: 'Módulo desactivado: no se ve',
+    moduleOff: 'Módulo desactivado',
+    opensSearch: 'Abre el buscador',
+    assistantNotOnPhone: 'Aún no contesta en el móvil: usa el del ordenador',
+    moveLeft: 'Mover {{name}} a la izquierda',
+    moveRight: 'Mover {{name}} a la derecha',
+    remove: 'Quitar {{name}} de la barra',
+    add: 'Añadir {{name}} a la barra',
+    atLeastOne: 'La barra necesita al menos una pestaña',
+    full: 'Caben {{max}} pestañas: quita una antes',
+    added: 'Añadido a la barra: {{name}}',
+    removed: 'Quitado de la barra: {{name}}',
+    movedLeft: '{{name}} a la izquierda',
+    movedRight: '{{name}} a la derecha',
+    demoFooter: 'Estás en modo demo: se pierde al recargar.',
+  },
+  modules: {
+    title: 'Módulos',
+    active: '{{on}} de {{total}} activos',
+    soon: 'Próximamente',
+    arrivesIn: 'Llega en la {{phase}}',
+    on: 'Módulo activado: {{name}}',
+    off: 'Módulo desactivado: {{name}}',
+    onHint: 'Vuelve a estar en el menú y en el buscador',
+    offHint: 'Sale del menú y del buscador; tus datos siguen guardados',
+    saveFailed: 'No se pudo guardar el cambio',
+    items: {
+      tasks: { label: 'Tareas y proyectos', text: 'Kanban por proyecto' },
+      notes: { label: 'Notas', text: 'Markdown vinculado a proyectos' },
+      finance: { label: 'Finanzas', text: 'Gastos, ingresos, ahorro, inversión y suscripciones' },
+      github: { label: 'GitHub', text: 'Issues como tareas y agentes' },
+      news: { label: 'Noticias', text: 'RSS con resumen local' },
+      focus: { label: 'Concentración', text: 'Bloques de trabajo profundo con la isla' },
+    },
+  },
+}

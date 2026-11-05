@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
-import { applyPageMeta } from '../src/lib/seo'
+import { applyNoIndex, applyPageMeta } from '../src/lib/seo'
 
 const meta = (sel: string) => document.head.querySelector<HTMLMetaElement>(sel)?.content
 const canonicals = () => document.head.querySelectorAll('link[rel="canonical"]')
@@ -44,5 +44,27 @@ describe('applyPageMeta', () => {
     document.title = 'Proyectos · Muninn'
     again()
     expect(document.title).toBe('Proyectos · Muninn')
+  })
+})
+
+describe('applyNoIndex', () => {
+  it('pone robots=noindex y lo quita al salir', () => {
+    const undo = applyNoIndex(document)
+    expect(meta('meta[name="robots"]')).toBe('noindex')
+    undo()
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull()
+  })
+})
+
+describe('applyPageMeta en una página prerenderizada', () => {
+  it('sustituye la canónica que ya traía el HTML', () => {
+    document.head.innerHTML =
+      '<link rel="canonical" href="https://muninn.test/documentacion/notas">'
+    history.replaceState(null, '', '/documentacion/tareas')
+    applyPageMeta(document, { title: 'Tareas' })
+    expect(canonicals()).toHaveLength(1)
+    expect((canonicals()[0] as HTMLLinkElement).href).toBe(
+      `${location.origin}/documentacion/tareas`,
+    )
   })
 })

@@ -2,6 +2,8 @@ import type { ChangeTarget, ToolRun } from '@muninn/assistant'
 import { Button, cn, Icon } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import { memo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { t as tr } from '../../i18n'
 import type { Turn } from '../../lib/assistant-history'
 import { isTauri } from '../../lib/auth'
 import { openImage } from '../../lib/external-link'
@@ -10,30 +12,30 @@ import { Logo } from '../../shell/Logo'
 
 /**
  * Frases del estado «pensando»: rotan mientras el modelo trabaja. Muninn es el cuervo de la memoria de Odín: algunas
- * guiñan a eso. Las de `TOOL_PHRASES` salen cuando ya está usando herramientas.
+ * guiñan a eso. Las de `toolPhrases` salen cuando ya está usando herramientas. Funciones: en el idioma activo.
  */
-export const THINKING_PHRASES = [
-  'Pensando…',
-  'Ordenando ideas…',
-  'Recordando…',
-  'Atando cabos…',
-  'Hilando fino…',
-  'Consultando a Hugin…',
-  'Batiendo las alas…',
-  'Repasando tu día…',
+export const thinkingPhrases = () => [
+  tr('thinking.thinking', { ns: 'assistant' }),
+  tr('thinking.ordering', { ns: 'assistant' }),
+  tr('thinking.remembering', { ns: 'assistant' }),
+  tr('thinking.connecting', { ns: 'assistant' }),
+  tr('thinking.refining', { ns: 'assistant' }),
+  tr('thinking.hugin', { ns: 'assistant' }),
+  tr('thinking.wings', { ns: 'assistant' }),
+  tr('thinking.day', { ns: 'assistant' }),
 ]
-export const TOOL_PHRASES = [
-  'Mirando tus datos…',
-  'Echando cuentas…',
-  'Repasando tus tareas…',
-  'Poniendo orden…',
-  'Tomando nota…',
+export const toolPhrases = () => [
+  tr('working.data', { ns: 'assistant' }),
+  tr('working.numbers', { ns: 'assistant' }),
+  tr('working.tasks', { ns: 'assistant' }),
+  tr('working.tidying', { ns: 'assistant' }),
+  tr('working.notes', { ns: 'assistant' }),
 ]
 const PHRASE_MS = 2400
 
 /** «Pensando…» con una ola del color de acento y frases que cambian (empieza en una al azar). */
 export function Thinking({ working }: { working: boolean }) {
-  const list = working ? TOOL_PHRASES : THINKING_PHRASES
+  const list = working ? toolPhrases() : thinkingPhrases()
   const [i, setI] = useState(() => Math.floor(Math.random() * list.length))
   useEffect(() => {
     const t = setInterval(() => setI((n) => n + 1), PHRASE_MS)
@@ -63,6 +65,7 @@ export function MuninnAvatar({ busy }: { busy?: boolean }) {
 
 /** El chip de una herramienta: nombre técnico (como en el diseño), detalle y si fue bien. */
 function ToolChip({ run }: { run: ToolRun }) {
+  const { t } = useTranslation('assistant')
   return (
     <span
       title={run.error ?? run.title}
@@ -81,16 +84,17 @@ function ToolChip({ run }: { run: ToolRun }) {
       {run.detail ? <span className="truncate">{run.detail}</span> : null}
       <span className="sr-only">
         {run.status === 'running'
-          ? 'en marcha'
+          ? t('tool.running')
           : run.status === 'ok'
-            ? 'hecho'
-            : `falló: ${run.error}`}
+            ? t('tool.ok')
+            : t('tool.failed', { error: run.error ?? '' })}
       </span>
     </span>
   )
 }
 
 function TargetLink({ target }: { target: ChangeTarget }) {
+  const { t } = useTranslation('assistant')
   const cls = 'text-xs text-fg-muted underline-offset-2 hover:text-fg hover:underline'
   switch (target.kind) {
     case 'task':
@@ -100,35 +104,36 @@ function TargetLink({ target }: { target: ChangeTarget }) {
           params={{ projectId: target.projectId, taskId: target.id }}
           className={cls}
         >
-          Abrir
+          {t('open')}
         </Link>
       )
     case 'project':
       return (
         <Link to="/proyectos/$projectId" params={{ projectId: target.id }} className={cls}>
-          Abrir
+          {t('open')}
         </Link>
       )
     case 'note':
       return (
         <Link to="/notas/$noteId" params={{ noteId: target.id }} className={cls}>
-          Abrir
+          {t('open')}
         </Link>
       )
     default:
       return (
         <Link to="/finanzas" className={cls}>
-          Abrir
+          {t('open')}
         </Link>
       )
   }
 }
 
 function AttachedImage({ src, n }: { src: string; n: number }) {
+  const { t } = useTranslation('assistant')
   return (
     <img
       src={src}
-      alt={`Imagen ${n} adjunta`}
+      alt={t('attachedImage', { n })}
       className="max-h-44 max-w-56 rounded-lg border border-border object-cover"
     />
   )
@@ -142,10 +147,11 @@ export const UserBubble = memo(function UserBubble({
   text: string
   images?: string[]
 }) {
+  const { t } = useTranslation('assistant')
   return (
     <div className="flex max-w-[86%] flex-col items-end gap-1.5 self-end md:max-w-[75%]">
       {images?.length ? (
-        <ul aria-label="Imágenes" className="flex flex-wrap justify-end gap-1.5">
+        <ul aria-label={t('imagesLabel')} className="flex flex-wrap justify-end gap-1.5">
           {images.map((src, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: las imágenes de un mensaje no cambian
             <li key={i}>
@@ -187,6 +193,7 @@ interface ReplyProps {
 /** Respuesta del asistente: herramientas usadas, el texto (Markdown) y qué ha cambiado, con «Deshacer». */
 /** Memo: solo se repinta la respuesta que cambia (los turnos sin cambios conservan su objeto). */
 export const Reply = memo(function Reply({ turn, running, canUndo, onUndo }: ReplyProps) {
+  const { t } = useTranslation('assistant')
   const tools = turn.tools ?? []
   const changes = turn.changes ?? []
   const undone = changes.length > 0 && changes.every((c) => c.undone)
@@ -195,10 +202,10 @@ export const Reply = memo(function Reply({ turn, running, canUndo, onUndo }: Rep
       <MuninnAvatar busy={running && !turn.text} />
       <div className="flex min-w-0 flex-1 flex-col gap-3 pt-0.5">
         {tools.length ? (
-          <ul aria-label="Herramientas usadas" className="flex flex-wrap gap-1.5">
-            {tools.map((t) => (
-              <li key={t.id} className="max-w-full">
-                <ToolChip run={t} />
+          <ul aria-label={t('toolsUsed')} className="flex flex-wrap gap-1.5">
+            {tools.map((run) => (
+              <li key={run.id} className="max-w-full">
+                <ToolChip run={run} />
               </li>
             ))}
           </ul>
@@ -212,11 +219,7 @@ export const Reply = memo(function Reply({ turn, running, canUndo, onUndo }: Rep
         {changes.length ? (
           <div className="overflow-hidden rounded-md border border-border bg-surface-sunken">
             <p className="flex items-center gap-2 px-3 pt-2.5 pb-1 text-xs font-semibold tracking-wider text-fg-faint uppercase">
-              {undone
-                ? 'Deshecho'
-                : changes.length === 1
-                  ? 'Ha cambiado'
-                  : `Ha cambiado (${changes.length})`}
+              {undone ? t('undone') : t('changed', { count: changes.length })}
             </p>
             <ul>
               {changes.map((c, i) => (
@@ -242,13 +245,13 @@ export const Reply = memo(function Reply({ turn, running, canUndo, onUndo }: Rep
               <div className="border-t border-border-subtle px-3 py-2">
                 <Button size="sm" onClick={() => onUndo(turn.id)}>
                   <Icon name="sync" size={13} />
-                  Deshacer {changes.length === 1 ? 'el cambio' : 'los cambios'}
+                  {t('undoChanges', { count: changes.length })}
                 </Button>
               </div>
             ) : null}
           </div>
         ) : null}
-        {turn.stopped ? <p className="text-xs text-fg-subtle">Detenido.</p> : null}
+        {turn.stopped ? <p className="text-xs text-fg-subtle">{t('stopped')}</p> : null}
         {turn.error ? (
           <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
             {turn.error}

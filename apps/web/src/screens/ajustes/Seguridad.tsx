@@ -1,11 +1,29 @@
-import { type AccountSession, sessionDeviceLabel } from '@muninn/core'
-import { Button, notify } from '@muninn/ui'
+import {
+  type AccountSession,
+  type AppSessions,
+  groupSessions,
+  sessionDeviceLabel,
+  type UserSettings,
+} from '@muninn/core'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  IconButton,
+  icons,
+  notify,
+  Switch,
+  TextField,
+} from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { timeAgo } from '../../lib/dates'
+import { rememberDeviceName } from '../../lib/device-name'
+import { notifyUndo } from '../../lib/feedback'
 import { useAuth, useMuninn } from '../../lib/muninn'
-import { fail } from '../../lib/mutations'
-import { keys } from '../../lib/queries'
+import { fail, serial } from '../../lib/mutations'
+import { keys, settingsQuery } from '../../lib/queries'
 import { useEndSession } from '../../lib/session'
 import { PrefGroup, PrefRow } from './ui'
 
@@ -14,30 +32,120 @@ import { PrefGroup, PrefRow } from './ui'
  * entrar en ese dispositivo): en lugar de «Deshacer», el aviso dice qué pasa.
  */
 
-const LEAVES_SOON =
-  'Saldrá en menos de una hora y ya no le llegan tus avisos. Para volver, tendrá que entrar de nuevo.'
+/**
+ * Ponerle nombre a una sesión («Portátil del curro», ADR-0082): en el navegador no se puede saber qué equipo es. El de
+ * este dispositivo, además, lo recuerda el navegador para la próxima vez que entres. Con «Deshacer».
+ */
+function RenameDialog({
+  session,
+  open,
+  onOpenChange,
+}: {
+  session: AccountSession
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useTranslation('security')
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const [value, setValue] = useState(session.deviceName ?? '')
+  const [busy, setBusy] = useState(false)
+
+  const apply = async (name: string | null, undoing = false): Promise<boolean> => {
+    let before: string | null
+    try {
+      before = await m.account.sessions.rename(session.id, name)
+    } catch (err) {
+      fail(t('sessions.renameFailed'), err)
+      return false
+    } finally {
+      void qc.invalidateQueries({ queryKey: keys.accountSessions })
+    }
+    const saved = name?.trim() || null
+    if (session.current) rememberDeviceName(saved)
+    if (!undoing)
+      notifyUndo(saved ? t('sessions.renamed', { name: saved }) : t('sessions.nameRemoved'), {
+        icon: 'edit',
+        undo: () => apply(before, true),
+      })
+    return true
+  }
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    if (await apply(value)) onOpenChange(false)
+    setBusy(false)
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (o) setValue(session.deviceName ?? '')
+        onOpenChange(o)
+      }}
+    >
+      <DialogContent
+        title={t('sessions.renameTitle')}
+        description={t('sessions.renameDescription', {
+          device: sessionDeviceLabel(session.userAgent, session.appName),
+        })}
+      >
+        <form onSubmit={(e) => void save(e)} className="flex flex-col gap-4">
+          <TextField
+            label={t('sessions.nameLabel')}
+            hint={session.current ? t('sessions.nameHintHere') : t('sessions.nameHint')}
+            placeholder={t('sessions.namePlaceholder')}
+            value={value}
+            maxLength={40}
+            autoFocus
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" onClick={() => onOpenChange(false)}>
+              {t('sessions.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" disabled={busy}>
+              {t('sessions.saveName')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function SessionRow({ session }: { session: AccountSession }) {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
-  const label = sessionDeviceLabel(session.userAgent, session.appName)
+  const [renaming, setRenaming] = useState(false)
+  const kind = sessionDeviceLabel(session.userAgent, session.appName)
+  const label = session.deviceName ?? kind
   const revoke = async () => {
     setBusy(true)
     try {
       await m.account.sessions.revoke(session.id)
-      notify.success(`Sesión cerrada en «${label}»`, { icon: 'user', description: LEAVES_SOON })
+      notify.success(t('sessions.signedOut', { device: label }), {
+        icon: 'user',
+        description: t('sessions.leavesSoon'),
+      })
     } catch (err) {
-      fail('No se pudo cerrar la sesión', err)
+      fail(t('sessions.signOutFailed'), err)
     }
     setBusy(false)
     void qc.invalidateQueries({ queryKey: keys.accountSessions })
   }
   const details = [
-    session.current ? 'Activa ahora' : `Última actividad ${timeAgo(session.lastActiveAt)}`,
-    `entraste ${timeAgo(session.createdAt)}`,
+    session.deviceName ? kind : null,
+    session.current
+      ? t('sessions.activeNow')
+      : t('sessions.lastActive', { time: timeAgo(session.lastActiveAt) }),
+    t('sessions.signedIn', { time: timeAgo(session.createdAt) }),
     session.ip,
-    session.aal === 'aal2' ? 'con segundo factor' : null,
+    session.aal === 'aal2' ? t('sessions.withSecondFactor') : null,
   ].filter(Boolean)
   return (
     <PrefRow
@@ -48,24 +156,79 @@ function SessionRow({ session }: { session: AccountSession }) {
           {label}
           {session.current ? (
             <span className="rounded-xs bg-accent-soft px-1.5 py-px text-2xs font-semibold text-accent">
-              Este
+              {t('sessions.thisOne')}
             </span>
           ) : null}
         </>
       }
       description={details.join(' · ')}
     >
-      {session.current ? null : (
-        <Button size="sm" onClick={() => void revoke()} disabled={busy}>
-          {busy ? 'Cerrando…' : 'Cerrar'}
-        </Button>
-      )}
+      <div className="flex items-center gap-1">
+        <IconButton
+          aria-label={t('sessions.renameOf', { device: label })}
+          icon={<icons.edit size={16} />}
+          size="sm"
+          onClick={() => setRenaming(true)}
+        />
+        {session.current ? null : (
+          <Button size="sm" onClick={() => void revoke()} disabled={busy}>
+            {busy ? t('sessions.signingOut') : t('sessions.signOut')}
+          </Button>
+        )}
+      </div>
+      <RenameDialog session={session} open={renaming} onOpenChange={setRenaming} />
+    </PrefRow>
+  )
+}
+
+/**
+ * Todas las sesiones de una app conectada (claude.ai, Claude Code…) en una fila (ADR-0081): cada reconexión abre una
+ * sesión nueva y, una a una, eran filas iguales que no decían nada. «Cerrar todas» las cierra; para que la app no
+ * vuelva a entrar está «Quitar acceso» en Apps con acceso.
+ */
+function AppSessionsRow({ group }: { group: AppSessions }) {
+  const { t } = useTranslation('security')
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState(false)
+  const label = sessionDeviceLabel(null, group.appName)
+  const revokeAll = async () => {
+    setBusy(true)
+    try {
+      for (const s of group.sessions) await m.account.sessions.revoke(s.id)
+      notify.success(t('sessions.appSignedOut', { device: label }), {
+        icon: 'user',
+        description: t('sessions.appSignedOutHint'),
+      })
+    } catch (err) {
+      fail(t('sessions.signOutFailed'), err)
+    }
+    setBusy(false)
+    void qc.invalidateQueries({ queryKey: keys.accountSessions })
+  }
+  return (
+    <PrefRow
+      icon="link"
+      title={label}
+      description={t('sessions.appSessions', {
+        count: group.sessions.length,
+        time: timeAgo(group.lastActiveAt),
+      })}
+    >
+      <Button size="sm" onClick={() => void revokeAll()} disabled={busy}>
+        {busy
+          ? t('sessions.signingOut')
+          : group.sessions.length > 1
+            ? t('sessions.signOutAll')
+            : t('sessions.signOut')}
+      </Button>
     </PrefRow>
   )
 }
 
 /** Dónde está abierta la sesión, y cerrarla en uno, en los demás o en todos. */
 export function Sesiones() {
+  const { t } = useTranslation('security')
   const m = useMuninn()
   const auth = useAuth()
   const qc = useQueryClient()
@@ -82,13 +245,12 @@ export function Sesiones() {
     setBusy('others')
     try {
       await m.account.sessions.signOut('others')
-      notify.success('Sesión cerrada en los demás dispositivos', {
+      notify.success(t('sessions.othersDone'), {
         icon: 'user',
-        description:
-          'Saldrán en menos de una hora y ya no les llegan tus avisos. En este sigues dentro y tus datos no cambian.',
+        description: t('sessions.othersDoneHint'),
       })
     } catch (err) {
-      fail('No se pudo cerrar la sesión en los demás dispositivos', err)
+      fail(t('sessions.othersFailed'), err)
     }
     setBusy(null)
     void qc.invalidateQueries({ queryKey: keys.accountSessions })
@@ -101,27 +263,33 @@ export function Sesiones() {
 
   if (!m.account.available()) return null
   return (
-    <PrefGroup
-      title="Sesiones y dispositivos"
-      icon="devices"
-      description="Dónde tienes la sesión abierta. Cierra las que no reconozcas."
-    >
+    <PrefGroup title={t('sessions.title')} icon="devices" description={t('sessions.description')}>
       <div id="ajuste-sesiones">
         {sessions.isPending ? (
-          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">Cargando…</p>
+          <p className="px-4 py-3.5 text-sm text-fg-subtle md:px-[18px]">{t('loading')}</p>
         ) : sessions.isError ? (
-          <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">
-            No se pudo cargar la lista de sesiones.
-          </p>
+          <p className="px-4 py-3.5 text-sm text-danger md:px-[18px]">{t('sessions.loadError')}</p>
         ) : (
-          sessions.data.map((s) => <SessionRow key={s.id} session={s} />)
+          (() => {
+            const { devices, apps } = groupSessions(sessions.data)
+            return (
+              <>
+                {devices.map((s) => (
+                  <SessionRow key={s.id} session={s} />
+                ))}
+                {apps.map((g) => (
+                  <AppSessionsRow key={g.appName} group={g} />
+                ))}
+              </>
+            )
+          })()
         )}
       </div>
       <PrefRow
         id="cerrar-sesiones"
         icon="signOut"
-        title="Cerrar en otros dispositivos"
-        description="En todos, también en este: tendrás que volver a entrar aquí."
+        title={t('sessions.othersTitle')}
+        description={t('sessions.othersDescription')}
       >
         <div className="flex flex-wrap justify-end gap-2">
           <Button
@@ -129,7 +297,7 @@ export function Sesiones() {
             onClick={() => void closeOthers()}
             disabled={busy !== null || others === 0}
           >
-            {busy === 'others' ? 'Cerrando…' : 'En los demás'}
+            {busy === 'others' ? t('sessions.signingOut') : t('sessions.others')}
           </Button>
           <Button
             size="sm"
@@ -137,9 +305,74 @@ export function Sesiones() {
             onClick={() => void closeAll()}
             disabled={busy !== null}
           >
-            {busy === 'global' ? 'Cerrando…' : 'En todos'}
+            {busy === 'global' ? t('sessions.signingOut') : t('sessions.everywhere')}
           </Button>
         </div>
+      </PrefRow>
+    </PrefGroup>
+  )
+}
+
+/** `preferences.loginAlerts`: activado salvo un `false` explícito, como lo lee el cron (ADR-0080). */
+export const loginAlertsOn = (settings: Pick<UserSettings, 'preferences'> | undefined | null) =>
+  settings?.preferences.loginAlerts !== false
+
+/**
+ * El correo cuando alguien entra desde un dispositivo nuevo (ADR-0080). Lo envía el servidor; aquí solo se activa o se
+ * desactiva, con «Deshacer».
+ */
+export function AvisoDispositivoNuevo() {
+  const { t } = useTranslation('security')
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const settings = useQuery(settingsQuery(m))
+  const [busy, setBusy] = useState(false)
+  const on = loginAlertsOn(settings.data)
+
+  const save = async (next: boolean, undoing = false): Promise<boolean> => {
+    setBusy(true)
+    try {
+      const saved = await serial('settings', () =>
+        m.settings.update({ preferences: { loginAlerts: next } }),
+      )
+      qc.setQueryData<UserSettings>(keys.settings, (s) =>
+        s ? { ...s, preferences: saved.preferences } : saved,
+      )
+    } catch (err) {
+      fail(t('loginAlerts.saveFailed'), err)
+      return false
+    } finally {
+      setBusy(false)
+    }
+    if (!undoing)
+      notifyUndo(next ? t('loginAlerts.turnedOn') : t('loginAlerts.turnedOff'), {
+        icon: 'bell',
+        undo: () => save(!next, true),
+      })
+    return true
+  }
+
+  if (!m.account.available()) return null
+  return (
+    <PrefGroup
+      title={t('loginAlerts.title')}
+      icon="bell"
+      description={t('loginAlerts.description')}
+    >
+      <PrefRow
+        id="aviso-dispositivo-nuevo"
+        icon="mail"
+        tile={on ? 'bg-accent-soft text-accent' : undefined}
+        title={t('loginAlerts.row')}
+        description={on ? t('loginAlerts.onHint') : t('loginAlerts.offHint')}
+        htmlFor="ajuste-aviso-dispositivo-switch"
+      >
+        <Switch
+          id="ajuste-aviso-dispositivo-switch"
+          checked={on}
+          disabled={busy || settings.isPending}
+          onCheckedChange={(next) => void save(next)}
+        />
       </PrefRow>
     </PrefGroup>
   )

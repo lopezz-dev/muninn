@@ -1,5 +1,6 @@
 import type { Muninn, UserSettings } from '@muninn/core'
 import type { QueryClient } from '@tanstack/react-query'
+import { t } from '../i18n'
 import type { DockTab } from '../shell/nav'
 import { fail, notifyUndo } from './feedback'
 import { serial } from './mutations'
@@ -24,7 +25,7 @@ export async function saveDock(m: Muninn, qc: QueryClient, dock: DockTab[]): Pro
   )
 }
 
-/** Cambia la barra con aviso y «Deshacer» (ADR-0019). `title` dice qué cambió («Notas añadida a la barra»). */
+/** Cambia la barra con aviso y «Deshacer» (ADR-0019). `title` dice qué cambió («Añadido a la barra: Notas»). */
 export async function changeDock(
   m: Muninn,
   qc: QueryClient,
@@ -38,13 +39,13 @@ export async function changeDock(
     await saveDock(m, qc, next)
   } catch (err) {
     putDock(qc, prev)
-    fail('No se pudo cambiar la barra', err)
+    fail(t('dock.saveFailed'), err)
     return
   }
   notifyUndo(title, {
     icon: 'home',
-    description: inAccount ? 'Guardado en tu cuenta' : 'Guardado en la demo',
+    description: inAccount ? t('dock.savedToAccount') : t('dock.savedInDemo'),
     undo: () => saveDock(m, qc, prev),
-    undone: 'Barra restaurada',
+    undone: t('dock.restored'),
   })
 }

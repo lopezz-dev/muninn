@@ -1,5 +1,6 @@
 import type { Muninn, UserSettings } from '@muninn/core'
 import type { QueryClient } from '@tanstack/react-query'
+import { t } from '../i18n'
 import { fail, notifyUndo } from './feedback'
 import { serial } from './mutations'
 import { keys } from './queries'
@@ -85,16 +86,16 @@ export async function changeReportPrefs(
   try {
     before = await savePrefs(m, qc, patch)
   } catch (err) {
-    fail('No se pudo guardar el ajuste', err)
+    fail(t('report.saveFailed'), err)
     return false
   }
   if (undoing) return true
   notifyUndo(
     patch.enabled === false
-      ? 'Informe de la mañana desactivado'
+      ? t('report.disabled')
       : patch.enabled
-        ? `Informe de la mañana cada día a las ${patch.time ?? before.time}`
-        : `El informe se hará a las ${patch.time}`,
+        ? t('report.enabledAt', { time: patch.time ?? before.time })
+        : t('report.timeChanged', { time: String(patch.time) }),
     {
       icon: 'clock',
       undo: () => changeReportPrefs(m, qc, { enabled: before.enabled, time: before.time }, true),

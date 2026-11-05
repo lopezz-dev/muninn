@@ -1,14 +1,16 @@
 import type { Project } from '@muninn/core'
 import { cn } from '@muninn/ui'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
+import { restoreDeviceName } from '../lib/device-name'
 import { typingIn } from '../lib/keyboard'
 import { registerLinkMenuHost, useLinkAsk } from '../lib/link-menu'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
-import { settingsQuery } from '../lib/queries'
+import { keys, settingsQuery } from '../lib/queries'
 import { sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
@@ -90,8 +92,15 @@ export function AppShell() {
   useSettingsLinksInSheet()
   const linkAsk = useLinkAsk()
   useEffect(registerLinkMenuHost, [])
+  const { t } = useTranslation()
+  const m = useMuninn()
+  const qc = useQueryClient()
+  // El nombre que le pusiste a este dispositivo vuelve a la sesión nueva al entrar (ADR-0082).
+  useEffect(() => {
+    void restoreDeviceName(m, () => qc.invalidateQueries({ queryKey: keys.accountSessions }))
+  }, [m, qc])
   const modules = useEnabledModules()
-  const settings = useQuery(settingsQuery(useMuninn())).data
+  const settings = useQuery(settingsQuery(m)).data
   const reportOn =
     (settings?.preferences.morningReport as { enabled?: unknown } | undefined)?.enabled === true
   const tasksOn = sectionEnabled('projects', modules)
@@ -170,7 +179,7 @@ export function AppShell() {
         href="#contenido"
         className="sr-only z-50 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
-        Saltar al contenido
+        {t('shell.skipToContent')}
       </a>
       {/*
        * Escritorio: la ventana no hace scroll; lo hace <main> (ADR-0050). Así una pantalla puede medir justo el

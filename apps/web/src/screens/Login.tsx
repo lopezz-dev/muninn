@@ -1,6 +1,8 @@
 import { Button, Icon, type IconName, icons, notify, TextField } from '@muninn/ui'
-import { getRouteApi, useRouter } from '@tanstack/react-router'
+import { getRouteApi, Link, useRouter } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { t as tr } from '../i18n'
 import { enterDemo, hasSupabase, isTauri, loadSupabase, safeRedirect } from '../lib/auth'
 import { captchaSiteKey, useCaptcha } from '../lib/captcha'
 import { useGitHubDesktopLogin } from '../lib/github-desktop-login'
@@ -20,18 +22,23 @@ const route = getRouteApi('/login')
 /** Supabase permite un correo por minuto y dirección. */
 const RESEND_SECONDS = 60
 
-const FEATURES: { icon: IconName; title: string; text: string }[] = [
+// Función y no constante: los textos salen en el idioma activo al pintar.
+const features = (): { icon: IconName; title: string; text: string }[] => [
   {
     icon: 'projects',
-    title: 'Kanban a tu medida',
-    text: 'Columnas propias por proyecto e issues de GitHub como tareas.',
+    title: tr('login.features.kanbanTitle', { ns: 'auth' }),
+    text: tr('login.features.kanbanText', { ns: 'auth' }),
   },
   {
     icon: 'assistant',
-    title: 'Asistente local o Claude',
-    text: 'Pregúntale cómo vas; nunca borra nada.',
+    title: tr('login.features.assistantTitle', { ns: 'auth' }),
+    text: tr('login.features.assistantText', { ns: 'auth' }),
   },
-  { icon: 'sync', title: 'Escritorio y móvil', text: 'Tus datos, en todos tus dispositivos.' },
+  {
+    icon: 'sync',
+    title: tr('login.features.syncTitle', { ns: 'auth' }),
+    text: tr('login.features.syncText', { ns: 'auth' }),
+  },
 ]
 
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
@@ -48,6 +55,7 @@ function useCountdown() {
 
 /** Inicio de sesión con código por correo o GitHub. Diseño: Login.dc.html. */
 export function Login() {
+  const { t } = useTranslation('auth')
   const router = useRouter()
   const search = route.useSearch()
   const target = safeRedirect(search.redirect)
@@ -64,9 +72,8 @@ export function Login() {
   const waitingCaptcha = captcha.required && captcha.status !== 'ready'
 
   usePageMeta({
-    title: 'Iniciar sesión',
-    description:
-      'Entra en Muninn, tu sistema operativo personal, con un código por correo o con GitHub. O pruébalo sin cuenta en modo demo.',
+    title: t('login.metaTitle'),
+    description: t('login.metaDescription'),
   })
 
   useEffect(() => {
@@ -82,17 +89,15 @@ export function Login() {
   // GitHub vuelve con `error_description` si se cancela o falla el permiso.
   useEffect(() => {
     if (search.error_description) {
-      notify.error('No se pudo entrar con GitHub', { description: search.error_description })
+      notify.error(t('notify.githubFailed'), { description: search.error_description })
     }
-  }, [search.error_description])
+  }, [search.error_description, t])
 
   useEffect(() => {
     if (captcha.status === 'error') {
-      notify.error('No se pudo comprobar que no eres un robot', {
-        description: 'Revisa tu conexión y pulsa «Reintentar».',
-      })
+      notify.error(t('notify.captchaFailed'), { description: t('notify.captchaFailedHint') })
     }
-  }, [captcha.status])
+  }, [captcha.status, t])
 
   const goIn = async () => {
     forgetUserData()
@@ -104,14 +109,14 @@ export function Login() {
     e?.preventDefault()
     const value = email.trim()
     if (!isEmail(value)) {
-      setError('Escribe un correo válido, como tu@correo.com.')
+      setError(t('validation.email'))
       return
     }
     if (captcha.required && !captcha.token) {
       setError(
         captcha.status === 'error'
-          ? 'Falta la comprobación anti-robots. Pulsa «Reintentar».'
-          : 'Un momento: estamos comprobando que no eres un robot.',
+          ? t('validation.captchaMissing')
+          : t('validation.captchaWaiting'),
       )
       return
     }
@@ -123,11 +128,11 @@ export function Login() {
       setCode('')
       setStep('code')
       startCountdown()
-      notify.success('Código enviado', { icon: 'send', description: value })
+      notify.success(t('notify.codeSent'), { icon: 'send', description: value })
     } catch (err) {
       const message = authErrorMessage(err)
       setError(message)
-      notify.error('No se pudo enviar el código', { description: message })
+      notify.error(t('notify.sendFailed'), { description: message })
     } finally {
       // El token es de un solo uso: se pide otro para el siguiente envío (o el reenvío).
       captcha.reset()
@@ -139,19 +144,19 @@ export function Login() {
     e.preventDefault()
     const token = code.replace(/\D/g, '')
     if (token.length < 6) {
-      setError('Escribe el código completo que te ha llegado.')
+      setError(t('validation.fullCode'))
       return
     }
     setError(null)
     setBusy('verify')
     try {
       const account = await verifyEmailCode(email, token)
-      notify.success('Sesión iniciada', { icon: 'user', description: account.name })
+      notify.success(t('notify.signedIn'), { icon: 'user', description: account.name })
       await goIn()
     } catch (err) {
       const message = authErrorMessage(err)
       setError(message)
-      notify.error('No se pudo iniciar la sesión', { description: message })
+      notify.error(t('notify.signInFailed'), { description: message })
       setBusy(null)
     }
   }
@@ -166,17 +171,14 @@ export function Login() {
       await signInWithGitHub(target)
       // El navegador se va a GitHub: nos quedamos en «cargando».
     } catch (err) {
-      notify.error('No se pudo abrir GitHub', { description: authErrorMessage(err) })
+      notify.error(t('notify.githubOpenFailed'), { description: authErrorMessage(err) })
       setBusy(null)
     }
   }
 
   const demo = async () => {
     enterDemo()
-    notify.info('Modo demo', {
-      icon: 'info',
-      description: 'Los datos viven en memoria y se pierden al recargar',
-    })
+    notify.info(t('notify.demo'), { icon: 'info', description: t('notify.demoHint') })
     await goIn()
   }
 
@@ -189,15 +191,12 @@ export function Login() {
         </div>
         <div className="mt-auto flex max-w-[520px] flex-col gap-[18px]">
           <h1 className="text-[44px] leading-[1.1] font-semibold tracking-[-0.03em]">
-            Recuerda por ti.
+            {t('login.tagline')}
           </h1>
-          <p className="text-[17px] leading-relaxed text-fg-muted">
-            Proyectos, tareas, notas y finanzas en un solo sitio, con un asistente que conoce todo
-            el contexto.
-          </p>
+          <p className="text-[17px] leading-relaxed text-fg-muted">{t('login.pitch')}</p>
         </div>
         <ul className="flex max-w-[520px] flex-col gap-[18px]">
-          {FEATURES.map((f) => (
+          {features().map((f) => (
             <li key={f.title} className="flex items-start gap-3 text-base leading-normal">
               <Icon name={f.icon} className="mt-[3px] text-accent" />
               <span className="text-fg-muted">
@@ -219,25 +218,23 @@ export function Login() {
 
           {step === 'email' ? (
             <form
-              aria-label="Iniciar sesión"
+              aria-label={t('login.formLabel')}
               noValidate
               onSubmit={send}
               className="flex flex-col gap-[18px]"
             >
               <div className="flex flex-col gap-1.5">
-                <h2 className="text-[26px] font-semibold tracking-[-0.02em]">Entrar en Muninn</h2>
-                <p className="text-base text-fg-subtle">
-                  Te enviamos un código al correo. Sin contraseñas.
-                </p>
+                <h2 className="text-[26px] font-semibold tracking-[-0.02em]">{t('login.title')}</h2>
+                <p className="text-base text-fg-subtle">{t('login.subtitle')}</p>
               </div>
               <TextField
-                label="Correo electrónico"
+                label={t('login.email')}
                 type="email"
                 inputMode="email"
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                placeholder="tu@correo.com"
+                placeholder={t('login.emailPlaceholder')}
                 size="lg"
                 value={email}
                 onChange={(e) => {
@@ -256,28 +253,34 @@ export function Login() {
                 disabled={!hasSupabase || busy !== null || waitingCaptcha}
               >
                 {busy === 'send'
-                  ? 'Enviando…'
+                  ? t('login.sending')
                   : captcha.status === 'loading'
-                    ? 'Comprobando…'
-                    : 'Enviar código'}
+                    ? t('login.checking')
+                    : t('login.sendCode')}
               </Button>
             </form>
           ) : (
             <form
-              aria-label="Escribir el código"
+              aria-label={t('login.codeFormLabel')}
               noValidate
               onSubmit={verify}
               className="flex flex-col gap-[18px]"
             >
               <div className="flex flex-col gap-1.5">
-                <h2 className="text-[26px] font-semibold tracking-[-0.02em]">Revisa tu correo</h2>
+                <h2 className="text-[26px] font-semibold tracking-[-0.02em]">
+                  {t('login.checkInbox')}
+                </h2>
                 <p className="text-base text-fg-subtle">
-                  Escribe el código que hemos enviado a{' '}
-                  <span className="font-medium text-fg">{email}</span>. Caduca en una hora.
+                  <Trans
+                    t={t}
+                    i18nKey="login.codeSentTo"
+                    values={{ email }}
+                    components={{ b: <span className="font-medium text-fg" /> }}
+                  />
                 </p>
               </div>
               <TextField
-                label="Código"
+                label={t('login.code')}
                 autoFocus
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -300,7 +303,7 @@ export function Login() {
                 className="font-semibold"
                 disabled={busy !== null}
               >
-                {busy === 'verify' ? 'Entrando…' : 'Entrar'}
+                {busy === 'verify' ? t('login.signingIn') : t('login.signIn')}
               </Button>
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <button
@@ -312,7 +315,7 @@ export function Login() {
                   }}
                 >
                   <icons.chevronLeft aria-hidden="true" className="mr-1 inline align-[-3px]" />
-                  Usar otro correo
+                  {t('login.otherEmail')}
                 </button>
                 <button
                   type="button"
@@ -320,7 +323,7 @@ export function Login() {
                   disabled={resendIn > 0 || busy !== null || waitingCaptcha}
                   onClick={() => send()}
                 >
-                  {resendIn > 0 ? `Reenviar en ${resendIn} s` : 'Reenviar código'}
+                  {resendIn > 0 ? t('login.resendIn', { seconds: resendIn }) : t('login.resend')}
                 </button>
               </div>
             </form>
@@ -332,17 +335,17 @@ export function Login() {
               <div ref={captcha.ref} />
               {captcha.status === 'loading' ? (
                 <p role="status" className="text-xs text-fg-faint">
-                  Comprobando que no eres un robot…
+                  {t('login.captchaChecking')}
                 </p>
               ) : captcha.status === 'error' ? (
                 <p role="alert" className="text-xs text-danger">
-                  No se pudo completar la comprobación anti-robots.{' '}
+                  {t('login.captchaFailed')}{' '}
                   <button
                     type="button"
                     onClick={captcha.retry}
                     className="cursor-pointer text-accent hover:text-accent-hover"
                   >
-                    Reintentar
+                    {t('login.retry')}
                   </button>
                 </p>
               ) : null}
@@ -352,7 +355,8 @@ export function Login() {
           {step === 'email' && github ? (
             <>
               <div className="flex items-center gap-3 text-xs text-fg-faint">
-                <span aria-hidden="true" className="h-px flex-1 bg-border" />o
+                <span aria-hidden="true" className="h-px flex-1 bg-border" />
+                {t('login.or')}
                 <span aria-hidden="true" className="h-px flex-1 bg-border" />
               </div>
               <Button
@@ -363,10 +367,10 @@ export function Login() {
               >
                 <Icon name="github" />
                 {desktopGitHub.waiting
-                  ? 'Esperando a GitHub…'
+                  ? t('login.waitingGitHub')
                   : busy === 'github'
-                    ? 'Abriendo GitHub…'
-                    : 'Continuar con GitHub'}
+                    ? t('login.openingGitHub')
+                    : t('login.continueGitHub')}
               </Button>
               {desktopGitHub.waiting ? (
                 <button
@@ -374,7 +378,7 @@ export function Login() {
                   onClick={desktopGitHub.cancel}
                   className="cursor-pointer self-center text-[12.5px] text-accent hover:text-accent-hover"
                 >
-                  Cancelar
+                  {t('login.cancel')}
                 </button>
               ) : null}
             </>
@@ -382,21 +386,29 @@ export function Login() {
 
           {search.error_description && step === 'email' ? (
             <p role="alert" className="text-xs text-danger">
-              GitHub: {search.error_description}
+              {t('login.githubError', { message: search.error_description })}
             </p>
           ) : null}
 
           <p className="mt-1.5 text-[12.5px] leading-normal text-fg-faint">
-            {hasSupabase ? '¿Prefieres probarlo sin cuenta? ' : 'Este build no tiene servidor. '}
+            {hasSupabase ? t('login.tryWithoutAccount') : t('login.noServer')}
             <button
               type="button"
               onClick={demo}
               disabled={busy !== null}
               className="cursor-pointer text-accent hover:text-accent-hover"
             >
-              Modo demo
+              {t('login.demo')}
             </button>
-            : los datos viven en memoria y se pierden al recargar.
+            {t('login.demoHint')}
+          </p>
+          {/* Pública (ADR-0076): también es por donde los buscadores llegan a las guías. */}
+          <p className="text-[12.5px] leading-normal text-fg-faint">
+            {t('login.docsBefore')}
+            <Link to="/documentacion" className="text-accent hover:text-accent-hover">
+              {t('login.docsLink')}
+            </Link>
+            {t('login.docsAfter')}
           </p>
         </div>
       </section>

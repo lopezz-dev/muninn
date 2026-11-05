@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import pkg from './package.json' with { type: 'json' }
+import { seo } from './vite/seo'
 
 // Tauri carga este mismo build; en escritorio no registramos service worker.
 const isTauri = Boolean(process.env.TAURI_ENV_PLATFORM)
@@ -11,13 +12,16 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    // URL pública, robots.txt, sitemap.xml y guías prerenderizadas (ADR-0076). En escritorio no hay buscadores.
+    seo({ enabled: !isTauri }),
     VitePWA({
       disable: isTauri,
       registerType: 'autoUpdate',
       // Iconos de `index.html` (los del manifiesto ya entran solos): la pestaña lleva el logo también sin conexión.
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       // Avisos Web Push (ADR-0040): `public/push-sw.js` solo escucha `push` y `notificationclick`.
-      workbox: { importScripts: ['push-sw.js'] },
+      // Las guías prerenderizadas y el 404 son para quien llega sin la app: dentro, el router pinta lo mismo.
+      workbox: { importScripts: ['push-sw.js'], globIgnores: ['documentacion/**', '404.html'] },
       manifest: {
         id: '/',
         scope: '/',

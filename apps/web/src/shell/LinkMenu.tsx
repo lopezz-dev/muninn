@@ -1,5 +1,6 @@
 import { copyText, icons, notify, Popover, PopoverAnchor, PopoverContent } from '@muninn/ui'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { openExternal } from '../lib/external-link'
 import { closeLinkMenu, type LinkAsk } from '../lib/link-menu'
 
@@ -20,6 +21,7 @@ const item =
  * junto al enlace tocado y se cierra al tocar fuera, con Escape o al hacer scroll (el enlace ya no estaría ahí).
  */
 export function LinkMenu({ ask }: { ask: LinkAsk }) {
+  const { t } = useTranslation()
   useEffect(() => {
     window.addEventListener('scroll', closeLinkMenu, { capture: true, passive: true })
     return () => window.removeEventListener('scroll', closeLinkMenu, { capture: true })
@@ -33,8 +35,8 @@ export function LinkMenu({ ask }: { ask: LinkAsk }) {
   const copy = async () => {
     closeLinkMenu()
     if (await copyText(ask.url))
-      notify.success('Enlace copiado', { icon: 'link', description: ask.url })
-    else notify.error('No se pudo copiar el enlace')
+      notify.success(t('link.copied'), { icon: 'link', description: ask.url })
+    else notify.error(t('link.copyFailed'))
   }
 
   return (
@@ -54,22 +56,22 @@ export function LinkMenu({ ask }: { ask: LinkAsk }) {
       <PopoverContent
         side="bottom"
         align="start"
-        aria-label="Enlace fuera de Muninn"
+        aria-label={t('link.outside')}
         className="w-[min(18rem,calc(100vw-24px))]"
       >
         <p className="px-2.5 pt-1 pb-1.5 text-xs text-fg-subtle">
-          Sale de Muninn ·{' '}
+          {t('link.leaves')} ·{' '}
           <span className="font-medium break-all text-fg-muted" title={ask.url}>
             {hostOf(ask.url)}
           </span>
         </p>
         <button type="button" className={item} onClick={open}>
           <icons.external size={16} aria-hidden="true" className="text-fg-subtle" />
-          Abrir enlace
+          {t('link.open')}
         </button>
         <button type="button" className={item} onClick={copy}>
           <icons.link size={16} aria-hidden="true" className="text-fg-subtle" />
-          Copiar enlace
+          {t('link.copy')}
         </button>
       </PopoverContent>
     </Popover>

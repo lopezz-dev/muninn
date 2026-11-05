@@ -14,6 +14,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProjectAvatar, ProjectCover, soft } from '../components/ProjectAvatar'
 import { type Swatch, SwatchPicker } from '../components/SwatchPicker'
 import { useMuninn } from '../lib/muninn'
@@ -27,14 +28,8 @@ import {
 } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
 
-const COLORS: Swatch<string>[] = [
-  { value: 'blue', label: 'Azul', color: palette.blue },
-  { value: 'violet', label: 'Violeta', color: palette.violet },
-  { value: 'teal', label: 'Verde azulado', color: palette.teal },
-  { value: 'pink', label: 'Rosa', color: palette.pink },
-  { value: 'green', label: 'Verde', color: palette.green },
-  { value: 'amber', label: 'Ámbar', color: palette.amber },
-]
+/** Colores de siempre; su nombre, `dialogs:project.colors.<color>`. */
+const COLORS = ['blue', 'violet', 'teal', 'pink', 'green', 'amber'] as const
 
 /** Qué pasa con la imagen al guardar: se queda como está, se cambia por una nueva (ya reducida) o se quita. */
 type ImageChange =
@@ -56,18 +51,15 @@ export function ProjectDialog({
   project?: Project
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('dialogs')
   const desktop = useIsDesktop()
-  const title = project ? 'Editar proyecto' : 'Nuevo proyecto'
+  const title = project ? t('project.editTitle') : t('project.newTitle')
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {desktop ? (
         <DialogContent
           title={title}
-          description={
-            project
-              ? undefined
-              : 'Empieza con un tablero de cinco columnas que puedes cambiar cuando quieras.'
-          }
+          description={project ? undefined : t('project.newDescription')}
         >
           {open ? <ProjectForm project={project} onDone={() => onOpenChange(false)} /> : null}
         </DialogContent>
@@ -83,15 +75,21 @@ export function ProjectDialog({
 /** Selector de una imagen (logo o portada): botón que abre el archivo, y «Quitar» si hay una. */
 function ImagePicker({
   label,
+  pickLabel,
+  changeLabel,
   has,
   onPick,
   onRemove,
 }: {
   label: string
+  /** «Elegir logo» y «Cambiar logo», enteras: cada idioma las ordena a su manera. */
+  pickLabel: string
+  changeLabel: string
   has: boolean
   onPick: (file: File) => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation('dialogs')
   const ref = useRef<HTMLInputElement>(null)
   return (
     <div className="flex items-center gap-2">
@@ -102,7 +100,7 @@ function ImagePicker({
         accept="image/*"
         className="sr-only"
         tabIndex={-1}
-        aria-label={`Elegir ${label.toLowerCase()}`}
+        aria-label={pickLabel}
         onChange={(e) => {
           const file = e.target.files?.[0]
           if (file) onPick(file)
@@ -111,11 +109,11 @@ function ImagePicker({
       />
       <Button size="lg" className="flex-1 md:h-8 md:flex-none" onClick={() => ref.current?.click()}>
         <Icon name="image" />
-        {has ? `Cambiar ${label.toLowerCase()}` : `Elegir ${label.toLowerCase()}`}
+        {has ? changeLabel : pickLabel}
       </Button>
       {has ? (
         <Button size="lg" variant="ghost" className="md:h-8" onClick={onRemove}>
-          Quitar
+          {t('project.remove')}
         </Button>
       ) : null}
     </div>
@@ -123,6 +121,7 @@ function ImagePicker({
 }
 
 function ProjectForm({ project, onDone }: { project?: Project; onDone: () => void }) {
+  const { t } = useTranslation('dialogs')
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -162,7 +161,7 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
       setLogoColor(reduced.color)
       if (reduced.color && !colorTouched) setColor(reduced.color)
     } catch (err) {
-      notify.error('No se pudo usar esa imagen', {
+      notify.error(t('project.imageFailed'), {
         description: err instanceof Error ? err.message : undefined,
       })
     }
@@ -175,19 +174,23 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
   const look = { name: name.trim() || 'P', color, imagePath: logoPath, coverPath }
 
   // Colores: los de siempre, el del logo y, si el proyecto ya tenía uno propio, ese.
-  const swatches: Swatch<string>[] = [...COLORS]
-  if (logoColor && !COLORS.some((c) => c.value === logoColor)) {
-    swatches.push({ value: logoColor, label: 'Del logo', color: logoColor })
+  const swatches: Swatch<string>[] = COLORS.map((c) => ({
+    value: c,
+    label: t(`project.colors.${c}`),
+    color: palette[c],
+  }))
+  if (logoColor && !swatches.some((c) => c.value === logoColor)) {
+    swatches.push({ value: logoColor, label: t('project.colors.fromLogo'), color: logoColor })
   }
   if (color.startsWith('#') && !swatches.some((c) => c.value === color)) {
-    swatches.push({ value: color, label: 'Personalizado', color })
+    swatches.push({ value: color, label: t('project.colors.custom'), color })
   }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) {
-      setError('Ponle un nombre al proyecto')
+      setError(t('project.nameRequired'))
       return
     }
     setSaving(true)
@@ -203,7 +206,7 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
           if (cover.kind === 'new') await m.projects.setImage(created.id, cover.blob, 'cover')
           await invalidateProjects(qc)
         } catch (err) {
-          notify.error('El proyecto se creó, pero no se pudo subir la imagen', {
+          notify.error(t('project.imageUploadFailed'), {
             description: err instanceof Error ? err.message : undefined,
           })
         }
@@ -248,7 +251,7 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
     <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
       {m.projects.imagesEnabled ? (
         <div className="flex flex-col gap-2.5">
-          <span className="text-xs font-medium text-fg-muted">Logo y portada</span>
+          <span className="text-xs font-medium text-fg-muted">{t('project.images')}</span>
           {/* Vista previa como en la tarjeta: la portada (o el degradado del color) con el logo encima. */}
           <div className="relative">
             {coverPreview ? (
@@ -273,7 +276,9 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
             </span>
           </div>
           <ImagePicker
-            label="Logo"
+            label={t('project.logo')}
+            pickLabel={t('project.pickLogo')}
+            changeLabel={t('project.changeLogo')}
             has={hasLogo}
             onPick={(f) => void pick(f, 'logo')}
             onRemove={() => {
@@ -282,21 +287,19 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
             }}
           />
           <ImagePicker
-            label="Portada"
+            label={t('project.cover')}
+            pickLabel={t('project.pickCover')}
+            changeLabel={t('project.changeCover')}
             has={hasCover}
             onPick={(f) => void pick(f, 'cover')}
             onRemove={() => setCover({ kind: 'remove' })}
           />
-          <p className="text-xs text-fg-subtle">
-            Opcionales. Se reducen en tu dispositivo antes de subirlas. El logo es el icono del
-            proyecto y su color se ofrece como color del proyecto; sin portada, el banner usa ese
-            color.
-          </p>
+          <p className="text-xs text-fg-subtle">{t('project.imagesHint')}</p>
         </div>
       ) : null}
 
       <TextField
-        label="Nombre"
+        label={t('project.name')}
         value={name}
         onChange={(e) => {
           setName(e.target.value)
@@ -308,16 +311,16 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
         autoFocus={!project}
       />
       <TextArea
-        label="Descripción"
-        hint="Opcional. Sale en la tarjeta del proyecto y la lee el asistente."
+        label={t('project.description')}
+        hint={t('project.descriptionHint')}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         maxLength={5000}
         rows={3}
-        placeholder="De qué va, para qué es, qué cuenta como terminado…"
+        placeholder={t('project.descriptionPlaceholder')}
       />
       <SwatchPicker
-        legend="Color"
+        legend={t('project.color')}
         name="project-color"
         value={color}
         options={swatches}
@@ -331,17 +334,17 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
         {project ? (
           <Button variant="danger" size="lg" className="md:h-8" onClick={archive}>
             <Icon name="archive" />
-            Archivar
+            {t('project.archive')}
           </Button>
         ) : null}
         <span className="flex-1" />
         <DialogClose asChild>
           <Button variant="ghost" size="lg" className="md:h-8">
-            Cancelar
+            {t('actions.cancel')}
           </Button>
         </DialogClose>
         <Button type="submit" variant="primary" size="lg" className="md:h-8" disabled={saving}>
-          {project ? 'Guardar' : 'Crear proyecto'}
+          {project ? t('project.save') : t('project.create')}
         </Button>
       </div>
     </form>

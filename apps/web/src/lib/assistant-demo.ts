@@ -1,9 +1,11 @@
 import { type ChatMessage, createScriptedProvider, lastToolResult } from '@muninn/assistant'
 import type { OverviewReport } from '@muninn/core'
+import { t } from '../i18n'
 
 /**
  * Guion de la demo (ADR-0041): sin modelo, el asistente entiende unas pocas frases y usa las herramientas de verdad
- * sobre los datos en memoria. Sirve para ver cómo se ve la pantalla; con Ollama entiende cualquier cosa.
+ * sobre los datos en memoria. Sirve para ver cómo se ve la pantalla; con Ollama entiende cualquier cosa. Entiende las
+ * frases en inglés y en español; contesta en el idioma de la interfaz. Los errores de las herramientas llegan del core.
  */
 
 const errorOf = (messages: ChatMessage[]) => {
@@ -11,13 +13,12 @@ const errorOf = (messages: ChatMessage[]) => {
   return typeof r === 'string' && r.startsWith('Error') ? r.replace(/^Error:\s*/, '') : null
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
-export const DEMO_EXAMPLES = [
-  '¿Cómo voy hoy?',
-  'Crea una tarea: probar el asistente',
-  'He gastado 24,90 en el cine',
-  '¿Qué suscripciones me cobran esta semana?',
+/** Las frases de ejemplo, en el idioma activo (las sugerencias de la pantalla en la demo). */
+export const demoExamples = () => [
+  t('demo.examples.today', { ns: 'assistant' }),
+  t('demo.examples.task', { ns: 'assistant' }),
+  t('demo.examples.expense', { ns: 'assistant' }),
+  t('demo.examples.subscriptions', { ns: 'assistant' }),
 ]
 
 /** `delayMs`: pausa entre palabras para que se vea el streaming (0 en los tests). */
@@ -25,35 +26,38 @@ export function demoProvider(delayMs = 18) {
   return createScriptedProvider(
     [
       {
-        when: /c[oó]mo voy|qu[eé] (tengo|me queda)/i,
+        when: /c[oó]mo voy|qu[eé] (tengo|me queda)|how am i|what do i have/i,
         steps: [
           { calls: [{ name: 'overview', arguments: {} }] },
           {
             text: (m) => {
               const o = lastToolResult(m) as OverviewReport | null
-              if (!o || typeof o !== 'object') return 'No he podido leer tu resumen.'
-              if (!o.projects.length) {
-                return 'Aún no tienes proyectos. Crea uno en Proyectos y te digo cómo vas.'
-              }
+              if (!o || typeof o !== 'object') return t('demo.overviewFailed', { ns: 'assistant' })
+              if (!o.projects.length) return t('demo.noProjects', { ns: 'assistant' })
               const parts = [
-                `Tienes ${plural(o.dueToday.length, 'tarea', 'tareas')} para hoy`,
-                `${plural(o.overdue.length, 'vencida', 'vencidas')}`,
-                `${o.inProgress.length} en curso`,
+                t('demo.dueToday', { ns: 'assistant', count: o.dueToday.length }),
+                t('demo.overdue', { ns: 'assistant', count: o.overdue.length }),
+                t('demo.inProgress', { ns: 'assistant', n: o.inProgress.length }),
               ]
               const urgent = o.overdue[0] ?? o.dueToday[0]
-              return `${parts.join(', ')}.${urgent ? ` Lo primero: «${urgent.title}» (${urgent.projectName}).` : ''}`
+              const first = urgent
+                ? ` ${t('demo.first', { ns: 'assistant', title: urgent.title, project: urgent.projectName })}`
+                : ''
+              return `${parts.join(', ')}.${first}`
             },
           },
         ],
       },
       {
-        when: /gast(ad)?o\s+[\d.,]+/i,
+        when: /gast(ad)?o\s+[\d.,]+|spent\s+[\d.,]+/i,
         steps: [
           {
             calls: (m) => {
               const said = m.findLast((x) => x.role === 'user')?.content ?? ''
               const amount = /([\d.,]+)/.exec(said)?.[1] ?? '0'
-              const concept = /\ben (?:el |la |los |las )?(.+?)[.!?]*$/i.exec(said)?.[1]
+              const concept = /\b(?:en|at|on) (?:el |la |los |las |the )?(.+?)[.!?]*$/i.exec(
+                said,
+              )?.[1]
               return [
                 {
                   name: 'create_transaction',
@@ -66,21 +70,24 @@ export function demoProvider(delayMs = 18) {
             text: (m) => {
               const error = errorOf(m)
               if (error) {
-                if (/desactivado/.test(error)) {
-                  return 'Finanzas está desactivado: actívalo en Ajustes › Módulos y vuelve a decírmelo.'
-                }
+                // Los errores llegan del core, en español.
+                if (/desactivado/.test(error)) return t('demo.financeOff', { ns: 'assistant' })
                 return /no hay cuentas/i.test(error)
-                  ? 'Aún no tienes ninguna cuenta: crea una en Finanzas › Cuentas y vuelve a decírmelo.'
-                  : `No he podido apuntarlo: ${error}`
+                  ? t('demo.noAccounts', { ns: 'assistant' })
+                  : t('demo.expenseFailed', { ns: 'assistant', error })
               }
-              const t = lastToolResult(m) as { amountText?: string; account?: string }
-              return `Apuntado: ${t.amountText ?? 'el gasto'} en ${t.account ?? 'tu cuenta'}.`
+              const r = lastToolResult(m) as { amountText?: string; account?: string }
+              return t('demo.expenseLogged', {
+                ns: 'assistant',
+                amount: r.amountText ?? t('demo.theExpense', { ns: 'assistant' }),
+                account: r.account ?? t('demo.yourAccount', { ns: 'assistant' }),
+              })
             },
           },
         ],
       },
       {
-        when: /suscrip/i,
+        when: /suscrip|subscri/i,
         steps: [
           { calls: [{ name: 'list_subscriptions', arguments: { upcomingDays: 7 } }] },
           {
@@ -89,14 +96,22 @@ export function demoProvider(delayMs = 18) {
                 (lastToolResult(m) as { name: string; amountText: string; nextDate: string }[]) ??
                 []
               if (!Array.isArray(list) || !list.length)
-                return 'Esta semana no te cobran ninguna suscripción.'
-              return `Esta semana: ${list.map((s) => `${s.name} (${s.amountText}, el ${s.nextDate.slice(8)})`).join(', ')}.`
+                return t('demo.noSubscriptions', { ns: 'assistant' })
+              const items = list.map((s) =>
+                t('demo.subscription', {
+                  ns: 'assistant',
+                  name: s.name,
+                  amount: s.amountText,
+                  day: s.nextDate.slice(8),
+                }),
+              )
+              return t('demo.subscriptions', { ns: 'assistant', list: items.join(', ') })
             },
           },
         ],
       },
       {
-        when: /crea(r)?\s+(una\s+)?tarea/i,
+        when: /crea(r)?\s+(una\s+)?tarea|create\s+(a\s+)?task/i,
         steps: [
           { calls: [{ name: 'list_projects', arguments: {} }] },
           {
@@ -104,27 +119,38 @@ export function demoProvider(delayMs = 18) {
               const projects = (lastToolResult(m) as { name: string }[]) ?? []
               const said = m.findLast((x) => x.role === 'user')?.content ?? ''
               const title =
-                /[:«"](.+?)[»"]?$/.exec(said)?.[1]?.trim() ??
-                said.replace(/^.*?tarea\s*/i, '').trim()
+                /[:«"“](.+?)[»"”]?$/.exec(said)?.[1]?.trim() ??
+                said.replace(/^.*?(?:tarea|task)\s*/i, '').trim()
               const project = Array.isArray(projects) ? projects[0]?.name : undefined
               return project
-                ? [{ name: 'create_task', arguments: { project, title: title || 'Tarea nueva' } }]
+                ? [
+                    {
+                      name: 'create_task',
+                      arguments: {
+                        project,
+                        title: title || t('demo.newTask', { ns: 'assistant' }),
+                      },
+                    },
+                  ]
                 : []
             },
             text: (m) => {
               const projects = lastToolResult(m)
               return Array.isArray(projects) && projects.length
                 ? ''
-                : 'Primero necesitas un proyecto: créalo en Proyectos y te creo la tarea.'
+                : t('demo.needProject', { ns: 'assistant' })
             },
           },
           {
             text: (m) => {
               const error = errorOf(m)
-              const t = lastToolResult(m) as { title?: string } | null
+              const r = lastToolResult(m) as { title?: string } | null
               return error
-                ? `No he podido crearla: ${error}`
-                : `Hecho: «${t?.title ?? 'la tarea'}» está en Pendiente.`
+                ? t('demo.taskFailed', { ns: 'assistant', error })
+                : t('demo.taskCreated', {
+                    ns: 'assistant',
+                    title: r?.title ?? t('demo.theTask', { ns: 'assistant' }),
+                  })
             },
           },
         ],
@@ -132,8 +158,13 @@ export function demoProvider(delayMs = 18) {
     ],
     {
       delayMs,
-      label: 'Demo · respuestas guionizadas',
-      fallback: `En la demo no hay modelo: respondo con un guion a frases como ${DEMO_EXAMPLES.map((e) => `«${e}»`).join(', ')}. Con Ollama en tu ordenador entiende cualquier cosa.`,
+      label: t('demo.label', { ns: 'assistant' }),
+      fallback: t('demo.fallback', {
+        ns: 'assistant',
+        examples: demoExamples()
+          .map((text) => t('demo.quoted', { ns: 'assistant', text }))
+          .join(', '),
+      }),
     },
   )
 }

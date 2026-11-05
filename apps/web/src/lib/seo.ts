@@ -46,6 +46,8 @@ export function applyPageMeta(doc: Document, { title, description }: PageMeta): 
   ogUrl.content = url
   twTitle.content = full
   twDesc.content = text
+  // La guía prerenderizada (ADR-0076) ya trae la suya en el HTML: una sola canónica por página.
+  for (const old of doc.head.querySelectorAll('link[rel="canonical"]')) old.remove()
   const canonical = doc.createElement('link')
   canonical.rel = 'canonical'
   canonical.href = url
@@ -64,4 +66,18 @@ export function applyPageMeta(doc: Document, { title, description }: PageMeta): 
 /** `applyPageMeta` mientras el componente está montado. */
 export function usePageMeta({ title, description }: PageMeta) {
   useEffect(() => applyPageMeta(document, { title, description }), [title, description])
+}
+
+/** Pide a los buscadores que no indexen la página mientras está abierta (rutas que no existen). */
+export function applyNoIndex(doc: Document): () => void {
+  const robots = doc.createElement('meta')
+  robots.name = 'robots'
+  robots.content = 'noindex'
+  doc.head.append(robots)
+  return () => robots.remove()
+}
+
+/** `applyNoIndex` mientras el componente está montado. */
+export function useNoIndex() {
+  useEffect(() => applyNoIndex(document), [])
 }

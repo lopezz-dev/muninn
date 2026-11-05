@@ -1,16 +1,14 @@
 import { cn, icons, screenIcons } from '@muninn/ui'
+import { useTranslation } from 'react-i18next'
 import type { DocStatus } from '../../lib/docs'
 
-const LOOK: Partial<
-  Record<DocStatus, { label: string; className: string; icon: typeof icons.clock }>
-> = {
+/** Cómo se ve cada marca; su nombre sale de `status.<estado>`, en el idioma activo. */
+const LOOK: Partial<Record<DocStatus, { className: string; icon: typeof icons.clock }>> = {
   parcial: {
-    label: 'Parcial',
     className: 'bg-accent-soft text-accent',
     icon: screenIcons.partial,
   },
   proximamente: {
-    label: 'Próximamente',
     className: 'border border-dashed border-border-strong bg-surface-raised text-fg-muted',
     icon: icons.clock,
   },
@@ -29,17 +27,19 @@ export function StatusBadge({
   compact?: boolean
   className?: string
 }) {
+  const { t } = useTranslation('docs')
   const look = LOOK[status]
-  if (!look) return null
+  if (!look || status === 'disponible') return null
   const { icon: Glyph } = look
+  const label = t(`status.${status}`)
   if (compact) {
     return (
       <span
-        title={look.label}
+        title={label}
         className={cn(status === 'parcial' ? 'text-accent' : 'text-fg-faint', className)}
       >
         <Glyph size={12} aria-hidden="true" />
-        <span className="sr-only">{look.label}</span>
+        <span className="sr-only">{label}</span>
       </span>
     )
   }
@@ -52,7 +52,7 @@ export function StatusBadge({
       )}
     >
       <Glyph size={10} aria-hidden="true" />
-      {look.label}
+      {label}
     </span>
   )
 }

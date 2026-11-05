@@ -2,6 +2,7 @@ import { Button } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Page } from '../components/Page'
 import { setModuleEnabled } from '../lib/module-actions'
 import { useMuninn } from '../lib/muninn'
@@ -14,6 +15,7 @@ import { SECTION_MODULE, SECTIONS, type SectionId } from './nav'
 export function ModuleOff({ section }: { section: SectionId }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation()
   const s = SECTIONS[section]
   const mod = SECTION_MODULE[section]
 
@@ -25,7 +27,7 @@ export function ModuleOff({ section }: { section: SectionId }) {
     <Page>
       <EmptyState
         icon={s.icon}
-        title={`${s.label} está desactivado`}
+        title={t('module.off', { name: s.label })}
         actions={
           <>
             {mod ? (
@@ -33,19 +35,18 @@ export function ModuleOff({ section }: { section: SectionId }) {
                 variant="primary"
                 onClick={() => setModuleEnabled(m, qc, mod, true, { label: s.label, icon: s.icon })}
               >
-                Activar {s.label}
+                {t('module.turnOn', { name: s.label })}
               </Button>
             ) : null}
             <Button asChild>
               <Link to="/ajustes/$seccion" params={{ seccion: 'modulos' }}>
-                Ir a Módulos
+                {t('module.goToModules')}
               </Link>
             </Button>
           </>
         }
       >
-        No aparece en el menú ni en el buscador. Tus datos siguen guardados: al activarlo vuelven a
-        verse.
+        {t('module.offHint')}
       </EmptyState>
     </Page>
   )

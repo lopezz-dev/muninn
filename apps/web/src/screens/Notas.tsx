@@ -3,6 +3,7 @@ import { Button, ColorDot, cn, Icon, IconButton, icons } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet, useMatch, useNavigate } from '@tanstack/react-router'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FilterChip } from '../components/FilterChip'
 import { EmptyState, Ghost, Page } from '../components/Page'
 import { timeAgo } from '../lib/dates'
@@ -77,6 +78,7 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
  * (Notas.dc.html y M-Notas.dc.html). En móvil, abrir una nota la pone a pantalla completa.
  */
 export function Notas() {
+  const { t } = useTranslation('notes')
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -87,8 +89,8 @@ export function Notas() {
   const [filter, setFilter] = useState<NoteFilter>(NO_FILTER)
   // Con una nota abierta, `NotaDetalle` pone su título; al volver a la lista, el de la sección.
   useEffect(() => {
-    if (!open) document.title = 'Notas · Muninn'
-  }, [open])
+    if (!open) document.title = t('pageTitle')
+  }, [open, t])
   const projectOf = useMemo(() => new Map(projects?.map((p) => [p.id, p])), [projects])
 
   const all = notes.data
@@ -118,7 +120,7 @@ export function Notas() {
   const newButton = (
     <Button variant="primary" onClick={create}>
       <Icon name="plus" />
-      Nueva nota
+      {t('list.newNote')}
     </Button>
   )
 
@@ -127,13 +129,15 @@ export function Notas() {
   // se queda pegado arriba (`sticky`, como la barra del editor).
   const list = (
     <section
-      aria-label="Lista de notas"
+      aria-label={t('list.label')}
       className="flex min-w-0 flex-col gap-3 md:sticky md:top-7 md:max-h-[calc(100dvh-3.5rem)] md:self-start md:pr-3"
     >
       <header className="flex shrink-0 items-center gap-3">
-        <h1 className="flex-1 text-2xl font-semibold tracking-tight md:text-xl">Notas</h1>
+        <h1 className="flex-1 text-2xl font-semibold tracking-tight md:text-xl">
+          {t('list.title')}
+        </h1>
         <IconButton
-          aria-label="Nueva nota"
+          aria-label={t('list.newNote')}
           icon={<icons.plus />}
           variant="primary"
           onClick={create}
@@ -146,8 +150,8 @@ export function Notas() {
           <icons.search size={16} aria-hidden="true" />
           <input
             type="search"
-            aria-label="Buscar en notas"
-            placeholder="Buscar en notas"
+            aria-label={t('list.search')}
+            placeholder={t('list.search')}
             value={filter.query}
             onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
             className="min-w-0 flex-1 bg-transparent text-md text-fg outline-none placeholder:text-fg-faint md:text-sm"
@@ -161,14 +165,15 @@ export function Notas() {
           pressed={!filter.pinned && !filter.projectId}
           onClick={() => setFilter((f) => ({ ...f, pinned: false, projectId: null }))}
         >
-          Todas{all ? ` · ${all.length}` : ''}
+          {t('list.all')}
+          {all ? ` · ${all.length}` : ''}
         </FilterChip>
         <FilterChip
           touch={!desktop}
           pressed={filter.pinned}
           onClick={() => setFilter((f) => ({ ...f, pinned: !f.pinned }))}
         >
-          Fijadas
+          {t('list.pinned')}
         </FilterChip>
         {projects
           ?.filter((p) => perProject.has(p.id))
@@ -196,29 +201,28 @@ export function Notas() {
             <Ghost className="h-16 opacity-30" />
           </div>
         ) : all.length === 0 ? (
-          <EmptyState icon="notes" title="Todavía no hay notas" actions={newButton}>
-            Escribe en Markdown, fija las importantes y vincula cada nota a un proyecto o a una
-            tarea.
+          <EmptyState icon="notes" title={t('list.emptyTitle')} actions={newButton}>
+            {t('list.emptyText')}
           </EmptyState>
         ) : shown.length === 0 ? (
           <p className="px-1 py-6 text-center text-sm text-fg-subtle text-pretty">
             {filter.query.trim()
-              ? `Nada coincide con «${filter.query.trim()}».`
-              : 'No hay notas con este filtro.'}{' '}
+              ? t('list.noMatch', { query: filter.query.trim() })
+              : t('list.noneWithFilter')}{' '}
             {filtering ? (
               <button
                 type="button"
                 onClick={() => setFilter(NO_FILTER)}
                 className="cursor-pointer text-accent hover:underline"
               >
-                Quitar filtros
+                {t('list.clearFilters')}
               </button>
             ) : null}
           </p>
         ) : (
           <div className="flex flex-col gap-1">
             {pinned.length ? (
-              <Group label="Fijadas">
+              <Group label={t('list.pinned')}>
                 {pinned.map((n) => (
                   <NoteItem
                     key={n.id}
@@ -229,7 +233,15 @@ export function Notas() {
               </Group>
             ) : null}
             {recent.length ? (
-              <Group label={pinned.length ? 'Recientes' : filtering ? 'Resultados' : 'Recientes'}>
+              <Group
+                label={
+                  pinned.length
+                    ? t('list.recent')
+                    : filtering
+                      ? t('list.results')
+                      : t('list.recent')
+                }
+              >
                 {recent.map((n) => (
                   <NoteItem
                     key={n.id}
@@ -256,11 +268,11 @@ export function Notas() {
             <div className="hidden md:flex md:flex-col">
               <EmptyState
                 icon="notes"
-                title="Elige una nota"
+                title={t('list.pickTitle')}
                 actions={all?.length ? newButton : undefined}
                 className="flex-1 justify-center"
               >
-                Selecciona una de la lista o crea una nueva. Se guardan solas mientras escribes.
+                {t('list.pickText')}
               </EmptyState>
             </div>
           )

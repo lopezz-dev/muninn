@@ -55,6 +55,9 @@ Cada ajuste se abre dentro de la misma hoja; **‹** te devuelve a la lista. Par
 arriba hacia abajo o pulsa la **X**: sigues en la pantalla en la que estabas. Si abres un enlace a un ajuste (por ejemplo, el
 botón «Ir a Módulos»), se abre la hoja ya en ese ajuste, encima de lo que estabas viendo.
 
+Todas las hojas que suben desde abajo (un movimiento nuevo, los filtros, cambiar una fecha…) se cierran igual: arrastra la
+rayita de arriba hacia abajo, toca fuera o pulsa la **X**. Si la sueltas antes de bajarla lo bastante, vuelve a su sitio.
+
 ### Elegir las pestañas de abajo
 
 En **Ajustes › Barra de abajo** (en la hoja de tu cuenta) eliges qué pestañas quieres y en qué orden:
@@ -147,6 +150,8 @@ borra. Pulsa **Deshacer** en el aviso para recuperarlo.
 
 En **Ajustes › Apariencia**:
 
+- **Idioma:** español o inglés. En **Automático**, Muninn usa el idioma de tu navegador (y, si no es ninguno de
+  los dos, el inglés).
 - **Cristal:** activa o desactiva el desenfoque translúcido de paneles y menús. Si tu sistema tiene
   activado «Reducir transparencia», Muninn empieza sin cristal.
 - **Color de acento:** ámbar, azul, violeta, verde azulado o rosa. Cambia los botones, la selección y la
@@ -154,6 +159,10 @@ En **Ajustes › Apariencia**:
 
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
+
+> **Estado:** toda la app está en inglés y en español. Estas guías siguen solo en español mientras se traducen, y lo
+> que Muninn crea por ti al empezar (las columnas del tablero, las categorías de Finanzas) sale en español aunque uses
+> el inglés: puedes renombrarlo.
 
 > **Próximamente:** tema claro.
 
@@ -166,7 +175,7 @@ lo más útil sin abrirla: con qué entras, cuántos módulos tienes activos o a
 | Grupo | Sección | Qué hay |
 |---|---|---|
 | Tú | **Cuenta** | Tu nombre y correo, cómo entras (código o GitHub) y **Cerrar sesión**. En modo demo, **Salir del modo demo** |
-| Tú | **Apariencia** | Cristal y color de acento (ver arriba) |
+| Tú | **Apariencia** | Idioma, cristal y color de acento (ver arriba) |
 | Tú | **Barra de abajo** | Las pestañas del móvil y su orden (ver [Elegir las pestañas de abajo](#elegir-las-pestañas-de-abajo)) |
 | Tú | **Atajos de teclado** | Los atajos del buscador, del tablero y de toda la app |
 | Espacio de trabajo | **Módulos** | Activar y desactivar módulos (ver arriba) |

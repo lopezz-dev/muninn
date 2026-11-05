@@ -14,8 +14,10 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SelectMenu } from '../../components/SelectMenu'
 import { PRIORITY_TEXT, SourceBadge } from '../../components/task-meta'
+import { intlLocale } from '../../i18n'
 import { activityLink, actorName, describeActivity } from '../../lib/activity'
 import { type BoardData, PRIORITIES } from '../../lib/board'
 import { dueLabel, timeAgo } from '../../lib/dates'
@@ -43,6 +45,7 @@ interface BodyProps {
 function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('task')
   const [title, setTitle] = useState(task.title)
   useEffect(() => setTitle(task.title), [task.title])
   const done = task.column.kind === 'done'
@@ -53,7 +56,7 @@ function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
     const clean = title.trim()
     if (!clean) return setTitle(task.title)
     if (clean !== task.title) {
-      void patchTask(m, qc, task, { title: clean }, { message: 'Título actualizado' })
+      void patchTask(m, qc, task, { title: clean }, { message: t('body.titleUpdated') })
     }
   }
 
@@ -62,15 +65,15 @@ function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
       <Checkbox
         checked={done}
         onCheckedChange={(v) => (v ? completeTask(m, qc, task) : reopenTask(m, qc, task))}
-        aria-label={done ? 'Reabrir tarea' : 'Completar tarea'}
+        aria-label={done ? t('body.reopenTask') : t('body.completeTask')}
         size="lg"
         touch={touch}
         className={cn('mt-1.5', !touch && 'size-5')}
       />
       <textarea
-        aria-label="Título de la tarea"
+        aria-label={t('body.title')}
         readOnly={locked}
-        title={locked ? 'El título viene de GitHub: cámbialo en la issue' : undefined}
+        title={locked ? t('body.titleFromGithub') : undefined}
         value={title}
         rows={1}
         maxLength={300}
@@ -101,6 +104,7 @@ function TitleRow({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
 function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('task')
   const today = m.today()
   const set = (value: string) =>
     patchTask(
@@ -110,8 +114,8 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
       { dueDate: value || null },
       {
         message: value
-          ? `Vence: ${dueLabel(value, today).toLowerCase()}`
-          : 'Fecha de vencimiento quitada',
+          ? t('body.dueSet', { date: dueLabel(value, today).toLowerCase() })
+          : t('body.dueRemoved'),
         icon: 'calendar',
       },
     )
@@ -127,7 +131,7 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
       {coarse ? (
         <input
           type="date"
-          aria-label="Fecha de vencimiento"
+          aria-label={t('body.dueDate')}
           value={value}
           onChange={(e) => {
             if (e.target.value !== value) void set(e.target.value)
@@ -145,18 +149,20 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
         >
           <button
             type="button"
-            aria-label={`Fecha de vencimiento: ${task.dueDate ? formatDateShort(task.dueDate) : 'sin fecha'}`}
+            aria-label={t('body.dueDateValue', {
+              date: task.dueDate ? formatDateShort(task.dueDate, intlLocale()) : t('body.noDate'),
+            })}
             className={cn(box, 'inline-flex cursor-pointer items-center gap-1.5')}
           >
             <icons.calendar size={14} className="text-fg-subtle" />
-            {task.dueDate ? dueLabel(task.dueDate, today) : 'Sin fecha'}
+            {task.dueDate ? dueLabel(task.dueDate, today) : t('body.noDateShort')}
           </button>
         </DatePicker>
       )}
       {task.dueDate ? (
         <button
           type="button"
-          aria-label="Quitar la fecha de vencimiento"
+          aria-label={t('body.removeDue')}
           onClick={() => set('')}
           className="grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
         >
@@ -171,6 +177,7 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
 function LabelsField({ task }: Pick<BodyProps, 'task'>) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('task')
   const [text, setText] = useState('')
 
   const add = () => {
@@ -182,7 +189,7 @@ function LabelsField({ task }: Pick<BodyProps, 'task'>) {
       qc,
       task,
       { labels: [...task.labels, label.slice(0, 40)] },
-      { message: `Etiqueta «${label}» añadida`, icon: 'plus' },
+      { message: t('body.labelAdded', { label }), icon: 'plus' },
     )
   }
   const remove = (label: string) =>
@@ -191,7 +198,7 @@ function LabelsField({ task }: Pick<BodyProps, 'task'>) {
       qc,
       task,
       { labels: task.labels.filter((l) => l !== label) },
-      { message: `Etiqueta «${label}» quitada` },
+      { message: t('body.labelRemoved', { label }) },
     )
 
   return (
@@ -201,7 +208,7 @@ function LabelsField({ task }: Pick<BodyProps, 'task'>) {
           {l}
           <button
             type="button"
-            aria-label={`Quitar la etiqueta ${l}`}
+            aria-label={t('body.removeLabel', { label: l })}
             onClick={() => remove(l)}
             className="grid size-4 cursor-pointer place-items-center rounded-xs text-fg-faint transition-colors hover:text-fg"
           >
@@ -210,8 +217,8 @@ function LabelsField({ task }: Pick<BodyProps, 'task'>) {
         </Chip>
       ))}
       <input
-        aria-label="Añadir etiqueta"
-        placeholder="+ Añadir"
+        aria-label={t('body.addLabel')}
+        placeholder={t('body.addLabelPlaceholder')}
         value={text}
         maxLength={41}
         onChange={(e) => setText(e.target.value)}
@@ -232,10 +239,11 @@ function LabelsField({ task }: Pick<BodyProps, 'task'>) {
 function Properties({ task, board, touch }: BodyProps) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('task')
 
   const status = (
     <SelectMenu
-      label="Estado"
+      label={t('body.status')}
       variant={touch ? 'field' : 'inline'}
       large={touch}
       value={task.columnId}
@@ -254,7 +262,7 @@ function Properties({ task, board, touch }: BodyProps) {
   )
   const priority = (
     <SelectMenu
-      label="Prioridad"
+      label={t('body.priority')}
       variant={touch ? 'field' : 'inline'}
       large={touch}
       value={task.priority}
@@ -267,7 +275,9 @@ function Properties({ task, board, touch }: BodyProps) {
           task,
           { priority: value },
           {
-            message: `Prioridad: ${PRIORITIES.find((p) => p.value === value)?.label.toLowerCase()}`,
+            message: t('body.prioritySet', {
+              priority: PRIORITIES.find((p) => p.value === value)?.label.toLowerCase() ?? '',
+            }),
             icon: 'flag',
           },
         )
@@ -299,32 +309,32 @@ function Properties({ task, board, touch }: BodyProps) {
   return (
     <dl className="flex flex-col">
       <div className={row}>
-        <dt className="text-fg-subtle">Estado</dt>
+        <dt className="text-fg-subtle">{t('body.status')}</dt>
         <dd>{status}</dd>
       </div>
       <div className={row}>
-        <dt className="text-fg-subtle">Prioridad</dt>
+        <dt className="text-fg-subtle">{t('body.priority')}</dt>
         <dd>{priority}</dd>
       </div>
       <div className={row}>
-        <dt className="text-fg-subtle">Vence</dt>
+        <dt className="text-fg-subtle">{t('body.due')}</dt>
         <dd>
           <DueField task={task} />
         </dd>
       </div>
       <div className={row}>
-        <dt className="text-fg-subtle">Etiquetas</dt>
+        <dt className="text-fg-subtle">{t('body.labels')}</dt>
         <dd>
           <LabelsField task={task} />
         </dd>
       </div>
       <div className={row}>
-        <dt className="text-fg-subtle">Origen</dt>
+        <dt className="text-fg-subtle">{t('body.source')}</dt>
         <dd className="flex items-center gap-2 font-medium">
           {task.source === 'manual' ? (
             <>
               <Icon name="user" size={14} className="text-fg-subtle" />
-              Manual
+              {t('body.manual')}
             </>
           ) : (
             <SourceBadge
@@ -334,7 +344,9 @@ function Properties({ task, board, touch }: BodyProps) {
               link
             />
           )}
-          <span className="font-normal text-fg-subtle">· creada {timeAgo(task.createdAt)}</span>
+          <span className="font-normal text-fg-subtle">
+            {t('body.created', { ago: timeAgo(task.createdAt) })}
+          </span>
         </dd>
       </div>
     </dl>
@@ -353,6 +365,7 @@ const Markdown = lazy(() =>
 function Description({ task }: Pick<BodyProps, 'task'>) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('task')
   const [text, setText] = useState(task.description)
   const [editing, setEditing] = useState(false)
   useEffect(() => setText(task.description), [task.description])
@@ -363,7 +376,7 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
   const toggleBox = (index: number) => {
     const next = toggleTask(task.description, index)
     if (next !== null) {
-      void patchTask(m, qc, task, { description: next }, { message: 'Casilla actualizada' })
+      void patchTask(m, qc, task, { description: next }, { message: t('body.checkboxUpdated') })
     }
   }
 
@@ -372,23 +385,18 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
       {showing ? (
         <>
           <div className="flex items-center justify-between gap-2">
-            <h2 className={h3}>Descripción</h2>
+            <h2 className={h3}>{t('body.description')}</h2>
             {locked ? null : (
               <button
                 type="button"
                 onClick={() => setEditing(true)}
                 className="-mr-2 h-7 cursor-pointer rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
               >
-                Editar
+                {t('body.edit')}
               </button>
             )}
           </div>
-          {locked ? (
-            <p className="text-xs text-fg-subtle">
-              El título y la descripción vienen de la issue: cámbialos en GitHub y aquí se
-              actualizan solos.
-            </p>
-          ) : null}
+          {locked ? <p className="text-xs text-fg-subtle">{t('body.fromIssue')}</p> : null}
           {/* Un clic en el texto (no en un enlace ni en una casilla) pasa a editar. */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: el botón «Editar» es la vía de teclado */}
           {/* biome-ignore lint/a11y/noStaticElementInteractions: ver arriba */}
@@ -411,17 +419,17 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
                   className="text-base"
                 />
               ) : (
-                <p className="text-sm text-fg-faint">La issue no tiene descripción.</p>
+                <p className="text-sm text-fg-faint">{t('body.issueNoDescription')}</p>
               )}
             </Suspense>
           </div>
         </>
       ) : (
         <TextArea
-          label="Descripción"
+          label={t('body.description')}
           hideLabel
           rows={4}
-          placeholder="Añade una descripción… (se entiende Markdown)"
+          placeholder={t('body.descriptionPlaceholder')}
           value={text}
           maxLength={20000}
           autoFocus={editing}
@@ -433,7 +441,7 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
                 qc,
                 task,
                 { description: text },
-                { message: 'Descripción guardada' },
+                { message: t('body.descriptionSaved') },
               )
             }
             setEditing(false)
@@ -449,6 +457,7 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const { t } = useTranslation('task')
   const notes = useQuery(taskNotesQuery(m, task.id)).data ?? []
 
   // La nota nace vinculada a esta tarea (y a su proyecto) y se abre para escribir.
@@ -460,7 +469,7 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   return (
     <section className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
-        <h2 className={h3}>Notas vinculadas</h2>
+        <h2 className={h3}>{t('body.linkedNotes')}</h2>
         <button
           type="button"
           onClick={add}
@@ -470,12 +479,10 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
           )}
         >
           <icons.plus size={13} />
-          Añadir nota
+          {t('body.addNote')}
         </button>
       </div>
-      {notes.length === 0 ? (
-        <p className="text-sm text-fg-subtle">Apuntes, decisiones o pasos de esta tarea.</p>
-      ) : null}
+      {notes.length === 0 ? <p className="text-sm text-fg-subtle">{t('body.notesHint')}</p> : null}
       {notes.map((n) => (
         <Link
           key={n.id}
@@ -484,7 +491,7 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
           className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-base transition-colors hover:border-border-strong"
         >
           <Icon name="notes" className="text-fg-subtle" />
-          <span className="min-w-0 flex-1 truncate">{n.title || 'Sin título'}</span>
+          <span className="min-w-0 flex-1 truncate">{n.title || t('body.untitled')}</span>
           <span className="text-xs text-fg-subtle">{timeAgo(n.updatedAt)}</span>
         </Link>
       ))}
@@ -494,12 +501,14 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
 
 function ActivityLog({ task }: Pick<BodyProps, 'task'>) {
   const m = useMuninn()
+  // `home` también: las frases de la actividad salen de `lib/activity.ts`, y así no se pintan antes de que llegue.
+  const { t } = useTranslation(['task', 'home'])
   const events = useQuery(taskActivityQuery(m, task.id)).data ?? []
   return (
     <section className="flex flex-col gap-3">
-      <h2 className={h3}>Actividad</h2>
+      <h2 className={h3}>{t('body.activity')}</h2>
       {events.length === 0 ? (
-        <p className="text-sm text-fg-subtle">Todavía no hay actividad.</p>
+        <p className="text-sm text-fg-subtle">{t('body.noActivity')}</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {events.map((a) => (
@@ -534,7 +543,7 @@ function ActivityLog({ task }: Pick<BodyProps, 'task'>) {
                       {...externalLink(activityLink(a) as string)}
                       className="text-accent hover:underline"
                     >
-                      Ver el PR
+                      {t('body.viewPr')}
                     </a>
                   </>
                 ) : null}

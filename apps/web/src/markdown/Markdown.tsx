@@ -1,7 +1,9 @@
 // biome-ignore-all lint/suspicious/noArrayIndexKey: el árbol sale del texto, sin ids, y se rehace entero en cada cambio
 import { cn } from '@muninn/ui'
+import type { TFunction } from 'i18next'
 import { Lexer, type Token, type Tokens } from 'marked'
 import { Fragment, memo, type ReactNode, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { externalLink } from '../lib/external-link'
 import { makeSlugger } from './outline'
 import { plainText } from './plain'
@@ -58,6 +60,8 @@ interface Ctx {
   slug?: (text: string) => string
   callouts?: MarkdownProps['callouts']
   renderLink?: MarkdownProps['renderLink']
+  /** Los pocos textos propios (casillas, imágenes), en el idioma activo. */
+  t: TFunction<'notes'>
 }
 
 const NAMED: Record<string, string> = {
@@ -135,7 +139,7 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
       // Sin cargar la imagen: su texto alternativo, como enlace si el destino es seguro.
       const tk = t as Tokens.Image
       const href = safeHref(decodeEntities(tk.href))
-      const label = decodeEntities(tk.text) || 'imagen'
+      const label = decodeEntities(tk.text) || ctx.t('markdown.image')
       return href ? (
         <a {...externalLink(href)} className="text-accent underline-offset-2 hover:underline">
           {label}
@@ -148,6 +152,21 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
       // HTML en línea (`<b>`, `<br>`…) y cualquier otra cosa: como texto.
       return text(t) || ('raw' in t ? t.raw : '')
   }
+}
+
+/** Hasta cuántos caracteres una columna se considera corta: cabe una fecha, un código o un importe. */
+const FIT_MAX = 24
+
+/**
+ * Qué columnas de una tabla se ajustan a su contenido: aquellas cuya celda más larga (cabecera
+ * incluida) no pasa de `FIT_MAX` caracteres. El resto es texto largo y se reparte el ancho.
+ */
+export function fitColumns(table: Pick<Tokens.Table, 'header' | 'rows'>): boolean[] {
+  return table.header.map((h, i) =>
+    [h, ...table.rows.map((row) => row[i])].every(
+      (c) => !c || plainText(decodeEntities(c.text), 200).length <= FIT_MAX,
+    ),
+  )
 }
 
 const HEADINGS = {
@@ -178,7 +197,7 @@ function listItem(item: Tokens.ListItem, ctx: Ctx): ReactNode {
         checked={Boolean(item.checked)}
         disabled={!toggle}
         onChange={toggle ? () => toggle(index) : undefined}
-        aria-label={item.checked ? 'Marcar como pendiente' : 'Marcar como hecha'}
+        aria-label={ctx.t(item.checked ? 'markdown.markPending' : 'markdown.markDone')}
         className={cn(
           'mt-[0.45em] mr-2 size-3.5 shrink-0 accent-accent',
           toggle ? 'cursor-pointer' : 'cursor-default',
@@ -290,13 +309,21 @@ function block(t: Token, ctx: Ctx): ReactNode {
       const tk = t as Tokens.Table
       const align = (a: string | null) =>
         a === 'center' ? 'text-center' : a === 'right' ? 'text-right' : 'text-left'
+      const fit = fitColumns(tk)
+      // Las columnas cortas (fechas, códigos, versiones) se ajustan a su contenido sin partirse
+      // (`w-px` + `nowrap`); las de texto largo se quedan el ancho sobrante y parten líneas, con un
+      // mínimo para que en el teléfono la tabla haga scroll dentro de su caja y no se aplaste.
+      const cell = (i: number, a: string | null) =>
+        cn('px-3 py-2', align(a), fit[i] && 'w-px whitespace-nowrap')
+      const body = (i: number, content: ReactNode) =>
+        fit[i] ? content : <div className="min-w-48">{content}</div>
       return (
-        <div className="overflow-x-auto rounded-lg border border-border">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-border">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-surface text-xs font-semibold text-fg-subtle">
               <tr>
                 {tk.header.map((c, i) => (
-                  <th key={i} className={cn('px-3 py-2', align(c.align))}>
+                  <th key={i} className={cell(i, c.align)}>
                     {inline(c.tokens, ctx)}
                   </th>
                 ))}
@@ -306,8 +333,8 @@ function block(t: Token, ctx: Ctx): ReactNode {
               {tk.rows.map((row, r) => (
                 <tr key={r} className="border-t border-border-subtle">
                   {row.map((c, i) => (
-                    <td key={i} className={cn('px-3 py-2 align-top', align(c.align))}>
-                      {inline(c.tokens, ctx)}
+                    <td key={i} className={cn(cell(i, c.align), 'align-top')}>
+                      {body(i, inline(c.tokens, ctx))}
                     </td>
                   ))}
                 </tr>
@@ -336,8 +363,10 @@ export const Markdown = memo(function Markdown({
   renderLink,
   className,
 }: MarkdownProps) {
+  const { t } = useTranslation('notes')
   const tokens = useMemo(() => Lexer.lex(source, { gfm: true }), [source])
   const start = (toggle?: MarkdownProps['onToggleTask']): Ctx => ({
+    t,
     tasks: 0,
     onToggleTask: toggle,
     slug: headingIds ? makeSlugger() : undefined,

@@ -10,6 +10,7 @@ import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-
 import type { BoardColumn } from '@muninn/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   type BoardData,
   colId,
@@ -63,6 +64,7 @@ export function BoardDesktop({
 }) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const [drag, setDrag] = useState<DragState | null>(null)
   const [editing, setEditing] = useState<BoardColumn | 'new' | null>(null)
 
@@ -74,7 +76,7 @@ export function BoardDesktop({
   const items = drag?.items ?? idle
   const colOrder = drag?.cols ?? board.columns.map((c) => c.id)
   const columnById = useMemo(() => new Map(board.columns.map((c) => [c.id, c])), [board.columns])
-  const taskById = useMemo(() => new Map(board.tasks.map((t) => [t.id, t])), [board.tasks])
+  const taskById = useMemo(() => new Map(board.tasks.map((x) => [x.id, x])), [board.tasks])
 
   const itemsRef = useRef(items)
   itemsRef.current = items
@@ -96,11 +98,11 @@ export function BoardDesktop({
     announcements: announcements({
       name: (id) =>
         isColKey(id)
-          ? `la columna ${colName(colId(String(id)))}`
-          : `«${taskById.get(String(id))?.title ?? ''}»`,
+          ? t('dnd.theColumn', { name: colName(colId(String(id))) })
+          : t('dnd.theTask', { title: taskById.get(String(id))?.title ?? '' }),
       where: (id) =>
         isColKey(id)
-          ? `sobre la columna ${colName(colId(String(id)))}`
+          ? t('dnd.overColumn', { name: colName(colId(String(id))) })
           : placeOf(itemsRef.current, String(id), colName),
     }),
   }
@@ -191,7 +193,7 @@ export function BoardDesktop({
         }}
       >
         <section
-          aria-label="Columnas"
+          aria-label={t('columns')}
           // flex-1 + min-h-0: el tablero mide lo que queda de ventana; las columnas llegan al pie (se puede
           // soltar en todo su alto) y sus tarjetas hacen scroll dentro (ADR-0050).
           className="-mx-8 flex min-h-0 flex-1 gap-3 overflow-x-auto px-8 pb-3"
@@ -205,7 +207,7 @@ export function BoardDesktop({
                   key={id}
                   column={column}
                   columns={board.columns}
-                  tasks={(items[id] ?? []).flatMap((t) => taskById.get(t) ?? [])}
+                  tasks={(items[id] ?? []).flatMap((x) => taskById.get(x) ?? [])}
                   // Cuenta la columna entera (para el límite), también con un filtro puesto y arrastrando.
                   total={
                     (allIds[id]?.length ?? 0) + (items[id]?.length ?? 0) - (idle[id]?.length ?? 0)

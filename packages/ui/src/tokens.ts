@@ -9,6 +9,8 @@ export const colors = {
   sidebar: '#101215',
   surface: '#15181C',
   'surface-raised': '#1D2026',
+  /** Lo que flota encima de todo (menús, popovers, el calendario): en sólido, igual que `surface-raised`. */
+  'surface-floating': '#1D2026',
   'surface-hover': '#181B20',
   'surface-sunken': '#111316',
   border: '#23272E',
@@ -67,6 +69,8 @@ export const glass = {
     sidebar: 'rgba(16, 18, 21, 0.62)',
     surface: 'rgba(21, 24, 28, 0.66)',
     'surface-raised': 'rgba(29, 32, 38, 0.74)',
+    // Más opaco: un menú o un calendario suele ir encima de un diálogo, y dos capas al 74 % dejan ver lo de detrás.
+    'surface-floating': 'rgba(29, 32, 38, 0.93)',
     'surface-hover': 'rgba(255, 255, 255, 0.04)',
     'surface-sunken': 'rgba(17, 19, 22, 0.5)',
     border: 'rgba(255, 255, 255, 0.07)',

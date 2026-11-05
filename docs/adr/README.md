@@ -72,6 +72,11 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0069](0069-noticias-equilibradas-por-fuente.md) — Noticias equilibradas por fuente: rachas plegadas en «Todas» y resumen repartido
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
+- [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
+- [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -95,6 +100,10 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
+- [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -105,6 +114,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### ui
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
@@ -125,6 +136,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 - [ADR-0068](0068-vista-calendario-del-tablero.md) — Vista Calendario del tablero: arrastrar cambia solo la fecha, bandeja «Sin fecha» y móvil sin arrastre
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
+- [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar *(propuesto)*
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -149,7 +161,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0042](0042-noticias-rss-con-descarga-en-servidor.md) — Noticias: fuentes RSS por usuario, descarga en una Edge Function con cron y resumen diario en local
 - [ADR-0043](0043-informe-de-la-manana-en-local.md) — Informe de la mañana generado en el ordenador y guardado como nota fijada
 - [ADR-0044](0044-voz-local-whisper-y-piper.md) — Voz en local: whisper.cpp para dictar y Piper para hablar, como procesos aparte en el escritorio *(propuesto)*
-- [ADR-0045](0045-seo-de-la-web-sin-ssr.md) — SEO sin SSR: metas en `index.html` y por página, iconos desde el logo *(guías públicas y prerenderizadas, propuesto)*
+- [ADR-0045](0045-seo-de-la-web-sin-ssr.md) — SEO sin SSR: metas en `index.html` y por página, iconos desde el logo *(guías públicas: ADR-0076)*
 - [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md) — Las pantallas ocupan todo el ancho y, en escritorio, todo el alto
 - [ADR-0049](0049-calendario-propio-con-raton-nativo-en-tactil.md) — Fechas con un calendario propio con ratón y el selector nativo en táctil
 - [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
@@ -177,6 +189,13 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
+- [ADR-0076](0076-guias-publicas-prerenderizadas-y-url-unica.md) — Guías públicas y prerenderizadas en el build, y la URL pública en un solo sitio (`SITE_URL`)
+- [ADR-0077](0077-i18n-ingles-por-defecto-con-i18next.md) — La app en varios idiomas con i18next: inglés por defecto, español con prefijo `/es` y rutas en inglés
+- [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar *(propuesto)*
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
+- [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
+- [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto *(propuesto)*
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -186,6 +205,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0057](0057-lector-de-noticias-integrado.md) — Lector de noticias integrado: modo lectura con el contenido del feed, sin iframe *(propuesto)*
 - [ADR-0059](0059-deep-links-para-oauth-en-escritorio.md) — GitHub OAuth en escritorio con el deep link `muninn://auth/callback`
 - [ADR-0060](0060-captcha-con-turnstile-en-la-entrada.md) — CAPTCHA de la entrada con Cloudflare Turnstile, invisible y opcional por variable
+- [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 
 ### ci
 - [ADR-0010](0010-ramas-y-releases.md) — Ramas `main`/`develop`, Conventional Commits y release-please *(el repo privado y el updater pendiente, reemplazados por ADR-0046 y ADR-0047)*

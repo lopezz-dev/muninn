@@ -1,5 +1,6 @@
 import type { ChangeTarget, ToolRun } from '@muninn/assistant'
 import { clear, createStore, get, set, type UseStore } from 'idb-keyval'
+import { t } from '../i18n'
 
 /**
  * Historial del asistente (ADR-0041): en el IndexedDB de este dispositivo, por usuario, las últimas 30
@@ -41,7 +42,7 @@ export const MAX_CONVERSATIONS = 30
 /** Título a partir de la primera pregunta: una línea, como mucho 60 caracteres. */
 export function titleFrom(text: string) {
   const line = text.replace(/\s+/g, ' ').trim()
-  return line.length > 60 ? `${line.slice(0, 59)}…` : line || 'Conversación'
+  return line.length > 60 ? `${line.slice(0, 59)}…` : line || t('untitled', { ns: 'assistant' })
 }
 
 /** Añade o reemplaza una conversación y deja las más recientes primero, sin pasar del máximo. */
@@ -51,14 +52,16 @@ export function upsertConversation(list: Conversation[], c: Conversation): Conve
     .slice(0, MAX_CONVERSATIONS)
 }
 
-/** «Hoy», «Esta semana» o «Antes», como la lista del diseño. */
-export function groupOf(iso: string, now = new Date()): 'Hoy' | 'Esta semana' | 'Antes' {
+/** Grupo de la lista del diseño: «Hoy», «Esta semana» o «Antes» (la etiqueta la pone la pantalla). */
+export type ConversationGroup = 'today' | 'week' | 'earlier'
+
+export function groupOf(iso: string, now = new Date()): ConversationGroup {
   const d = new Date(iso)
   const start = new Date(now)
   start.setHours(0, 0, 0, 0)
-  if (d >= start) return 'Hoy'
+  if (d >= start) return 'today'
   start.setDate(start.getDate() - 6)
-  return d >= start ? 'Esta semana' : 'Antes'
+  return d >= start ? 'week' : 'earlier'
 }
 
 let db: UseStore | undefined

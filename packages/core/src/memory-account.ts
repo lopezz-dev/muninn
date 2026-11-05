@@ -49,6 +49,7 @@ export function createMemoryAccount(
       aal: 'aal1',
       current: true,
       appName: null,
+      deviceName: null,
     })
   }
   let factors = [...(seed.factors ?? [])]
@@ -64,6 +65,12 @@ export function createMemoryAccount(
   return {
     async sessions() {
       return structuredClone(sessions)
+    },
+    async renameSession(id, name) {
+      const s = sessions.find((x) => x.id === id)
+      if (!s) return false
+      s.deviceName = name
+      return true
     },
     async revokeSession(id) {
       const found = sessions.some((s) => s.id === id)

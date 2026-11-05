@@ -1,4 +1,5 @@
 import type { BoardColumn, TaskWithColumn } from '@muninn/core'
+import { currentLocale, t } from '../i18n'
 import { PRIORITY_RANK } from './board'
 import { addDays } from './dates'
 
@@ -11,12 +12,22 @@ import { addDays } from './dates'
 export type CalendarScale = 'month' | 'week'
 
 const utc = (iso: string) => new Date(`${iso}T00:00:00Z`)
-const fmt = (opts: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('es-ES', { ...opts, timeZone: 'UTC' })
-const monthYearFmt = fmt({ month: 'long', year: 'numeric' })
-const monthFmt = fmt({ month: 'long' })
-const shortFmt = fmt({ weekday: 'short', day: 'numeric', month: 'short' })
-const longFmt = fmt({ weekday: 'long', day: 'numeric', month: 'long' })
+/** Formateadores en el idioma activo (ADR-0077), creados una vez por idioma: `Intl` es caro de construir. */
+const formats = new Map<string, Intl.DateTimeFormat>()
+const fmt = (opts: Intl.DateTimeFormatOptions) => {
+  const locale = currentLocale() === 'es' ? 'es-ES' : 'en'
+  const id = `${locale}|${JSON.stringify(opts)}`
+  let f = formats.get(id)
+  if (!f) {
+    f = new Intl.DateTimeFormat(locale, { ...opts, timeZone: 'UTC' })
+    formats.set(id, f)
+  }
+  return f
+}
+const monthYearFmt = () => fmt({ month: 'long', year: 'numeric' })
+const monthFmt = () => fmt({ month: 'long' })
+const shortFmt = () => fmt({ weekday: 'short', day: 'numeric', month: 'short' })
+const longFmt = () => fmt({ weekday: 'long', day: 'numeric', month: 'long' })
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /** Lunes = 0 … domingo = 6. */
@@ -45,7 +56,11 @@ export function weekDays(iso: string): string[] {
 
 /** «Octubre 2026». */
 export const monthTitle = (month: string) =>
-  capital(monthYearFmt.format(utc(`${month}-01`)).replace(' de ', ' '))
+  capital(
+    monthYearFmt()
+      .format(utc(`${month}-01`))
+      .replace(' de ', ' '),
+  )
 
 /** «26 oct – 1 nov 2026» (o «2 – 8 nov 2026» si no cambia de mes). */
 export function weekTitle(iso: string) {
@@ -59,31 +74,34 @@ export function weekTitle(iso: string) {
 }
 
 /** «diciembre». */
-export const monthName = (month: string) => monthFmt.format(utc(`${month}-01`))
+export const monthName = (month: string) => monthFmt().format(utc(`${month}-01`))
 
 /** «mié 4 nov». */
 export const dayShort = (iso: string) =>
-  shortFmt.format(utc(iso)).replaceAll('.', '').replace(',', '')
+  shortFmt().format(utc(iso)).replaceAll('.', '').replace(',', '')
 
 /** «Miércoles 4 de noviembre». */
-export const dayLong = (iso: string) => capital(longFmt.format(utc(iso)).replace(',', ''))
+export const dayLong = (iso: string) => capital(longFmt().format(utc(iso)).replace(',', ''))
 
 /** Texto del aviso al cambiar la fecha: «Vence hoy», «Vence mañana», «Vence el mié 4 nov» o «Sin fecha». */
 export function dueToast(due: string | null, today: string) {
-  if (!due) return 'Sin fecha'
-  if (due === today) return 'Vence hoy'
-  if (due === addDays(today, 1)) return 'Vence mañana'
+  if (!due) return t('calendar.noDate', { ns: 'board' })
+  if (due === today) return t('calendar.dueToday', { ns: 'board' })
+  if (due === addDays(today, 1)) return t('calendar.dueTomorrow', { ns: 'board' })
   const sameYear = due.slice(0, 4) === today.slice(0, 4)
-  return `Vence el ${dayShort(due)}${sameYear ? '' : ` ${due.slice(0, 4)}`}`
+  return t('calendar.dueOn', {
+    ns: 'board',
+    date: `${dayShort(due)}${sameYear ? '' : ` ${due.slice(0, 4)}`}`,
+  })
 }
 
 /** Atajos de la hoja «Cambiar fecha» del móvil: hoy, mañana, el próximo lunes y dentro de una semana. */
 export function quickDates(today: string) {
   return [
-    { label: 'Hoy', date: today },
-    { label: 'Mañana', date: addDays(today, 1) },
-    { label: 'Próximo lunes', date: addDays(startOfWeek(today), 7) },
-    { label: 'En una semana', date: addDays(today, 7) },
+    { label: t('dates.today'), date: today },
+    { label: t('dates.tomorrow'), date: addDays(today, 1) },
+    { label: t('calendar.nextMonday', { ns: 'board' }), date: addDays(startOfWeek(today), 7) },
+    { label: t('calendar.inAWeek', { ns: 'board' }), date: addDays(today, 7) },
   ]
 }
 

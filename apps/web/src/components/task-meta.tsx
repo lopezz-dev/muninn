@@ -1,5 +1,6 @@
 import type { TaskPriority, TaskSource } from '@muninn/core'
 import { Chip, cn, Icon, icons } from '@muninn/ui'
+import { useTranslation } from 'react-i18next'
 import { priorityLabel } from '../lib/board'
 import { type DueTone, dueLabel, dueTone } from '../lib/dates'
 import { externalLink } from '../lib/external-link'
@@ -91,6 +92,7 @@ export function SourceBadge({
   link,
   className,
 }: SourceBadgeProps) {
+  const { t } = useTranslation('task')
   if (source === 'manual') return null
   if (source === 'github') {
     const n = issueNumber(externalId ?? null)
@@ -105,7 +107,7 @@ export function SourceBadge({
       <a
         {...externalLink(externalUrl)}
         href={externalUrl}
-        aria-label={n ? `Abrir la issue #${n} en GitHub` : 'Abrir la issue en GitHub'}
+        aria-label={n ? t('meta.openIssue', { n }) : t('meta.openIssueNoNumber')}
         className={cn(
           'inline-flex items-center gap-1 rounded-xs transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent',
           className,
@@ -120,8 +122,8 @@ export function SourceBadge({
   }
   const [icon, label] =
     source === 'mcp'
-      ? (['assistant', 'Creada por Claude'] as const)
-      : (['branch', 'Agente'] as const)
+      ? (['assistant', t('meta.byClaude')] as const)
+      : (['branch', t('meta.agent')] as const)
   return (
     <span className={cn('inline-flex items-center gap-1', className)}>
       <Icon name={icon} size={13} />

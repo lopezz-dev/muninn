@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { cn } from '../cn'
 import { icons } from '../icons'
+import { useUiLocale } from '../locale'
 import { Button, IconButton } from './button'
 import { Field, type FieldChrome, fieldBox } from './forms'
 
@@ -42,19 +43,44 @@ const localToday = () => {
 }
 const isIso = (v: string | undefined): v is string => Boolean(v && /^\d{4}-\d{2}-\d{2}$/.test(v))
 
-const fmt = (opts: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('es-ES', { ...opts, timeZone: 'UTC' })
-const monthFmt = fmt({ month: 'long', year: 'numeric' })
-const longFmt = fmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-const shortFmt = fmt({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 const utc = (iso: string) => new Date(`${iso}T00:00:00Z`)
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-/** «mar, 27 oct 2026». Para mostrar una fecha elegida. */
-export const formatDateShort = (iso: string) => shortFmt.format(utc(iso)).replaceAll('.', '')
+/**
+ * Formatos de fecha de un idioma (`Intl`, en UTC para que el día no se mueva), creados una vez por idioma. Las iniciales
+ * de la semana empiezan en lunes: el 1 de enero de 2024 fue lunes.
+ */
+const formatsCache = new Map<string, ReturnType<typeof makeFormats>>()
+function makeFormats(locale: string) {
+  const fmt = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(locale, { ...opts, timeZone: 'UTC' })
+  const week = Array.from({ length: 7 }, (_, i) => utc(`2024-01-0${i + 1}`))
+  return {
+    month: fmt({ month: 'long', year: 'numeric' }),
+    long: fmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+    short: fmt({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
+    monthOnly: fmt({ month: 'long' }),
+    weekdays: week.map((d) => fmt({ weekday: 'narrow' }).format(d)),
+    weekdayNames: week.map((d) => fmt({ weekday: 'long' }).format(d)),
+    monthsShort: Array.from({ length: 12 }, (_, i) =>
+      fmt({ month: 'short' })
+        .format(utc(`2024-${String(i + 1).padStart(2, '0')}-01`))
+        .replaceAll('.', ''),
+    ),
+  }
+}
+const formats = (locale: string) => {
+  let f = formatsCache.get(locale)
+  if (!f) {
+    f = makeFormats(locale)
+    formatsCache.set(locale, f)
+  }
+  return f
+}
 
-const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
-const WEEKDAY_NAMES = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+/** «Tue, 27 Oct 2026» / «mar, 27 oct 2026». Para mostrar una fecha elegida, en el idioma de la app. */
+export const formatDateShort = (iso: string, locale = 'en-GB') =>
+  formats(locale).short.format(utc(iso)).replaceAll('.', '')
 
 /**
  * ¿Puntero grueso (táctil)? Ahí el selector nativo del sistema (iOS, Android) es mejor que el
@@ -86,7 +112,7 @@ export interface CalendarProps {
 }
 
 /**
- * Calendario mensual en español, con la semana empezando en lunes. Se maneja con el teclado:
+ * Calendario mensual en el idioma de la app (`UiLocaleProvider`), con la semana empezando en lunes. Se maneja con el teclado:
  * flechas (día y semana), Inicio/Fin (semana), RePág/AvPág (mes; con Mayús, año).
  */
 export function Calendar({
@@ -96,6 +122,8 @@ export function Calendar({
   onClear,
   autoFocus,
 }: CalendarProps) {
+  const { locale, labels } = useUiLocale()
+  const f = formats(locale)
   const selected = isIso(value) ? value : undefined
   // Día con el foco (tabindex itinerante); el mes visible es el suyo.
   const [active, setActive] = useState(selected ?? today)
@@ -140,16 +168,16 @@ export function Calendar({
     <div className="flex w-[252px] flex-col gap-2">
       <div className="flex items-center gap-1">
         <span id={labelId} aria-live="polite" className="flex-1 pl-1.5 text-sm font-semibold">
-          {capital(monthFmt.format(utc(first)))}
+          {capital(f.month.format(utc(first)))}
         </span>
         <IconButton
-          aria-label="Mes anterior"
+          aria-label={labels.prevMonth}
           icon={<icons.chevronLeft size={14} />}
           size="sm"
           onClick={() => setActive(addMonths(active, -1))}
         />
         <IconButton
-          aria-label="Mes siguiente"
+          aria-label={labels.nextMonth}
           icon={<icons.chevronRight size={14} />}
           size="sm"
           onClick={() => setActive(addMonths(active, 1))}
@@ -164,9 +192,10 @@ export function Calendar({
       >
         <thead>
           <tr>
-            {WEEKDAYS.map((d, i) => (
-              <th key={d} scope="col" className="h-7 p-0 text-2xs font-medium text-fg-subtle">
-                <abbr title={WEEKDAY_NAMES[i]} className="no-underline">
+            {f.weekdays.map((d, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: las siete iniciales fijas de la semana (en inglés se repiten)
+              <th key={i} scope="col" className="h-7 p-0 text-2xs font-medium text-fg-subtle">
+                <abbr title={f.weekdayNames[i]} className="no-underline">
                   {d}
                 </abbr>
               </th>
@@ -186,7 +215,7 @@ export function Calendar({
                       type="button"
                       data-day={day}
                       tabIndex={day === active ? 0 : -1}
-                      aria-label={longFmt.format(utc(day))}
+                      aria-label={f.long.format(utc(day))}
                       aria-pressed={isSelected}
                       aria-current={isToday ? 'date' : undefined}
                       onClick={() => onSelect(day)}
@@ -220,11 +249,11 @@ export function Calendar({
 
       <div className="flex items-center justify-between border-t border-border-subtle pt-2">
         <Button size="sm" variant="ghost" onClick={() => onSelect(today)}>
-          Hoy
+          {labels.today}
         </Button>
         {onClear && selected ? (
           <Button size="sm" variant="ghost" onClick={onClear}>
-            Quitar fecha
+            {labels.clearDate}
           </Button>
         ) : null}
       </div>
@@ -283,10 +312,8 @@ export function DatePicker({
 }
 
 const popoverBox =
-  'glass-raised z-50 origin-(--radix-popover-content-transform-origin) rounded-lg border border-border-strong p-2.5 shadow-popover outline-none data-[state=open]:animate-pop-in'
+  'glass-floating z-50 origin-(--radix-popover-content-transform-origin) rounded-lg border border-border-strong p-2.5 shadow-popover outline-none data-[state=open]:animate-pop-in'
 
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-const monthOnlyFmt = fmt({ month: 'long' })
 /** Mes `AAAA-MM` desplazado `n` meses. */
 const shiftYm = (ym: string, n: number) => addMonths(`${ym}-01`, n).slice(0, 7)
 
@@ -309,6 +336,8 @@ export function MonthCalendar({
   current = localToday().slice(0, 7),
   autoFocus,
 }: MonthCalendarProps) {
+  const { locale, labels } = useUiLocale()
+  const f = formats(locale)
   const [active, setActive] = useState(value)
   const [focusNext, setFocusNext] = useState(Boolean(autoFocus))
   const grid = useRef<HTMLFieldSetElement>(null)
@@ -347,7 +376,7 @@ export function MonthCalendar({
     <div className="flex w-[252px] flex-col gap-2">
       <div className="flex items-center gap-1">
         <IconButton
-          aria-label="Año anterior"
+          aria-label={labels.prevYear}
           icon={<icons.chevronLeft size={14} />}
           size="sm"
           onClick={() => setActive(shiftYm(active, -12))}
@@ -360,7 +389,7 @@ export function MonthCalendar({
           {year}
         </span>
         <IconButton
-          aria-label="Año siguiente"
+          aria-label={labels.nextYear}
           icon={<icons.chevronRight size={14} />}
           size="sm"
           onClick={() => setActive(shiftYm(active, 12))}
@@ -373,7 +402,7 @@ export function MonthCalendar({
         onKeyDown={onKey}
         className="m-0 grid min-w-0 grid-cols-3 gap-1 border-0 p-0"
       >
-        {MONTHS.map((label, i) => {
+        {f.monthsShort.map((label, i) => {
           const ym = `${year}-${String(i + 1).padStart(2, '0')}`
           const isSelected = ym === value
           const isCurrent = ym === current
@@ -383,7 +412,7 @@ export function MonthCalendar({
               type="button"
               data-month={ym}
               tabIndex={i + 1 === monthNum ? 0 : -1}
-              aria-label={`${capital(monthOnlyFmt.format(utc(`${ym}-01`)))} de ${year}`}
+              aria-label={labels.monthOfYear(capital(f.monthOnly.format(utc(`${ym}-01`))), year)}
               aria-pressed={isSelected}
               aria-current={isCurrent ? 'date' : undefined}
               onClick={() => onSelect(ym)}
@@ -409,7 +438,7 @@ export function MonthCalendar({
 
       <div className="flex items-center border-t border-border-subtle pt-2">
         <Button size="sm" variant="ghost" onClick={() => onSelect(current)}>
-          Este mes
+          {labels.thisMonth}
         </Button>
       </div>
     </div>
@@ -467,7 +496,7 @@ export interface DateFieldProps extends FieldChrome {
   /** `lg` = 44 px, para móvil. */
   size?: 'md' | 'lg'
   clearable?: boolean
-  /** Texto cuando no hay fecha. */
+  /** Texto cuando no hay fecha. Por defecto, «Sin fecha» en el idioma de la app. */
   placeholder?: string
   today?: string
   disabled?: boolean
@@ -488,12 +517,13 @@ export function DateField({
   onChange,
   size = 'md',
   clearable,
-  placeholder = 'Sin fecha',
+  placeholder,
   today,
   disabled,
   id: idProp,
   className,
 }: DateFieldProps) {
+  const { locale, labels } = useUiLocale()
   const autoId = useId()
   const id = idProp ?? autoId
   const coarse = useCoarsePointer()
@@ -543,7 +573,9 @@ export function DateField({
           >
             <icons.calendar size={16} className="shrink-0 text-fg-subtle" />
             <span className={cn('flex-1 truncate', isIso(value) ? 'text-fg' : 'text-fg-faint')}>
-              {isIso(value) ? capital(formatDateShort(value)) : placeholder}
+              {isIso(value)
+                ? capital(formatDateShort(value, locale))
+                : (placeholder ?? labels.noDate)}
             </span>
             <icons.chevronDown size={12} className="shrink-0 text-fg-subtle" />
           </button>

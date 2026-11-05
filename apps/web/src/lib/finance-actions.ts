@@ -12,6 +12,7 @@ import type {
   UpdateTransactionInput,
 } from '@muninn/core'
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
+import { t } from '../i18n'
 import { notifyUndo } from './feedback'
 import {
   amountText,
@@ -118,7 +119,7 @@ export async function createTransaction(
     saved = await run(() => m.finance.transactions.create(input))
   } catch (err) {
     restoreSnapshot(qc, snap)
-    fail('No se pudo guardar el movimiento', err)
+    fail(t('toast.txSaveFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return null
   }
@@ -129,7 +130,7 @@ export async function createTransaction(
     icon: input.kind === 'income' ? 'income' : input.kind === 'expense' ? 'expense' : 'move',
     description: describe(saved),
     undo: () => archiveTransaction(m, qc, saved, { undoing: true }),
-    undone: ['Movimiento deshecho', { icon: 'archive' }],
+    undone: [t('toast.txUndone', { ns: 'finance' }), { icon: 'archive' }],
   })
   return saved
 }
@@ -157,7 +158,7 @@ export async function updateTransaction(
     saved = await run(() => m.finance.transactions.update(before.id, patch))
   } catch (err) {
     restoreSnapshot(qc, snap)
-    fail('No se pudo guardar el cambio', err)
+    fail(t('toast.txChangeFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return null
   }
@@ -174,7 +175,7 @@ export async function updateTransaction(
     concept: before.concept,
     note: before.note,
   }
-  notifyUndo('Movimiento guardado', {
+  notifyUndo(t('toast.txEdited', { ns: 'finance' }), {
     icon: 'check',
     description: describe(saved),
     id: `tx-${before.id}`,
@@ -197,13 +198,13 @@ export async function archiveTransaction(
     await run(() => m.finance.transactions.archive(tx.id))
   } catch (err) {
     restoreSnapshot(qc, snap)
-    fail('No se pudo archivar el movimiento', err)
+    fail(t('toast.txArchiveFailed', { ns: 'finance' }), err)
     settleFinance(qc)
     return false
   }
   settleFinance(qc)
   if (opts.undoing) return true
-  notifyUndo('Movimiento archivado', {
+  notifyUndo(t('toast.txArchived', { ns: 'finance' }), {
     icon: 'archive',
     description: describe(tx),
     undo: async () => {
@@ -219,8 +220,8 @@ export async function archiveTransaction(
         settleFinance(qc)
       }
     },
-    undone: 'Movimiento recuperado',
-    failTitle: 'No se pudo recuperar el movimiento',
+    undone: t('toast.txRestored', { ns: 'finance' }),
+    failTitle: t('toast.txRestoreFailed', { ns: 'finance' }),
   })
   return true
 }
@@ -243,14 +244,17 @@ export async function createAccount(m: Muninn, qc: QueryClient, input: CreateAcc
     const account = await run(() => m.finance.accounts.create(input))
     patchList<AccountWithBalance>(qc, financeKeys.accounts, (l) => [...l, account])
     settleFinance(qc)
-    notifyUndo(`Cuenta «${account.name}» creada`, {
+    notifyUndo(t('toast.accountCreated', { ns: 'finance', name: account.name }), {
       icon: 'plus',
       undo: () => archiveAccount(m, qc, account, { undoing: true }),
-      undone: [`Cuenta «${account.name}» deshecha`, { icon: 'archive' }],
+      undone: [
+        t('toast.accountUndone', { ns: 'finance', name: account.name }),
+        { icon: 'archive' },
+      ],
     })
     return account
   } catch (err) {
-    fail('No se pudo crear la cuenta', err)
+    fail(t('toast.accountCreateFailed', { ns: 'finance' }), err)
     return null
   }
 }
@@ -284,7 +288,7 @@ export async function updateAccount(
         initialBalance: before.initialBalance,
         goal: before.goal,
       }
-      notifyUndo('Cuenta guardada', {
+      notifyUndo(t('toast.accountSaved', { ns: 'finance' }), {
         icon: 'check',
         id: `account-${before.id}`,
         undo: async () => (await updateAccount(m, qc, saved, back, { undoing: true })) !== null,
@@ -293,7 +297,7 @@ export async function updateAccount(
     return saved
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.accounts, prev)
-    fail('No se pudo guardar la cuenta', err)
+    fail(t('toast.accountSaveFailed', { ns: 'finance' }), err)
     return null
   }
 }
@@ -312,17 +316,17 @@ export async function archiveAccount(
     await run(() => m.finance.accounts.archive(account.id))
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.accounts, prev)
-    fail('No se pudo archivar la cuenta', err)
+    fail(t('toast.accountArchiveFailed', { ns: 'finance' }), err)
     return false
   }
   settleFinance(qc)
   if (opts.undoing) return true
-  notifyUndo(`«${account.name}» archivada`, {
+  notifyUndo(t('toast.accountArchived', { ns: 'finance', name: account.name }), {
     icon: 'archive',
-    description: 'sus movimientos se conservan',
+    description: t('toast.accountArchivedHint', { ns: 'finance' }),
     undo: () => run(() => m.finance.accounts.restore(account.id)).finally(() => settleFinance(qc)),
-    undone: `«${account.name}» recuperada`,
-    failTitle: 'No se pudo recuperar la cuenta',
+    undone: t('toast.accountRestored', { ns: 'finance', name: account.name }),
+    failTitle: t('toast.accountRestoreFailed', { ns: 'finance' }),
   })
   return true
 }
@@ -332,14 +336,17 @@ export async function createCategory(m: Muninn, qc: QueryClient, input: CreateCa
     const category = await run(() => m.finance.categories.create(input))
     patchList<FinanceCategory>(qc, financeKeys.categories, (l) => [...l, category])
     settleFinance(qc)
-    notifyUndo(`Categoría «${category.name}» creada`, {
+    notifyUndo(t('toast.categoryCreated', { ns: 'finance', name: category.name }), {
       icon: 'plus',
       undo: () => archiveCategory(m, qc, category, { undoing: true }),
-      undone: [`Categoría «${category.name}» deshecha`, { icon: 'archive' }],
+      undone: [
+        t('toast.categoryUndone', { ns: 'finance', name: category.name }),
+        { icon: 'archive' },
+      ],
     })
     return category
   } catch (err) {
-    fail('No se pudo crear la categoría', err)
+    fail(t('toast.categoryCreateFailed', { ns: 'finance' }), err)
     return null
   }
 }
@@ -359,7 +366,7 @@ export async function updateCategory(
     settleFinance(qc)
     if (!opts.undoing) {
       const back = { name: before.name, color: before.color as UpdateCategoryInput['color'] }
-      notifyUndo('Categoría guardada', {
+      notifyUndo(t('toast.categorySaved', { ns: 'finance' }), {
         icon: 'check',
         id: `category-${before.id}`,
         undo: async () => (await updateCategory(m, qc, saved, back, { undoing: true })) !== null,
@@ -368,7 +375,7 @@ export async function updateCategory(
     return saved
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.categories, prev)
-    fail('No se pudo guardar la categoría', err)
+    fail(t('toast.categorySaveFailed', { ns: 'finance' }), err)
     return null
   }
 }
@@ -387,18 +394,18 @@ export async function archiveCategory(
     await run(() => m.finance.categories.archive(category.id))
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.categories, prev)
-    fail('No se pudo archivar la categoría', err)
+    fail(t('toast.categoryArchiveFailed', { ns: 'finance' }), err)
     return false
   }
   settleFinance(qc)
   if (opts.undoing) return true
-  notifyUndo(`«${category.name}» archivada`, {
+  notifyUndo(t('toast.categoryArchived', { ns: 'finance', name: category.name }), {
     icon: 'archive',
-    description: 'sus movimientos la conservan',
+    description: t('toast.categoryArchivedHint', { ns: 'finance' }),
     undo: () =>
       run(() => m.finance.categories.restore(category.id)).finally(() => settleFinance(qc)),
-    undone: `«${category.name}» recuperada`,
-    failTitle: 'No se pudo recuperar la categoría',
+    undone: t('toast.categoryRestored', { ns: 'finance', name: category.name }),
+    failTitle: t('toast.categoryRestoreFailed', { ns: 'finance' }),
   })
   return true
 }
@@ -422,16 +429,16 @@ export async function moveCategory(
     await run(() => m.finance.categories.move(category.id, index))
   } catch (err) {
     if (prev) qc.setQueryData(financeKeys.categories, prev)
-    fail('No se pudo mover la categoría', err)
+    fail(t('toast.categoryMoveFailed', { ns: 'finance' }), err)
     return false
   }
   settleFinance(qc)
   if (opts.undoing) return true
-  notifyUndo(`«${category.name}» movida`, {
+  notifyUndo(t('toast.categoryMoved', { ns: 'finance', name: category.name }), {
     icon: 'move',
     // Sin la lista en caché no se sabe de dónde venía.
     undo: fromIndex >= 0 ? () => moveCategory(m, qc, category, fromIndex, { undoing: true }) : null,
-    undone: ['Orden deshecho', { icon: 'move' }],
+    undone: [t('toast.orderUndone', { ns: 'finance' }), { icon: 'move' }],
   })
   return true
 }

@@ -15,8 +15,10 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Ghost, Page, useDocumentTitle } from '../components/Page'
 import { DueDate, PriorityFlag } from '../components/task-meta'
+import { currentLocale } from '../i18n'
 import { clock, weekdayShort } from '../lib/dates'
 import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
@@ -27,12 +29,19 @@ import { UpcomingCharges } from './finanzas/UpcomingCharges'
 
 type Task = OverviewReport['dueToday'][number]
 
-const greeting = (h: number) =>
-  h < 6 ? 'Buenas noches' : h < 14 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches'
+/** El saludo según la hora: de madrugada y por la noche, el mismo. */
+const daypart = (h: number) =>
+  h < 6 ? 'night' : h < 14 ? 'morning' : h < 21 ? 'afternoon' : ('night' as const)
 
-const dateFmt = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+/** «lunes, 3 de noviembre» en el idioma activo (ADR-0077). */
+const longDate = (d: Date) =>
+  new Intl.DateTimeFormat(currentLocale() === 'es' ? 'es-ES' : 'en', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(d)
 
-/** «Alex» de «Alex López»; nada si el nombre es el correo o el de reserva. */
+/** «Alex» de «Alex López»; nada si el nombre es el correo o el de reserva (`lib/auth.ts`). */
 const firstName = (name: string) => (name.includes('@') || name === 'Tú' ? '' : name.split(' ')[0])
 
 function Stat({
@@ -77,13 +86,14 @@ interface RowProps {
 
 /** Fila de tarea: casilla para completar, título (enlace al detalle) y sus datos. */
 function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowProps) {
+  const { t } = useTranslation('home')
   const checked = done || pending
   return (
     <li className="flex items-center gap-3 border-t border-border-subtle px-4 py-2.5 first:border-t-0 hover:bg-surface-hover/60">
       <Checkbox
         checked={checked}
         onCheckedChange={() => onToggle(task)}
-        aria-label={`${done ? 'Reabrir' : 'Completar'}: ${task.title}`}
+        aria-label={t(done ? 'row.reopen' : 'row.complete', { title: task.title })}
         touch
         size="lg"
         className="md:size-4 md:rounded-sm"
@@ -125,7 +135,7 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
           </span>
         ) : null}
         {done && task.completedAt ? (
-          <span>Hecha {clock(task.completedAt)}</span>
+          <span>{t('row.doneAt', { time: clock(task.completedAt) })}</span>
         ) : task.dueDate ? (
           <DueDate due={task.dueDate} today={today} />
         ) : null}
@@ -137,6 +147,7 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
 
 /** «Mis tareas» sin nada para hoy: en vez de un hueco, qué viene después. */
 function Clear({ next, today }: { next?: Task; today: string }) {
+  const { t } = useTranslation('home')
   return (
     <div className="border-t border-border-subtle">
       <div className="flex items-center gap-3.5 px-4 py-4">
@@ -144,8 +155,8 @@ function Clear({ next, today }: { next?: Task; today: string }) {
           <Icon name="check" size={20} />
         </span>
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-md font-semibold">Día despejado</span>
-          <span className="text-sm text-fg-muted">Nada vence hoy ni está atrasado.</span>
+          <span className="text-md font-semibold">{t('clear.title')}</span>
+          <span className="text-sm text-fg-muted">{t('clear.description')}</span>
         </span>
       </div>
       {next ? (
@@ -156,7 +167,7 @@ function Clear({ next, today }: { next?: Task; today: string }) {
         >
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="flex items-center gap-1.5 text-xs font-medium text-fg-subtle">
-              Lo siguiente
+              {t('clear.next')}
               {next.dueDate ? (
                 <>
                   {' · '}
@@ -172,7 +183,7 @@ function Clear({ next, today }: { next?: Task; today: string }) {
         </Link>
       ) : (
         <p className="border-t border-border-subtle px-4 py-3 text-sm text-fg-muted">
-          Cuando pongas fechas a tus tareas, aparecerán aquí por urgencia.
+          {t('clear.noDates')}
         </p>
       )}
     </div>
@@ -180,6 +191,7 @@ function Clear({ next, today }: { next?: Task; today: string }) {
 }
 
 export function Inicio() {
+  const { t } = useTranslation(['home', 'common', 'finance'])
   const m = useMuninn()
   const qc = useQueryClient()
   const shell = useShell()
@@ -188,20 +200,23 @@ export function Inicio() {
   const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
 
   const ids = data
-    ? [...data.overdue, ...data.dueToday, ...data.inProgress, ...data.upcoming].map((t) => t.id)
+    ? [...data.overdue, ...data.dueToday, ...data.inProgress, ...data.upcoming].map(
+        (task) => task.id,
+      )
     : []
   const counts = useQuery(checklistCountsQuery(m, [...new Set(ids)].sort())).data ?? {}
   const color = new Map(data?.projects.map((p) => [p.id, p.color]))
 
   const now = new Date()
-  const date = dateFmt.format(now)
+  const date = longDate(now)
   const name = auth.kind === 'user' ? firstName(auth.account.name) : ''
   const today = data?.today ?? m.today()
   const modules = useEnabledModules()
   // Con Finanzas oculta no se pregunta por cobros (ADR-0028); mientras no se sepa, tampoco.
   const financeOn = modules?.has('finance') ?? false
   const projectCount = data?.projects.length ?? 0
-  const title = name ? `${greeting(now.getHours())}, ${name}` : greeting(now.getHours())
+  const part = daypart(now.getHours())
+  const title = name ? t(`greetingNamed.${part}`, { name }) : t(`greeting.${part}`)
   useDocumentTitle(title)
   const totalTasks = data?.projects.reduce((n, p) => n + p.open + p.done, 0) ?? 0
 
@@ -216,43 +231,35 @@ export function Inicio() {
   }
 
   const rows = (list: Task[], done = false) =>
-    list.map((t) => (
+    list.map((task) => (
       <TaskRow
-        key={t.id}
-        task={t}
-        color={color.get(t.projectId) ?? 'gray'}
+        key={task.id}
+        task={task}
+        color={color.get(task.projectId) ?? 'gray'}
         today={today}
-        progress={counts[t.id]}
+        progress={counts[task.id]}
         done={done}
-        pending={pending.has(t.id)}
+        pending={pending.has(task.id)}
         onToggle={(task) => toggle(task, done)}
       />
     ))
 
   const todayTasks = data ? [...data.overdue, ...data.dueToday] : []
   // Lo que ya está en curso sale en su tarjeta: en «Próximos días» no se repite.
-  const inProgressIds = new Set(data?.inProgress.map((t) => t.id))
-  const upcoming = data?.upcoming.filter((t) => !inProgressIds.has(t.id)) ?? []
+  const inProgressIds = new Set(data?.inProgress.map((task) => task.id))
+  const upcoming = data?.upcoming.filter((task) => !inProgressIds.has(task.id)) ?? []
   const summary = data
     ? [
-        data.overdue.length
-          ? data.overdue.length === 1
-            ? '1 vencida'
-            : `${data.overdue.length} vencidas`
-          : null,
-        data.dueToday.length
-          ? data.dueToday.length === 1
-            ? '1 tarea para hoy'
-            : `${data.dueToday.length} tareas para hoy`
-          : null,
-        data.overdue.length || data.dueToday.length ? null : 'Nada vence hoy',
-        data.inProgress.length ? `${data.inProgress.length} en curso` : null,
+        data.overdue.length ? t('summary.overdue', { count: data.overdue.length }) : null,
+        data.dueToday.length ? t('summary.dueToday', { count: data.dueToday.length }) : null,
+        data.overdue.length || data.dueToday.length ? null : t('summary.nothingDue'),
+        data.inProgress.length ? t('summary.inProgress', { count: data.inProgress.length }) : null,
       ]
         .filter(Boolean)
         .join(' · ')
     : ''
   const doneToday = data?.completedTodayTasks ?? []
-  const dueTodayDone = doneToday.filter((t) => t.dueDate === today).length
+  const dueTodayDone = doneToday.filter((task) => task.dueDate === today).length
   const week = data?.completedByDay ?? []
   const weekTotal = week.reduce((n, d) => n + d.count, 0)
   const weekMax = Math.max(1, ...week.map((d) => d.count))
@@ -260,14 +267,14 @@ export function Inicio() {
   const newTask = (
     <Button variant="primary" onClick={() => shell.openNewTask()}>
       <Icon name="plus" />
-      Nueva tarea
+      {t('newTask')}
       <Kbd className="border-accent-fg/30 text-accent-fg max-md:hidden">N</Kbd>
     </Button>
   )
   const newProject = (
     <Button variant="primary" onClick={shell.openNewProject}>
       <Icon name="plus" />
-      Nuevo proyecto
+      {t('shell.newProject', { ns: 'common' })}
     </Button>
   )
 
@@ -286,14 +293,14 @@ export function Inicio() {
           <IconButton
             variant="secondary"
             size="lg"
-            aria-label="Buscar o preguntar"
+            aria-label={t('shell.searchOrAsk', { ns: 'common' })}
             icon={<Icon name="search" size={20} />}
             onClick={() => shell.openPalette()}
           />
           <IconButton
             variant="primary"
             size="lg"
-            aria-label={projectCount > 0 ? 'Nueva tarea' : 'Nuevo proyecto'}
+            aria-label={projectCount > 0 ? t('newTask') : t('shell.newProject', { ns: 'common' })}
             icon={<Icon name="plus" size={20} />}
             onClick={() => (projectCount > 0 ? shell.openNewTask() : shell.openNewProject())}
           />
@@ -302,7 +309,7 @@ export function Inicio() {
           <Button asChild>
             <Link to="/asistente">
               <Icon name="assistant" className="text-accent" />
-              Preguntar a Muninn
+              {t('askMuninn')}
             </Link>
           </Button>
           {projectCount > 0 ? newTask : newProject}
@@ -318,7 +325,7 @@ export function Inicio() {
       ) : projectCount === 0 ? (
         <EmptyState
           icon="projects"
-          title="Empieza por un proyecto"
+          title={t('empty.projectsTitle')}
           actions={newProject}
           preview={
             <div className="grid grid-cols-3 gap-3 pb-6">
@@ -332,30 +339,29 @@ export function Inicio() {
             </div>
           }
         >
-          Cada proyecto trae su tablero Kanban. Aquí verás lo que vence hoy, lo que tienes en curso
-          y lo que has terminado esta semana.
+          {t('empty.projects')}
         </EmptyState>
       ) : (
         <>
           {/* Una sola franja: en el teléfono, cuatro tarjetas grandes con ceros se comían la pantalla. */}
           <Card
-            aria-label="Resumen"
+            aria-label={t('stats.label')}
             className="grid shrink-0 grid-cols-4 divide-x divide-border-subtle"
           >
             <Stat
-              label="Para hoy"
+              label={t('stats.dueToday')}
               value={data.dueToday.length}
               total={data.dueToday.length + dueTodayDone}
             />
-            <Stat label="En curso" value={data.inProgress.length} />
-            <Stat label="Vencidas" value={data.overdue.length} tone="danger" />
-            <Stat label="Hechas · 7 días" value={weekTotal} />
+            <Stat label={t('stats.inProgress')} value={data.inProgress.length} />
+            <Stat label={t('stats.overdue')} value={data.overdue.length} tone="danger" />
+            <Stat label={t('stats.doneWeek')} value={weekTotal} />
           </Card>
 
           {totalTasks === 0 ? (
             <EmptyState
               icon="check"
-              title="Todavía no tienes tareas"
+              title={t('empty.tasksTitle')}
               actions={newTask}
               preview={
                 <div className="flex flex-col gap-2 pb-6">
@@ -364,7 +370,7 @@ export function Inicio() {
                 </div>
               }
             >
-              Crea la primera y aparecerá aquí cuando venza hoy, esté en curso o la termines.
+              {t('empty.tasks')}
             </EmptyState>
           ) : null}
 
@@ -386,11 +392,11 @@ export function Inicio() {
               <>
                 <Card className="@container flex min-w-0 flex-col md:col-span-2 lg:min-h-0">
                   <CardHeader
-                    title="Mis tareas"
-                    description="Vencidas, de hoy y las que has hecho hoy"
+                    title={t('myTasks.title')}
+                    description={t('myTasks.description')}
                     action={
                       <Link to="/proyectos" className="text-sm text-accent hover:text-accent-hover">
-                        Ver tableros
+                        {t('myTasks.boards')}
                       </Link>
                     }
                   />
@@ -405,10 +411,13 @@ export function Inicio() {
                 </Card>
 
                 <Card className="@container flex min-w-0 flex-col lg:min-h-0">
-                  <CardHeader title="En curso" description="Lo que tienes entre manos" />
+                  <CardHeader
+                    title={t('inProgress.title')}
+                    description={t('inProgress.description')}
+                  />
                   {data.inProgress.length === 0 ? (
                     <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
-                      Ninguna tarea en curso. Mueve una a «En curso» en su tablero.
+                      {t('inProgress.empty')}
                     </p>
                   ) : (
                     <ul className="min-h-0 overflow-y-auto">{rows(data.inProgress)}</ul>
@@ -418,33 +427,28 @@ export function Inicio() {
             )}
 
             <Card className="flex min-w-0 flex-col lg:order-last lg:min-h-0">
-              <CardHeader
-                title="Próximos días"
-                description="Lo que vence esta semana y no está en curso"
-              />
+              <CardHeader title={t('upcoming.title')} description={t('upcoming.description')} />
               {upcoming.length === 0 ? (
                 <p className="border-t border-border-subtle px-4 py-6 text-center text-sm text-fg-muted">
-                  {data.upcoming.length
-                    ? 'Todo lo que vence esta semana ya está en curso.'
-                    : 'Nada vence en los próximos 7 días.'}
+                  {data.upcoming.length ? t('upcoming.allInProgress') : t('upcoming.empty')}
                 </p>
               ) : (
                 <ul className="min-h-0 overflow-y-auto">
-                  {upcoming.slice(0, 6).map((t) => (
+                  {upcoming.slice(0, 6).map((task) => (
                     <li
-                      key={t.id}
+                      key={task.id}
                       className="flex items-center gap-2.5 border-t border-border-subtle px-4 py-3 first:border-t-0 md:py-2.5"
                     >
-                      <ColorDot color={color.get(t.projectId) ?? 'gray'} />
+                      <ColorDot color={color.get(task.projectId) ?? 'gray'} />
                       <Link
                         to="/proyectos/$projectId/tareas/$taskId"
-                        params={{ projectId: t.projectId, taskId: t.id }}
+                        params={{ projectId: task.projectId, taskId: task.id }}
                         className="min-w-0 flex-1 text-md max-md:line-clamp-2 md:truncate md:text-sm"
                       >
-                        {t.title}
+                        {task.title}
                       </Link>
-                      {t.dueDate ? (
-                        <DueDate due={t.dueDate} today={today} className="shrink-0 text-xs" />
+                      {task.dueDate ? (
+                        <DueDate due={task.dueDate} today={today} className="shrink-0 text-xs" />
                       ) : null}
                     </li>
                   ))}
@@ -454,12 +458,12 @@ export function Inicio() {
 
             <Card className="flex min-w-0 flex-col gap-3.5 overflow-y-auto p-4 lg:min-h-0">
               <div className="flex items-center">
-                <h2 className="text-md font-semibold">Proyectos</h2>
+                <h2 className="text-md font-semibold">{t('projects.title')}</h2>
                 <Link
                   to="/proyectos"
                   className="ml-auto text-sm text-accent hover:text-accent-hover"
                 >
-                  Todos
+                  {t('projects.all')}
                 </Link>
               </div>
               {data.projects.map((p) => {
@@ -475,13 +479,15 @@ export function Inicio() {
                       <ColorDot color={p.color} />
                       <span className="truncate">{p.name}</span>
                       <span className="ml-auto shrink-0 text-xs text-fg-subtle tabular">
-                        {total ? `${p.done} de ${total}` : 'Sin tareas'}
+                        {total
+                          ? t('projects.progress', { done: p.done, total })
+                          : t('projects.noTasks')}
                       </span>
                     </span>
                     <ProgressBar
                       value={total ? p.done / total : 0}
                       color={p.color}
-                      label={`Progreso de ${p.name}`}
+                      label={t('projects.progressLabel', { name: p.name })}
                     />
                   </Link>
                 )
@@ -490,14 +496,16 @@ export function Inicio() {
 
             <Card className="flex min-w-0 flex-col gap-3 p-4">
               <div className="flex items-baseline gap-2">
-                <h2 className="text-md font-semibold">Últimos 7 días</h2>
+                <h2 className="text-md font-semibold">{t('week.title')}</h2>
                 <span className="ml-auto text-xs text-fg-subtle">
-                  {weekTotal === 1 ? '1 tarea hecha' : `${weekTotal} tareas hechas`}
+                  {t('week.done', { count: weekTotal })}
                 </span>
               </div>
               <div
                 role="img"
-                aria-label={`Tareas hechas por día: ${week.map((d) => `${weekdayShort(d.date)} ${d.count}`).join(', ')}`}
+                aria-label={t('week.chart', {
+                  days: week.map((d) => `${weekdayShort(d.date)} ${d.count}`).join(', '),
+                })}
                 className="grid min-h-[96px] flex-1 grid-cols-7 items-end gap-2 md:min-h-[130px]"
               >
                 {week.map((d, i) => {
@@ -511,7 +519,7 @@ export function Inicio() {
                       {/* Las barras crecen con la tarjeta: alto en % del hueco libre, mínimo 4 px. */}
                       <div className="flex min-h-[52px] w-full flex-1 items-end md:min-h-[84px]">
                         <div
-                          title={`${d.count} hechas`}
+                          title={t('week.bar', { count: d.count })}
                           className={cn(
                             'min-h-1 w-full rounded-xs',
                             isToday ? 'bg-accent' : 'bg-border-strong',
@@ -525,7 +533,7 @@ export function Inicio() {
                           isToday ? 'font-semibold text-fg' : 'text-fg-subtle',
                         )}
                       >
-                        {isToday ? 'Hoy' : weekdayShort(d.date)}
+                        {isToday ? t('dates.today', { ns: 'common' }) : weekdayShort(d.date)}
                       </span>
                     </div>
                   )

@@ -2,6 +2,7 @@ import { createOllamaProvider, generateDigest } from '@muninn/assistant'
 import type { Muninn, NewsDigest } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { i18n, t } from '../i18n'
 import type { AssistantPrefs } from './assistant-settings'
 import { isHandheld } from './assistant-status'
 import { notifyUndo } from './feedback'
@@ -29,14 +30,16 @@ export function generateTodayDigest(
   prefs: AssistantPrefs,
 ): Promise<DigestOutcome> {
   running ??= (async (): Promise<DigestOutcome> => {
-    if (isHandheld()) return { status: 'no-model', detail: 'En este dispositivo no hay modelo' }
+    if (isHandheld()) return { status: 'no-model', detail: t('digest.noModelHere', { ns: 'news' }) }
     const provider = createOllamaProvider({ baseUrl: prefs.ollamaUrl, model: prefs.model })
     const status = await provider.status()
     if (status.state !== 'ready') {
       return {
         status: 'no-model',
         detail:
-          status.state === 'offline' ? 'Ollama no responde' : `Falta el modelo ${prefs.model}`,
+          status.state === 'offline'
+            ? t('digest.ollamaOffline', { ns: 'news' })
+            : t('digest.missingModel', { ns: 'news', model: prefs.model }),
       }
     }
     const since = Date.now() - DIGEST_WINDOW_HOURS * 3_600_000
@@ -71,18 +74,20 @@ export function generateTodayDigest(
 
 /** «Generar resumen» (o «Rehacer»): con feedback y, si había uno antes, «Deshacer» que lo devuelve. */
 export async function generateDigestNow(m: Muninn, qc: QueryClient, prefs: AssistantPrefs) {
+  // `detail` sale de `generateTodayDigest`, que también usa el informe de la mañana: el namespace, antes.
+  await i18n.loadNamespaces('news')
   const before = await m.news.digests.get().catch(() => null)
-  const id = notify.loading('Resumiendo tus noticias…', { icon: 'assistant' })
+  const id = notify.loading(t('digest.working', { ns: 'news' }), { icon: 'assistant' })
   try {
     const r = await generateTodayDigest(m, qc, prefs)
     notify.dismiss(id)
-    if (r.status === 'empty') return notify.info('No hay noticias de hoy que resumir')
+    if (r.status === 'empty') return notify.info(t('digest.nothingToday', { ns: 'news' }))
     if (r.status === 'no-model') {
-      return notify.error('No se pudo resumir', {
-        description: `${r.detail}. El resumen se hace con el modelo de tu ordenador.`,
+      return notify.error(t('digest.failed', { ns: 'news' }), {
+        description: t('digest.failedHint', { ns: 'news', detail: r.detail }),
       })
     }
-    notifyUndo('Resumen del día listo', {
+    notifyUndo(t('digest.ready', { ns: 'news' }), {
       icon: 'assistant',
       // Si es el primero de hoy, no hay a qué volver.
       undo: before
@@ -96,11 +101,11 @@ export async function generateDigestNow(m: Muninn, qc: QueryClient, prefs: Assis
             qc.setQueryData(newsKeys.digest(back.date), back)
           }
         : null,
-      undone: 'Vuelve el resumen anterior',
-      failTitle: 'No se pudo recuperar el resumen anterior',
+      undone: t('digest.undone', { ns: 'news' }),
+      failTitle: t('digest.restoreFailed', { ns: 'news' }),
     })
   } catch (err) {
     notify.dismiss(id)
-    notify.error('No se pudo resumir', { description: reason(err) })
+    notify.error(t('digest.failed', { ns: 'news' }), { description: reason(err) })
   }
 }

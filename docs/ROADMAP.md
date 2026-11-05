@@ -40,6 +40,11 @@
   proyectos archivados ([ADR-0067](adr/0067-eliminar-tareas-archivadas.md); sale del backlog)
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
+- [ ] **Notas como Claude Docs** (0.11, del 16 al 27-11): en el ordenador, editor en sitio que guarda Markdown
+  ([ADR-0078](adr/0078-editor-de-notas-en-sitio-con-tiptap.md), propuesto); en el teléfono, leer y comentar. Comentarios anclados a una
+  cita, con hilo, «Resolver» y «Para Claude», que Claude atiende por el MCP ([ADR-0079](adr/0079-comentarios-anclados-en-las-notas.md),
+  propuesto). Tablas con las columnas cortas ajustadas ([#129](https://github.com/lopezz-dev/muninn/pull/129)) y seleccionar sin pasar a
+  editar ([#130](https://github.com/lopezz-dev/muninn/pull/130)), ya en PR
 - [x] Sección **Documentación** en la app: renderiza `docs/user/*.md` (menú a partir del front matter, buscador, marca de
   estado, índice de la página; [ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md))
   - [x] Rediseño: portada con las guías por grupos e iconos, guía centrada en pantallas anchas, búsqueda que lleva al
@@ -170,16 +175,18 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > recompilados. La función `mcp` se redesplegó el 26 de octubre.
 - [x] Redesplegar la función `mcp` para que el MCP remoto tenga Finanzas: `pnpm --filter @muninn/mcp build:edge` y
   `npx supabase@2 functions deploy mcp --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api` ([gotchas/mcp](gotchas/mcp.md))
-- [ ] Con tu sesión (en el 5174): activar Finanzas, crear una cuenta «Prueba F3 …», apuntar, editar y archivar con «Deshacer», y
-  archivar la cuenta al acabar. En la demo (5175) y con SQL dentro de `rollback` pasa el 21 de octubre; con tu sesión no se pudo porque
-  el 5174 lo tenía ocupado otra sesión
-- [ ] En el iPhone: la hoja «Nuevo movimiento» se abre desde abajo, el importe saca el teclado decimal y no hace zoom; con dos
-  dispositivos, lo apuntado en uno aparece en el otro sin recargar
-- [ ] Suscripciones con tu sesión: crear «Prueba F3 …» con el cobro mañana; sale en Inicio › «Próximos cobros»; «Apuntar» crea el gasto
+- [x] Con tu sesión (en el 5174): activar Finanzas, crear una cuenta «Prueba F3 …», apuntar, editar y archivar con «Deshacer», y
+  archivar la cuenta al acabar. En la demo (5175) y con SQL dentro de `rollback` pasa el 21 de octubre. *(4 de noviembre, con tu sesión:
+  100 − 24,90 = 75,10 €, editar a 30 €, archivar y «Deshacer» lo devuelve; todo archivado al acabar.)*
+- [x] En el iPhone: la hoja «Nuevo movimiento» se abre desde abajo, el importe saca el teclado decimal y no hace zoom; con dos
+  dispositivos, lo apuntado en uno aparece en el otro sin recargar *(29 de octubre. Fallo: el asa de la hoja no la cerraba al
+  arrastrar; arreglado para todas las hojas inferiores en `@muninn/ui` el 4 de noviembre, falta verlo en el iPhone.)*
+- [x] Suscripciones con tu sesión: crear «Prueba F3 …» con el cobro mañana; sale en Inicio › «Próximos cobros»; «Apuntar» crea el gasto
   con el icono de repetición y «Deshacer» lo quita; archivarla al acabar. En la demo pasa el 22 de octubre, y la unicidad del cobro en SQL
-  (`rollback`)
-- [ ] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
-  gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app
+  (`rollback`). *(4 de noviembre: sale en Inicio; «Apuntar» lleva el cobro al mes siguiente y «Deshacer» lo devuelve a pendiente.)*
+- [x] Con Claude conectado (stdio con tus datos de la nube, reiniciando el cliente tras compilar): «He gastado 24,90 en el cine» apunta un
+  gasto en tu cuenta corriente con la categoría Ocio, y «¿cuánto tengo?» da los mismos saldos que la app *(4 de noviembre, con el
+  conector remoto de claude.ai, que usa el mismo catálogo: −8,53 € en el MCP y en la app.)*
 
 ### F3 · Avisos push (fase final)
 > Montado el 28 de octubre sin desplegar: falta todo lo de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales)
@@ -233,7 +240,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 - [x] La release lleva los instaladores firmados y `latest.json`, descargable sin sesión
 - [x] El `-setup.exe` se instala en Windows sin administrador (tras «Ejecutar de todas formas») y entra con tu cuenta
 - [x] Con una versión más nueva publicada, al abrir sale «Hay una versión nueva · Reiniciar» y al pulsarlo se reinicia en la versión nueva
-- [ ] Sin conexión, al abrir no sale ningún aviso
+- [x] Sin conexión, al abrir no sale ningún aviso *(4 de noviembre, con la v0.9.0 instalada y sin salida a internet: ni aviso ni error.)*
 
 ### Enlaces externos (`tauri-plugin-opener`)
 > Antes, en escritorio ningún enlace externo abría nada (`target="_blank"` no hace nada en Tauri). Ahora todos pasan por `openExternal`.
@@ -363,10 +370,33 @@ más o menos en este orden:
     La migración, en la fase final (4b)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
-- [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
+- [x] Aviso por correo cuando se inicia sesión desde un dispositivo sin nombre o nuevo, uno al día como mucho
+  ([ADR-0080](adr/0080-aviso-por-correo-de-dispositivo-nuevo.md)). Se apoya en el nombre del equipo (ADR-0081) y el puesto a
+  mano (ADR-0082). Montado y con tests del core; la migración, la función `security`, el cron y la prueba real, en la fase final (4d)
 - [x] Deep links en Tauri para GitHub OAuth en escritorio (`muninn://auth/callback`, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)). Falta probarlo instalado: [fase final](fase-final.md), paso 3
 - [ ] Más proveedores: Apple (útil en iPhone) y Google
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público
+
+## Idiomas (i18n)
+
+Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (ADR-0077). Antes del lanzamiento público.
+
+- [x] Fase 1: i18next con claves tipadas y carga diferida por pantalla, idioma de la cuenta en Ajustes › Apariencia y el shell
+  en los dos idiomas (barra lateral, dock, menú y hoja de tu cuenta, avisos y «Deshacer»). El buscador ⌘K y los diálogos de
+  nuevo proyecto y nueva tarea pasan a la fase 2
+- [x] Fase 2: el resto de pantallas en inglés y en español, por grupos
+  - [x] Buscador ⌘K, diálogos de nuevo proyecto y nueva tarea, Ajustes entero y los textos compartidos de `lib/` (sesión,
+    segundo factor, avisos push, GitHub, permisos OAuth, prioridades, fechas)
+  - [x] Inicio, Proyectos, tablero (filtros, columnas, Lista y Calendario), detalle de tarea, Notas, Finanzas (importes con
+    el formato de cada idioma), Asistente, Noticias, GitHub, Documentación (la interfaz; las guías, en la fase 4), login,
+    `/oauth/consent` y las pantallas de error
+  - [ ] Decidir: los datos que se crean por defecto (columnas del tablero, categorías de Finanzas, temas del catálogo de
+    Noticias) se guardan en español; en inglés se ven «Pendiente», «Supermercado» o «Tecnología». Propuesta: crearlos en
+    el idioma de quien los crea
+- [ ] Fase 3: rutas en inglés (`/projects`, `/notes`, `/docs`…) con redirecciones de las antiguas
+- [ ] Fase 4: guías en los dos idiomas, prerender por idioma con `hreflang` y sitemap, y el aviso «Esta página también está en
+  español» (abajo a la derecha; en el móvil, encima del dock)
+- [ ] Fase 5: correos de Supabase, avisos push y lo que escriben el asistente y el MCP para el usuario
 
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)
@@ -379,8 +409,7 @@ más o menos en este orden:
 - Logo definitivo (lo diseña Alex; el actual es provisional). Al cambiarlo, regenerar el favicon y los iconos de la web
   (`pnpm --filter @muninn/web icons` y la imagen social), los de escritorio (`pnpm --filter @muninn/desktop icons`) y el del
   conector MCP (`packages/mcp/src/icon.ts`)
-- Guías de ayuda públicas (sin sesión) y prerenderizadas, para que los buscadores las indexen (ADR-0045, *propuesto*). Se hará
-  junto con la landing page; entonces, añadirlas a `sitemap.xml` y dar de alta Search Console
+- Dar de alta Search Console con el dominio propio y enviar `sitemap.xml` (las guías ya son públicas y prerenderizadas, ADR-0076)
 - Vibrancy nativa en escritorio (Mica/Acrylic en Windows, NSVisualEffect en macOS) además del cristal CSS
 - Módulo Focus (temporizador tipo "isla")
 - Migración a servidor propio (Supabase self-hosted)

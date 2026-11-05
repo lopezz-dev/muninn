@@ -161,6 +161,9 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
   - entrar con GitHub vuelve a la URL publicada;
   - la pestaña lleva el logo, `/robots.txt` y `/sitemap.xml` se abren, y al pegar la URL en un chat sale la tarjeta con la imagen
     (ADR-0045). *(Hecho el 27 de octubre: la tarjeta sale bien en WhatsApp y los ficheros responden en producción.)*
+  - sin sesión, `/documentacion/notas` se lee con la cabecera «Entrar»; al pegar su enlace en un chat, la tarjeta dice «Notas · Muninn»;
+    una guía que no existe (`/documentacion/xyz`) responde 404
+    (ADR-0076)
 - [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`. *(Más adelante.)*
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
   local», acéptalo.
@@ -173,9 +176,9 @@ Pasos 1–8 de [gotchas/web › Web Push](gotchas/web.md#publicar-la-pwa-y-activ
 - [ ] Aplicar la migración `20261028180000_push_subscriptions` (y alinear la versión si usas `apply_migration`).
   Justo después, `20261029180000_require_mfa_push` (la política del segundo factor en sus dos tablas) y comprobar que hay
   tantas políticas `require_mfa` como tablas de `public` con RLS más una (hoy, 19 = 18 + 1, con `oauth_mfa_grants`).
-- [ ] Después, `20261031120000_push_por_sesion` ([ADR-0074](adr/0074-avisos-push-atados-a-la-sesion.md)): `push_subscriptions.session_id`
+- [x] Después, `20261031120000_push_por_sesion` ([ADR-0074](adr/0074-avisos-push-atados-a-la-sesion.md)): `push_subscriptions.session_id`
   con borrado en cascada desde `auth.sessions` y el trigger que lo rellena. Comprobar en el editor SQL que la columna existe y que
-  `push_subscriptions_set_session` no tiene `execute` para `authenticated` ni `anon`.
+  `push_subscriptions_set_session` no tiene `execute` para `authenticated` ni `anon`. Aplicada el 3 de noviembre.
 - [ ] Secretos de la función: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:…`).
 - [ ] `pnpm --filter @muninn/core build:edge` y desplegar `push` con `--no-verify-jwt`.
 - [ ] `VITE_VAPID_PUBLIC_KEY` (la pública) en Vercel, Production y Preview, y volver a desplegar la web.
@@ -214,8 +217,19 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
 - [ ] Aplicar después `20261029170000_sesiones_con_app` (nombre de la app OAuth en la lista). Comprobar en el editor SQL, con el
   `sub` y `session_id` de tu usuario, que `select * from list_my_sessions()` trae `app_name` = «Claude» en las de claude.ai y que
   `list_my_sessions` sigue con `execute` solo para `authenticated`. En la app, esas sesiones salen como **Claude · app conectada**.
-- [ ] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
-  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge».
+- [x] **Nombre de las sesiones ([ADR-0082](adr/0082-nombre-puesto-a-mano-en-cada-sesion.md)):** aplicar
+  `20261105150000_nombre_de_sesion` (después de `sesiones_con_app`; vuelve a crear `list_my_sessions`). En **Sesiones y dispositivos**,
+  el lápiz de la fila de este navegador: «Portátil del curro» → la fila se llama así y debajo sigue «Windows · Chrome»; «Deshacer» lo
+  quita. Pon nombre a otra fila desde aquí y mira que en ese dispositivo sale igual. Cierra sesión y vuelve a entrar en este navegador: la
+  sesión nueva recupera el nombre sola. `select * from session_names` solo tiene filas de sesiones abiertas.
+  *(05-11, en el 5174 con la cuenta de Alex: migración aplicada; nombre «Navegador de Claude» guardado, «Deshacer» lo quita del servidor y
+  del navegador; con el nombre solo en el navegador, al recargar se lo vuelve a poner y la lista lo enseña a la primera. Sin probar: poner
+  nombre a otra fila y verlo en ese dispositivo, y volver a entrar de verdad.)*
+- [ ] **Escritorio con el nombre del equipo ([ADR-0081](adr/0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md)):** con la 0.10
+  instalada, cierra sesión y vuelve a entrar en la app: sale «<nombre del equipo> · Muninn para Windows» (o Mac).
+- [x] **Escritorio:** con una versión que traiga la marca `Muninn/<versión>` (la siguiente a la 0.4.0), cierra sesión y vuelve a entrar:
+  la sesión sale como **Muninn para Windows** (o **Muninn para Mac**), no como «Windows · Edge». *(4 de noviembre: las dos sesiones de
+  escritorio salen como «Muninn para Windows».)*
 - [x] **Sesiones:** en el ordenador, **Sesiones y dispositivos** lista el ordenador con la marca **Este** y el iPhone, cada uno con su
   última actividad. Una sesión de otro usuario no sale nunca (prueba con la consulta de «Probar RLS sin crear usuarios»:
   `select * from list_my_sessions()` con otro `sub` devuelve 0 filas). *(Sí; lo de otro usuario lo cubre la prueba SQL. Fallo: la app de
@@ -280,6 +294,13 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   reteniendo su repo de GitHub». La regla del servidor sí la cubre la prueba SQL.)*
 - [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
   **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
+- [ ] **Aviso de dispositivo nuevo ([ADR-0080](adr/0080-aviso-por-correo-de-dispositivo-nuevo.md)):** migración
+  `20261105180000_aviso_dispositivo_nuevo` (después de `nombre_de_sesion`), secretos, función `security` y cron, con los pasos de
+  [gotchas/db › Aviso de dispositivo nuevo](gotchas/db.md#aviso-de-dispositivo-nuevo-pasos-manuales). Antes, ponle nombre a tus
+  sesiones de siempre. Tras la primera pasada, `known_devices` tiene esos nombres y no ha llegado ningún correo. Entra desde un navegador
+  sin nombre: entre 2 y 7 minutos después llega «Inicio de sesión en Muninn: …» con el dispositivo, la hora y la IP, y su enlace abre
+  Sesiones y dispositivos. Ponle nombre y vuelve a entrar desde ahí: no llega otro. Otra entrada sin nombre el mismo día: no llega correo
+  (tope diario). Desactívalo en Ajustes › Cuenta: no llega nada.
 
 ## 5. iPhone (≈ 45 min)
 
@@ -399,7 +420,8 @@ actualizaciones.
 7. **Probar la actualización**, cuando salga la siguiente versión (cualquier `fix` que llegue a `main` y su Release PR):
    - [ ] Al abrir Muninn sale «Hay una versión nueva · Reiniciar» con el número nuevo. Pulsa **Reiniciar**: se instala sin pedir
      administrador, Muninn se vuelve a abrir y la barra lateral enseña la versión nueva. Sigues con la sesión iniciada.
-   - [ ] Sin conexión, al abrir no sale ningún aviso ni error.
+   - [x] Sin conexión, al abrir no sale ningún aviso ni error. *(4 de noviembre, v0.9.0: Muninn abierto sin salida a internet, con un
+     proxy cerrado para el actualizador y el WebView2. Así el navegador cree que hay red, que es el peor caso.)*
 
 ## Después (trabajo de código que necesita lo anterior)
 

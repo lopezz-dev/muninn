@@ -1,6 +1,7 @@
 import { notify } from '@muninn/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
+import { t } from '../i18n'
 import { connectAppearance } from './appearance'
 import { leaveDemo, resetAuth, signOut } from './auth'
 import { currentMuninn, resetMuninn } from './muninn'
@@ -29,13 +30,13 @@ export async function endSession(kind: 'user' | 'demo', everywhere = false): Pro
       const m = await currentMuninn()?.catch(() => undefined)
       await import('./push').then((p) => p.leaveThisDevice(m)).catch(() => undefined)
       if (everywhere) {
-        if (!m) throw new Error('No se pudo conectar con tu cuenta')
+        if (!m) throw new Error(t('session.noAccount'))
         await m.account.sessions.signOut('global')
         resetAuth()
       } else await signOut()
     } else leaveDemo()
   } catch (err) {
-    notify.error('No se pudo cerrar la sesión', {
+    notify.error(t('session.signOutFailed'), {
       description: err instanceof Error ? err.message : undefined,
     })
     return false
@@ -43,18 +44,14 @@ export async function endSession(kind: 'user' | 'demo', everywhere = false): Pro
   forgetUserData()
   notify.success(
     kind === 'demo'
-      ? 'Has salido del modo demo'
+      ? t('session.leftDemo')
       : everywhere
-        ? 'Sesión cerrada en todos tus dispositivos'
-        : 'Sesión cerrada',
+        ? t('session.signedOutEverywhere')
+        : t('session.signedOut'),
     {
       icon: 'user',
       description:
-        kind === 'demo'
-          ? undefined
-          : everywhere
-            ? 'Los demás saldrán en menos de una hora y ya no les llegan tus avisos. Tus datos siguen guardados en tu cuenta'
-            : 'Tus datos siguen guardados en tu cuenta',
+        kind === 'demo' ? undefined : everywhere ? t('session.othersHint') : t('session.dataSaved'),
     },
   )
   return true

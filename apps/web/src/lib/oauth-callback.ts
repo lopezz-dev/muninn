@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 /**
  * Vuelta del OAuth de GitHub en escritorio (ADR-0059). En Tauri, la redirección no puede volver a la
  * propia app por HTTP: GitHub → Supabase → `muninn://auth/callback?code=…`, y el sistema se lo pasa a la
@@ -59,7 +61,7 @@ export function parseAuthCallback(raw: string): AuthCallback | null {
   }
   const code = query.get('code')
   if (code) return { kind: 'code', code }
-  return { kind: 'error', cancelled: false, message: 'GitHub no ha devuelto ningún código.' }
+  return { kind: 'error', cancelled: false, message: t('errors.noCode', { ns: 'auth' }) }
 }
 
 /** Marca de «hay un login con GitHub en marcha en esta app». Sin ella, un enlace de vuelta se ignora. */
@@ -93,12 +95,13 @@ export interface DeepLinkDeps {
 /** El login no terminó: lo cancelaste aquí, dijiste que no en GitHub o pasó el tiempo. */
 export class OAuthAbortedError extends Error {
   constructor(readonly reason: 'cancelled' | 'denied' | 'timeout') {
+    // Solo lo lee la consola: el aviso sale de `reason` (`notifyGitHubFailure`). Lo carga `login-actions`.
     super(
       reason === 'timeout'
-        ? 'Se ha agotado el tiempo de espera.'
+        ? t('errors.timeout', { ns: 'auth' })
         : reason === 'denied'
-          ? 'No has dado permiso en GitHub.'
-          : 'Cancelado.',
+          ? t('errors.denied', { ns: 'auth' })
+          : t('errors.cancelled', { ns: 'auth' }),
     )
     this.name = 'OAuthAbortedError'
   }

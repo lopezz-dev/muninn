@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { t } from '../../i18n'
 import { imageToDataUrl, MAX_IMAGES } from '../../lib/assistant-images'
 
 interface Options {
@@ -50,13 +51,15 @@ export function useImageAttachments({ ready, provider, onAttached }: Options) {
     if (!list.length) return
     const room = MAX_IMAGES - current.current.length
     if (list.length > room)
-      notify.info(`Como mucho ${MAX_IMAGES} imágenes por mensaje`, { icon: 'image' })
+      notify.info(t('images.max', { ns: 'assistant', count: MAX_IMAGES }), { icon: 'image' })
     const added: string[] = []
     for (const f of list.slice(0, Math.max(0, room))) {
       try {
         added.push(await imageToDataUrl(f))
       } catch (err) {
-        notify.error(err instanceof Error ? err.message : 'No se pudo adjuntar la imagen')
+        notify.error(
+          err instanceof Error ? err.message : t('images.attachFailed', { ns: 'assistant' }),
+        )
       }
     }
     if (added.length) setImages((l) => [...l, ...added].slice(0, MAX_IMAGES))

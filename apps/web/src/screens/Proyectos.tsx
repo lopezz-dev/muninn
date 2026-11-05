@@ -3,10 +3,12 @@ import { Button, Card, cn, Icon, IconButton, icons, SegmentedControl, TextField 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Ghost, Page, useDocumentTitle } from '../components/Page'
 import { ProjectAvatar, ProjectCover } from '../components/ProjectAvatar'
 import { SelectMenu } from '../components/SelectMenu'
 import { DueDate } from '../components/task-meta'
+import { currentLocale } from '../i18n'
 import { timeAgo } from '../lib/dates'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
@@ -25,15 +27,13 @@ type Stats = OverviewReport['projects'][number]
 type Filter = 'all' | 'overdue' | 'github'
 type Sort = 'urgency' | 'activity' | 'name'
 
-/** Segmentos de la barra por estado, con el color de cada tipo de columna. */
+/** Segmentos de la barra por estado, con el color de cada tipo de columna. Su texto, en `projects.kind`. */
 const KINDS = [
-  { key: 'backlog', one: 'en backlog', many: 'en backlog', bar: 'bg-kind-backlog' },
-  { key: 'todo', one: 'pendiente', many: 'pendientes', bar: 'bg-kind-todo' },
-  { key: 'in_progress', one: 'en curso', many: 'en curso', bar: 'bg-kind-in-progress' },
-  { key: 'review', one: 'en revisión', many: 'en revisión', bar: 'bg-kind-review' },
+  { key: 'backlog', bar: 'bg-kind-backlog' },
+  { key: 'todo', bar: 'bg-kind-todo' },
+  { key: 'in_progress', bar: 'bg-kind-in-progress' },
+  { key: 'review', bar: 'bg-kind-review' },
 ] as const
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** Lo urgente primero: más vencidas, luego la fecha más cercana, luego lo que se movió hace menos. */
 function byUrgency(a?: Stats, b?: Stats) {
@@ -47,6 +47,7 @@ function byUrgency(a?: Stats, b?: Stats) {
 
 /** Barra apilada por estado: abiertas por tipo de columna y hechas. */
 function StateBar({ s }: { s: Stats }) {
+  const { t } = useTranslation('projects')
   const total = s.open + s.done
   const parts = [
     ...KINDS.map((k) => ({ n: s.byKind[k.key], bar: k.bar })),
@@ -55,7 +56,10 @@ function StateBar({ s }: { s: Stats }) {
   return (
     <div
       role="img"
-      aria-label={`${plural(s.open, 'abierta', 'abiertas')} y ${plural(s.done, 'hecha', 'hechas')}`}
+      aria-label={t('stateBar', {
+        open: t('open', { count: s.open }),
+        done: t('done', { count: s.done }),
+      })}
       className="flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-border"
     >
       {total
@@ -66,23 +70,24 @@ function StateBar({ s }: { s: Stats }) {
 }
 
 function Chips({ s }: { s: Stats }) {
+  const { t } = useTranslation('projects')
   const chip = 'inline-flex h-[22px] items-center rounded-sm px-1.5 text-xs font-medium'
   const any = s.overdue || s.inProgress || s.agent || s.githubRepo
   return (
     <div className="flex flex-wrap gap-1.5">
       {s.overdue ? (
         <span className={cn(chip, 'bg-danger-soft text-danger')}>
-          {plural(s.overdue, 'vencida', 'vencidas')}
+          {t('overdue', { count: s.overdue })}
         </span>
       ) : null}
       {s.byKind.in_progress ? (
         <span className={cn(chip, 'bg-accent-soft text-accent')}>
-          {s.byKind.in_progress} en curso
+          {t('chip.inProgress', { count: s.byKind.in_progress })}
         </span>
       ) : null}
       {s.agent ? (
         <span className={cn(chip, 'bg-project-violet/15 text-project-violet')}>
-          {s.agent} con el agente
+          {t('chip.agent', { count: s.agent })}
         </span>
       ) : null}
       {s.githubRepo ? (
@@ -91,7 +96,9 @@ function Chips({ s }: { s: Stats }) {
           {s.githubRepo}
         </span>
       ) : null}
-      {any ? null : <span className={cn(chip, 'bg-success-soft text-success')}>Al día</span>}
+      {any ? null : (
+        <span className={cn(chip, 'bg-success-soft text-success')}>{t('chip.upToDate')}</span>
+      )}
     </div>
   )
 }
@@ -102,6 +109,7 @@ function Chips({ s }: { s: Stats }) {
  * Diseño: lienzo «Muninn — Móvil 2.0» (P-Escritorio, P-Tablet, Proyectos).
  */
 function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today: string }) {
+  const { t } = useTranslation('projects')
   const shell = useShell()
   const look = { ...project, imagePath: project.imagePath ?? null }
   return (
@@ -126,8 +134,8 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
               </Link>
               <span className="text-xs text-fg-subtle md:hidden">
                 {s
-                  ? `${plural(s.open, 'abierta', 'abiertas')} · ${plural(s.done, 'hecha', 'hechas')} · ${timeAgo(s.lastActivityAt)}`
-                  : 'Sin tareas todavía'}
+                  ? `${t('open', { count: s.open })} · ${t('done', { count: s.done })} · ${timeAgo(s.lastActivityAt)}`
+                  : t('card.noTasksYet')}
               </span>
               {project.description ? (
                 <p className="line-clamp-2 text-sm text-fg-muted max-md:hidden">
@@ -139,12 +147,12 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
                   onClick={() => shell.openEditProject(project)}
                   className="relative z-10 self-start text-sm text-fg-faint transition-colors hover:text-fg max-md:hidden"
                 >
-                  + Añade una descripción
+                  {t('card.addDescription')}
                 </button>
               )}
             </div>
             <IconButton
-              aria-label={`Editar ${project.name}`}
+              aria-label={t('card.edit', { name: project.name })}
               icon={<icons.edit />}
               onClick={() => shell.openEditProject(project)}
               className="relative z-10 -mt-1 -mr-1 max-md:hidden"
@@ -163,12 +171,12 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
                   {KINDS.filter((k) => s.byKind[k.key]).map((k) => (
                     <span key={k.key} className="inline-flex items-center gap-1.5">
                       <span aria-hidden="true" className={cn('size-[7px] rounded-xs', k.bar)} />
-                      {plural(s.byKind[k.key], k.one, k.many)}
+                      {t(`kind.${k.key}`, { count: s.byKind[k.key] })}
                     </span>
                   ))}
                   <span className="inline-flex items-center gap-1.5">
                     <span aria-hidden="true" className="size-[7px] rounded-xs bg-kind-done" />
-                    {plural(s.done, 'hecha', 'hechas')}
+                    {t('done', { count: s.done })}
                   </span>
                 </div>
               </div>
@@ -176,23 +184,23 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
               {s.next.length ? (
                 <div className="-mx-4 flex flex-col border-t border-border-subtle pt-1">
                   <span className="px-4 pt-2 pb-1 text-2xs font-semibold tracking-wider text-fg-faint uppercase">
-                    Lo próximo
+                    {t('card.next')}
                   </span>
-                  {s.next.map((t, i) => (
+                  {s.next.map((task, i) => (
                     <Link
-                      key={t.id}
+                      key={task.id}
                       to="/proyectos/$projectId/tareas/$taskId"
-                      params={{ projectId: project.id, taskId: t.id }}
+                      params={{ projectId: project.id, taskId: task.id }}
                       className={cn(
                         'relative z-10 flex min-h-10 items-center gap-2.5 px-4 text-sm transition-colors hover:bg-surface-hover md:min-h-8',
                         i > 0 && 'max-md:hidden',
                       )}
                     >
-                      <span className="min-w-0 flex-1 truncate">{t.title}</span>
-                      {t.dueDate ? (
-                        <DueDate due={t.dueDate} today={today} className="shrink-0 text-xs" />
+                      <span className="min-w-0 flex-1 truncate">{task.title}</span>
+                      {task.dueDate ? (
+                        <DueDate due={task.dueDate} today={today} className="shrink-0 text-xs" />
                       ) : (
-                        <span className="shrink-0 text-xs text-fg-faint">Sin fecha</span>
+                        <span className="shrink-0 text-xs text-fg-faint">{t('card.noDate')}</span>
                       )}
                     </Link>
                   ))}
@@ -203,7 +211,11 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
         </div>
 
         <div className="relative z-10 flex items-center border-t border-border-subtle bg-surface-sunken text-xs text-fg-faint md:gap-2 md:px-4 md:py-1.5">
-          {s ? <span className="max-md:hidden">Actividad {timeAgo(s.lastActivityAt)}</span> : null}
+          {s ? (
+            <span className="max-md:hidden">
+              {t('card.activity', { when: timeAgo(s.lastActivityAt) })}
+            </span>
+          ) : null}
           <span className="flex-1 max-md:hidden" />
           <Button
             variant="ghost"
@@ -212,7 +224,7 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
             onClick={() => shell.openNewTask({ projectId: project.id })}
           >
             <Icon name="plus" />
-            Tarea
+            {t('card.task')}
           </Button>
           <span aria-hidden="true" className="h-6 w-px bg-border-subtle md:hidden" />
           <Button
@@ -222,7 +234,7 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
             onClick={() => shell.openEditProject(project)}
           >
             <Icon name="edit" />
-            Editar
+            {t('card.editShort')}
           </Button>
         </div>
       </Card>
@@ -231,6 +243,7 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
 }
 
 function Archived() {
+  const { t } = useTranslation('projects')
   const m = useMuninn()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -243,7 +256,7 @@ function Archived() {
   const archived = (useQuery(archivedProjectsQuery(m)).data ?? []).filter((p) => !hidden.has(p.id))
   if (!archived.length) return null
   return (
-    <section aria-label="Archivados" className="flex flex-col gap-2">
+    <section aria-label={t('archived.title')} className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -255,7 +268,7 @@ function Archived() {
             aria-hidden="true"
             className={cn('transition-transform', open && 'rotate-90')}
           />
-          Archivados
+          {t('archived.title')}
           <span className="text-fg-faint tabular">{archived.length}</span>
         </button>
         {open && archived.length > 1 ? (
@@ -266,7 +279,7 @@ function Archived() {
             onClick={() => deleteArchivedWithUndo(m, qc, archived, view)}
           >
             <Icon name="trash" />
-            Eliminar todos
+            {t('archived.deleteAll')}
           </Button>
         ) : null}
       </div>
@@ -283,7 +296,7 @@ function Archived() {
                   <span className="truncate text-sm">{p.name}</span>
                   {p.githubRepo ? (
                     <span className="truncate text-xs text-fg-subtle">
-                      Sigue vinculado a {p.githubRepo}
+                      {t('archived.stillLinked', { repo: p.githubRepo })}
                     </span>
                   ) : null}
                 </span>
@@ -292,13 +305,13 @@ function Archived() {
                   className="max-md:h-10"
                   onClick={() => unarchiveProjectWithUndo(m, qc, p)}
                 >
-                  Recuperar
+                  {t('archived.restore')}
                 </Button>
                 <IconButton
                   size="sm"
                   variant="danger"
-                  aria-label={`Eliminar «${p.name}»`}
-                  title="Eliminar para siempre"
+                  aria-label={t('archived.delete', { name: p.name })}
+                  title={t('archived.deleteForever')}
                   className="max-md:size-10"
                   icon={<Icon name="trash" />}
                   onClick={() => deleteArchivedWithUndo(m, qc, [p], view)}
@@ -313,6 +326,7 @@ function Archived() {
 }
 
 export function Proyectos() {
+  const { t } = useTranslation(['projects', 'common'])
   const m = useMuninn()
   const shell = useShell()
   const modules = useEnabledModules()
@@ -323,7 +337,7 @@ export function Proyectos() {
   const [filter, setFilter] = useState<Filter>('all')
   const [sort, setSort] = useState<Sort>('urgency')
   const [search, setSearch] = useState('')
-  useDocumentTitle('Proyectos')
+  useDocumentTitle(t('title'))
 
   const stats = new Map(overview?.projects.map((p) => [p.id, p]))
   const today = overview?.today ?? m.today()
@@ -339,7 +353,7 @@ export function Proyectos() {
     .filter((p) => matchesAll(p.name, terms))
     .sort((a, b) =>
       sort === 'name'
-        ? a.name.localeCompare(b.name, 'es')
+        ? a.name.localeCompare(b.name, currentLocale())
         : sort === 'activity'
           ? (stats.get(b.id)?.lastActivityAt ?? '').localeCompare(
               stats.get(a.id)?.lastActivityAt ?? '',
@@ -352,7 +366,7 @@ export function Proyectos() {
   const newButton = (
     <Button variant="primary" onClick={shell.openNewProject}>
       <Icon name="plus" />
-      Nuevo proyecto
+      {t('shell.newProject', { ns: 'common' })}
     </Button>
   )
 
@@ -360,18 +374,18 @@ export function Proyectos() {
     <Page>
       <header className="flex items-start gap-3 md:flex-wrap md:items-end md:gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">Proyectos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           {all.length ? (
             <p className="text-base text-fg-muted">
-              {plural(all.length, 'activo', 'activos')}
+              {t('summary.active', { count: all.length })}
               <span className="max-md:hidden">
                 {' '}
-                · {plural(openTasks, 'tarea abierta', 'tareas abiertas')}
+                · {t('summary.openTasks', { count: openTasks })}
               </span>
               {overdue ? (
                 <>
                   {' · '}
-                  <span className="text-danger">{plural(overdue, 'vencida', 'vencidas')}</span>
+                  <span className="text-danger">{t('overdue', { count: overdue })}</span>
                 </>
               ) : null}
             </p>
@@ -383,17 +397,17 @@ export function Proyectos() {
               <IconButton
                 variant="primary"
                 size="lg"
-                aria-label="Nuevo proyecto"
+                aria-label={t('shell.newProject', { ns: 'common' })}
                 icon={<Icon name="plus" size={20} />}
                 onClick={shell.openNewProject}
               />
             </div>
             <div className="hidden items-end gap-2 md:flex">
               <TextField
-                label="Buscar proyecto"
+                label={t('search')}
                 hideLabel
                 type="search"
-                placeholder="Buscar proyecto"
+                placeholder={t('search')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-56"
@@ -407,7 +421,7 @@ export function Proyectos() {
       {projects && projects.length === 0 ? (
         <EmptyState
           icon="projects"
-          title="Todavía no hay proyectos"
+          title={t('empty.title')}
           actions={newButton}
           preview={
             <div className="flex gap-3 pb-6">
@@ -426,8 +440,7 @@ export function Proyectos() {
             </div>
           }
         >
-          Un proyecto agrupa tareas en un tablero Kanban. Ponle una imagen y una descripción para
-          reconocerlo de un vistazo, y vincúlalo a un repositorio de GitHub si quieres.
+          {t('empty.body')}
         </EmptyState>
       ) : null}
       {projects && projects.length === 0 ? (
@@ -436,17 +449,20 @@ export function Proyectos() {
         <>
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedControl<Filter>
-              aria-label="Filtrar proyectos"
+              aria-label={t('filter.label')}
               value={filter}
               onValueChange={setFilter}
               options={[
-                { value: 'all', label: `Todos · ${all.length}` },
-                { value: 'overdue', label: `Con vencidas · ${all.filter(tests.overdue).length}` },
+                { value: 'all', label: t('filter.all', { n: all.length }) },
+                {
+                  value: 'overdue',
+                  label: t('filter.overdue', { n: all.filter(tests.overdue).length }),
+                },
                 ...(githubOn
                   ? [
                       {
                         value: 'github' as const,
-                        label: `Con GitHub · ${all.filter(tests.github).length}`,
+                        label: t('filter.github', { n: all.filter(tests.github).length }),
                       },
                     ]
                   : []),
@@ -456,13 +472,13 @@ export function Proyectos() {
             />
             <span className="flex-1 max-md:hidden" />
             <SelectMenu<Sort>
-              label="Orden"
+              label={t('sort.label')}
               value={sort}
               onChange={setSort}
               options={[
-                { value: 'urgency', label: 'Urgencia' },
-                { value: 'activity', label: 'Actividad reciente' },
-                { value: 'name', label: 'Nombre' },
+                { value: 'urgency', label: t('sort.urgency') },
+                { value: 'activity', label: t('sort.activity') },
+                { value: 'name', label: t('sort.name') },
               ]}
               className="max-md:hidden"
             />
@@ -479,9 +495,7 @@ export function Proyectos() {
             </div>
           ) : shown.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-fg-muted">
-              {terms.length
-                ? `Ningún proyecto se llama «${search.trim()}».`
-                : 'Ningún proyecto con este filtro.'}
+              {terms.length ? t('noMatch', { query: search.trim() }) : t('noneInFilter')}
             </p>
           ) : (
             <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

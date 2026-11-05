@@ -1,5 +1,6 @@
 import { Avatar, cn, Icon, icons } from '@muninn/ui'
 import type { ComponentProps } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../lib/muninn'
 import { USER_MENU_SHORTCUT } from './shell-context'
 
@@ -13,12 +14,13 @@ export function UserButton({
   ...props
 }: ComponentProps<'button'> & { rail: boolean }) {
   const auth = useAuth()
-  const name = auth.kind === 'user' ? auth.account.name : 'Modo demo'
+  const { t } = useTranslation()
+  const name = auth.kind === 'user' ? auth.account.name : t('account.demo')
   return (
     <button
       type="button"
-      aria-label={`Tu cuenta: ${name}`}
-      title={`Tu cuenta (${USER_MENU_SHORTCUT})`}
+      aria-label={t('account.yourAccountNamed', { name })}
+      title={t('account.yourAccountShortcut', { shortcut: USER_MENU_SHORTCUT })}
       aria-keyshortcuts={USER_MENU_SHORTCUT.startsWith('⌘') ? 'Meta+Shift+U' : 'Control+Shift+U'}
       className={cn(
         'flex w-full cursor-pointer items-center gap-2.5 rounded-md py-1.5 text-left transition-colors hover:bg-surface-hover data-[state=open]:bg-surface-hover',
@@ -49,7 +51,7 @@ export function UserButton({
                   auth.kind === 'user' ? 'bg-success' : 'bg-fg-faint',
                 )}
               />
-              {auth.kind === 'user' ? 'Guardado en tu cuenta' : 'Datos sin guardar'}
+              {auth.kind === 'user' ? t('account.savedToAccount') : t('account.notSaved')}
             </span>
           </span>
           <icons.chevronUpDown aria-hidden="true" className="shrink-0 text-fg-faint" />

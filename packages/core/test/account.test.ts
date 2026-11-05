@@ -4,6 +4,7 @@ import {
   createMemoryStore,
   createMuninn,
   emptySnapshot,
+  groupSessions,
   MEMORY_WRONG_MFA_CODE,
   type MemoryAccountSeed,
   sessionDeviceLabel,
@@ -19,6 +20,7 @@ const session = (over: Partial<AccountSession>): AccountSession => ({
   aal: 'aal1',
   current: false,
   appName: null,
+  deviceName: null,
   ...over,
 })
 
@@ -52,6 +54,29 @@ describe('sesiones', () => {
     expect(await account.sessions.revoke(other.id)).toBe(false)
     await expect(account.sessions.revoke(here.id)).rejects.toThrow(/Cerrar sesión/)
     expect((await account.sessions.list()).map((s) => s.id)).toEqual([here.id])
+  })
+
+  it('pone nombre a una sesión (también a la de este dispositivo), lo quita con vacío y devuelve el anterior', async () => {
+    const other = session({})
+    const here = session({ current: true })
+    const account = setup({ sessions: [other, here] })
+    expect(await account.sessions.rename(here.id, '  Portátil del curro  ')).toBeNull()
+    expect(await account.sessions.rename(other.id, 'iPhone')).toBeNull()
+    const named = await account.sessions.list()
+    expect(named.map((s) => s.deviceName)).toEqual(['Portátil del curro', 'iPhone'])
+    expect(await account.sessions.rename(other.id, '   ')).toBe('iPhone')
+    expect((await account.sessions.list())[1]?.deviceName).toBeNull()
+  })
+
+  it('el nombre tiene 40 caracteres como mucho y la sesión tiene que existir', async () => {
+    const account = setup({ sessions: [session({ current: true })] })
+    const [here] = await account.sessions.list()
+    await expect(account.sessions.rename(here?.id ?? '', 'x'.repeat(41))).rejects.toBeInstanceOf(
+      ValidationError,
+    )
+    await expect(account.sessions.rename(crypto.randomUUID(), 'Otro')).rejects.toThrow(
+      /ya no está abierta/,
+    )
   })
 
   it('cerrar en los demás deja solo esta; en todos, ninguna', async () => {
@@ -285,11 +310,51 @@ describe('nombre del dispositivo', () => {
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Muninn/0.4.0',
       'Muninn para Mac',
     ],
+    // Desde la 0.10, con el nombre del equipo (ADR-0081).
+    [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0 Muninn/0.10.0 (PC-ALEX)',
+      'PC-ALEX · Muninn para Windows',
+    ],
+    [
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Muninn/0.10.0 (Mac de Álex)',
+      'Mac de Álex · Muninn para Mac',
+    ],
+    // Un navegador con paréntesis propios en el user agent no se confunde con el nombre.
+    [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36',
+      'Windows · Chrome',
+    ],
     ['node', 'Programa o servidor'],
     ['python-httpx/0.28.1', 'Programa o servidor'],
     [null, 'Dispositivo desconocido'],
   ])('%s → %s', (ua, label) => {
     expect(sessionDeviceLabel(ua)).toBe(label)
+  })
+
+  it('groupSessions junta las sesiones de cada app conectada y deja los dispositivos aparte', () => {
+    const s = (id: string, lastActiveAt: string, appName: string | null = null, current = false) =>
+      ({
+        id,
+        createdAt: lastActiveAt,
+        lastActiveAt,
+        userAgent: null,
+        ip: null,
+        aal: 'aal1',
+        current,
+        appName,
+      }) as AccountSession
+    const { devices, apps } = groupSessions([
+      s('este', '2026-11-05T09:00:00Z', null, true),
+      s('c1', '2026-11-01T09:00:00Z', 'Claude'),
+      s('pc', '2026-11-04T09:00:00Z'),
+      s('cc', '2026-11-03T09:00:00Z', 'Claude Code (Muninn)'),
+      s('c2', '2026-11-05T08:00:00Z', 'Claude'),
+    ])
+    expect(devices.map((d) => d.id)).toEqual(['este', 'pc'])
+    expect(apps.map((a) => [a.appName, a.sessions.length, a.lastActiveAt])).toEqual([
+      ['Claude', 2, '2026-11-05T08:00:00Z'],
+      ['Claude Code (Muninn)', 1, '2026-11-03T09:00:00Z'],
+    ])
   })
 
   it('una sesión abierta por una app OAuth lleva su nombre, diga lo que diga el user agent', () => {

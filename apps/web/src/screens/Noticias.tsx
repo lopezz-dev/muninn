@@ -3,9 +3,10 @@ import { Button, Card, Chip, cn, Icon, IconButton, icons, Switch, TextField } fr
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Page, PageHeader } from '../components/Page'
 import { useAssistantPrefs } from '../lib/assistant-settings'
-import { timeAgo } from '../lib/dates'
+import { clock, timeAgo } from '../lib/dates'
 import { externalLink } from '../lib/external-link'
 import { useEnabledModules } from '../lib/modules'
 import { useAuth, useMuninn } from '../lib/muninn'
@@ -37,6 +38,7 @@ const route = getRouteApi('/_app/noticias')
 
 /** El resumen del día (Noticias.dc.html): generado en el ordenador con el modelo local. */
 function DigestCard({ hasItems }: { hasItems: boolean }) {
+  const { t } = useTranslation('news')
   const m = useMuninn()
   const qc = useQueryClient()
   const prefs = useAssistantPrefs()
@@ -68,14 +70,10 @@ function DigestCard({ hasItems }: { hasItems: boolean }) {
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <h2 className="text-md font-semibold">Lo importante de hoy</h2>
+          <h2 className="text-md font-semibold">{t('digest.title')}</h2>
           {digest ? (
             <span className="text-xs text-fg-subtle">
-              Resumido en local ·{' '}
-              {new Date(digest.updatedAt).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {t('digest.summarizedAt', { time: clock(digest.updatedAt) })}
             </span>
           ) : null}
           {auth.kind === 'user' && hasItems ? (
@@ -87,7 +85,11 @@ function DigestCard({ hasItems }: { hasItems: boolean }) {
               disabled={busy}
             >
               <Icon name="sync" size={13} />
-              {busy ? 'Resumiendo…' : digest ? 'Rehacer' : 'Resumir'}
+              {busy
+                ? t('digest.summarizingShort')
+                : digest
+                  ? t('digest.redo')
+                  : t('digest.summarize')}
             </Button>
           ) : null}
         </div>
@@ -98,10 +100,10 @@ function DigestCard({ hasItems }: { hasItems: boolean }) {
         ) : (
           <p className="text-sm text-fg-muted text-pretty">
             {busy
-              ? 'Resumiendo tus noticias con el modelo de tu ordenador…'
+              ? t('digest.summarizingLong')
               : hasItems
-                ? 'Aún no hay resumen de hoy. Se hace en tu ordenador con el modelo local: ábrelo allí (con Ollama) o pulsa «Resumir».'
-                : 'Cuando lleguen artículos de tus fuentes, aquí tendrás lo más importante del día.'}
+                ? t('digest.noneYet')
+                : t('digest.empty')}
           </p>
         )}
       </div>
@@ -120,6 +122,7 @@ interface ArticleProps {
 }
 
 function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleProps) {
+  const { t } = useTranslation('news')
   const m = useMuninn()
   const qc = useQueryClient()
   const shell = useShell()
@@ -131,16 +134,16 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
         <button
           type="button"
           className="cursor-pointer font-medium text-fg-muted hover:text-fg hover:underline"
-          title={`Ver solo ${source?.title ?? 'esta fuente'}`}
+          title={t('article.onlySource', { source: source?.title ?? t('article.thisSource') })}
           onClick={onSource}
         >
-          {source?.title ?? 'Fuente'}
+          {source?.title ?? t('article.source')}
         </button>
         · {timeAgo(item.publishedAt ?? item.fetchedAt)}
         {item.author ? ` · ${item.author}` : ''}
         {related.map((p) => (
           <Chip key={p} variant="accent" className="ml-auto">
-            Relacionada con {p}
+            {t('article.related', { project: p })}
           </Chip>
         ))}
       </div>
@@ -163,7 +166,7 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
             onClick={() => shell.openNewTask({ title: item.title, description: item.url })}
           >
             <Icon name="projects" size={14} />
-            Crear tarea
+            {t('article.createTask')}
           </button>
         ) : null}
         {notesOn ? (
@@ -178,7 +181,7 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
             }
           >
             <Icon name="notes" size={14} />
-            Guardar como nota
+            {t('article.saveAsNote')}
           </button>
         ) : null}
         <button
@@ -188,14 +191,14 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
           onClick={() => void setSaved(m, qc, item, !item.savedAt)}
         >
           <Icon name="pin" size={14} className={item.savedAt ? 'text-accent' : undefined} />
-          {item.savedAt ? 'Guardada' : 'Leer luego'}
+          {item.savedAt ? t('article.saved') : t('article.readLater')}
         </button>
         <a
           {...externalLink(item.url, { onOpen: () => markRead(m, qc, item), direct: true })}
           className={act}
         >
           <Icon name="external" size={14} />
-          Abrir
+          {t('article.open')}
         </a>
       </div>
     </article>
@@ -204,6 +207,7 @@ function Article({ item, source, related, tasksOn, notesOn, onSource }: ArticleP
 
 /** Fuentes del usuario: activar o pausar, quitar (se archiva) y añadir un RSS. */
 function Sources({ sources }: { sources: NewsSource[] }) {
+  const { t } = useTranslation('news')
   const m = useMuninn()
   const qc = useQueryClient()
   const [url, setUrl] = useState('')
@@ -214,8 +218,7 @@ function Sources({ sources }: { sources: NewsSource[] }) {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const clean = url.trim()
-    if (!/^https?:\/\/\S+$/i.test(clean))
-      return setError('Pega la dirección del feed (empieza por https://)')
+    if (!/^https?:\/\/\S+$/i.test(clean)) return setError(t('sources.invalidUrl'))
     setAdding(true)
     const s = await addSource(m, qc, { url: clean, topic: topic.trim() || null })
     setAdding(false)
@@ -227,7 +230,7 @@ function Sources({ sources }: { sources: NewsSource[] }) {
 
   return (
     <Card className="flex flex-col px-[18px] py-4">
-      <h2 className="pb-2.5 text-md font-semibold">Fuentes</h2>
+      <h2 className="pb-2.5 text-md font-semibold">{t('sources.title')}</h2>
       {sources.length ? (
         <ul>
           {sources.map((s) => (
@@ -247,11 +250,11 @@ function Sources({ sources }: { sources: NewsSource[] }) {
               </div>
               <Switch
                 checked={s.enabled}
-                aria-label={`${s.enabled ? 'Pausar' : 'Activar'} ${s.title}`}
+                aria-label={t(s.enabled ? 'sources.pause' : 'sources.resume', { title: s.title })}
                 onCheckedChange={(on) => void setSourceEnabled(m, qc, s, on)}
               />
               <IconButton
-                aria-label={`Quitar ${s.title}`}
+                aria-label={t('sources.remove', { title: s.title })}
                 icon={<Icon name="archive" size={15} />}
                 size="sm"
                 onClick={() => void archiveSource(m, qc, s)}
@@ -260,13 +263,11 @@ function Sources({ sources }: { sources: NewsSource[] }) {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-fg-subtle">
-          Aún no sigues ninguna fuente. Añade la primera abajo.
-        </p>
+        <p className="text-sm text-fg-subtle">{t('sources.none')}</p>
       )}
       <div className="mt-3 flex flex-col gap-1.5 border-t border-border-subtle pt-3">
         <SuggestedSourcesButton sources={sources} />
-        <p className="text-xs text-fg-subtle">Medios, organismos y blogs técnicos, por temas.</p>
+        <p className="text-xs text-fg-subtle">{t('sources.catalogHint')}</p>
       </div>
       <form
         onSubmit={submit}
@@ -274,8 +275,8 @@ function Sources({ sources }: { sources: NewsSource[] }) {
         noValidate
       >
         <TextField
-          label="Añadir RSS"
-          placeholder="https://blog.ejemplo.com/rss.xml"
+          label={t('sources.addRss')}
+          placeholder={t('sources.rssPlaceholder')}
           value={url}
           onChange={(e) => {
             setUrl(e.target.value)
@@ -286,22 +287,21 @@ function Sources({ sources }: { sources: NewsSource[] }) {
           spellCheck={false}
         />
         <TextField
-          label="Tema (opcional)"
-          placeholder="Rust, IA local…"
+          label={t('sources.topic')}
+          placeholder={t('sources.topicPlaceholder')}
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           maxLength={40}
         />
         <Button type="submit" disabled={adding}>
           <icons.plus size={14} />
-          Añadir fuente
+          {t('sources.add')}
         </Button>
       </form>
       <p className="mt-3.5 rounded-md bg-surface-sunken p-3 text-[12.5px] leading-relaxed text-fg-muted">
-        Los artículos los descarga el servidor de Muninn cada hora, aunque tu ordenador esté
-        apagado. El resumen se hace{' '}
-        <strong className="font-semibold text-fg">en tu ordenador</strong> con el modelo local: tus
-        intereses no salen de casa.
+        {t('sources.privacyBefore')}
+        <strong className="font-semibold text-fg">{t('sources.privacyStrong')}</strong>
+        {t('sources.privacyAfter')}
       </p>
     </Card>
   )
@@ -309,6 +309,7 @@ function Sources({ sources }: { sources: NewsSource[] }) {
 
 /** Noticias (Noticias.dc.html, ADR-0042): resumen del día, temas, artículos y fuentes. */
 export function Noticias() {
+  const { t } = useTranslation(['news', 'common'])
   const m = useMuninn()
   const qc = useQueryClient()
   const modules = useEnabledModules()
@@ -340,8 +341,8 @@ export function Noticias() {
     [visible, tab, onlySource, search, openRuns],
   )
   const sourceById = useMemo(() => new Map(sources.map((s) => [s.id, s])), [sources])
-  const pickTab = (t: string | null) => {
-    setTab(t)
+  const pickTab = (next: string | null) => {
+    setTab(next)
     setOnlySource(null)
   }
   const fresh = newSince(items)
@@ -364,16 +365,12 @@ export function Noticias() {
   return (
     <Page>
       <PageHeader
-        title="Noticias"
-        description={
-          items.length
-            ? `${fresh} ${fresh === 1 ? 'nueva' : 'nuevas'} desde ayer`
-            : 'Tus fuentes, resumidas cada mañana.'
-        }
+        title={t('nav.news', { ns: 'common' })}
+        description={items.length ? t('page.fresh', { count: fresh }) : t('page.tagline')}
         actions={
           <Button onClick={refresh} disabled={refreshing || !sources.length}>
             <Icon name="sync" size={15} />
-            {refreshing ? 'Actualizando…' : 'Actualizar'}
+            {refreshing ? t('page.refreshing') : t('page.refresh')}
           </Button>
         }
       />
@@ -384,7 +381,11 @@ export function Noticias() {
           {items.length ? (
             <>
               <div className="flex flex-wrap items-center gap-1.5">
-                <div role="tablist" aria-label="Temas" className="flex flex-wrap gap-1.5">
+                <div
+                  role="tablist"
+                  aria-label={t('page.topics')}
+                  className="flex flex-wrap gap-1.5"
+                >
                   <button
                     type="button"
                     role="tab"
@@ -392,18 +393,18 @@ export function Noticias() {
                     className={tabClass(tab === null)}
                     onClick={() => pickTab(null)}
                   >
-                    Todas · {items.length}
+                    {t('page.all', { n: items.length })}
                   </button>
-                  {tabs.map(([t, n]) => (
+                  {tabs.map(([topic, n]) => (
                     <button
-                      key={t}
+                      key={topic}
                       type="button"
                       role="tab"
-                      aria-selected={tab === t}
-                      className={tabClass(tab === t)}
-                      onClick={() => pickTab(t)}
+                      aria-selected={tab === topic}
+                      className={tabClass(tab === topic)}
+                      onClick={() => pickTab(topic)}
                     >
-                      {t} · {n}
+                      {topic} · {n}
                     </button>
                   ))}
                   <button
@@ -413,24 +414,28 @@ export function Noticias() {
                     className={tabClass(tab === SAVED_TAB)}
                     onClick={() => pickTab(SAVED_TAB)}
                   >
-                    Guardadas{savedCount ? ` · ${savedCount}` : ''}
+                    {savedCount ? t('page.savedCount', { n: savedCount }) : t('page.saved')}
                   </button>
                 </div>
                 {onlySource ? (
                   <button
                     type="button"
                     className={cn(tabClass(true), 'inline-flex items-center gap-1.5')}
-                    aria-label={`Quitar el filtro: solo ${sourceById.get(onlySource)?.title ?? 'una fuente'}`}
+                    aria-label={t('page.clearSourceFilter', {
+                      source: sourceById.get(onlySource)?.title ?? t('page.aSource'),
+                    })}
                     onClick={() => setOnlySource(null)}
                   >
-                    Solo {sourceById.get(onlySource)?.title ?? 'una fuente'}
+                    {t('page.onlySource', {
+                      source: sourceById.get(onlySource)?.title ?? t('page.aSource'),
+                    })}
                     <Icon name="close" size={12} />
                   </button>
                 ) : null}
                 <TextField
-                  label="Buscar en noticias"
+                  label={t('page.search')}
                   hideLabel
-                  placeholder="Buscar…"
+                  placeholder={t('page.searchPlaceholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   leading={<Icon name="search" size={14} />}
@@ -438,7 +443,7 @@ export function Noticias() {
                 />
               </div>
               {visible.length ? (
-                <Card aria-label="Artículos" className="overflow-hidden">
+                <Card aria-label={t('page.articles')} className="overflow-hidden">
                   {rows.map((r) =>
                     r.kind === 'item' ? (
                       <Article
@@ -458,39 +463,42 @@ export function Noticias() {
                         onClick={() => setOpenRuns((prev) => new Set(prev).add(r.key))}
                       >
                         <Icon name="chevronDown" size={14} />
-                        Ver {r.items.length} más de{' '}
-                        {sourceById.get(r.sourceId)?.title ?? 'esta fuente'}
+                        {t('page.showMore', {
+                          count: r.items.length,
+                          source: sourceById.get(r.sourceId)?.title ?? t('article.thisSource'),
+                        })}
                       </button>
                     ),
                   )}
                 </Card>
               ) : (
                 <p className="px-1 py-6 text-center text-sm text-fg-subtle">
-                  {tab === SAVED_TAB ? 'No tienes artículos guardados.' : 'Nada que coincida.'}
+                  {tab === SAVED_TAB ? t('page.noSaved') : t('page.noMatch')}
                 </p>
               )}
             </>
           ) : itemsQ.isSuccess ? (
             <EmptyState
               icon="news"
-              title={sources.length ? 'Aún no han llegado artículos' : 'Elige tus fuentes'}
+              title={sources.length ? t('page.noArticlesYet') : t('page.pickSources')}
               actions={
                 sources.length ? undefined : (
                   <SuggestedSourcesButton
                     sources={sources}
                     variant="primary"
-                    label="Ver fuentes oficiales"
+                    label={t('page.seeOfficial')}
                   />
                 )
               }
             >
-              {sources.length
-                ? 'El servidor de Muninn descarga tus fuentes cada hora. Si acabas de añadirlas, prueba «Actualizar» en un rato.'
-                : 'Añade el RSS de los blogs y webs que sigues. Muninn los descarga solo y te prepara cada mañana un resumen hecho en tu ordenador.'}
+              {sources.length ? t('page.waitHint') : t('page.startHint')}
             </EmptyState>
           ) : null}
         </div>
-        <aside aria-label="Fuentes" className="w-full shrink-0 lg:sticky lg:top-7 lg:w-[300px]">
+        <aside
+          aria-label={t('sources.title')}
+          className="w-full shrink-0 lg:sticky lg:top-7 lg:w-[300px]"
+        >
           <Sources sources={sources} />
         </aside>
       </div>

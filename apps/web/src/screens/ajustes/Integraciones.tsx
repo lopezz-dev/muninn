@@ -3,6 +3,7 @@ import { Button, ColorDot, cn, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { type ReactNode, useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { EmptyState } from '../../components/Page'
 import { SelectMenu } from '../../components/SelectMenu'
 import { timeAgo } from '../../lib/dates'
@@ -55,6 +56,7 @@ function RepoPicker({
   projects: Project[]
   repos: GithubRepoSummary[] | undefined
 }) {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const qc = useQueryClient()
   const [checking, setChecking] = useState(false)
@@ -74,13 +76,13 @@ function RepoPicker({
 
   return (
     <SelectMenu
-      label={`Repositorio de GitHub de ${project.name}`}
+      label={t('github.repoLabel', { project: project.name })}
       value={value}
       options={options}
       onChange={(name) => void choose(name)}
       disabled={!repos || checking}
       buttonText={
-        !repos ? 'Cargando repositorios…' : checking ? 'Comprobando el acceso…' : undefined
+        !repos ? t('github.loadingRepos') : checking ? t('github.checkingAccess') : undefined
       }
       className="w-full justify-between"
     />
@@ -89,6 +91,7 @@ function RepoPicker({
 
 /** Campo `owner/repo` de un proyecto: se guarda al salir o con Enter; acepta la URL de GitHub. */
 function RepoField({ project }: { project: Project }) {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const qc = useQueryClient()
   const [text, setText] = useState(project.githubRepo ?? '')
@@ -98,7 +101,7 @@ function RepoField({ project }: { project: Project }) {
   const commit = async () => {
     const repo = parseRepoInput(text)
     if (repo === undefined) {
-      setError('Escribe usuario/repositorio, por ejemplo lopezz-dev/muninn')
+      setError(t('github.repoFormat'))
       return
     }
     setError(undefined)
@@ -108,9 +111,9 @@ function RepoField({ project }: { project: Project }) {
 
   return (
     <TextField
-      label={`Repositorio de GitHub de ${project.name}`}
+      label={t('github.repoLabel', { project: project.name })}
       hideLabel
-      placeholder="usuario/repositorio"
+      placeholder={t('github.repoPlaceholder')}
       value={text}
       onChange={(e) => {
         setText(e.target.value)
@@ -134,6 +137,7 @@ function RepoField({ project }: { project: Project }) {
 
 /** Ajustes › Integraciones: el módulo GitHub, el estado de la sincronización y el repo de cada proyecto. */
 export function Integraciones() {
+  const { t } = useTranslation('integrations')
   const m = useMuninn()
   const auth = useAuth()
   const modules = useEnabledModules()
@@ -148,97 +152,90 @@ export function Integraciones() {
   return (
     <>
       <PrefGroup
-        title="Estado"
+        title={t('github.statusTitle')}
         icon="github"
-        description="Las issues de un repositorio llegan como tareas de su proyecto. Cerrar la issue completa la tarea, y completar la tarea cierra la issue."
+        description={t('github.statusDescription')}
         padded
       >
         <dl id="ajuste-github-estado" className="-my-2.5 flex flex-col text-sm">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle py-2.5 first:border-t-0">
-            <dt className="flex-[1_1_180px] text-fg-subtle">Módulo</dt>
+            <dt className="flex-[1_1_180px] text-fg-subtle">{t('github.module')}</dt>
             <dd className="flex items-center gap-2">
               <span
                 aria-hidden="true"
                 className={cn('size-1.5 rounded-full', moduleOn ? 'bg-success' : 'bg-fg-faint')}
               />
-              {moduleOn ? 'Activado' : 'Desactivado'}
+              {moduleOn ? t('github.on') : t('github.off')}
               <Link
                 to="/ajustes/$seccion"
                 params={{ seccion: 'modulos' }}
                 className="text-accent hover:underline"
               >
-                Cambiar
+                {t('github.change')}
               </Link>
             </dd>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle py-2.5">
-            <dt className="flex-[1_1_180px] text-fg-subtle">Sincronización</dt>
+            <dt className="flex-[1_1_180px] text-fg-subtle">{t('github.sync')}</dt>
             <dd className="flex items-center gap-2">
               <span
                 aria-hidden="true"
                 className={cn('size-1.5 rounded-full', synced ? 'bg-success' : 'bg-accent')}
               />
               {synced && activity?.last
-                ? `${activity.count} ${activity.count === 1 ? 'tarea' : 'tareas'} de GitHub · último cambio ${timeAgo(activity.last)}`
-                : 'Aún no ha llegado ninguna issue'}
+                ? t('github.synced', { count: activity.count, time: timeAgo(activity.last) })
+                : t('github.noIssuesYet')}
             </dd>
           </div>
         </dl>
         {synced ? null : (
           <p className="rounded-md bg-surface-sunken px-3 py-2.5 text-[12.5px] leading-relaxed text-fg-muted">
-            <b className="font-semibold text-fg">Aún no ha llegado nada.</b> La sincronización corre
-            en el servidor: las issues abiertas de un repositorio vinculado llegan en unos segundos,
-            y como mucho en 5 minutos. Si el repositorio tiene issues abiertas y no aparecen, revisa
-            la puesta en marcha.
+            <Trans
+              t={t}
+              i18nKey="github.nothingYet"
+              components={{ strong: <b className="font-semibold text-fg" /> }}
+            />
           </p>
         )}
       </PrefGroup>
 
-      <PrefGroup title="Repositorio de cada proyecto" icon="link">
+      <PrefGroup title={t('github.reposTitle')} icon="link">
         <div id="ajuste-repos" className="px-4 md:px-[18px]">
           {picker ? (
-            <p className="pt-3 pb-2 text-[12.5px] text-fg-subtle">
-              Un repositorio por proyecto. Salen los repositorios que ve el token de la
-              sincronización; al elegir uno público se comprueba que el token pueda usarlo. Si falta
-              alguno, dale acceso en GitHub y vuelve a esta página.
-            </p>
+            <p className="pt-3 pb-2 text-[12.5px] text-fg-subtle">{t('github.pickerHint')}</p>
           ) : (
             <p className="pt-3 pb-2 text-[12.5px] text-fg-subtle">
-              Un repositorio por proyecto. Escribe{' '}
-              <span className="font-mono">usuario/repositorio</span> o pega su dirección de GitHub;
-              déjalo vacío para desvincularlo.
+              <Trans
+                t={t}
+                i18nKey="github.manualHint"
+                components={{ mono: <span className="font-mono" /> }}
+              />
             </p>
           )}
           {repos.isError ? (
             <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-              No se pudo cargar la lista de repositorios, así que toca escribirlo a mano.{' '}
+              {t('github.reposError')}{' '}
               <button
                 type="button"
                 onClick={() => void repos.refetch()}
                 className="cursor-pointer text-accent hover:underline"
               >
-                Reintentar
+                {t('github.retry')}
               </button>
             </p>
           ) : repos.data?.length === 0 ? (
             <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-              El token de la sincronización todavía no tiene acceso a ningún repositorio: dáselo en
-              GitHub o escríbelo a mano.
+              {t('github.noRepos')}
             </p>
           ) : null}
           {auth.kind === 'demo' ? (
             <p className="border-t border-border-subtle py-3 text-sm text-fg-subtle">
-              En modo demo puedes probar el campo, pero nada llegará de GitHub: la sincronización
-              necesita una cuenta.
+              {t('github.demo')}
             </p>
           ) : null}
           {projects.length === 0 ? (
-            <EmptyState
-              icon="projects"
-              title="Aún no tienes proyectos"
-              className="mb-3 shadow-none"
-            >
-              Crea uno desde Proyectos y vuelve para vincularle un repositorio.
+            <EmptyState icon="projects" title={t('github.noProjects')} className="mb-3 shadow-none">
+              {t('github.noProjectsHint')}
             </EmptyState>
           ) : (
             projects.map((p) => (
@@ -255,12 +252,10 @@ export function Integraciones() {
       </PrefGroup>
 
       <p className="px-0.5 text-xs text-fg-faint">
-        Las tareas que vienen de GitHub llevan su insignia y su número de issue. Su título y su
-        descripción se cambian en GitHub; lo demás (columna, prioridad, fecha, subtareas y notas) es
-        tuyo.{' '}
+        {t('github.footer')}{' '}
         <Button asChild variant="ghost" className="h-auto px-0 text-xs text-accent">
           <Link to="/documentacion/$pagina" params={{ pagina: 'github' }}>
-            Cómo funciona
+            {t('github.howItWorks')}
           </Link>
         </Button>
       </p>

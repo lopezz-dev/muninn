@@ -17,6 +17,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link, Outlet, useMatch, useNavigate } from '@tanstack/react-router'
 import { lazy, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EmptyState, Ghost, Page, PageHeader } from '../components/Page'
 import { ProjectAvatar } from '../components/ProjectAvatar'
 import { activeGroups, type BoardFilter, labelsOf, NO_FILTER } from '../lib/board-filter'
@@ -49,29 +50,10 @@ const BoardCalendar = lazy(() =>
   import('./tablero/BoardCalendar').then((mod) => ({ default: mod.BoardCalendar })),
 )
 
-const VIEWS: { value: BoardView; label: string; icon: ReactNode }[] = [
-  { value: 'board', label: 'Tablero', icon: <icons.projects size={14} aria-hidden="true" /> },
-  { value: 'list', label: 'Lista', icon: <screenIcons.list size={14} aria-hidden="true" /> },
-  { value: 'calendar', label: 'Calendario', icon: <icons.calendar size={14} aria-hidden="true" /> },
-]
-
-/** En el móvil, solo los iconos (el nombre queda para el lector de pantalla). */
-const COMPACT_VIEWS: { value: BoardView; label: ReactNode; icon: ReactNode }[] = [
-  {
-    value: 'board',
-    label: <span className="sr-only">Tablero</span>,
-    icon: <icons.projects size={18} aria-hidden="true" />,
-  },
-  {
-    value: 'list',
-    label: <span className="sr-only">Lista</span>,
-    icon: <screenIcons.list size={18} aria-hidden="true" />,
-  },
-  {
-    value: 'calendar',
-    label: <span className="sr-only">Calendario</span>,
-    icon: <icons.calendar size={18} aria-hidden="true" />,
-  },
+const VIEW_ICONS: { value: BoardView; icon: (size: number) => ReactNode }[] = [
+  { value: 'board', icon: (size) => <icons.projects size={size} aria-hidden="true" /> },
+  { value: 'list', icon: (size) => <screenIcons.list size={size} aria-hidden="true" /> },
+  { value: 'calendar', icon: (size) => <icons.calendar size={size} aria-hidden="true" /> },
 ]
 
 /** Mientras llega el calendario: su rejilla de verdad, con fantasmas, para que no salte de alto. */
@@ -120,6 +102,19 @@ export function Tablero() {
   const navigate = useNavigate()
   const shell = useShell()
   const desktop = useIsDesktop()
+  const { t } = useTranslation(['board', 'common', 'task'])
+  // Las vistas con su nombre en el idioma activo. En el móvil, solo los iconos (el nombre queda para el lector
+  // de pantalla).
+  const views = VIEW_ICONS.map((v) => ({
+    value: v.value,
+    label: t(`views.${v.value}`),
+    icon: v.icon(14),
+  }))
+  const compactViews = VIEW_ICONS.map((v) => ({
+    value: v.value,
+    label: <span className="sr-only">{t(`views.${v.value}`)}</span>,
+    icon: v.icon(18),
+  }))
   // Los filtros viven aquí, en la ruta padre: sobreviven a abrir y cerrar una tarea.
   const [filter, setFilter] = useState<BoardFilter>(NO_FILTER)
   const [sheet, setSheet] = useState(false)
@@ -173,18 +168,17 @@ export function Tablero() {
   if (project.isError) {
     return (
       <Page>
-        <PageHeader title="Tablero" />
+        <PageHeader title={t('views.board')} />
         <EmptyState
           icon="projects"
-          title="No encontramos este proyecto"
+          title={t('notFound.title')}
           actions={
             <Button asChild variant="primary">
-              <Link to="/proyectos">Ver proyectos</Link>
+              <Link to="/proyectos">{t('notFound.action')}</Link>
             </Button>
           }
         >
-          Puede que se haya archivado o que el enlace sea de otra cuenta. En modo demo los proyectos
-          se pierden al recargar.
+          {t('notFound.body')}
         </EmptyState>
       </Page>
     )
@@ -197,8 +191,9 @@ export function Tablero() {
 
   const copyLink = async () => {
     const ok = await copyText(location.href)
-    if (ok) notify.success('Enlace copiado', { icon: 'link', description: p.name })
-    else notify.error('No se pudo copiar el enlace')
+    if (ok)
+      notify.success(t('link.copied', { ns: 'common' }), { icon: 'link', description: p.name })
+    else notify.error(t('link.copyFailed', { ns: 'common' }))
   }
 
   const archive = async () => {
@@ -208,9 +203,12 @@ export function Tablero() {
   return (
     <Page fit>
       {desktop ? (
-        <nav aria-label="Ruta" className="-mb-2 flex items-center gap-1.5 text-sm text-fg-subtle">
+        <nav
+          aria-label={t('breadcrumb')}
+          className="-mb-2 flex items-center gap-1.5 text-sm text-fg-subtle"
+        >
           <Link to="/proyectos" className="transition-colors hover:text-fg">
-            Proyectos
+            {t('nav.projects', { ns: 'common' })}
           </Link>
           <icons.chevronRight size={12} aria-hidden="true" />
           <span className="text-fg">{p.name}</span>
@@ -224,14 +222,14 @@ export function Tablero() {
             className="-ml-1 inline-flex h-11 items-center gap-0.5 pr-2 text-sm text-fg-subtle transition-colors hover:text-fg"
           >
             <icons.chevronLeft size={16} aria-hidden="true" />
-            Proyectos
+            {t('nav.projects', { ns: 'common' })}
           </Link>
           {board.data ? (
             <SegmentedControl
-              aria-label="Vista"
+              aria-label={t('views.label')}
               value={view}
               onValueChange={changeView}
-              options={COMPACT_VIEWS}
+              options={compactViews}
               size="lg"
             />
           ) : null}
@@ -245,16 +243,18 @@ export function Tablero() {
           <>
             {desktop ? (
               <SegmentedControl
-                aria-label="Vista"
+                aria-label={t('views.label')}
                 value={view}
                 onValueChange={changeView}
-                options={VIEWS}
+                options={views}
                 className="self-center"
               />
             ) : null}
             <IconButton
               aria-label={
-                activeGroups(filter) ? `Filtrar (${activeGroups(filter)} activos)` : 'Filtrar'
+                activeGroups(filter)
+                  ? t('filter.buttonActive', { count: activeGroups(filter) })
+                  : t('filter.button')
               }
               icon={<icons.filter />}
               variant="secondary"
@@ -268,7 +268,7 @@ export function Tablero() {
               // Aquí y no al final de las columnas: así no hay que hacer scroll lateral para crear una.
               <Button onClick={() => setNewColumn(true)}>
                 <Icon name="plus" />
-                Columna
+                {t('header.column')}
               </Button>
             ) : null}
             <Button
@@ -277,13 +277,13 @@ export function Tablero() {
               onClick={() => shell.openNewTask({ projectId: p.id })}
             >
               <Icon name="plus" />
-              <span className="max-md:sr-only">Nueva tarea</span>
+              <span className="max-md:sr-only">{t('header.newTask')}</span>
               <Kbd className="max-md:hidden border-accent-fg/30 text-accent-fg">N</Kbd>
             </Button>
             <Menu>
               <MenuTrigger asChild>
                 <IconButton
-                  aria-label="Opciones del proyecto"
+                  aria-label={t('header.projectOptions')}
                   icon={<icons.dots />}
                   variant="secondary"
                   className="max-md:size-11"
@@ -291,19 +291,19 @@ export function Tablero() {
               </MenuTrigger>
               <MenuContent>
                 <MenuItem icon={<icons.edit />} onSelect={() => shell.openEditProject(p)}>
-                  Editar proyecto
+                  {t('header.editProject')}
                 </MenuItem>
                 <MenuItem icon={<icons.plus />} onSelect={() => setNewColumn(true)}>
-                  Nueva columna
+                  {t('header.newColumn')}
                 </MenuItem>
                 <MenuItem icon={<icons.link />} onSelect={copyLink}>
-                  Copiar enlace
+                  {t('link.copy', { ns: 'common' })}
                 </MenuItem>
                 <MenuItem icon={<icons.archive />} onSelect={() => setArchivedOpen(true)}>
-                  Tareas archivadas
+                  {t('header.archivedTasks')}
                 </MenuItem>
                 <MenuItem icon={<icons.archive />} onSelect={archive}>
-                  Archivar proyecto
+                  {t('header.archiveProject')}
                 </MenuItem>
               </MenuContent>
             </Menu>
@@ -365,8 +365,8 @@ export function Tablero() {
           <BoardMobile projectId={p.id} board={board.data} today={m.today()} filter={filter} />
         )
       ) : board.isError ? (
-        <EmptyState icon="warning" title="No se pudo cargar el tablero">
-          Comprueba tu conexión e inténtalo de nuevo.
+        <EmptyState icon="warning" title={t('loadFailed.title')}>
+          {t('loadFailed.body')}
         </EmptyState>
       ) : view === 'calendar' ? (
         <CalendarSkeleton />

@@ -1,6 +1,6 @@
 # ADR-0045: SEO de la web sin SSR: metas en `index.html` y por página; guías públicas y prerenderizadas, como propuesta
 
-- **Estado:** Aceptado (metas, iconos, `robots.txt` y `sitemap.xml`) · Propuesto (guías públicas y prerenderizadas)
+- **Estado:** Aceptado (metas, iconos, `robots.txt` y `sitemap.xml`) · Reemplazado por ADR-0076 en las guías públicas y prerenderizadas y en dónde vive el dominio
 - **Fecha:** 2026-10-26
 - **Área:** web
 

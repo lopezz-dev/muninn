@@ -1,6 +1,7 @@
 import type { GithubRepoSummary, Muninn, Project } from '@muninn/core'
 import { notify } from '@muninn/ui'
 import type { QueryClient } from '@tanstack/react-query'
+import { t } from '../i18n'
 import { notifyUndo } from './feedback'
 import { fail, serial } from './mutations'
 import { invalidateProjects } from './queries'
@@ -50,7 +51,7 @@ export function repoChoices(
   repos: GithubRepoSummary[],
 ): { value: string; options: RepoChoice[] } {
   const current = project.githubRepo
-  const options: RepoChoice[] = [{ value: '', label: 'Sin repositorio', tone: 'text-fg-muted' }]
+  const options: RepoChoice[] = [{ value: '', label: t('github.noRepo'), tone: 'text-fg-muted' }]
   for (const r of repos) {
     const other = projects.find(
       (p) => p.id !== project.id && p.githubRepo && sameRepo(p.githubRepo, r.fullName),
@@ -58,14 +59,18 @@ export function repoChoices(
     options.push({
       value: r.fullName,
       label: r.fullName,
-      hint: other ? `en ${other.name}` : r.private ? 'privado' : undefined,
+      hint: other
+        ? t('github.inProject', { name: other.name })
+        : r.private
+          ? t('github.private')
+          : undefined,
       disabled: Boolean(other),
     })
   }
   if (!current) return { value: '', options }
   const listed = repos.find((r) => sameRepo(r.fullName, current))
   if (listed) return { value: listed.fullName, options }
-  options.push({ value: current, label: current, hint: 'sin acceso del token' })
+  options.push({ value: current, label: current, hint: t('github.noTokenAccess') })
   return { value: current, options }
 }
 
@@ -88,13 +93,12 @@ export async function pickProjectRepo(
     try {
       writable = await m.github.canWrite(repo.fullName)
     } catch (err) {
-      fail('No se pudo comprobar el acceso del token', err)
+      fail(t('github.checkFailed'), err)
       return false
     }
     if (writable === false) {
-      notify.error(`El token no tiene acceso a ${repo.fullName}`, {
-        description:
-          'Dáselo en GitHub › Settings › Developer settings › Fine-grained tokens, y vuelve a elegirlo.',
+      notify.error(t('github.noAccess', { repo: repo.fullName }), {
+        description: t('github.noAccessHint'),
       })
       return false
     }
@@ -119,7 +123,7 @@ export async function moveProjectRepo(
   try {
     await serial(from.id, () => m.projects.update(from.id, { githubRepo: null }))
   } catch (err) {
-    fail('No se pudo mover el repositorio', err)
+    fail(t('github.moveFailed'), err)
     return false
   }
   try {
@@ -127,16 +131,16 @@ export async function moveProjectRepo(
   } catch (err) {
     await serial(from.id, () => m.projects.update(from.id, { githubRepo: repo })).catch(() => {})
     await invalidateProjects(qc)
-    fail('No se pudo mover el repositorio', err)
+    fail(t('github.moveFailed'), err)
     return false
   }
   await invalidateProjects(qc)
   if (undoing) return true
-  notifyUndo(`${repo} va ahora con «${to.name}»`, {
+  notifyUndo(t('github.moved', { repo, project: to.name }), {
     icon: 'link',
-    description: `Ya no está vinculado a «${from.name}».`,
+    description: t('github.movedHint', { project: from.name }),
     undo: () => moveProjectRepo(m, qc, to, from, repo, true),
-    undone: `${repo} vuelve a «${from.name}»`,
+    undone: t('github.movedBack', { repo, project: from.name }),
   })
   return true
 }
@@ -158,24 +162,23 @@ export async function setProjectRepo(
     const duplicate =
       err instanceof Error && /projects_owner_repo_uq|duplicate key/i.test(err.message)
     if (duplicate) {
-      notify.error('Ese repositorio ya está vinculado a otro proyecto', {
-        description: 'Cada repositorio va con un solo proyecto.',
-      })
+      notify.error(t('github.duplicate'), { description: t('github.duplicateHint') })
     } else if (isMfaRequired(err)) {
-      notify.error('Para conectar GitHub necesitas el segundo factor', {
-        description:
-          'Actívalo en Ajustes › Cuenta › Segundo factor y vuelve a vincular el repositorio.',
-      })
-    } else fail('No se pudo guardar el repositorio', err)
+      notify.error(t('github.mfaRequired'), { description: t('github.mfaRequiredHint') })
+    } else fail(t('github.saveFailed'), err)
     return false
   }
   if (undoing) return true
   notifyUndo(
-    repo ? `«${project.name}» vinculado a ${repo}` : `«${project.name}» ya no tiene repositorio`,
+    repo
+      ? t('github.linked', { project: project.name, repo })
+      : t('github.unlinked', { project: project.name }),
     {
       icon: 'link',
       undo: () => setProjectRepo(m, qc, { ...project, githubRepo: repo }, prev, true),
-      undone: prev ? `«${project.name}» vuelve a ${prev}` : `«${project.name}» sin repositorio`,
+      undone: prev
+        ? t('github.linkedBack', { project: project.name, repo: prev })
+        : t('github.unlinkedBack', { project: project.name }),
     },
   )
   return true

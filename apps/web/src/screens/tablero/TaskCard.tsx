@@ -4,6 +4,7 @@ import type { TaskWithColumn } from '@muninn/core'
 import { cn, ProgressBar } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DueDate, LabelChips, PriorityFlag, SourceBadge } from '../../components/task-meta'
 import { timeAgo } from '../../lib/dates'
 
@@ -24,6 +25,7 @@ interface CardBodyProps {
  * tablero reutiliza los objetos de las tareas intactas) y no se vuelven a pintar.
  */
 export const CardBody = memo(function CardBody({ task, progress, today }: CardBodyProps) {
+  const { t } = useTranslation('board')
   const done = task.column.kind === 'done'
   const subtasks = progress && progress.total > 0 ? progress : null
   // Sin nada que mostrar, la fila de datos no existe: la tarjeta no lleva un hueco vacío abajo.
@@ -40,14 +42,14 @@ export const CardBody = memo(function CardBody({ task, progress, today }: CardBo
       {subtasks ? (
         <ProgressBar
           value={subtasks.done / subtasks.total}
-          label={`Subtareas de «${task.title}»`}
+          label={t('card.subtasks', { title: task.title })}
           className="h-[3px]"
         />
       ) : null}
       {hasMeta ? (
         <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-fg-subtle">
           {done && task.completedAt ? (
-            <span>Hecha {timeAgo(task.completedAt)}</span>
+            <span>{t('card.doneAgo', { when: timeAgo(task.completedAt) })}</span>
           ) : task.dueDate ? (
             <DueDate due={task.dueDate} today={today} />
           ) : null}
@@ -78,10 +80,11 @@ interface TaskCardProps extends CardBodyProps {
  * Espacio la recoge para moverla con las flechas (ver `dnd.ts`).
  */
 export function SortableTaskCard({ task, progress, today, projectId, large }: TaskCardProps) {
+  const { t } = useTranslation('board')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card' },
-    attributes: { role: 'link', roleDescription: 'tarjeta ordenable', tabIndex: 0 },
+    attributes: { role: 'link', roleDescription: t('card.sortable'), tabIndex: 0 },
   })
   return (
     <Link

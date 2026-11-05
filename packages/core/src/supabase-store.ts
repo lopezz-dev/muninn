@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { LoginRecord, PendingLogin } from './login-alerts'
 import type {
   AccountSession,
   Activity,
@@ -535,18 +536,29 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
 
   // Seguridad de la cuenta (ADR-0061). `auth.sessions` no se puede leer desde el cliente: las funciones
   // `list_my_sessions` y `revoke_my_session` (migración 20261029120000_account_sessions) solo ven las del usuario.
-  // `app_name` llega con la migración 20261029170000_sesiones_con_app; sin ella, no viene.
+  // `app_name` llega con la migración 20261029170000_sesiones_con_app y `device_name` con 20261105150000_nombre_de_sesion;
+  // sin ellas, no vienen.
   const account: AccountStore = {
     async sessions() {
       const { data, error } = await client.rpc('list_my_sessions')
       if (error) throw error
       return (data as Row[]).map((r) => {
         const { isCurrent, ...rest } = fromRow<AccountSession & { isCurrent: boolean }>(r)
-        return { ...rest, current: Boolean(isCurrent), appName: rest.appName ?? null }
+        return {
+          ...rest,
+          current: Boolean(isCurrent),
+          appName: rest.appName ?? null,
+          deviceName: rest.deviceName ?? null,
+        }
       })
     },
     async revokeSession(id) {
       const { data, error } = await client.rpc('revoke_my_session', { session_id: id })
+      if (error) throw error
+      return Boolean(data)
+    },
+    async renameSession(id, name) {
+      const { data, error } = await client.rpc('name_my_session', { session_id: id, name })
       if (error) throw error
       return Boolean(data)
     },
@@ -843,6 +855,84 @@ export async function prunePushLog(client: Client, { days = 90 } = {}) {
     .from('push_log')
     .delete({ count: 'exact' })
     .lt('sent_at', new Date(Date.now() - days * 86_400_000).toISOString())
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Sesiones que el cron del aviso de dispositivo nuevo aún no ha mirado (ADR-0080). Solo con la service role. */
+export async function listPendingLogins(client: Client): Promise<PendingLogin[]> {
+  const { data, error } = await client.rpc('login_alert_pending')
+  if (error) throw error
+  return ((data ?? []) as Row[]).map((r) => ({
+    sessionId: r.session_id as string,
+    ownerId: r.owner_id as string,
+    createdAt: r.created_at as string,
+    userAgent: (r.user_agent as string | null) ?? null,
+    ip: (r.ip as string | null) ?? null,
+    appName: (r.app_name as string | null) ?? null,
+    deviceName: (r.device_name as string | null) ?? null,
+    email: (r.email as string | null) ?? null,
+    locale: (r.locale as string | null) ?? null,
+    enabled: r.enabled !== false,
+    lastEmailedAt: (r.last_emailed_at as string | null) ?? null,
+  }))
+}
+
+/** Los dispositivos ya conocidos de esas cuentas (service role). */
+export async function listKnownDevices(
+  client: Client,
+  ownerIds: string[],
+): Promise<Array<{ ownerId: string; deviceKey: string }>> {
+  if (!ownerIds.length) return []
+  const { data, error } = await client
+    .from('known_devices')
+    .select('owner_id, device_key')
+    .in('owner_id', ownerIds)
+  if (error) throw error
+  return (data as Row[]).map((r) => ({
+    ownerId: r.owner_id as string,
+    deviceKey: r.device_key as string,
+  }))
+}
+
+/**
+ * Apunta las sesiones miradas y, las que tienen nombre, como dispositivos conocidos (service role). Un mismo dispositivo
+ * dos veces en el lote se junta antes del `upsert`: Postgres no deja que un `on conflict` toque la misma fila dos veces.
+ */
+export async function recordLogins(client: Client, rows: LoginRecord[]) {
+  if (!rows.length) return
+  const devices = new Map<string, { owner_id: string; device_key: string; last_seen_at: string }>()
+  for (const r of rows) {
+    if (!r.deviceKey) continue
+    const k = `${r.ownerId}\n${r.deviceKey}`
+    const prev = devices.get(k)
+    if (!prev || prev.last_seen_at < r.seenAt)
+      devices.set(k, { owner_id: r.ownerId, device_key: r.deviceKey, last_seen_at: r.seenAt })
+  }
+  if (devices.size) {
+    const known = await client
+      .from('known_devices')
+      .upsert([...devices.values()], { onConflict: 'owner_id,device_key' })
+    if (known.error) throw known.error
+  }
+  const log = await client.from('login_alert_log').upsert(
+    rows.map((r) => ({
+      session_id: r.sessionId,
+      owner_id: r.ownerId,
+      device_key: r.deviceKey,
+      emailed_at: r.emailed ? new Date().toISOString() : null,
+    })),
+    { onConflict: 'session_id', ignoreDuplicates: true },
+  )
+  if (log.error) throw log.error
+}
+
+/** Limpieza del cron: el registro solo hace falta mientras la sesión puede salir en `login_alert_pending()` (24 h). */
+export async function pruneLoginAlertLog(client: Client, { days = 30 } = {}) {
+  const { error, count } = await client
+    .from('login_alert_log')
+    .delete({ count: 'exact' })
+    .lt('created_at', new Date(Date.now() - days * 86_400_000).toISOString())
   if (error) throw error
   return count ?? 0
 }

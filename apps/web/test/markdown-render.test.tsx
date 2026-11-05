@@ -1,6 +1,7 @@
+import { Lexer, type Tokens } from 'marked'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { Markdown, safeHref } from '../src/markdown/Markdown'
+import { fitColumns, Markdown, safeHref } from '../src/markdown/Markdown'
 
 const html = (source: string, onToggleTask?: (i: number) => void) =>
   renderToStaticMarkup(<Markdown source={source} onToggleTask={onToggleTask} />)
@@ -136,5 +137,26 @@ describe('Markdown: guías', () => {
     expect(out).toContain('data-doc="05-notas.md"')
     expect(out).toContain('href="https://a.b"')
     expect(out).not.toContain('javascript:')
+  })
+})
+
+describe('Markdown: tablas', () => {
+  const table = (source: string) =>
+    Lexer.lex(source, { gfm: true }).find((t) => t.type === 'table') as Tokens.Table
+
+  it('las columnas cortas se ajustan y la de texto largo se reparte', () => {
+    const md =
+      '| Inicio | Entrega | Tarjeta | Versión |\n|---|---|---|---|\n' +
+      '| 03-11-2026 | 04-11-2026 | **Corte 0.9.0**: #120 y #121 fusionadas, migración aplicada | 0.9 |\n' +
+      '| 05-11-2026 | | Pruebas: F2 · Vista Calendario (manual) | — |'
+    expect(fitColumns(table(md))).toEqual([true, true, false, true])
+    const out = html(md)
+    expect(out.match(/whitespace-nowrap/g)).toHaveLength(9)
+    expect(out).toContain('min-w-48')
+    expect(out).toContain('overflow-x-auto')
+  })
+
+  it('una tabla de valores cortos no reparte nada', () => {
+    expect(fitColumns(table('| a | b |\n|---|---|\n| 1 | 2 |'))).toEqual([true, true])
   })
 })

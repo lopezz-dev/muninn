@@ -22,10 +22,12 @@ import {
   DotsThree,
   DownloadSimple,
   Drop,
+  Envelope,
   Flag,
   FunnelSimple,
   GitBranch,
   GithubLogo,
+  Globe,
   House,
   ImageSquare,
   Info,
@@ -77,6 +79,7 @@ export const icons = {
   search: MagnifyingGlass,
   plus: Plus,
   bell: Bell,
+  mail: Envelope,
   mic: Microphone,
   send: PaperPlaneTilt,
   speaker: SpeakerHigh,
@@ -115,6 +118,8 @@ export const icons = {
   image: ImageSquare,
   attach: Paperclip,
   edit: PencilSimple,
+  /** Idioma (ADR-0077). */
+  globe: Globe,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type IconName = keyof typeof icons

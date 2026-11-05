@@ -3,6 +3,7 @@ import { Checkbox, cn, icons } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DueDate, LabelChips, PriorityFlag, SourceBadge } from '../../components/task-meta'
 import { useAgentColumn } from '../../lib/agent'
 import type { BoardData } from '../../lib/board'
@@ -26,6 +27,7 @@ interface RowProps {
 function TaskRow({ task, progress, today, projectId }: RowProps) {
   const m = useMuninn()
   const qc = useQueryClient()
+  const { t } = useTranslation('board')
   const done = task.column.kind === 'done'
   const subtasks = progress && progress.total > 0 ? progress : null
   const meta = (
@@ -37,7 +39,7 @@ function TaskRow({ task, progress, today, projectId }: RowProps) {
         </span>
       ) : null}
       {done && task.completedAt ? (
-        <span>Hecha {timeAgo(task.completedAt)}</span>
+        <span>{t('card.doneAgo', { when: timeAgo(task.completedAt) })}</span>
       ) : task.dueDate ? (
         <DueDate due={task.dueDate} today={today} done={done} />
       ) : null}
@@ -50,7 +52,9 @@ function TaskRow({ task, progress, today, projectId }: RowProps) {
         checked={done}
         // Las dos acciones son optimistas y avisan con «Deshacer» (ADR-0025).
         onCheckedChange={() => void (done ? reopenTask(m, qc, task) : completeTask(m, qc, task))}
-        aria-label={`${done ? 'Reabrir' : 'Completar'}: ${task.title}`}
+        aria-label={
+          done ? t('list.reopen', { title: task.title }) : t('list.complete', { title: task.title })
+        }
         touch
         size="lg"
         className="md:size-4 md:rounded-sm"
@@ -94,6 +98,7 @@ interface GroupProps {
 /** Un grupo de la lista: las tareas de una columna, plegable y con «Añadir tarea» al pie. */
 function Group({ column, tasks, total, filtering, counts, today, projectId }: GroupProps) {
   const [open, setOpen] = useState(true)
+  const { t } = useTranslation('board')
   const listId = `lista-${column.id}`
   const isAgent = useAgentColumn(projectId).columnId === column.id
   return (
@@ -120,12 +125,12 @@ function Group({ column, tasks, total, filtering, counts, today, projectId }: Gr
             <icons.agent
               size={13}
               className="shrink-0 text-accent"
-              aria-label="columna del agente"
+              aria-label={t('list.agentColumn')}
             />
           ) : null}
           {filtering && tasks.length !== total ? (
             <span className="shrink-0 text-xs font-normal text-fg-subtle tabular">
-              {tasks.length} de {total}
+              {t('list.countOf', { shown: tasks.length, total })}
             </span>
           ) : (
             <ColumnCount count={total} limit={column.wipLimit} />
@@ -136,11 +141,11 @@ function Group({ column, tasks, total, filtering, counts, today, projectId }: Gr
         <div id={listId} className="flex flex-col bg-surface">
           {tasks.length > 0 ? (
             <ul className="flex flex-col">
-              {tasks.map((t) => (
+              {tasks.map((task) => (
                 <TaskRow
-                  key={t.id}
-                  task={t}
-                  progress={counts[t.id]}
+                  key={task.id}
+                  task={task}
+                  progress={counts[task.id]}
                   today={today}
                   projectId={projectId}
                 />
@@ -148,7 +153,7 @@ function Group({ column, tasks, total, filtering, counts, today, projectId }: Gr
             </ul>
           ) : (
             <p className="px-4 py-3 text-sm text-fg-faint">
-              {total > 0 ? 'Ninguna tarea cumple el filtro.' : `Sin tareas en ${column.name}.`}
+              {total > 0 ? t('column.noMatch') : t('column.emptyIn', { column: column.name })}
             </p>
           )}
           {column.kind === 'done' || isAgent ? null : (

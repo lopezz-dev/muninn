@@ -15,6 +15,7 @@ import { settingsSection } from './screens/ajustes/sections'
 import { ErrorScreen } from './screens/ErrorScreen'
 import { NotFound } from './screens/NotFound'
 import { AppShell } from './shell/AppShell'
+import { PublicShell } from './shell/PublicShell'
 
 /**
  * Rutas de la app (ADR-0020). Cada pantalla es un chunk aparte (`lazyRouteComponent`) que se
@@ -28,9 +29,9 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFound,
 })
 
-const screen = <T extends Record<string, unknown>>(
+const screen = <T extends Record<string, unknown>, K extends keyof T & string>(
   load: () => Promise<T>,
-  name: keyof T & string,
+  name: K,
 ) => lazyRouteComponent(load, name)
 
 export interface LoginSearch {
@@ -84,24 +85,35 @@ const oauthConsentRoute = createRoute({
   component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent'),
 })
 
+/** La documentación es pública (ADR-0076): sin sesión se lee en un marco propio, sin datos. */
+const isPublicPath = (pathname: string) => /^\/documentacion(?:\/|$)/.test(pathname)
+
 /** Todo lo que necesita datos: sin sesión ni demo, a /login (y vuelta aquí al entrar). */
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: '_app',
   beforeLoad: ({ context, location }) => {
     const { auth } = context
-    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí).
+    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí), salvo lo público.
     if (auth.kind === 'anonymous' || auth.kind === 'mfa') {
+      if (isPublicPath(location.pathname)) return { auth: null }
       throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
     }
     return { auth }
   },
-  // El core se descarga en paralelo con la pantalla; nada se pinta hasta tener los dos.
-  loader: ({ context }) => loadMuninn(context.auth),
+  // El core se descarga en paralelo con la pantalla; nada se pinta hasta tener los dos. Sin sesión (solo en lo
+  // público), no hay core: `useMuninn()` no se llama en esas pantallas.
+  loader: ({ context }) => (context.auth ? loadMuninn(context.auth) : null),
   // Es la misma instancia mientras no cambie el usuario (`router.invalidate()` al cambiar).
   staleTime: Number.POSITIVE_INFINITY,
-  component: AppShell,
+  component: AppFrame,
 })
+
+/** El shell de la app o, sin sesión en una página pública, el marco de la documentación. */
+function AppFrame() {
+  const visitor = appRoute.useRouteContext({ select: (c) => c.auth === null })
+  return visitor ? <PublicShell /> : <AppShell />
+}
 
 const homeRoute = createRoute({
   getParentRoute: () => appRoute,

@@ -1,6 +1,7 @@
 import { cn, icons, Kbd } from '@muninn/ui'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppIcon } from '../../components/AppIcon'
 import { typingIn } from '../../lib/keyboard'
 import { SETTINGS_INDEX, type SettingEntry, searchSettings } from '../../lib/settings-search'
@@ -86,6 +87,7 @@ export function SettingsSearchField({
   search: SettingsSearch
   className?: string
 }) {
+  const { t } = useTranslation('settings')
   return (
     <label
       className={cn(
@@ -101,8 +103,8 @@ export function SettingsSearchField({
         aria-expanded={search.searching}
         aria-controls="resultados-ajustes"
         aria-activedescendant={search.searching ? `resultado-ajuste-${search.active}` : undefined}
-        aria-label="Buscar un ajuste"
-        placeholder="Buscar un ajuste"
+        aria-label={t('search.placeholder')}
+        placeholder={t('search.placeholder')}
         value={search.query}
         onChange={(e) => search.change(e.target.value)}
         onKeyDown={search.onKeyDown}
@@ -118,6 +120,7 @@ export function SettingsSearchField({
  * hay dos copias de cada control que se desfasen).
  */
 export function SettingsResults({ search }: { search: SettingsSearch }) {
+  const { t } = useTranslation('settings')
   const q = search.query.trim()
   const sections = [...new Set(search.hits.map((h) => h.section))]
 
@@ -128,13 +131,16 @@ export function SettingsResults({ search }: { search: SettingsSearch }) {
           <icons.search size={20} aria-hidden="true" />
         </span>
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Ajustes con «{q}»</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('search.title', { query: q })}
+          </h1>
           <p className="text-base text-fg-subtle" aria-live="polite">
             {search.hits.length === 0
-              ? 'Ningún ajuste coincide. Prueba con otra palabra.'
-              : `${search.hits.length === 1 ? '1 ajuste' : `${search.hits.length} ajustes`} en ${
-                  sections.length === 1 ? '1 sección' : `${sections.length} secciones`
-                }. Pulsa uno para ir a él; Esc borra la búsqueda.`}
+              ? t('search.none')
+              : t('search.summary', {
+                  settings: t('search.settings', { count: search.hits.length }),
+                  sections: t('search.sections', { count: sections.length }),
+                })}
           </p>
         </div>
       </header>
@@ -174,7 +180,7 @@ export function SettingsResults({ search }: { search: SettingsSearch }) {
                         {hit.soon ? (
                           <span className="inline-flex items-center gap-1 rounded-xs border border-dashed border-border-strong px-1.5 py-px text-2xs font-semibold tracking-wide text-fg-muted uppercase">
                             <icons.clock size={10} aria-hidden="true" />
-                            Próximamente
+                            {t('soon')}
                           </span>
                         ) : null}
                         <icons.chevronRight

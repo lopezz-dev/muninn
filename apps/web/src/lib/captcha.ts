@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { currentLocale } from '../i18n'
 
 /**
  * CAPTCHA de la entrada con Cloudflare Turnstile (ADR-0060). Supabase Auth valida el token con la
@@ -81,7 +82,8 @@ export function useCaptcha(siteKey: string | null = captchaSiteKey) {
           sitekey: siteKey,
           appearance: 'interaction-only',
           theme: 'auto',
-          language: 'es',
+          // El widget, en el idioma de la app.
+          language: currentLocale(),
           size: 'flexible',
           'refresh-expired': 'auto',
           callback: (value: string) => {
