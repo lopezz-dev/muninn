@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.10.0](https://github.com/lopezz-dev/muninn/compare/v0.9.0...v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **core:** aviso por correo al entrar desde un dispositivo nuevo ([fd93337](https://github.com/lopezz-dev/muninn/commit/fd93337a5e63ebdb8899ab670623e62d2c3b3388))
+* **core:** aviso por correo al entrar desde un dispositivo nuevo ([02d9bf7](https://github.com/lopezz-dev/muninn/commit/02d9bf747e2adfea99be61d212fda42d615062d9))
+* **core:** el aviso de dispositivo nuevo reconoce por nombre y manda uno al día ([c0ab151](https://github.com/lopezz-dev/muninn/commit/c0ab1512f5ccdc2f12d277ae9ff46be19c5c80ea))
+* **desktop:** el nombre del equipo en Sesiones y las apps conectadas agrupadas ([a9f86be](https://github.com/lopezz-dev/muninn/commit/a9f86be669b98dd812c88789444ef00bed4c2f04))
+* **desktop:** el nombre del equipo en Sesiones y las apps conectadas agrupadas ([160a199](https://github.com/lopezz-dev/muninn/commit/160a19905da0342d510c9d8bac3bfda7a7d0e890))
+* **ui:** los componentes de @muninn/ui siguen el idioma de la app ([239753e](https://github.com/lopezz-dev/muninn/commit/239753e522e561fc41dba73b9632cb4389786f67))
+* **ui:** los componentes de @muninn/ui siguen el idioma de la app ([3b74aa5](https://github.com/lopezz-dev/muninn/commit/3b74aa5143a2fa8ecfd2c184096183652079cdbf))
+* **web:** Ajustes, buscador, diálogos y textos compartidos en inglés y español ([1dc8c88](https://github.com/lopezz-dev/muninn/commit/1dc8c88ea6941abb3eb3349e83b67225c5b18aa8))
+* **web:** Ajustes, buscador, diálogos y textos compartidos en inglés y español ([#126](https://github.com/lopezz-dev/muninn/issues/126)) ([1fc00a0](https://github.com/lopezz-dev/muninn/commit/1fc00a005c95b6ed2152b66f93aea9828f34c1af))
+* **web:** el resto de pantallas en inglés y español ([35f12c8](https://github.com/lopezz-dev/muninn/commit/35f12c887524f4650b8821aa6378dfbfd5cc9625))
+* **web:** el resto de pantallas en inglés y español ([6336ae8](https://github.com/lopezz-dev/muninn/commit/6336ae8e17c05d9ba21cba4c131aee4c14e1cbad))
+* **web:** guías públicas y prerenderizadas, y la URL pública en un solo sitio ([eb6150b](https://github.com/lopezz-dev/muninn/commit/eb6150b79ddffb35085a176e0980ed1867744896))
+* **web:** i18n con i18next, idioma en Ajustes y el shell en inglés y español ([e8b5b9b](https://github.com/lopezz-dev/muninn/commit/e8b5b9b632988f5d775135f1da4b38569b454f52))
+* **web:** i18n con i18next, idioma en Ajustes y el shell en inglés y español ([#125](https://github.com/lopezz-dev/muninn/issues/125)) ([47b4750](https://github.com/lopezz-dev/muninn/commit/47b475047158047c3b903c47e5df64bd32367214))
+* **web:** namespaces diferidos de la fase 2 de i18n y su test de paridad ([c5be98f](https://github.com/lopezz-dev/muninn/commit/c5be98f0574e79ff73aadabdce823fffd6b08181))
+* **web:** namespaces diferidos del resto de pantallas (i18n) ([48ae09b](https://github.com/lopezz-dev/muninn/commit/48ae09b99ffaff120c0aa2838769038fb059fb28))
+* **web:** ponerle nombre a cada sesión desde «Sesiones y dispositivos» ([cbb8c59](https://github.com/lopezz-dev/muninn/commit/cbb8c59fcec74f00e61f30ff7f2aab4fcf96d04b))
+* **web:** ponerle nombre a cada sesión desde «Sesiones y dispositivos» ([52d4ade](https://github.com/lopezz-dev/muninn/commit/52d4ade4ccfec4928c27943035339ad7d06aa757))
+
+
+### Bug Fixes
+
+* **desktop:** clean_device_name solo donde se usa (clippy en Linux) ([a93f14a](https://github.com/lopezz-dev/muninn/commit/a93f14a0dcd2f469a77eca54d9641805065d5e10))
+* **ui:** las hojas inferiores se cierran arrastrando el asa ([f79f86e](https://github.com/lopezz-dev/muninn/commit/f79f86e3c87f838c7e024d96e3181bde31001d15))
+* **ui:** las hojas inferiores se cierran arrastrando el asa ([a4913f0](https://github.com/lopezz-dev/muninn/commit/a4913f0f411d6c199357a16654ee6e0c99cc5ca1))
+* **ui:** menús, popovers y calendario más opacos con el cristal ([45c6df6](https://github.com/lopezz-dev/muninn/commit/45c6df6edfd2aad7e47d3b613b6fff38aa631309))
+* **ui:** menús, popovers y calendario más opacos con el cristal ([c90f964](https://github.com/lopezz-dev/muninn/commit/c90f964a709ff73730be842d2f2185c8c6ab89d8))
+* **web:** la lista de sesiones enseña a la primera el nombre que recupera el navegador ([da08c7f](https://github.com/lopezz-dev/muninn/commit/da08c7fd71a0ab87955a1e188827df933992d9d7))
+* **web:** las tablas del Markdown ajustan las columnas cortas y hacen scroll dentro ([b605627](https://github.com/lopezz-dev/muninn/commit/b605627222376438a782617e8e3540a1fad2d672))
+* **web:** seleccionar texto en la vista previa de una nota no pasa a editar ([49067d9](https://github.com/lopezz-dev/muninn/commit/49067d9366c866314f580483f888126b48d35907))
+* **web:** seleccionar texto en una nota no pasa a editar ([3a0fa55](https://github.com/lopezz-dev/muninn/commit/3a0fa55312317ea79903ec960446a8b62f926f3c))
+* **web:** tablas del Markdown con columnas bien repartidas ([8fce9b8](https://github.com/lopezz-dev/muninn/commit/8fce9b88b79c980a7503c0a516bab31a83723fa5))
+
 ## [0.9.0](https://github.com/lopezz-dev/muninn/compare/v0.8.0...v0.9.0) (2026-11-03)
 
 
