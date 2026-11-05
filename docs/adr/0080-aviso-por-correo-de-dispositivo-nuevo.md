@@ -1,6 +1,6 @@
 # ADR-0080: Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-11-05
 - **Área:** db, core
 - **Complementa a:** [ADR-0061](0061-seguridad-de-la-cuenta.md), [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md),
