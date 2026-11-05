@@ -23,6 +23,7 @@ supabase/.temp/
 supabase/functions/github/_core/
 supabase/functions/news/_core/
 supabase/functions/push/_core/
+supabase/functions/security/_core/
 
 # Capturas y registros de Playwright MCP (pruebas en el navegador)
 .playwright-mcp/

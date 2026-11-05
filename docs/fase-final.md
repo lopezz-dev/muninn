@@ -294,6 +294,12 @@ pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de p
   reteniendo su repo de GitHub». La regla del servidor sí la cubre la prueba SQL.)*
 - [ ] **Apps con acceso** (necesita el paso 6 o 7: una app conectada por OAuth): sale claude.ai (o Claude Code) con la fecha y su web.
   **Quitar acceso**: desaparece y esa app deja de poder usar el MCP (pide volver a conectar). Sin ninguna app, dice «Ninguna».
+- [ ] **Aviso de dispositivo nuevo ([ADR-0080](adr/0080-aviso-por-correo-de-dispositivo-nuevo.md)):** migración
+  `20261105120000_aviso_dispositivo_nuevo`, secretos, función `security` y cron, con los pasos de
+  [gotchas/db › Aviso de dispositivo nuevo](gotchas/db.md#aviso-de-dispositivo-nuevo-pasos-manuales). Tras la primera pasada,
+  `known_devices` tiene tus dispositivos y no ha llegado ningún correo. Entra desde un navegador que no hayas usado: en menos de 5 minutos
+  llega «Nuevo inicio de sesión en Muninn: …» con el dispositivo, la hora y la IP, y su enlace abre Sesiones y dispositivos. Vuelve a
+  entrar con ese mismo navegador: no llega otro. Desactívalo en Ajustes › Cuenta, entra desde otro tipo de dispositivo: no llega nada.
 
 ## 5. iPhone (≈ 45 min)
 

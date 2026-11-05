@@ -137,6 +137,11 @@ export const settings = {
       description: 'The others or all of them, this one included.',
       keywords: 'log out logout everywhere all security',
     },
+    'aviso-dispositivo-nuevo': {
+      label: 'New-device sign-in alerts',
+      description: 'An email when someone signs in from a device you haven’t used.',
+      keywords: 'email notification login security alert unknown device',
+    },
     apps: {
       label: 'Apps with access',
       description:

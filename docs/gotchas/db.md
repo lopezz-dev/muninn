@@ -367,3 +367,37 @@
   ventana privada): si no, el consentimiento se aprueba (200 en los logs de Auth) pero claude.ai nunca canjea el código y dice «Error
   Starting Authentication». MFA TOTP se activa en **Authentication › Multi-Factor** (lo está por
   defecto); quitar un factor confirmado exige una sesión `aal2`, por eso «Desactivar» pide un código antes.
+
+### Aviso de dispositivo nuevo (pasos manuales)
+
+- **Síntoma:** entras desde otro dispositivo y no llega ningún correo, o la función `security` responde 500 con «Faltan los secretos…».
+- **Causa:** el aviso ([ADR-0080](../adr/0080-aviso-por-correo-de-dispositivo-nuevo.md)) necesita la migración, la Edge Function
+  `security`, tres secretos y un cron. Sin el cron no se mira ninguna sesión: no hay *trigger* en `auth.sessions`, a propósito.
+- **Solución,** en este orden:
+  1. **Migración:** aplica `supabase/migrations/20261105120000_aviso_dispositivo_nuevo.sql` (SQL Editor o `npx supabase@2 db push`). Si
+     usas `apply_migration` del MCP de Supabase, alinea la versión (arriba).
+  2. **Secretos** (Supabase › **Edge Functions › Secrets**): `RESEND_API_KEY` (la misma clave de Resend que la contraseña del SMTP;
+     necesita *Sending access*), `MUNINN_MAIL_FROM` (p. ej. `Muninn <avisos@send.<dominio>>`, del dominio verificado en Resend) y
+     `MUNINN_APP_URL` (la URL publicada, sin barra final). Reutiliza `MUNINN_SYNC_SECRET` y, opcional, `MUNINN_TIME_ZONE`.
+  3. **Desplegar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/security/_core/muninn.js`, fuera de git) y
+     `npx supabase@2 functions deploy security --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`.
+  4. **Cron cada 5 minutos** (SQL Editor):
+     ```sql
+     select cron.schedule('muninn-login-alerts', '*/5 * * * *', $$
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/security/login-alerts',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 30000
+       );
+     $$);
+     ```
+  5. **Comprobar:** la primera pasada apunta en silencio tus dispositivos de las últimas 24 h (`select * from known_devices`). Entra
+     desde un navegador que no hayas usado (otro navegador o el iPhone): en menos de 5 minutos llega el correo, y
+     `login_alert_log.emailed_at` tiene fecha. La respuesta de la función está en `net._http_response`.
+- **Ojo:** el «dispositivo» es el tipo («Windows · Chrome»), no el aparato: otro Windows con Chrome no avisa. Y una sesión de hace más de
+  24 h que no se miró (cron parado) ya no se avisa nunca.
