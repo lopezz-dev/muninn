@@ -17,6 +17,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SelectMenu } from '../../components/SelectMenu'
 import { PRIORITY_TEXT, SourceBadge } from '../../components/task-meta'
+import { intlLocale } from '../../i18n'
 import { activityLink, actorName, describeActivity } from '../../lib/activity'
 import { type BoardData, PRIORITIES } from '../../lib/board'
 import { dueLabel, timeAgo } from '../../lib/dates'
@@ -149,7 +150,7 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
           <button
             type="button"
             aria-label={t('body.dueDateValue', {
-              date: task.dueDate ? formatDateShort(task.dueDate) : t('body.noDate'),
+              date: task.dueDate ? formatDateShort(task.dueDate, intlLocale()) : t('body.noDate'),
             })}
             className={cn(box, 'inline-flex cursor-pointer items-center gap-1.5')}
           >

@@ -37,7 +37,7 @@ describe('notify', () => {
     act(() => {
       notify.error('No se pudo sincronizar')
     })
-    await userEvent.click(await screen.findByRole('button', { name: 'Cerrar notificación' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Close notification' }))
     await waitFor(() =>
       expect(screen.queryByText('No se pudo sincronizar')).not.toBeInTheDocument(),
     )

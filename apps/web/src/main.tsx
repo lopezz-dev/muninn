@@ -7,6 +7,7 @@ import { Fragment, type ReactNode, StrictMode, useSyncExternalStore } from 'reac
 import { createRoot } from 'react-dom/client'
 // Antes que nada que pinte texto: el primer pintado ya sale en su idioma (ADR-0077).
 import { i18n } from './i18n'
+import { AppUiLocale } from './i18n/ui-locale'
 import { appearanceStore } from './lib/appearance'
 import { queryClient } from './lib/query-client'
 import { router } from './router'
@@ -37,10 +38,12 @@ createRoot(root).render(
     <QueryClientProvider client={queryClient}>
       <IconDefaults>
         <TooltipProvider>
-          <LanguageRoot>
-            <RouterProvider router={router} />
-          </LanguageRoot>
-          <Toaster />
+          <AppUiLocale>
+            <LanguageRoot>
+              <RouterProvider router={router} />
+            </LanguageRoot>
+            <Toaster />
+          </AppUiLocale>
         </TooltipProvider>
       </IconDefaults>
     </QueryClientProvider>

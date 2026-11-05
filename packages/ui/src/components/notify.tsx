@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Toaster as SonnerToaster, toast } from 'sonner'
 import { cn } from '../cn'
 import { type IconName, icons } from '../icons'
+import { useUiLocale } from '../locale'
 
 /**
  * Notificaciones efímeras: una píldora arriba en el centro (la «isla» del diseño).
@@ -117,6 +118,7 @@ export function NotificationPill({
   onDismiss,
   continued,
 }: NotificationPillProps) {
+  const { labels } = useUiLocale()
   const Close = icons.close
   return (
     <div
@@ -142,7 +144,7 @@ export function NotificationPill({
       {tone === 'error' && onDismiss ? (
         <button
           type="button"
-          aria-label="Cerrar notificación"
+          aria-label={labels.closeNotification}
           onClick={onDismiss}
           className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-fg-subtle transition-[color,background-color,scale] duration-150 ease-out hover:bg-surface-hover hover:text-fg active:scale-[0.92]"
         >

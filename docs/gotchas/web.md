@@ -855,6 +855,10 @@
   - Fechas, números y dinero: `Intl` con `intlLocale()` (`src/i18n`), nunca `'es-ES'` fijo. Los formateadores se guardan
     por idioma (`lib/dates.ts`, `lib/calendar.ts`, `lib/finance.ts`): crearlos en cada llamada es caro. `AmountField` recibe
     `locale={intlLocale()}`; sin él, enseña el importe a la española.
+  - Los componentes de `@muninn/ui` (fecha, «Cerrar» de diálogos y hojas, avisos) no usan i18next: sus textos llegan por
+    `<AppUiLocale>` (`src/i18n/ui-locale.tsx`, en `main.tsx`), que los saca de `common` › `ui.*` y envuelve también al
+    `<Toaster />`. Sin él, salen en inglés: un test de la web que busque «Hoy» o «Cerrar» tiene que envolver con
+    `UiLocaleProvider value={uiLocale()}`. `formatDateShort` pide el idioma: `formatDateShort(iso, intlLocale())`.
   - Una pantalla que pinta piezas de otra (las tarjetas usan `SourceBadge` de `task`; Inicio, `UpcomingCharges` de
     `finance`) pide los dos namespaces en su `useTranslation([...])`: así suspende una sola vez y no a trozos.
   - En Git Bash, un *heredoc* con comillas tipográficas (’ “ ») corta el comando («unexpected EOF»). Para scripts de

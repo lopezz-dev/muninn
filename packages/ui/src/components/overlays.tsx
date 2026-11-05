@@ -2,6 +2,7 @@ import { Dialog as RDialog } from 'radix-ui'
 import { type ComponentProps, type PointerEvent, type ReactNode, useRef } from 'react'
 import { cn } from '../cn'
 import { icons } from '../icons'
+import { useUiLocale } from '../locale'
 import { IconButton } from './button'
 
 // ─── Diálogo ─────────────────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export function DialogContent({
 }
 
 function DialogHeader({ title, description }: { title: ReactNode; description?: ReactNode }) {
+  const { labels } = useUiLocale()
   const Close = icons.close
   return (
     <div className="flex items-start gap-3">
@@ -95,7 +97,7 @@ function DialogHeader({ title, description }: { title: ReactNode; description?: 
       </div>
       <RDialog.Close asChild>
         <IconButton
-          aria-label="Cerrar"
+          aria-label={labels.close}
           icon={<Close />}
           size="sm"
           className="-mt-1 -mr-1 ml-auto"
@@ -178,6 +180,7 @@ export function SheetContent({
   children,
   ...props
 }: SheetContentProps) {
+  const { labels } = useUiLocale()
   const Close = icons.close
   // Sin `onDragClose`, el asa pulsa el botón de cerrar: así cierra igual que la X y avisa al `Dialog`.
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -225,7 +228,7 @@ export function SheetContent({
           <div className="ml-auto flex items-center gap-1">
             {toolbar}
             <RDialog.Close asChild>
-              <IconButton ref={closeRef} aria-label="Cerrar" icon={<Close />} />
+              <IconButton ref={closeRef} aria-label={labels.close} icon={<Close />} />
             </RDialog.Close>
           </div>
         </div>
