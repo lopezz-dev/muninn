@@ -1,6 +1,6 @@
 {
   "name": "muninn",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "description": "Muninn — sistema operativo personal: proyectos, tareas, notas, finanzas y un asistente con memoria.",
   "license": "MIT",

@@ -25,6 +25,7 @@
   --color-sidebar: var(--mn-color-sidebar);
   --color-surface: var(--mn-color-surface);
   --color-surface-raised: var(--mn-color-surface-raised);
+  --color-surface-floating: var(--mn-color-surface-floating);
   --color-surface-hover: var(--mn-color-surface-hover);
   --color-surface-sunken: var(--mn-color-surface-sunken);
   --color-border: var(--mn-color-border);
@@ -154,6 +155,12 @@
 }
 @utility glass-raised {
   background-color: var(--mn-color-surface-raised);
+  -webkit-backdrop-filter: var(--mn-backdrop);
+  backdrop-filter: var(--mn-backdrop);
+}
+/* Menús, popovers y el calendario: flotan sobre otras superficies (a menudo un diálogo) y necesitan leerse bien. */
+@utility glass-floating {
+  background-color: var(--mn-color-surface-floating);
   -webkit-backdrop-filter: var(--mn-backdrop);
   backdrop-filter: var(--mn-backdrop);
 }
