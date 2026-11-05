@@ -6,6 +6,7 @@
   --mn-color-sidebar: #101215;
   --mn-color-surface: #15181C;
   --mn-color-surface-raised: #1D2026;
+  --mn-color-surface-floating: #1D2026;
   --mn-color-surface-hover: #181B20;
   --mn-color-surface-sunken: #111316;
   --mn-color-border: #23272E;
@@ -76,6 +77,7 @@
   --mn-color-sidebar: rgba(16, 18, 21, 0.62);
   --mn-color-surface: rgba(21, 24, 28, 0.66);
   --mn-color-surface-raised: rgba(29, 32, 38, 0.74);
+  --mn-color-surface-floating: rgba(29, 32, 38, 0.93);
   --mn-color-surface-hover: rgba(255, 255, 255, 0.04);
   --mn-color-surface-sunken: rgba(17, 19, 22, 0.5);
   --mn-color-border: rgba(255, 255, 255, 0.07);

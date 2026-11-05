@@ -163,6 +163,14 @@
   `tooltip.tsx`, `toggles.tsx`, `segmented-control.tsx`). `package.json` declara `"sideEffects": ["*.css"]`
   para que lo no usado se pueda descartar.
 
+### Lo que flota va con `glass-floating`, no con `glass-raised`
+
+- **Síntoma:** con el cristal activado, un menú o el calendario de un campo de fecha abierto encima de un diálogo deja ver lo de
+  detrás (el botón naranja «Crear tarea») y se lee peor.
+- **Causa:** `surface-raised` en cristal está al 74 %: dos capas así una encima de otra no tapan lo suficiente.
+- **Solución:** menús, popovers y el calendario usan `glass-floating` (`surface-floating`, al 93 % en cristal e igual que
+  `surface-raised` en sólido). Los diálogos y las hojas siguen con `glass-raised`.
+
 ### Selección sobre cristal: `bg-fg/[0.07]`, no `bg-surface-raised`
 
 - **Síntoma:** con el cristal activado, la opción seleccionada de una lista dentro de un panel `glass-raised`
