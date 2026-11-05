@@ -20,12 +20,11 @@ export const security: Messages<typeof en> = {
   loginAlerts: {
     title: 'Avisos de inicio de sesión',
     description:
-      'Un correo cuando alguien entra en tu cuenta desde un dispositivo que no habías usado.',
+      'Un correo cuando alguien entra en tu cuenta desde un dispositivo que no reconocemos.',
     row: 'Avisarme de dispositivos nuevos',
     onHint:
-      'Activado. Unos minutos después de entrar desde otro tipo de dispositivo (otro navegador, tu móvil, una app que conectes), te llega un correo.',
-    offHint:
-      'Desactivado. Las entradas desde dispositivos nuevos siguen saliendo en Sesiones y dispositivos.',
+      'Activado. Si alguien entra desde un dispositivo sin nombre o nuevo, te llega un correo unos minutos después (uno al día como mucho). Ponle nombre a los tuyos para que no avisen.',
+    offHint: 'Desactivado. Las entradas siguen saliendo en Sesiones y dispositivos.',
     turnedOn: 'Avisos de dispositivos nuevos activados',
     turnedOff: 'Avisos de dispositivos nuevos desactivados',
     saveFailed: 'No se pudo guardar el aviso',

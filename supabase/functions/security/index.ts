@@ -1,4 +1,4 @@
-// Edge Function de Supabase (Deno): aviso por correo al entrar desde un dispositivo nuevo (ADR-0080). Corre con el
+// Edge Function de Supabase (Deno): aviso por correo al entrar desde un dispositivo sin nombre o nuevo (ADR-0080). Corre con el
 // ordenador apagado. Qué sesión avisar y el texto del correo los decide @muninn/core (`login-alerts.ts`, con tests); aquí
 // solo se leen secretos y se envía con la API de Resend. Antes de desplegar: `pnpm --filter @muninn/core build:edge`
 // (genera ./_core/muninn.js). Pasos completos en docs/gotchas/db.md, «Aviso de dispositivo nuevo (pasos manuales)».

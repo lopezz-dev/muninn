@@ -122,17 +122,19 @@ a entrar en uno de ellos y quieres los avisos, actívalos otra vez en **Ajustes 
 
 ## Aviso de dispositivo nuevo
 
-Cuando alguien entra en tu cuenta desde un dispositivo que no habías usado, te llega un correo unos minutos después. Dice
-qué dispositivo era, cuándo y desde qué dirección IP. Si fuiste tú, no hace falta hacer nada. Si no, ciérrala en
-**Sesiones y dispositivos** (el correo trae el enlace) y activa el segundo factor.
+Cuando alguien entra en tu cuenta desde un dispositivo que Muninn no reconoce, te llega un correo unos minutos después. Dice
+qué dispositivo era, cuándo y desde qué dirección IP. Si no fuiste tú, ciérrala en **Sesiones y dispositivos** (el correo
+trae el enlace) y activa el segundo factor.
 
-Muninn reconoce el **tipo** de dispositivo, no el aparato concreto: «Windows · Chrome», «iPhone · Safari», la app de
-escritorio o una app que conectes, como claude.ai. Por eso:
+Muninn reconoce un dispositivo por su **nombre**: el de tu ordenador en la app de escritorio, el que le pusiste con el lápiz
+(ver «Ponerle nombre a una sesión») o el de una app conectada, como claude.ai. Por eso:
 
-- Entrar desde otro navegador, desde el móvil o conectar una app nueva sí avisa.
-- Entrar desde **otro** ordenador con el mismo sistema y el mismo navegador que ya usas **no** avisa. Para eso está el
-  segundo factor: el aviso es una ayuda más, no la protección principal.
+- Una sesión **sin nombre** avisa siempre: quien entra sin permiso no tiene ninguno.
+- Si fuiste tú, **ponle nombre** a esa sesión y no te volveremos a avisar de ella. El navegador lo recuerda, así que la
+  próxima vez que entres desde ahí tampoco avisa.
 - Volver a conectar una app que ya usabas no avisa cada vez.
+- Te mandamos **como mucho un correo al día**. Si entran varias veces el mismo día, van en el mismo correo; lo que llegue
+  después solo se ve en la lista.
 
 Está activado por defecto. Lo desactivas en **Avisos de inicio de sesión › Avisarme de dispositivos nuevos**; mientras
 está desactivado, Muninn sigue apuntando tus dispositivos, así que al volver a activarlo no te llegan avisos atrasados.

@@ -374,7 +374,7 @@
 - **Causa:** el aviso ([ADR-0080](../adr/0080-aviso-por-correo-de-dispositivo-nuevo.md)) necesita la migración, la Edge Function
   `security`, tres secretos y un cron. Sin el cron no se mira ninguna sesión: no hay *trigger* en `auth.sessions`, a propósito.
 - **Solución,** en este orden:
-  1. **Migración:** aplica `supabase/migrations/20261105120000_aviso_dispositivo_nuevo.sql` (SQL Editor o `npx supabase@2 db push`). Si
+  1. **Migración:** aplica `supabase/migrations/20261105180000_aviso_dispositivo_nuevo.sql` (SQL Editor o `npx supabase@2 db push`). Si
      usas `apply_migration` del MCP de Supabase, alinea la versión (arriba).
   2. **Secretos** (Supabase › **Edge Functions › Secrets**): `RESEND_API_KEY` (la misma clave de Resend que la contraseña del SMTP;
      necesita *Sending access*), `MUNINN_MAIL_FROM` (p. ej. `Muninn <avisos@send.<dominio>>`, del dominio verificado en Resend) y
@@ -396,8 +396,9 @@
        );
      $$);
      ```
-  5. **Comprobar:** la primera pasada apunta en silencio tus dispositivos de las últimas 24 h (`select * from known_devices`). Entra
-     desde un navegador que no hayas usado (otro navegador o el iPhone): en menos de 5 minutos llega el correo, y
-     `login_alert_log.emailed_at` tiene fecha. La respuesta de la función está en `net._http_response`.
-- **Ojo:** el «dispositivo» es el tipo («Windows · Chrome»), no el aparato: otro Windows con Chrome no avisa. Y una sesión de hace más de
-  24 h que no se miró (cron parado) ya no se avisa nunca.
+  5. **Comprobar:** la primera pasada apunta en silencio tus dispositivos con nombre de las últimas 24 h (`select * from
+     known_devices`). Entra desde un navegador sin nombre (otro navegador, una ventana privada): entre 2 y 7 minutos después llega el
+     correo, y `login_alert_log.emailed_at` tiene fecha. Ponle nombre a esa sesión y vuelve a entrar desde ahí: no avisa. La respuesta de
+     la función está en `net._http_response`.
+- **Ojo:** como mucho un correo al día por cuenta (Resend gratuito): para repetir la prueba el mismo día, borra el `emailed_at` de tu
+  última fila en `login_alert_log`. Una sesión de hace más de 24 h que no se miró (cron parado) ya no se avisa nunca.

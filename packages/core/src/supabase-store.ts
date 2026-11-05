@@ -870,9 +870,11 @@ export async function listPendingLogins(client: Client): Promise<PendingLogin[]>
     userAgent: (r.user_agent as string | null) ?? null,
     ip: (r.ip as string | null) ?? null,
     appName: (r.app_name as string | null) ?? null,
+    deviceName: (r.device_name as string | null) ?? null,
     email: (r.email as string | null) ?? null,
     locale: (r.locale as string | null) ?? null,
     enabled: r.enabled !== false,
+    lastEmailedAt: (r.last_emailed_at as string | null) ?? null,
   }))
 }
 
@@ -894,22 +896,25 @@ export async function listKnownDevices(
 }
 
 /**
- * Apunta las sesiones miradas y sus dispositivos (service role). Un mismo dispositivo dos veces en el lote se junta
- * antes del `upsert`: Postgres no deja que un `on conflict` toque la misma fila dos veces.
+ * Apunta las sesiones miradas y, las que tienen nombre, como dispositivos conocidos (service role). Un mismo dispositivo
+ * dos veces en el lote se junta antes del `upsert`: Postgres no deja que un `on conflict` toque la misma fila dos veces.
  */
 export async function recordLogins(client: Client, rows: LoginRecord[]) {
   if (!rows.length) return
   const devices = new Map<string, { owner_id: string; device_key: string; last_seen_at: string }>()
   for (const r of rows) {
+    if (!r.deviceKey) continue
     const k = `${r.ownerId}\n${r.deviceKey}`
     const prev = devices.get(k)
     if (!prev || prev.last_seen_at < r.seenAt)
       devices.set(k, { owner_id: r.ownerId, device_key: r.deviceKey, last_seen_at: r.seenAt })
   }
-  const known = await client
-    .from('known_devices')
-    .upsert([...devices.values()], { onConflict: 'owner_id,device_key' })
-  if (known.error) throw known.error
+  if (devices.size) {
+    const known = await client
+      .from('known_devices')
+      .upsert([...devices.values()], { onConflict: 'owner_id,device_key' })
+    if (known.error) throw known.error
+  }
   const log = await client.from('login_alert_log').upsert(
     rows.map((r) => ({
       session_id: r.sessionId,

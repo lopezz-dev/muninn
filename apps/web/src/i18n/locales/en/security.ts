@@ -16,12 +16,11 @@ export const security = {
   },
   loginAlerts: {
     title: 'Sign-in alerts',
-    description:
-      'An email when someone signs in to your account from a device you haven’t used before.',
+    description: 'An email when someone signs in to your account from a device we don’t recognise.',
     row: 'Email me about new devices',
     onHint:
-      'On. A few minutes after a sign-in from a new kind of device (another browser, your phone, a newly connected app), you get an email.',
-    offHint: 'Off. Sign-ins from new devices are still listed in Sessions and devices.',
+      'On. If someone signs in from an unnamed or new device, you get an email a few minutes later (at most one a day). Name your own devices so they don’t trigger it.',
+    offHint: 'Off. Sign-ins are still listed in Sessions and devices.',
     turnedOn: 'New-device alerts turned on',
     turnedOff: 'New-device alerts turned off',
     saveFailed: 'Couldn’t save the alert setting',
