@@ -40,7 +40,9 @@
   proyectos archivados ([ADR-0067](adr/0067-eliminar-tareas-archivadas.md); sale del backlog)
 - [x] Notas: editor Markdown con barra de formato y vista previa, autoguardado, lista con búsqueda, fijadas y filtro por
   proyecto, y notas vinculadas a proyecto o tarea ([ADR-0026](adr/0026-markdown-marked-a-react-y-textarea.md))
-- [ ] **Notas como Claude Docs** (0.11, del 16 al 27-11): en el ordenador, editor en sitio que guarda Markdown
+- [ ] **Notas como Claude Docs** (0.11, del 16 al 27-11): **árbol de páginas** con carpetas e hijas y un espacio por proyecto,
+  enlazado como el índice de la ayuda, con arrastrar, migas y anterior/siguiente ([ADR-0083](adr/0083-notas-en-arbol-con-un-espacio-por-proyecto.md),
+  [#138](https://github.com/lopezz-dev/muninn/pull/138)). Después, en el ordenador, editor en sitio que guarda Markdown
   ([ADR-0078](adr/0078-editor-de-notas-en-sitio-con-tiptap.md), propuesto); en el teléfono, leer y comentar. Comentarios anclados a una
   cita, con hilo, «Resolver» y «Para Claude», que Claude atiende por el MCP ([ADR-0079](adr/0079-comentarios-anclados-en-las-notas.md),
   propuesto). Tablas con las columnas cortas ajustadas ([#129](https://github.com/lopezz-dev/muninn/pull/129)) y seleccionar sin pasar a

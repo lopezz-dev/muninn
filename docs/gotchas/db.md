@@ -47,6 +47,17 @@
 - **Causa:** la columna destino es de otro proyecto o de otro dueño. El core ya lo valida; el trigger es la última barrera.
 - **Solución:** mover una tarea a otro proyecto requerirá una operación específica (no existe todavía).
 
+### Trigger `enforce_note_tree` (notas en árbol)
+
+- **Síntoma:** `note … is not in the space of its parent …` o `note … would be its own ancestor` al crear o mover una nota.
+- **Causa:** la madre es de otro espacio (`project_id`) o de otro dueño, o el movimiento crearía un ciclo. El core ya lo valida;
+  el trigger es la última barrera.
+- **Ojo:** es un *constraint trigger* `AFTER` (se comprueba al acabar cada sentencia) y solo mira la fila contra su madre, no
+  contra sus hijas. Por eso mover un subárbol de espacio se hace **de arriba abajo**: primero la nota (con su madre nueva) y luego
+  sus descendientes en orden (`notes.updateMany`, en trozos de 100 y en el orden recibido). Al revés, una hija quedaría en un
+  espacio distinto del de su madre y el trigger la rechazaría.
+- **Ref:** [ADR-0083](../adr/0083-notas-en-arbol-con-un-espacio-por-proyecto.md)
+
 ### `or()` de PostgREST y caracteres especiales
 
 - **Síntoma:** una búsqueda con comas, paréntesis o comillas rompe la consulta.

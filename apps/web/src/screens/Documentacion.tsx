@@ -2,6 +2,7 @@ import { cn, icons } from '@muninn/ui'
 import { Link, Outlet, useMatch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Page } from '../components/Page'
+import { TreeItem, TreeList } from '../components/TreeBranch'
 import { type Doc, type DocGroupId, groupDocs } from '../lib/docs'
 import { usePageMeta } from '../lib/seo'
 import { useIsDesktop } from '../lib/use-media'
@@ -9,7 +10,6 @@ import { DOCS } from './docs/content'
 import { DocIcon, DocTile, GROUP_ICON } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
 import { DocResults, DocSearchField, useDocSearch } from './docs/search'
-import { TreeItem, TreeList } from './docs/tree'
 
 const GROUPS = groupDocs(DOCS)
 

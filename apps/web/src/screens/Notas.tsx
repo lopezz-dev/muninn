@@ -21,6 +21,7 @@ import {
 import { notesQuery } from '../lib/notes-queries'
 import { projectsQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
+import { NoteTree } from './notas/NoteTree'
 
 const sectionLabel = 'px-3.5 pt-3 pb-1 text-xs font-semibold tracking-wider text-fg-faint uppercase'
 
@@ -99,6 +100,8 @@ export function Notas() {
   const filtering = isFiltering(filter)
   const pinned = shown.filter((n) => n.pinned)
   const recent = shown.filter((n) => !n.pinned)
+  // Sin buscar ni «Fijadas», la lista es el árbol por espacios (ADR-0083); buscando, una lista plana de resultados.
+  const treeMode = !filter.query.trim() && !filter.pinned
 
   // En móvil la nota abierta ocupa toda la pantalla; la lista se queda debajo, sin pintarse.
   if (open && !desktop) return <Outlet />
@@ -204,6 +207,26 @@ export function Notas() {
           <EmptyState icon="notes" title={t('list.emptyTitle')} actions={newButton}>
             {t('list.emptyText')}
           </EmptyState>
+        ) : treeMode ? (
+          <div className="flex flex-col gap-3">
+            {pinned.length ? (
+              <Group label={t('list.pinned')}>
+                {pinned.map((n) => (
+                  <NoteItem
+                    key={n.id}
+                    note={n}
+                    project={n.projectId ? projectOf.get(n.projectId) : undefined}
+                  />
+                ))}
+              </Group>
+            ) : null}
+            <NoteTree
+              notes={all}
+              projects={projects ?? []}
+              onlyProjectId={filter.projectId}
+              touch={!desktop}
+            />
+          </div>
         ) : shown.length === 0 ? (
           <p className="px-1 py-6 text-center text-sm text-fg-subtle text-pretty">
             {filter.query.trim()

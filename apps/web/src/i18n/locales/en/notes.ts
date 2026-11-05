@@ -20,6 +20,30 @@ export const notes = {
     pickTitle: 'Pick a note',
     pickText: 'Select one from the list or create a new one. Notes save themselves as you type.',
   },
+  tree: {
+    label: 'Notes by space',
+    general: 'General',
+    newPageIn: 'New page in {{name}}',
+    newSubpage: 'New page inside',
+    newFolder: 'New folder',
+    newFolderInside: 'New folder inside',
+    toFolder: 'Turn into a folder',
+    toPage: 'Turn into a page',
+    toRoot: 'Move to the top of {{name}}',
+    actions: 'Actions for “{{title}}”',
+    expand: 'Expand “{{title}}”',
+    collapse: 'Collapse “{{title}}”',
+    dragHint:
+      'Drag a note onto another to put it inside, or onto its top or bottom edge to place it next to it.',
+    breadcrumbs: 'Where this note is',
+    otherNotes: 'Other notes',
+    previous: 'Previous',
+    next: 'Next',
+    children: 'Pages inside',
+    emptyFolder: 'This folder is empty.',
+    addDescription: 'Add a description…',
+    emptySpace: 'No notes in this space yet.',
+  },
   detail: {
     notFoundTitle: 'We couldn’t find this note',
     notFoundText:
@@ -90,6 +114,10 @@ export const notes = {
     changeFailed: 'Couldn’t save the change',
     saveFailed: 'Couldn’t save the note',
     retry: 'Retry',
+    moved: '“{{title}}” moved',
+    moveFailed: 'Couldn’t move the note',
+    kindFolder: 'Now it’s a folder',
+    kindPage: 'Now it’s a page',
   },
   /** El renderizador y la barra de formato de Markdown (`src/markdown`). */
   markdown: {

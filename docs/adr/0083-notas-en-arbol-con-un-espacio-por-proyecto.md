@@ -1,6 +1,6 @@
 # ADR-0083: Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-11-05
 - **Área:** db, core, web, mcp
 - **Complementa a:** [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md), [ADR-0079](0079-comentarios-anclados-en-las-notas.md)

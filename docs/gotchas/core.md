@@ -86,6 +86,18 @@
   `unpinned`) y vincular se anota siempre. Sin esto, el autoguardado del editor escribiría un evento por pausa al teclear.
 - **Ref:** [ADR-0007](../adr/0007-registro-de-actividad.md), [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)
 
+### Notas en árbol: el subárbol se mueve y se archiva junto
+
+- **Espacio:** una hija está siempre en el espacio (`projectId`) de su madre. `notes.move` y cambiar `projectId` con
+  `notes.update` se llevan todas las descendientes; si alguna está ligada a una tarea, no se mueve nada (no puede salir del
+  proyecto de su tarea). Cambiar de espacio con `update` deja la nota en la raíz del nuevo.
+- **Archivar:** `notes.archive` pone **la misma fecha** a la nota y a las descendientes que no estaban archivadas, y
+  `notes.restore` devuelve solo las que tienen esa fecha: así un «Deshacer» lo trae todo sin traer lo que ya estaba archivado.
+  Si la madre sigue archivada, la nota restaurada va a la raíz de su espacio.
+- **Consultas:** `notes.list({ parentId })` devuelve un nivel por `position`; sin `parentId`, fijadas y recientes como siempre.
+  `projectId: null` es «General» (sin proyecto); sin `projectId`, todos los espacios.
+- **Ref:** [ADR-0083](../adr/0083-notas-en-arbol-con-un-espacio-por-proyecto.md)
+
 ### GitHub: el estado de una tarea con envío pendiente no lo cambia GitHub
 
 - **Síntoma:** completas una tarea de GitHub y, al editar alguien la issue en GitHub, la tarea no se reabre; o una tarea «no hace caso» a

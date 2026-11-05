@@ -150,8 +150,14 @@ export interface ChecklistItem {
 
 export interface Note {
   id: string
+  /** Su espacio (ADR-0083): el proyecto, o `null` para «General». */
   projectId: string | null
   taskId: string | null
+  /** La madre en el árbol, o `null` en la raíz de su espacio. Siempre del mismo espacio. */
+  parentId: string | null
+  /** Orden entre hermanas (fractional indexing). */
+  position: string
+  kind: NoteKind
   title: string
   content: string
   pinned: boolean
@@ -290,25 +296,49 @@ export const taskQuery = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 })
 
+/** Una carpeta es una página que agrupa: solo cambia cómo se presenta (ADR-0083). */
+export const noteKind = z.enum(['page', 'folder'])
+
 export const createNoteInput = z.object({
   title: z.string().max(300).optional(),
   content: z.string().max(200000).optional(),
   projectId: id.nullable().optional(),
   taskId: id.nullable().optional(),
+  /** Colgarla de otra nota: hereda su espacio. */
+  parentId: id.nullable().optional(),
+  kind: noteKind.optional(),
+  /** Posición entre sus hermanas (0 = la primera). Por defecto, al final. */
+  index: z.number().int().min(0).optional(),
   pinned: z.boolean().optional(),
 })
 
 export const updateNoteInput = z.object({
   title: z.string().max(300).optional(),
   content: z.string().max(200000).optional(),
+  /** Cambiar de espacio la saca de su madre (a la raíz) y se lleva sus hijas. Para colgarla de otra, `notes.move`. */
   projectId: id.nullable().optional(),
   taskId: id.nullable().optional(),
+  kind: noteKind.optional(),
   pinned: z.boolean().optional(),
 })
 
+/**
+ * Destino de `notes.move`. Con `parentId`, el espacio es el de la madre; con `parentId: null`, la raíz del espacio
+ * `projectId` (o del suyo, si no se dice). Sin ninguno de los dos, se reordena entre sus hermanas.
+ */
+export const moveNoteInput = z.object({
+  parentId: id.nullable().optional(),
+  projectId: id.nullable().optional(),
+  /** Posición entre las nuevas hermanas (0 = la primera). Por defecto, al final. */
+  index: z.number().int().min(0).optional(),
+})
+
 export const noteQuery = z.object({
-  projectId: id.optional(),
+  /** El espacio: un proyecto, o `null` para «General». Sin él, todos. */
+  projectId: id.nullable().optional(),
   taskId: id.optional(),
+  /** Un nivel del árbol: las hijas de esa nota, o `null` para la raíz. Ordenadas por posición. */
+  parentId: id.nullable().optional(),
   search: z.string().trim().min(1).max(200).optional(),
   includeArchived: z.boolean().optional(),
   limit: z.number().int().min(1).max(500).optional(),
@@ -531,6 +561,8 @@ export type MoveTaskInput = z.input<typeof moveTaskInput>
 export type TaskQuery = z.infer<typeof taskQuery>
 export type CreateNoteInput = z.input<typeof createNoteInput>
 export type UpdateNoteInput = z.input<typeof updateNoteInput>
+export type MoveNoteInput = z.input<typeof moveNoteInput>
+export type NoteKind = z.infer<typeof noteKind>
 export type NoteQuery = z.infer<typeof noteQuery>
 export type UpdateSettingsInput = z.input<typeof updateSettingsInput>
 

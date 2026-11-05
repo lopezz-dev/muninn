@@ -133,3 +133,35 @@ describe('create_task y create_tasks', () => {
     expect(schema.safeParse({ project: 'x', tasks: tasks.slice(0, 50) }).success).toBe(true)
   })
 })
+
+describe('notas en árbol', () => {
+  it('crea hijas, lista un nivel y mueve con deshacer', async () => {
+    const app = setup()
+    const p = await app.projects.create({ name: 'Muninn' })
+    const { result: mother } = await call(app, 'create_note', {
+      title: 'Planificación',
+      content: '',
+      project: 'Muninn',
+      kind: 'folder',
+    })
+    const motherId = (mother as { id: string }).id
+    await call(app, 'create_note', { title: 'Reajustes', content: 'x', parentId: motherId })
+    const { result: level } = await call(app, 'list_notes', { parentId: motherId })
+    expect(
+      (level as { title: string; projectId: string }[]).map((n) => [n.title, n.projectId]),
+    ).toEqual([['Reajustes', p.id]])
+
+    const { result: moved, changes } = await call(app, 'move_note', {
+      noteId: motherId,
+      parentId: null,
+      general: true,
+    })
+    expect(moved).toMatchObject({ projectId: null, parentId: null })
+    const [child] = await app.notes.list({ parentId: motherId })
+    expect(child?.projectId).toBeNull()
+
+    await changes[0]?.undo?.(app)
+    expect(await app.notes.get(motherId)).toMatchObject({ projectId: p.id, parentId: null })
+    expect((await app.notes.get(child?.id ?? '')).projectId).toBe(p.id)
+  })
+})

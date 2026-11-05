@@ -3,6 +3,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../components/Page'
+import { TreeItem, TreeList } from '../components/TreeBranch'
 import { type Doc, docLink, neighbours } from '../lib/docs'
 import { useNoIndex, usePageMeta } from '../lib/seo'
 import { type CalloutLook, Markdown } from '../markdown/Markdown'
@@ -10,7 +11,6 @@ import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/out
 import { DOCS } from './docs/content'
 import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
-import { TreeItem, TreeList } from './docs/tree'
 
 const route = getRouteApi('/_app/documentacion/$pagina')
 

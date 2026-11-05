@@ -44,7 +44,7 @@ export interface Store {
   columns: Collection<BoardColumn, ColumnStoreQuery>
   tasks: Collection<Task, TaskStoreQuery>
   checklist: Collection<ChecklistItem, { taskIds: string[] }>
-  notes: Collection<Note, NoteStoreQuery>
+  notes: NoteStore
   activity: ActivityLog
   settings: SettingsStore
   githubOutbox: GithubOutbox
@@ -262,9 +262,17 @@ export interface TransactionStoreQuery {
   subscriptionId?: string
 }
 
+/** Las notas, con escritura en lote para mover o archivar un subárbol en una sola sentencia (ADR-0083). */
+export interface NoteStore extends Collection<Note, NoteStoreQuery> {
+  updateMany(ids: string[], patch: Partial<NewRow<Note>>): Promise<void>
+}
+
 export interface NoteStoreQuery {
-  projectId?: string
+  /** `null` = «General» (sin proyecto). */
+  projectId?: string | null
   taskId?: string
+  /** `null` = la raíz. Con él, por posición en vez de fijadas y recientes. */
+  parentId?: string | null
   search?: string
   includeArchived?: boolean
   limit?: number

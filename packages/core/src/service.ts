@@ -30,7 +30,9 @@ import {
   githubRepo,
   githubRepoList,
   githubSyncScope,
+  type MoveNoteInput,
   type MoveTaskInput,
+  moveNoteInput,
   moveTaskInput,
   type Note,
   type NoteQuery,
@@ -292,7 +294,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   /** Inserta/mueve con clave de orden; persiste el rebalanceo si hubo colisión. */
   async function place(
-    collection: 'projects' | 'columns' | 'tasks' | 'checklist',
+    collection: 'projects' | 'columns' | 'tasks' | 'checklist' | 'notes',
     siblings: { id: string; position: string }[],
     index?: number,
   ) {
@@ -1132,6 +1134,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
   }
 
   // ─── Notas ─────────────────────────────────────────────────────────────────
+  // Árbol de páginas con un espacio por proyecto (ADR-0083): una hija está siempre en el espacio de su madre.
 
   async function listNotes(query: NoteQuery = {}) {
     return store.notes.list(parse(noteQuery, query))
@@ -1141,24 +1144,104 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return must(store.notes.get(id), 'Nota', id)
   }
 
+  /** Las hermanas de un nivel, por posición (sin `exceptId`, la que se mueve). */
+  async function noteSiblings(
+    projectId: string | null,
+    parentId: string | null,
+    exceptId?: string,
+  ) {
+    const rows = await store.notes.list({ projectId, parentId })
+    return exceptId ? rows.filter((n) => n.id !== exceptId) : rows
+  }
+
+  /**
+   * Las descendientes de una nota, de arriba abajo (madres antes que hijas), archivadas incluidas. Lee el espacio
+   * entero una vez y recorre en memoria: un espacio tiene decenas o cientos de notas, no miles.
+   */
+  async function noteDescendants(note: Note): Promise<Note[]> {
+    const all = await store.notes.list({ projectId: note.projectId, includeArchived: true })
+    const byParent = new Map<string, Note[]>()
+    for (const n of all) {
+      if (!n.parentId) continue
+      const list = byParent.get(n.parentId) ?? []
+      list.push(n)
+      byParent.set(n.parentId, list)
+    }
+    const out: Note[] = []
+    const queue = [...(byParent.get(note.id) ?? [])]
+    while (queue.length > 0) {
+      const n = queue.shift() as Note
+      out.push(n)
+      queue.push(...(byParent.get(n.id) ?? []))
+    }
+    return out
+  }
+
+  /** La madre de destino: existe, no está archivada y no es la propia nota ni una de sus descendientes. */
+  async function noteParent(parentId: string, movingId?: string) {
+    const parent = await getNote(parentId)
+    if (parent.archivedAt) throw new ValidationError('No se puede colgar de una nota archivada')
+    if (movingId) {
+      let cursor: Note | null = parent
+      while (cursor) {
+        if (cursor.id === movingId) {
+          throw new ValidationError('Una nota no puede colgar de sí misma ni de una de sus hijas')
+        }
+        cursor = cursor.parentId ? await store.notes.get(cursor.parentId) : null
+      }
+    }
+    return parent
+  }
+
+  /** Lleva al espacio nuevo las descendientes de una nota que ya se ha movido (de arriba abajo, para el trigger). */
+  async function moveDescendants(descendants: Note[], projectId: string | null) {
+    if (descendants.length === 0) return
+    await store.notes.updateMany(
+      descendants.map((d) => d.id),
+      { projectId },
+    )
+  }
+
+  /** Una nota ligada a una tarea no sale del proyecto de su tarea: si hay alguna en el subárbol, no se mueve nada. */
+  function assertNoTaskNotes(notes: Note[]) {
+    const tied = notes.find((n) => n.taskId)
+    if (tied) {
+      throw new ValidationError(
+        `«${tied.title || 'Sin título'}» está ligada a una tarea y no puede salir de su proyecto`,
+      )
+    }
+  }
+
   async function createNote(input: CreateNoteInput) {
     const data = parse(createNoteInput, input)
     let projectId = data.projectId ?? null
+    const parentId = data.parentId ?? null
+    if (parentId) {
+      const parent = await noteParent(parentId)
+      if (data.projectId !== undefined && data.projectId !== parent.projectId) {
+        throw new ValidationError('Una hija va en el espacio de su madre')
+      }
+      projectId = parent.projectId
+    }
     if (data.taskId) {
       // Una nota de tarea es del proyecto de esa tarea: si dicen otro, algo va mal.
       const task = await getTask(data.taskId)
-      if (projectId && projectId !== task.projectId) {
+      if ((data.projectId || parentId) && projectId !== task.projectId) {
         throw new ValidationError('La tarea no pertenece a ese proyecto')
       }
       projectId = task.projectId
-    } else if (projectId) {
+    } else if (projectId && !parentId) {
       await getProject(projectId)
     }
+    const siblings = await noteSiblings(projectId, parentId)
     const note = await store.notes.insert({
       title: data.title ?? '',
       content: data.content ?? '',
       projectId,
       taskId: data.taskId ?? null,
+      parentId,
+      position: await place('notes', siblings, data.index),
+      kind: data.kind ?? 'page',
       pinned: data.pinned ?? false,
       archivedAt: null,
     })
@@ -1187,11 +1270,22 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       if (patch.projectId) await getProject(patch.projectId)
       if (patch.taskId === undefined) patch.taskId = null
     }
-    const fields = (['title', 'content', 'projectId', 'taskId', 'pinned'] as const).filter(
+    const fields = (['title', 'content', 'projectId', 'taskId', 'kind', 'pinned'] as const).filter(
       (k) => patch[k] !== undefined && patch[k] !== before[k],
     )
     if (fields.length === 0) return before
-    const note = await store.notes.update(id, patch)
+
+    // Otro espacio: sale de su madre (a la raíz del nuevo, al final) y se lleva sus hijas.
+    let descendants: Note[] = []
+    let tree: { parentId: null; position: string } | undefined
+    if (fields.includes('projectId')) {
+      descendants = await noteDescendants(before)
+      assertNoTaskNotes(descendants)
+      const space = patch.projectId ?? null
+      tree = { parentId: null, position: await place('notes', await noteSiblings(space, null)) }
+    }
+    const note = await store.notes.update(id, { ...patch, ...tree })
+    await moveDescendants(descendants, note.projectId)
 
     if (fields.length === 1 && fields[0] === 'pinned') {
       await log('note', id, note.pinned ? 'pinned' : 'unpinned', note.projectId, {
@@ -1211,16 +1305,111 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return note
   }
 
-  async function archiveNote(id: string) {
+  /**
+   * Mueve una nota en el árbol: a otra madre, a la raíz de un espacio o a otro sitio entre sus hermanas, con todo su
+   * subárbol. Para deshacerlo se vuelve a mover a donde estaba (`parentId`, `projectId` e índice de antes).
+   */
+  async function moveNote(id: string, input: MoveNoteInput): Promise<Note> {
+    const target = parse(moveNoteInput, input)
     const note = await getNote(id)
-    await log('note', id, 'archived', note.projectId, { title: note.title })
-    return store.notes.update(id, { archivedAt: nowIso() })
+    let parentId = target.parentId === undefined ? note.parentId : target.parentId
+    let projectId = note.projectId
+    if (parentId) {
+      const parent = await noteParent(parentId, id)
+      if (target.projectId !== undefined && target.projectId !== parent.projectId) {
+        throw new ValidationError('Una hija va en el espacio de su madre')
+      }
+      projectId = parent.projectId
+    } else {
+      parentId = null
+      if (target.projectId !== undefined) projectId = target.projectId
+      if (projectId && projectId !== note.projectId) await getProject(projectId)
+    }
+
+    const otherSpace = projectId !== note.projectId
+    let descendants: Note[] = []
+    if (otherSpace) {
+      descendants = await noteDescendants(note)
+      assertNoTaskNotes([note, ...descendants])
+    }
+    const siblings = await noteSiblings(projectId, parentId, id)
+    const moved = await store.notes.update(id, {
+      parentId,
+      projectId,
+      position: await place('notes', siblings, target.index),
+    })
+    await moveDescendants(descendants, projectId)
+    if (otherSpace || parentId !== note.parentId) {
+      await log('note', id, 'moved', moved.projectId, {
+        title: moved.title,
+        from: { parentId: note.parentId, projectId: note.projectId },
+        to: { parentId, projectId },
+      })
+    }
+    return moved
   }
 
-  /** Deshace `archiveNote`. */
+  /** La ruta de una nota desde la raíz de su espacio (sin ella misma), para las migas. */
+  async function noteAncestors(id: string): Promise<Note[]> {
+    const out: Note[] = []
+    let cursor = await getNote(id)
+    while (cursor.parentId) {
+      const parent = await store.notes.get(cursor.parentId)
+      if (!parent || out.some((n) => n.id === parent.id)) break
+      out.unshift(parent)
+      cursor = parent
+    }
+    return out
+  }
+
+  /**
+   * Archiva la nota y las descendientes que no lo estaban, con la misma fecha: así `restoreNote` sabe cuáles volver
+   * a traer con un solo «Deshacer».
+   */
+  async function archiveNote(id: string) {
+    const note = await getNote(id)
+    const at = nowIso()
+    const descendants = (await noteDescendants(note)).filter((d) => !d.archivedAt)
+    await log('note', id, 'archived', note.projectId, {
+      title: note.title,
+      ...(descendants.length > 0 ? { descendants: descendants.length } : {}),
+    })
+    const archived = await store.notes.update(id, { archivedAt: at })
+    if (descendants.length > 0) {
+      await store.notes.updateMany(
+        descendants.map((d) => d.id),
+        { archivedAt: at },
+      )
+    }
+    return archived
+  }
+
+  /**
+   * Deshace `archiveNote`: vuelve con las descendientes que se archivaron con ella. Si su madre sigue archivada, la
+   * nota vuelve a la raíz de su espacio (al final).
+   */
   async function restoreNote(id: string) {
     const note = await getNote(id)
-    const restored = await store.notes.update(id, { archivedAt: null })
+    const descendants = note.archivedAt
+      ? (await noteDescendants(note)).filter((d) => d.archivedAt === note.archivedAt)
+      : []
+    let tree: { parentId: null; position: string } | undefined
+    if (note.parentId) {
+      const parent = await store.notes.get(note.parentId)
+      if (!parent || parent.archivedAt) {
+        tree = {
+          parentId: null,
+          position: await place('notes', await noteSiblings(note.projectId, null)),
+        }
+      }
+    }
+    const restored = await store.notes.update(id, { archivedAt: null, ...tree })
+    if (descendants.length > 0) {
+      await store.notes.updateMany(
+        descendants.map((d) => d.id),
+        { archivedAt: null },
+      )
+    }
     await log('note', id, 'restored', note.projectId, { title: note.title })
     return restored
   }
@@ -1453,6 +1642,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       get: getNote,
       create: createNote,
       update: updateNote,
+      move: moveNote,
+      ancestors: noteAncestors,
       archive: archiveNote,
       restore: restoreNote,
     },

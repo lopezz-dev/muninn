@@ -167,7 +167,15 @@ export function createMemoryStore(
   const columns = toMap(initial.columns)
   const tasks = toMap(initial.tasks)
   const checklist = toMap(initial.checklist)
-  const notes = toMap(initial.notes)
+  // Los ficheros y semillas de antes del árbol (ADR-0083) no traen sus campos: van a la raíz de su espacio.
+  const notes = toMap(
+    initial.notes.map((n) => ({
+      ...n,
+      parentId: n.parentId ?? null,
+      position: n.position ?? 'a0',
+      kind: n.kind ?? 'page',
+    })),
+  )
   const activity = [...initial.activity]
   let nextActivityId = activity.reduce((max, a) => Math.max(max, a.id), 0) + 1
   let settings = initial.settings ?? null
@@ -581,21 +589,37 @@ export function createMemoryStore(
       changed,
       now,
     ),
-    notes: new MemoryCollection<Note, NoteStoreQuery>(
-      'Nota',
-      notes,
-      (rows, q) =>
-        rows
-          .filter((n) => q.includeArchived || !n.archivedAt)
-          .filter((n) => !q.projectId || n.projectId === q.projectId)
-          .filter((n) => !q.taskId || n.taskId === q.taskId)
-          .filter((n) => !q.search || includesText([n.title, n.content], q.search))
-          .sort(
-            (a, b) => Number(b.pinned) - Number(a.pinned) || (a.updatedAt < b.updatedAt ? 1 : -1),
-          )
-          .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
-      changed,
-      now,
+    notes: Object.assign(
+      new MemoryCollection<Note, NoteStoreQuery>(
+        'Nota',
+        notes,
+        (rows, q) =>
+          rows
+            .filter((n) => q.includeArchived || !n.archivedAt)
+            .filter((n) => q.projectId === undefined || n.projectId === q.projectId)
+            .filter((n) => !q.taskId || n.taskId === q.taskId)
+            .filter((n) => q.parentId === undefined || n.parentId === q.parentId)
+            .filter((n) => !q.search || includesText([n.title, n.content], q.search))
+            .sort(
+              q.parentId !== undefined
+                ? byPosition
+                : (a, b) =>
+                    Number(b.pinned) - Number(a.pinned) || (a.updatedAt < b.updatedAt ? 1 : -1),
+            )
+            .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+        changed,
+        now,
+      ),
+      {
+        async updateMany(ids: string[], patch: Partial<NewRow<Note>>) {
+          const ts = now()
+          for (const id of ids) {
+            const current = notes.get(id)
+            if (current) notes.set(id, { ...current, ...stripUndefined(patch), updatedAt: ts })
+          }
+          if (ids.length > 0) changed()
+        },
+      },
     ),
   }
 }
