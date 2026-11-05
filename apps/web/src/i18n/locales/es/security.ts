@@ -17,6 +17,18 @@ export const security: Messages<typeof en> = {
     revokedHint: 'Para volver a usarla con Muninn, conéctala otra vez desde esa app.',
     revokeFailed: 'No se pudo quitar el acceso',
   },
+  loginAlerts: {
+    title: 'Avisos de inicio de sesión',
+    description:
+      'Un correo cuando alguien entra en tu cuenta desde un dispositivo que no reconocemos.',
+    row: 'Avisarme de dispositivos nuevos',
+    onHint:
+      'Activado. Si alguien entra desde un dispositivo sin nombre o nuevo, te llega un correo unos minutos después (uno al día como mucho). Ponle nombre a los tuyos para que no avisen.',
+    offHint: 'Desactivado. Las entradas siguen saliendo en Sesiones y dispositivos.',
+    turnedOn: 'Avisos de dispositivos nuevos activados',
+    turnedOff: 'Avisos de dispositivos nuevos desactivados',
+    saveFailed: 'No se pudo guardar el aviso',
+  },
   sessions: {
     title: 'Sesiones y dispositivos',
     description: 'Dónde tienes la sesión abierta. Cierra las que no reconozcas.',

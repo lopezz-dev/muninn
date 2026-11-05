@@ -16,6 +16,11 @@ export interface AccountContext {
   parse: <S extends z.ZodType>(schema: S, value: unknown) => z.output<S>
 }
 
+/** El nombre del equipo que añade la app de escritorio a su user agent: `Muninn/0.10.0 (PC-ALEX)` (ADR-0081). */
+export function desktopDeviceName(ua: string | null | undefined): string | null {
+  return (ua && /\bMuninn\/\S+ \(([^()]{1,40})\)/.exec(ua)?.[1]?.trim()) || null
+}
+
 /**
  * «Mac · Chrome», «iPhone · Safari», «Muninn para Windows», «Claude · app conectada»: el nombre que enseña la lista de
  * sesiones. `appName` es la app OAuth que abrió la sesión (claude.ai manda `python-httpx/…`, que no dice nada).
@@ -41,7 +46,7 @@ export function sessionDeviceLabel(ua: string | null | undefined, appName?: stri
   // Desde la 0.10, la app añade el nombre del equipo: `Muninn/0.10.0 (PC-ALEX)` (ADR-0081).
   if (/\bMuninn\/|Tauri/i.test(ua)) {
     const app = os ? `Muninn para ${os}` : 'Muninn de escritorio'
-    const name = /\bMuninn\/\S+ \(([^()]{1,40})\)/.exec(ua)?.[1]?.trim()
+    const name = desktopDeviceName(ua)
     return name ? `${name} · ${app}` : app
   }
   if (/^node|undici|Deno|supabase-js-node|curl|python-httpx|python-requests|aiohttp/i.test(ua))

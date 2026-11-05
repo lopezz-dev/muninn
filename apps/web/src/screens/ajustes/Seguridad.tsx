@@ -3,8 +3,18 @@ import {
   type AppSessions,
   groupSessions,
   sessionDeviceLabel,
+  type UserSettings,
 } from '@muninn/core'
-import { Button, Dialog, DialogContent, IconButton, icons, notify, TextField } from '@muninn/ui'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  IconButton,
+  icons,
+  notify,
+  Switch,
+  TextField,
+} from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,8 +22,8 @@ import { timeAgo } from '../../lib/dates'
 import { rememberDeviceName } from '../../lib/device-name'
 import { notifyUndo } from '../../lib/feedback'
 import { useAuth, useMuninn } from '../../lib/muninn'
-import { fail } from '../../lib/mutations'
-import { keys } from '../../lib/queries'
+import { fail, serial } from '../../lib/mutations'
+import { keys, settingsQuery } from '../../lib/queries'
 import { useEndSession } from '../../lib/session'
 import { PrefGroup, PrefRow } from './ui'
 
@@ -298,6 +308,71 @@ export function Sesiones() {
             {busy === 'global' ? t('sessions.signingOut') : t('sessions.everywhere')}
           </Button>
         </div>
+      </PrefRow>
+    </PrefGroup>
+  )
+}
+
+/** `preferences.loginAlerts`: activado salvo un `false` explícito, como lo lee el cron (ADR-0080). */
+export const loginAlertsOn = (settings: Pick<UserSettings, 'preferences'> | undefined | null) =>
+  settings?.preferences.loginAlerts !== false
+
+/**
+ * El correo cuando alguien entra desde un dispositivo nuevo (ADR-0080). Lo envía el servidor; aquí solo se activa o se
+ * desactiva, con «Deshacer».
+ */
+export function AvisoDispositivoNuevo() {
+  const { t } = useTranslation('security')
+  const m = useMuninn()
+  const qc = useQueryClient()
+  const settings = useQuery(settingsQuery(m))
+  const [busy, setBusy] = useState(false)
+  const on = loginAlertsOn(settings.data)
+
+  const save = async (next: boolean, undoing = false): Promise<boolean> => {
+    setBusy(true)
+    try {
+      const saved = await serial('settings', () =>
+        m.settings.update({ preferences: { loginAlerts: next } }),
+      )
+      qc.setQueryData<UserSettings>(keys.settings, (s) =>
+        s ? { ...s, preferences: saved.preferences } : saved,
+      )
+    } catch (err) {
+      fail(t('loginAlerts.saveFailed'), err)
+      return false
+    } finally {
+      setBusy(false)
+    }
+    if (!undoing)
+      notifyUndo(next ? t('loginAlerts.turnedOn') : t('loginAlerts.turnedOff'), {
+        icon: 'bell',
+        undo: () => save(!next, true),
+      })
+    return true
+  }
+
+  if (!m.account.available()) return null
+  return (
+    <PrefGroup
+      title={t('loginAlerts.title')}
+      icon="bell"
+      description={t('loginAlerts.description')}
+    >
+      <PrefRow
+        id="aviso-dispositivo-nuevo"
+        icon="mail"
+        tile={on ? 'bg-accent-soft text-accent' : undefined}
+        title={t('loginAlerts.row')}
+        description={on ? t('loginAlerts.onHint') : t('loginAlerts.offHint')}
+        htmlFor="ajuste-aviso-dispositivo-switch"
+      >
+        <Switch
+          id="ajuste-aviso-dispositivo-switch"
+          checked={on}
+          disabled={busy || settings.isPending}
+          onCheckedChange={(next) => void save(next)}
+        />
       </PrefRow>
     </PrefGroup>
   )

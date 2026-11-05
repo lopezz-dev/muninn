@@ -137,6 +137,11 @@ export const settings: Messages<typeof en> = {
       description: 'En los demás o en todos, también en este.',
       keywords: 'salir logout todos seguridad',
     },
+    'aviso-dispositivo-nuevo': {
+      label: 'Avisos de dispositivos nuevos',
+      description: 'Un correo cuando alguien entra desde un dispositivo que no habías usado.',
+      keywords: 'correo email aviso inicio sesión entrar seguridad dispositivo desconocido',
+    },
     apps: {
       label: 'Apps con acceso',
       description:

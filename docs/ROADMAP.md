@@ -370,7 +370,9 @@ más o menos en este orden:
     La migración, en la fase final (4b)
 - [ ] **Bloqueo de la app** al abrirla o tras un rato inactiva: biometría del sistema en escritorio (Tauri)
   y clave de acceso en el móvil, sin cerrar la sesión
-- [ ] Aviso por correo cuando se inicia sesión desde un dispositivo nuevo
+- [x] Aviso por correo cuando se inicia sesión desde un dispositivo sin nombre o nuevo, uno al día como mucho
+  ([ADR-0080](adr/0080-aviso-por-correo-de-dispositivo-nuevo.md), propuesto). Se apoya en el nombre del equipo (ADR-0081) y el puesto a
+  mano (ADR-0082). Montado y con tests del core; la migración, la función `security`, el cron y la prueba real, en la fase final (4d)
 - [x] Deep links en Tauri para GitHub OAuth en escritorio (`muninn://auth/callback`, [ADR-0059](adr/0059-deep-links-para-oauth-en-escritorio.md)). Falta probarlo instalado: [fase final](fase-final.md), paso 3
 - [ ] Más proveedores: Apple (útil en iPhone) y Google
 - [ ] Protección anti-bots en el formulario (CAPTCHA de Supabase Auth) antes de abrir el registro al público

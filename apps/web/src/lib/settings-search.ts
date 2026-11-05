@@ -44,6 +44,7 @@ export const SETTINGS_INDEX: SettingEntry[] = [
   entry('segundo-factor', 'cuenta'),
   entry('sesiones', 'cuenta'),
   entry('cerrar-sesiones', 'cuenta'),
+  entry('aviso-dispositivo-nuevo', 'cuenta'),
   entry('apps', 'cuenta'),
   entry('idioma', 'apariencia'),
   entry('tema', 'apariencia'),

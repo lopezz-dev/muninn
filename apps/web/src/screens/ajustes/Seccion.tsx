@@ -31,7 +31,7 @@ import { Integraciones } from './Integraciones'
 import { Modulos } from './Modulos'
 import { Notificaciones } from './Notificaciones'
 import { SegundoFactor } from './SegundoFactor'
-import { Sesiones } from './Seguridad'
+import { AvisoDispositivoNuevo, Sesiones } from './Seguridad'
 import { resetSectionLabel, type SettingsSection, settingsSection } from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
@@ -129,6 +129,7 @@ function Cuenta() {
       </PrefGroup>
       <SegundoFactor />
       <Sesiones />
+      <AvisoDispositivoNuevo />
       <AppsConAcceso />
     </>
   )

@@ -14,6 +14,17 @@ export const security = {
     revokedHint: 'To use it with Muninn again, reconnect it from that app.',
     revokeFailed: 'Couldn’t remove access',
   },
+  loginAlerts: {
+    title: 'Sign-in alerts',
+    description: 'An email when someone signs in to your account from a device we don’t recognise.',
+    row: 'Email me about new devices',
+    onHint:
+      'On. If someone signs in from an unnamed or new device, you get an email a few minutes later (at most one a day). Name your own devices so they don’t trigger it.',
+    offHint: 'Off. Sign-ins are still listed in Sessions and devices.',
+    turnedOn: 'New-device alerts turned on',
+    turnedOff: 'New-device alerts turned off',
+    saveFailed: 'Couldn’t save the alert setting',
+  },
   sessions: {
     title: 'Sessions and devices',
     description: 'Where you’re signed in. Sign out of any you don’t recognize.',

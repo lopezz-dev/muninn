@@ -1,6 +1,6 @@
 ---
 title: Cuenta y seguridad
-description: Protege tu cuenta con un segundo factor, cierra la sesión en los dispositivos que ya no uses y quita el acceso a otras apps.
+description: Protege tu cuenta con un segundo factor, recibe un aviso cuando se entra desde un dispositivo nuevo, cierra la sesión en los que ya no uses y quita el acceso a otras apps.
 order: 14
 status: disponible
 group: cuenta
@@ -119,6 +119,25 @@ Al final de la lista, en **Cerrar en otros dispositivos**:
 
 En los dos casos, los demás dispositivos dejan de recibir tus avisos al momento y salen en menos de una hora. Si vuelves
 a entrar en uno de ellos y quieres los avisos, actívalos otra vez en **Ajustes › Notificaciones**.
+
+## Aviso de dispositivo nuevo
+
+Cuando alguien entra en tu cuenta desde un dispositivo que Muninn no reconoce, te llega un correo unos minutos después. Dice
+qué dispositivo era, cuándo y desde qué dirección IP. Si no fuiste tú, ciérrala en **Sesiones y dispositivos** (el correo
+trae el enlace) y activa el segundo factor.
+
+Muninn reconoce un dispositivo por su **nombre**: el de tu ordenador en la app de escritorio, el que le pusiste con el lápiz
+(ver «Ponerle nombre a una sesión») o el de una app conectada, como claude.ai. Por eso:
+
+- Una sesión **sin nombre** avisa siempre: quien entra sin permiso no tiene ninguno.
+- Si fuiste tú, **ponle nombre** a esa sesión y no te volveremos a avisar de ella. El navegador lo recuerda, así que la
+  próxima vez que entres desde ahí tampoco avisa.
+- Volver a conectar una app que ya usabas no avisa cada vez.
+- Te mandamos **como mucho un correo al día**. Si entran varias veces el mismo día, van en el mismo correo; lo que llegue
+  después solo se ve en la lista.
+
+Está activado por defecto. Lo desactivas en **Avisos de inicio de sesión › Avisarme de dispositivos nuevos**; mientras
+está desactivado, Muninn sigue apuntando tus dispositivos, así que al volver a activarlo no te llegan avisos atrasados.
 
 ## Quitar el acceso a una app
 
