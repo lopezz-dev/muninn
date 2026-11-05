@@ -6,6 +6,9 @@ import {
   Compass,
   Copy,
   Devices,
+  FileText,
+  Folder,
+  FolderOpen,
   Key,
   ListBullets,
   ListChecks,
@@ -38,6 +41,10 @@ export const screenIcons = {
   copy: Copy,
   qr: QrCode,
   dock: SquareHalfBottom,
+  // Notas en árbol (ADR-0083): página y carpeta.
+  page: FileText,
+  folder: Folder,
+  folderOpen: FolderOpen,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type ScreenIconName = keyof typeof screenIcons

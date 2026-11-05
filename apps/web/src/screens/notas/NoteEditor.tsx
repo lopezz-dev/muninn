@@ -19,8 +19,10 @@ import { useTranslation } from 'react-i18next'
 import { SelectMenu, type SelectOption } from '../../components/SelectMenu'
 import { timeAgo } from '../../lib/dates'
 import { useMuninn } from '../../lib/muninn'
-import { archiveNote, patchNote } from '../../lib/note-actions'
-import { projectTasksQuery } from '../../lib/notes-queries'
+import { archiveNote, createNote, patchNote } from '../../lib/note-actions'
+import { noteTitle } from '../../lib/notes'
+import { notesQuery, projectTasksQuery } from '../../lib/notes-queries'
+import { ancestorsOf, childrenOf, treeNeighbours } from '../../lib/notes-tree'
 import { projectsQuery } from '../../lib/queries'
 import { applyEdit } from '../../markdown/edit'
 import { applyFormat, continueList, type FormatCommand } from '../../markdown/format'
@@ -123,6 +125,19 @@ export function NoteEditor({ note, desktop }: EditorProps) {
 
   // Propiedades
   const projects = useQuery(projectsQuery(m)).data ?? []
+  // Su sitio en el árbol (ADR-0083), con lo que ya está en la lista: migas arriba e hijas al pie.
+  const allNotes = useQuery(notesQuery(m)).data ?? []
+  const ancestors = ancestorsOf(allNotes, note)
+  const children = childrenOf(allNotes, note.id)
+  const { prev, next } = treeNeighbours(allNotes, note.id)
+  const spaceName = note.projectId
+    ? (projects.find((p) => p.id === note.projectId)?.name ?? t('editor.archivedProject'))
+    : t('tree.general')
+  const createChild = async () => {
+    await save()
+    const child = await createNote(m, qc, { parentId: note.id })
+    if (child) navigate({ to: '/notas/$noteId', params: { noteId: child.id } })
+  }
   const projectOptions = useMemo<SelectOption<string>[]>(() => {
     const opts: SelectOption<string>[] = [
       { value: '', label: t('editor.noProject') },
@@ -287,6 +302,23 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               />
             </MenuTrigger>
             <MenuContent align="end">
+              <MenuItem onSelect={createChild}>{t('tree.newSubpage')}</MenuItem>
+              <MenuItem
+                onSelect={() =>
+                  patchNote(
+                    m,
+                    qc,
+                    note.id,
+                    { kind: note.kind === 'folder' ? 'page' : 'folder' },
+                    {
+                      message: note.kind === 'folder' ? t('toast.kindPage') : t('toast.kindFolder'),
+                      icon: 'notes',
+                    },
+                  )
+                }
+              >
+                {note.kind === 'folder' ? t('tree.toPage') : t('tree.toFolder')}
+              </MenuItem>
               <MenuItem onSelect={copyLink}>{t('link.copy', { ns: 'common' })}</MenuItem>
               <MenuItem onSelect={copyMarkdown}>{t('editor.copyMarkdown')}</MenuItem>
               <MenuItem danger onSelect={archive}>
@@ -298,6 +330,32 @@ export function NoteEditor({ note, desktop }: EditorProps) {
       </div>
 
       <div className="flex flex-col gap-4 pt-6 md:px-2 md:pt-9">
+        {/* Migas como en la ayuda: Notas › Espacio › madres › esta nota (ADR-0083). */}
+        <nav
+          aria-label={t('tree.breadcrumbs')}
+          className="-mb-2 flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-fg-subtle"
+        >
+          <Link to="/notas" className="flex items-center gap-1.5 hover:text-fg">
+            <icons.notes size={14} aria-hidden="true" />
+            {t('list.title')}
+          </Link>
+          <icons.chevronRight size={12} aria-hidden="true" className="shrink-0 text-fg-faint" />
+          <span className="truncate">{spaceName}</span>
+          {ancestors.map((a) => (
+            <span key={a.id} className="flex min-w-0 items-center gap-1.5">
+              <icons.chevronRight size={12} aria-hidden="true" className="shrink-0 text-fg-faint" />
+              <Link
+                to="/notas/$noteId"
+                params={{ noteId: a.id }}
+                className="max-w-[14rem] truncate hover:text-fg"
+              >
+                {noteTitle(a)}
+              </Link>
+            </span>
+          ))}
+          <icons.chevronRight size={12} aria-hidden="true" className="shrink-0 text-fg-faint" />
+          <span className="max-w-[14rem] truncate text-fg-muted">{noteTitle(draft)}</span>
+        </nav>
         <input
           ref={titleRef}
           aria-label={t('editor.titleLabel')}
@@ -385,12 +443,110 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           <button
             type="button"
             onClick={edit}
-            className="min-h-[30dvh] cursor-text text-left text-md text-fg-faint"
+            // Una carpeta o una página con hijas: su contenido son las hijas, el texto es opcional.
+            className={cn(
+              'cursor-text text-left text-md text-fg-faint',
+              note.kind === 'folder' || children.length ? 'py-1 text-sm' : 'min-h-[30dvh]',
+            )}
           >
-            {t('editor.empty')}
+            {note.kind === 'folder' || children.length
+              ? t('tree.addDescription')
+              : t('editor.empty')}
           </button>
         )}
+
+        {children.length || note.kind === 'folder' ? (
+          <section
+            aria-label={t('tree.children')}
+            className="flex flex-col gap-1 border-t border-border-subtle pt-4"
+          >
+            <h2 className="text-xs font-semibold tracking-wider text-fg-faint uppercase">
+              {t('tree.children')}
+            </h2>
+            {children.length === 0 ? (
+              <p className="px-2 py-1 text-sm text-fg-subtle">{t('tree.emptyFolder')}</p>
+            ) : null}
+            <ul className="flex flex-col">
+              {children.map((c) => {
+                const KindIcon = c.kind === 'folder' ? screenIcons.folder : screenIcons.page
+                return (
+                  <li key={c.id}>
+                    <Link
+                      to="/notas/$noteId"
+                      params={{ noteId: c.id }}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md px-2 text-fg transition-colors hover:bg-surface-hover',
+                        touch ? 'min-h-11 text-md' : 'h-8 text-sm',
+                      )}
+                    >
+                      <KindIcon size={15} aria-hidden="true" className="shrink-0 text-fg-subtle" />
+                      <span className={cn('truncate', !c.title.trim() && 'text-fg-subtle')}>
+                        {noteTitle(c)}
+                      </span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+            <button
+              type="button"
+              onClick={createChild}
+              className={cn(
+                'flex cursor-pointer items-center gap-2 self-start rounded-md px-2 text-sm text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg',
+                touch ? 'min-h-11' : 'h-8',
+              )}
+            >
+              <icons.plus size={14} aria-hidden="true" />
+              {t('tree.newSubpage')}
+            </button>
+          </section>
+        ) : null}
+
+        {prev || next ? (
+          <nav
+            aria-label={t('tree.otherNotes')}
+            className="mt-4 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row"
+          >
+            {prev ? (
+              <Neighbour note={prev} dir="prev" />
+            ) : (
+              <span className="hidden flex-1 sm:block" />
+            )}
+            {next ? (
+              <Neighbour note={next} dir="next" />
+            ) : (
+              <span className="hidden flex-1 sm:block" />
+            )}
+          </nav>
+        ) : null}
       </div>
     </article>
+  )
+}
+
+/** Nota anterior o siguiente en el árbol, como en la ayuda. */
+function Neighbour({ note, dir }: { note: Note; dir: 'prev' | 'next' }) {
+  const { t } = useTranslation('notes')
+  const next = dir === 'next'
+  const Arrow = next ? icons.move : icons.chevronLeft
+  const KindIcon = note.kind === 'folder' ? screenIcons.folder : screenIcons.page
+  return (
+    <Link
+      to="/notas/$noteId"
+      params={{ noteId: note.id }}
+      className={cn(
+        'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent md:py-2.5',
+        next && 'flex-row-reverse text-right',
+      )}
+    >
+      <Arrow size={16} aria-hidden="true" className="shrink-0 text-fg-subtle" />
+      <KindIcon size={16} aria-hidden="true" className="shrink-0 text-fg-subtle" />
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate text-xs text-fg-subtle">
+          {next ? t('tree.next') : t('tree.previous')}
+        </span>
+        <span className="truncate text-base font-medium">{noteTitle(note)}</span>
+      </span>
+    </Link>
   )
 }
