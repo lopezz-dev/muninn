@@ -370,7 +370,7 @@ function AgentCard({
       <p className="text-xs leading-relaxed text-fg-faint">
         {t('agent.about')}{' '}
         <Link
-          to="/documentacion/$pagina"
+          to="/docs/$pagina"
           params={{ pagina: 'github' }}
           className="text-accent hover:underline"
         >
@@ -406,7 +406,7 @@ function RunLine({ run, projectId }: { run: AgentRun; projectId: string | undefi
       </span>
       {projectId ? (
         <Link
-          to="/proyectos/$projectId/tareas/$taskId"
+          to="/projects/$projectId/tasks/$taskId"
           params={{ projectId, taskId: run.taskId }}
           className="min-w-0 flex-[1_1_160px] truncate hover:underline"
         >
@@ -506,7 +506,7 @@ export function GitHub() {
           <>
             {linked.length ? <SyncButton onErrors={setErrors} /> : null}
             <Button asChild variant="ghost">
-              <Link to="/ajustes/$seccion" params={{ seccion: 'integraciones' }}>
+              <Link to="/settings/$seccion" params={{ seccion: 'integrations' }}>
                 <Icon name="settings" size={15} aria-hidden="true" />
                 {t('nav.settings', { ns: 'common' })}
               </Link>
@@ -521,7 +521,7 @@ export function GitHub() {
           title={t('page.emptyTitle')}
           actions={
             <Button asChild variant="primary">
-              <Link to="/ajustes/$seccion" params={{ seccion: 'integraciones' }}>
+              <Link to="/settings/$seccion" params={{ seccion: 'integrations' }}>
                 {t('page.linkRepos')}
               </Link>
             </Button>

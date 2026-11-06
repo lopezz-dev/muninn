@@ -19,8 +19,8 @@ describe('ajustes cambiados (ADR-0053)', () => {
     )
     expect(keys).toEqual(['glass', 'accent', 'reportEnabled', 'reportTime'])
     expect(bySection(keys)).toEqual({
-      apariencia: ['glass', 'accent'],
-      informe: ['reportEnabled', 'reportTime'],
+      appearance: ['glass', 'accent'],
+      report: ['reportEnabled', 'reportTime'],
     })
   })
 

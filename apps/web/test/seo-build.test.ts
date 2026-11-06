@@ -51,7 +51,7 @@ describe('guías de docs/user en el build', () => {
       '## Archivar una nota\n\nMira [tareas](04-tareas.md#Fecha%20l%C3%ADmite) o [arriba](#Archivar%20una%20nota).',
     )
     expect(html).toContain('<h2 id="archivar-una-nota">')
-    expect(html).toContain('href="/documentacion/tareas#fecha-limite"')
+    expect(html).toContain('href="/docs/tareas#fecha-limite"')
     expect(html).toContain('href="#archivar-una-nota"')
   })
 })
@@ -64,8 +64,8 @@ describe('pageHtml', () => {
   it('cambia título, metas (también las de varias líneas) y canónica', () => {
     expect(html).toContain(`<title>${doc.title} · Muninn</title>`)
     expect(html).not.toContain('content="General"')
-    expect(html).toContain(`content="${SITE}/documentacion/notas"`)
-    expect(html).toContain(`<link rel="canonical" href="${SITE}/documentacion/notas" />`)
+    expect(html).toContain(`content="${SITE}/docs/notas"`)
+    expect(html).toContain(`<link rel="canonical" href="${SITE}/docs/notas" />`)
     expect(html).toContain('<meta property="og:type" content="article" />')
   })
 
@@ -96,22 +96,22 @@ describe('pageHtml', () => {
 
   it('la portada enlaza todas las guías', () => {
     const index = docsIndexPage(docs, SITE)
-    for (const d of docs) expect(index.content).toContain(`href="/documentacion/${d.slug}"`)
+    for (const d of docs) expect(index.content).toContain(`href="/docs/${d.slug}"`)
   })
 })
 
 describe('robots.txt y sitemap.xml', () => {
   it('robots bloquea lo privado, deja la documentación y apunta al sitemap del dominio', () => {
     const robots = robotsTxt(SITE)
-    expect(robots).toContain('Disallow: /proyectos')
-    expect(robots).not.toContain('Disallow: /documentacion')
+    expect(robots).toContain('Disallow: /projects')
+    expect(robots).not.toContain('Disallow: /docs')
     expect(robots).toContain(`Sitemap: ${SITE}/sitemap.xml`)
   })
 
   it('el sitemap lista la entrada, la portada y cada guía', () => {
     const xml = sitemapXml(docs, SITE)
     expect(xml).toContain(`<loc>${SITE}/login</loc>`)
-    expect(xml).toContain(`<loc>${SITE}/documentacion</loc>`)
-    for (const d of docs) expect(xml).toContain(`<loc>${SITE}/documentacion/${d.slug}</loc>`)
+    expect(xml).toContain(`<loc>${SITE}/docs</loc>`)
+    for (const d of docs) expect(xml).toContain(`<loc>${SITE}/docs/${d.slug}</loc>`)
   })
 })

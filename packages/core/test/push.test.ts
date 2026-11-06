@@ -163,7 +163,7 @@ describe('avisos de cobro', () => {
       key: `charge:${vercel.id}:2026-10-29`,
       tag: `charge:${vercel.id}`,
       title: 'Próximo cobro',
-      url: '/finanzas?vista=suscripciones',
+      url: '/finance?view=subscriptions',
     })
   })
 

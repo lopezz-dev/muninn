@@ -9,17 +9,17 @@ describe('hoja «Tu cuenta»', () => {
   })
 
   it('sabe qué sección de Ajustes pide una ruta', () => {
-    expect(settingsViewOf('/ajustes')).toBe('root')
-    expect(settingsViewOf('/ajustes/')).toBe('root')
-    expect(settingsViewOf('/ajustes/notificaciones')).toBe('notificaciones')
-    expect(settingsViewOf('/ajustes/notificaciones/otra')).toBeNull()
-    expect(settingsViewOf('/ajustesx')).toBeNull()
-    expect(settingsViewOf('/proyectos')).toBeNull()
+    expect(settingsViewOf('/settings')).toBe('root')
+    expect(settingsViewOf('/settings/')).toBe('root')
+    expect(settingsViewOf('/settings/notifications')).toBe('notifications')
+    expect(settingsViewOf('/settings/notifications/otra')).toBeNull()
+    expect(settingsViewOf('/settingsx')).toBeNull()
+    expect(settingsViewOf('/projects')).toBeNull()
   })
 
   it('un enlace directo la abre ya en la sección, con la raíz debajo para volver', () => {
-    accountSheet.open('notificaciones')
-    expect(accountSheet.get()).toEqual({ open: true, stack: ['root', 'notificaciones'] })
+    accountSheet.open('notifications')
+    expect(accountSheet.get()).toEqual({ open: true, stack: ['root', 'notifications'] })
     accountSheet.pop()
     expect(accountSheet.get().stack).toEqual(['root'])
     accountSheet.pop()
@@ -28,14 +28,14 @@ describe('hoja «Tu cuenta»', () => {
 
   it('abierta, un enlace a otra sección se apila encima (y no repite la que ya se ve)', () => {
     accountSheet.open()
-    accountSheet.push('cuenta')
-    accountSheet.open('modulos')
-    accountSheet.open('modulos')
-    expect(accountSheet.get().stack).toEqual(['root', 'cuenta', 'modulos'])
+    accountSheet.push('account')
+    accountSheet.open('modules')
+    accountSheet.open('modules')
+    expect(accountSheet.get().stack).toEqual(['root', 'account', 'modules'])
   })
 
   it('el avatar la abre siempre en la raíz', () => {
-    accountSheet.open('apariencia')
+    accountSheet.open('appearance')
     accountSheet.close()
     accountSheet.open()
     expect(accountSheet.get()).toEqual({ open: true, stack: ['root'] })

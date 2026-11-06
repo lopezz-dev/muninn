@@ -254,7 +254,7 @@ export function Notificaciones() {
           description={t('push.beforeChargeHint')}
         >
           <Button asChild size="sm" variant="ghost">
-            <Link to="/finanzas" search={{ vista: 'suscripciones' }}>
+            <Link to="/finance" search={{ view: 'subscriptions' }}>
               {t('push.subscriptions')}
             </Link>
           </Button>

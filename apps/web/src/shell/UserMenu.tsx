@@ -43,7 +43,7 @@ export function UserMenu({ rail }: { rail: boolean }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const go = (seccion: string) => void navigate({ to: '/ajustes/$seccion', params: { seccion } })
+  const go = (seccion: string) => void navigate({ to: '/settings/$seccion', params: { seccion } })
 
   return (
     <Menu open={open} onOpenChange={setOpen}>
@@ -76,20 +76,20 @@ export function UserMenu({ rail }: { rail: boolean }) {
             </span>
           </span>
         </div>
-        <MenuItem icon={<icons.user />} onSelect={() => go('cuenta')}>
+        <MenuItem icon={<icons.user />} onSelect={() => go('account')}>
           {t('account.account')}
         </MenuItem>
-        <MenuItem icon={<icons.settings />} onSelect={() => void navigate({ to: '/ajustes' })}>
+        <MenuItem icon={<icons.settings />} onSelect={() => void navigate({ to: '/settings' })}>
           {t('nav.settings')}
         </MenuItem>
-        <MenuItem icon={<icons.keyboard />} onSelect={() => go('atajos')}>
+        <MenuItem icon={<icons.keyboard />} onSelect={() => go('shortcuts')}>
           {t('account.shortcuts')}
         </MenuItem>
-        <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: '/documentacion' })}>
+        <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: '/docs' })}>
           {t('nav.docsLong')}
         </MenuItem>
         <MenuSeparator />
-        <MenuItem icon={<icons.info />} onSelect={() => go('acerca')}>
+        <MenuItem icon={<icons.info />} onSelect={() => go('about')}>
           <span className="flex items-center">
             {t('account.about')}
             <span className="ml-auto font-mono text-xs text-fg-faint">v{__APP_VERSION__}</span>

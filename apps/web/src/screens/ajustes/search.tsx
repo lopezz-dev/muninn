@@ -50,7 +50,7 @@ export function useSettingsSearch() {
   const open = (hit: SettingEntry) => {
     change('')
     void navigate({
-      to: '/ajustes/$seccion',
+      to: '/settings/$seccion',
       params: { seccion: hit.section },
       hash: `ajuste-${hit.id}`,
     })
@@ -164,7 +164,7 @@ export function SettingsResults({ search }: { search: SettingsSearch }) {
                       className="border-t border-border-subtle first:border-t-0"
                     >
                       <Link
-                        to="/ajustes/$seccion"
+                        to="/settings/$seccion"
                         params={{ seccion: hit.section }}
                         hash={`ajuste-${hit.id}`}
                         onClick={() => search.change('')}

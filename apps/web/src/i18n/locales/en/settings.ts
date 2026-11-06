@@ -11,91 +11,91 @@ export const settings = {
     datos: 'Data',
   },
   sections: {
-    cuenta: {
+    account: {
       label: 'Account',
       subtitle: 'How you sign in, where you’re signed in and which apps use your account.',
     },
-    apariencia: {
+    appearance: {
       label: 'Appearance',
       subtitle: 'How Muninn looks. It follows you to all your devices.',
     },
-    barra: {
+    dock: {
       label: 'Bottom bar',
       subtitle:
         'The tabs at the bottom on your phone: which ones and in what order. It follows you to all your devices.',
     },
-    atajos: {
+    shortcuts: {
       label: 'Keyboard shortcuts',
       subtitle: 'Everything you can do without leaving the keyboard.',
     },
-    modulos: {
+    modules: {
       label: 'Modules',
       subtitle: 'Turn on only what you use. What’s off leaves the menu; your data stays saved.',
     },
-    notificaciones: {
+    notifications: {
       label: 'Notifications',
       subtitle: 'Alerts on your phone and computer, even when Muninn is closed.',
     },
-    asistente: {
+    assistant: {
       label: 'Local model',
       subtitle: 'The model on your computer that the Assistant uses, through Ollama.',
     },
-    informe: {
+    report: {
       label: 'Morning report',
       subtitle: 'Every day, a pinned note with what’s on your plate today.',
     },
-    integraciones: {
+    integrations: {
       label: 'GitHub',
       subtitle: 'Issues from your repositories, as tasks in their project.',
     },
-    datos: {
+    data: {
       label: 'Data and sync',
       subtitle: 'Where your data is stored and how it moves between devices.',
     },
-    acerca: {
+    about: {
       label: 'About Muninn',
       subtitle: 'Version, documentation and source code.',
     },
   },
   // Columna «En la documentación» de cada sección.
   docs: {
-    cuenta: {
+    account: {
       title: 'Account and security',
       text: 'Two-factor authentication, open sessions and the apps with access to your account.',
     },
-    apariencia: {
+    appearance: {
       title: 'Getting around Muninn › Appearance',
       text: 'Glass and accent color: what each one changes and where it’s saved.',
     },
-    barra: {
+    dock: {
       title: 'Getting around Muninn › Bottom bar',
       text: 'Which tabs you can add, how many fit and where everything else goes.',
     },
-    atajos: {
+    shortcuts: {
       title: 'Getting around Muninn › Shortcuts',
       text: 'Shortcuts for search, the board and dialogs.',
     },
-    modulos: {
+    modules: {
       title: 'Getting around Muninn › Modules',
       text: 'What happens when you turn a module off and how to turn it back on.',
     },
-    notificaciones: {
+    notifications: {
       title: 'Notifications',
       text: 'How to turn on alerts on your iPhone and what Muninn alerts you about.',
     },
-    asistente: {
+    assistant: {
       title: 'Assistant › Install Ollama',
       text: 'How to install Ollama and the recommended model, step by step.',
     },
-    informe: {
+    report: {
       title: 'Assistant › Morning report',
       text: 'What it includes, when it’s made and what happens if your computer is off.',
     },
-    integraciones: {
+    integrations: {
       title: 'GitHub',
       text: 'How issues sync and what changes on each side.',
     },
-    datos: {
+    data: {
       title: 'Your data and privacy',
       text: 'Where everything is stored, who can see it and what works offline.',
     },

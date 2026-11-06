@@ -12,7 +12,7 @@ import { DOCS } from './docs/content'
 import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
 
-const route = getRouteApi('/_app/documentacion/$pagina')
+const route = getRouteApi('/_app/docs/$pagina')
 
 const linkClass = 'text-accent underline-offset-2 hover:underline'
 
@@ -39,7 +39,7 @@ function renderLink(href: string, children: ReactNode): ReactNode | undefined {
   if (!doc) return undefined
   return (
     <Link
-      to="/documentacion/$pagina"
+      to="/docs/$pagina"
       params={{ pagina: doc.slug }}
       hash={doc.hash ? slugify(decodeURIComponent(doc.hash)) : undefined}
       className={linkClass}
@@ -146,7 +146,7 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
   const Arrow = next ? icons.move : icons.chevronLeft
   return (
     <Link
-      to="/documentacion/$pagina"
+      to="/docs/$pagina"
       params={{ pagina: doc.slug }}
       className={cn(
         'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg md:py-2.5 outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
@@ -176,7 +176,7 @@ function DocNotFound() {
       className="mt-10 flex-1"
       actions={
         <Button asChild variant="primary">
-          <Link to="/documentacion">{t('page.seeDocs')}</Link>
+          <Link to="/docs">{t('page.seeDocs')}</Link>
         </Button>
       }
     >
@@ -218,7 +218,7 @@ export function DocPagina() {
           className="flex min-w-0 flex-col gap-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-3 md:pb-6"
         >
           <Link
-            to="/documentacion"
+            to="/docs"
             className="-mb-1 flex h-11 items-center gap-1.5 self-start text-md text-accent md:hidden"
           >
             <icons.chevronLeft size={18} aria-hidden="true" />
@@ -228,7 +228,7 @@ export function DocPagina() {
             aria-label={t('page.youAreHere')}
             className="hidden items-center gap-1.5 text-sm text-fg-subtle md:flex"
           >
-            <Link to="/documentacion" className="flex items-center gap-1.5 hover:text-fg">
+            <Link to="/docs" className="flex items-center gap-1.5 hover:text-fg">
               <icons.docs size={14} aria-hidden="true" />
               {t('title')}
             </Link>

@@ -42,7 +42,7 @@ function DocCard({ doc, featured }: { doc: Doc; featured?: boolean }) {
   const soon = doc.status === 'proximamente'
   return (
     <Link
-      to="/documentacion/$pagina"
+      to="/docs/$pagina"
       params={{ pagina: doc.slug }}
       className={cn(
         'flex gap-3 rounded-lg border border-border p-4 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
@@ -156,7 +156,7 @@ function Indice() {
       className="flex min-h-0 w-[248px] shrink-0 flex-col gap-3 overflow-y-auto"
     >
       <Link
-        to="/documentacion"
+        to="/docs"
         className="flex items-center gap-2 px-1 text-xl font-semibold tracking-tight text-fg"
       >
         <icons.docs size={18} aria-hidden="true" className="text-accent" />
@@ -173,7 +173,7 @@ function Indice() {
               {g.docs.map((d) => (
                 <TreeItem key={d.slug}>
                   <Link
-                    to="/documentacion/$pagina"
+                    to="/docs/$pagina"
                     params={{ pagina: d.slug }}
                     className={cn(
                       'group flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13.5px] text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
@@ -209,7 +209,7 @@ function Indice() {
  */
 export function Documentacion() {
   const desktop = useIsDesktop()
-  const open = useMatch({ from: '/_app/documentacion/$pagina', shouldThrow: false })?.params.pagina
+  const open = useMatch({ from: '/_app/docs/$pagina', shouldThrow: false })?.params.pagina
 
   if (!open) return <Portada />
   if (!desktop) return <Outlet />

@@ -7,10 +7,10 @@ export const finance: Messages<typeof en> = {
   description: 'Cuentas, gastos, ingresos y ahorro.',
   sectionNav: 'Sección de Finanzas',
   views: {
-    resumen: 'Resumen',
-    movimientos: 'Movimientos',
-    suscripciones: 'Suscripciones',
-    cuentas: 'Cuentas',
+    overview: 'Resumen',
+    transactions: 'Movimientos',
+    subscriptions: 'Suscripciones',
+    accounts: 'Cuentas',
   },
   month: {
     previous: 'Mes anterior',

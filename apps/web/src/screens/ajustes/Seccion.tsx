@@ -35,7 +35,7 @@ import { AvisoDispositivoNuevo, Sesiones } from './Seguridad'
 import { resetSectionLabel, type SettingsSection, settingsSection } from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
-const route = getRouteApi('/_app/ajustes/$seccion')
+const route = getRouteApi('/_app/settings/$seccion')
 
 // Funciones, no constantes: los textos se leen al pintar, en el idioma activo (ADR-0077).
 const accentOptions = (): Swatch<AccentName>[] =>
@@ -214,7 +214,7 @@ function IdiomaRow({ changed, onReset }: { changed: boolean; onReset: () => void
 function Apariencia() {
   const auth = useAuth()
   const appearance = useAppearance()
-  const { changed, reset } = useReset('apariencia')
+  const { changed, reset } = useReset('appearance')
   const { t } = useTranslation(['settings', 'common'])
   return (
     <>
@@ -363,7 +363,7 @@ function Acerca() {
       </PrefRow>
       <PrefRow icon="docs" title={t('about.docs')} description={t('about.docsText')}>
         <Button asChild size="sm">
-          <Link to="/documentacion">{t('about.open')}</Link>
+          <Link to="/docs">{t('about.open')}</Link>
         </Button>
       </PrefRow>
       <PrefRow icon="github" title={t('about.code')} description={t('about.codeText')}>

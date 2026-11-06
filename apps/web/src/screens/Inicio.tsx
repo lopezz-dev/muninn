@@ -100,7 +100,7 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <Link
-          to="/proyectos/$projectId/tareas/$taskId"
+          to="/projects/$projectId/tasks/$taskId"
           params={{ projectId: task.projectId, taskId: task.id }}
           // La fila se adapta al ancho de su tarjeta (`@container`), no al de la pantalla: en una tarjeta estrecha
           // (teléfono, tablet o la columna de «En curso») el título ocupa hasta dos líneas y los datos van debajo.
@@ -161,7 +161,7 @@ function Clear({ next, today }: { next?: Task; today: string }) {
       </div>
       {next ? (
         <Link
-          to="/proyectos/$projectId/tareas/$taskId"
+          to="/projects/$projectId/tasks/$taskId"
           params={{ projectId: next.projectId, taskId: next.id }}
           className="flex items-center gap-3 border-t border-border-subtle px-4 py-3 transition-colors hover:bg-surface-hover/60"
         >
@@ -307,7 +307,7 @@ export function Inicio() {
         </div>
         <div className="hidden shrink-0 flex-wrap gap-2 md:flex">
           <Button asChild>
-            <Link to="/asistente">
+            <Link to="/assistant">
               <Icon name="assistant" className="text-accent" />
               {t('askMuninn')}
             </Link>
@@ -395,7 +395,7 @@ export function Inicio() {
                     title={t('myTasks.title')}
                     description={t('myTasks.description')}
                     action={
-                      <Link to="/proyectos" className="text-sm text-accent hover:text-accent-hover">
+                      <Link to="/projects" className="text-sm text-accent hover:text-accent-hover">
                         {t('myTasks.boards')}
                       </Link>
                     }
@@ -441,7 +441,7 @@ export function Inicio() {
                     >
                       <ColorDot color={color.get(task.projectId) ?? 'gray'} />
                       <Link
-                        to="/proyectos/$projectId/tareas/$taskId"
+                        to="/projects/$projectId/tasks/$taskId"
                         params={{ projectId: task.projectId, taskId: task.id }}
                         className="min-w-0 flex-1 text-md max-md:line-clamp-2 md:truncate md:text-sm"
                       >
@@ -460,7 +460,7 @@ export function Inicio() {
               <div className="flex items-center">
                 <h2 className="text-md font-semibold">{t('projects.title')}</h2>
                 <Link
-                  to="/proyectos"
+                  to="/projects"
                   className="ml-auto text-sm text-accent hover:text-accent-hover"
                 >
                   {t('projects.all')}
@@ -471,7 +471,7 @@ export function Inicio() {
                 return (
                   <Link
                     key={p.id}
-                    to="/proyectos/$projectId"
+                    to="/projects/$projectId"
                     params={{ projectId: p.id }}
                     className="flex flex-col gap-1.5 rounded-sm"
                   >

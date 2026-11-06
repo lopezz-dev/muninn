@@ -214,7 +214,7 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
       setSaving(false)
       if (!created) return
       onDone()
-      navigate({ to: '/proyectos/$projectId', params: { projectId: created.id } })
+      navigate({ to: '/projects/$projectId', params: { projectId: created.id } })
       return
     }
     const patch = {
@@ -244,7 +244,7 @@ function ProjectForm({ project, onDone }: { project?: Project; onDone: () => voi
   const archive = async () => {
     if (!project) return
     onDone()
-    if (await archiveProjectWithUndo(m, qc, project)) navigate({ to: '/proyectos' })
+    if (await archiveProjectWithUndo(m, qc, project)) navigate({ to: '/projects' })
   }
 
   return (

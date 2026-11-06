@@ -100,7 +100,7 @@ function TargetLink({ target }: { target: ChangeTarget }) {
     case 'task':
       return (
         <Link
-          to="/proyectos/$projectId/tareas/$taskId"
+          to="/projects/$projectId/tasks/$taskId"
           params={{ projectId: target.projectId, taskId: target.id }}
           className={cls}
         >
@@ -109,19 +109,19 @@ function TargetLink({ target }: { target: ChangeTarget }) {
       )
     case 'project':
       return (
-        <Link to="/proyectos/$projectId" params={{ projectId: target.id }} className={cls}>
+        <Link to="/projects/$projectId" params={{ projectId: target.id }} className={cls}>
           {t('open')}
         </Link>
       )
     case 'note':
       return (
-        <Link to="/notas/$noteId" params={{ noteId: target.id }} className={cls}>
+        <Link to="/notes/$noteId" params={{ noteId: target.id }} className={cls}>
           {t('open')}
         </Link>
       )
     default:
       return (
-        <Link to="/finanzas" className={cls}>
+        <Link to="/finance" className={cls}>
           {t('open')}
         </Link>
       )

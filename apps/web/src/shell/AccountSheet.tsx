@@ -93,7 +93,7 @@ function Root() {
     <div className="flex flex-col gap-5">
       <button
         type="button"
-        onClick={() => accountSheet.push('cuenta')}
+        onClick={() => accountSheet.push('account')}
         className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface px-3.5 py-3 text-left transition-colors hover:border-border-strong"
       >
         {auth.kind === 'user' ? (
@@ -153,7 +153,7 @@ function Root() {
             </button>
           )}
           {isTauri ? (
-            <Link to="/asistente" onClick={accountSheet.close} className={tileClass}>
+            <Link to="/assistant" onClick={accountSheet.close} className={tileClass}>
               <span className="grid size-[34px] place-items-center rounded-md bg-project-amber/15 text-project-amber">
                 <Icon name="assistant" size={19} />
               </span>
@@ -200,7 +200,7 @@ function Root() {
       ))}
 
       <div className="glass overflow-hidden rounded-lg border border-border">
-        <Link to="/documentacion" onClick={accountSheet.close} className={rowClass}>
+        <Link to="/docs" onClick={accountSheet.close} className={rowClass}>
           <span className="grid size-[30px] shrink-0 place-items-center rounded-md bg-project-blue/15 text-project-blue">
             <Icon name="docs" size={17} />
           </span>
@@ -242,7 +242,7 @@ function SectionView({ section }: { section: SettingsSection }) {
         </Button>
       ) : null}
       <SectionContent section={section} />
-      {section.id === 'cuenta' && auth.kind === 'user' ? (
+      {section.id === 'account' && auth.kind === 'user' ? (
         <Button
           variant="danger"
           size="lg"
@@ -269,7 +269,7 @@ const viewTitle = (view: string) =>
 
 /**
  * Hoja «Tu cuenta» del teléfono (ADR-0072): se abre con tu avatar, abajo a la derecha, o con un enlace a
- * `/ajustes/<sección>`. Dentro se navega con «‹» y, al cerrarla (fuera, Esc o arrastrando el asa), sigues en la
+ * `/settings/<sección>`. Dentro se navega con «‹» y, al cerrarla (fuera, Esc o arrastrando el asa), sigues en la
  * pantalla en la que estabas. Diseño: lienzo «Dock y cuenta».
  */
 export function AccountSheet() {

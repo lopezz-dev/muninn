@@ -396,7 +396,9 @@ Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (AD
   - [ ] Decidir: los datos que se crean por defecto (columnas del tablero, categorías de Finanzas, temas del catálogo de
     Noticias) se guardan en español; en inglés se ven «Pendiente», «Supermercado» o «Tecnología». Propuesta: crearlos en
     el idioma de quien los crea
-- [ ] Fase 3: rutas en inglés (`/projects`, `/notes`, `/docs`…) con redirecciones de las antiguas
+- [x] Fase 3: rutas en inglés (`/projects`, `/notes`, `/finance?view=…`, `/settings/account`, `/docs`…). Las antiguas en
+  español redirigen a las nuevas (`lib/legacy-routes.ts`, y Vercel con 301 las guías prerenderizadas). Los slugs de las guías siguen
+  en español hasta la fase 4
 - [ ] Fase 4: guías en los dos idiomas, prerender por idioma con `hreflang` y sitemap, y el aviso «Esta página también está en
   español» (abajo a la derecha; en el móvil, encima del dock)
 - [ ] Fase 5: correos de Supabase, avisos push y lo que escriben el asistente y el MCP para el usuario

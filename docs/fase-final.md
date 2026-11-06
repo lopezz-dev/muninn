@@ -144,7 +144,7 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales).
 
 > **26 de octubre:** publicada en **https://muninn-sepia.vercel.app** (proyecto `muninn` del equipo Kodemaru, rama de producción `develop`,
-> primer despliegue de `e17cfec`). Comprobado con `curl` y en el navegador: la URL de producción es pública, `/finanzas` no da 404
+> primer despliegue de `e17cfec`). Comprobado con `curl` y en el navegador: la URL de producción es pública, `/finance` no da 404
 > (redirige al login), el service worker se registra y el build lleva la dirección de Supabase.
 - [x] Proyecto en Vercel con *Root Directory* `apps/web` y la rama del paso 0.
 - [x] Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Despliega.
@@ -161,8 +161,8 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
   - entrar con GitHub vuelve a la URL publicada;
   - la pestaña lleva el logo, `/robots.txt` y `/sitemap.xml` se abren, y al pegar la URL en un chat sale la tarjeta con la imagen
     (ADR-0045). *(Hecho el 27 de octubre: la tarjeta sale bien en WhatsApp y los ficheros responden en producción.)*
-  - sin sesión, `/documentacion/notas` se lee con la cabecera «Entrar»; al pegar su enlace en un chat, la tarjeta dice «Notas · Muninn»;
-    una guía que no existe (`/documentacion/xyz`) responde 404
+  - sin sesión, `/docs/notas` se lee con la cabecera «Entrar»; al pegar su enlace en un chat, la tarjeta dice «Notas · Muninn»;
+    una guía que no existe (`/docs/xyz`) responde 404
     (ADR-0076)
 - [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`. *(Más adelante.)*
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red

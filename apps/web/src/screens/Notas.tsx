@@ -35,7 +35,7 @@ function NoteItem({ note, project }: ItemProps) {
   const preview = notePreview(note)
   return (
     <Link
-      to="/notas/$noteId"
+      to="/notes/$noteId"
       params={{ noteId: note.id }}
       className="flex flex-col gap-1.5 px-3.5 py-3 text-fg outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent data-[status=active]:bg-fg/[0.07] md:rounded-md"
     >
@@ -86,7 +86,7 @@ export function Notas() {
   const desktop = useIsDesktop()
   const notes = useQuery(notesQuery(m))
   const projects = useQuery(projectsQuery(m)).data
-  const open = useMatch({ from: '/_app/notas/$noteId', shouldThrow: false })?.params.noteId
+  const open = useMatch({ from: '/_app/notes/$noteId', shouldThrow: false })?.params.noteId
   const [filter, setFilter] = useState<NoteFilter>(NO_FILTER)
   // Con una nota abierta, `NotaDetalle` pone su título; al volver a la lista, el de la sección.
   useEffect(() => {
@@ -112,11 +112,11 @@ export function Notas() {
       m,
       qc,
       { projectId: filter.projectId ?? undefined },
-      { onUndo: () => navigate({ to: '/notas', replace: true }) },
+      { onUndo: () => navigate({ to: '/notes', replace: true }) },
     )
     if (note) {
       setFilter(NO_FILTER)
-      navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+      navigate({ to: '/notes/$noteId', params: { noteId: note.id } })
     }
   }
 

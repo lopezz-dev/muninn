@@ -405,7 +405,7 @@ export function Login() {
           {/* Pública (ADR-0076): también es por donde los buscadores llegan a las guías. */}
           <p className="text-[12.5px] leading-normal text-fg-faint">
             {t('login.docsBefore')}
-            <Link to="/documentacion" className="text-accent hover:text-accent-hover">
+            <Link to="/docs" className="text-accent hover:text-accent-hover">
               {t('login.docsLink')}
             </Link>
             {t('login.docsAfter')}

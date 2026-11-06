@@ -4,10 +4,10 @@ export const finance = {
   description: 'Accounts, expenses, income and savings.',
   sectionNav: 'Finance section',
   views: {
-    resumen: 'Overview',
-    movimientos: 'Transactions',
-    suscripciones: 'Subscriptions',
-    cuentas: 'Accounts',
+    overview: 'Overview',
+    transactions: 'Transactions',
+    subscriptions: 'Subscriptions',
+    accounts: 'Accounts',
   },
   month: {
     previous: 'Previous month',
