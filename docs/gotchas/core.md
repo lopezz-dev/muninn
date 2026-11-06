@@ -1,5 +1,33 @@
 # Gotchas · core (`packages/core`)
 
+### `noteText` tiene que coincidir con el editor (comentarios)
+
+- **Síntoma:** al comentar desde la app sale «Ese texto no está en la nota», o un subrayado aparece desplazado.
+- **Causa:** el ancla de un comentario se guarda sobre el **texto visible** (`noteText`, en `note-text.ts`), y la app manda la cita tal
+  como la ve el editor (TipTap con `@tiptap/markdown`: `doc.textBetween(0, size, '
+', leaf)`, con `'
+'` en un salto duro y el
+  `alt` de una imagen en línea). `noteText` reproduce ese texto con el lexer de marked (el mismo que usa `@tiptap/markdown`): un `
+`
+  entre bloques (párrafo, título, bloque de código, celda de tabla, elemento de lista), los saltos suaves como `
+`, las líneas en
+  blanco de más como párrafos vacíos, solo `&lt; &gt; &quot; &amp;` y las numéricas como entidades, y el HTML como texto.
+- **Diferencias conocidas:** TipTap tiene su propio tokenizador de listas numeradas y conserva parte de la sangría de las líneas de
+  continuación; `noteText` no. Por eso `locateQuote`, si no encuentra la cita tal cual, la busca **sin tener en cuenta el espaciado**. En
+  el navegador, TipTap convierte el HTML que reconoce (`<b>`, `<em>`…) en marcas; `noteText` lo deja como texto (en Node, TipTap también).
+- **Solución:** si cambias las extensiones del editor (otra lista, imágenes, HTML…), compara `noteText` con lo que da el editor sobre
+  el corpus de `test/note-text.test.ts` (sus textos esperados salen de TipTap 3.33) y ajusta los dos a la vez.
+- **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md)
+
+### `notes.update` vuelve a anclar los comentarios
+
+- Cuando cambia el `content` de una nota, el core relee sus hilos (abiertos y resueltos, no archivados) y llama a `reanchor` con el texto
+  visible de antes y el de después; solo escribe los que cambian. Así vale igual para la app, el asistente y el MCP. Un hilo «Sin sitio»
+  (`orphaned`) conserva su ancla vieja y, si su cita vuelve (un «Deshacer»), se reancla en el siguiente guardado.
+- No escribas `content` en el store directamente: los comentarios se quedarían con anclas viejas.
+- La búsqueda aproximada (paso 3 del ADR) es Levenshtein con inicio libre (Sellers) en una zona alrededor de donde estaba la cita: coste
+  cita × zona. Citas de más de 2000 caracteres o de menos de 4 no se buscan así.
+
 ### Comparar posiciones con `<`, nunca con `localeCompare`
 
 - **Síntoma:** tarjetas que saltan de orden, sobre todo con claves que mezclan mayúsculas y minúsculas (`a0V` vs `a0b`).

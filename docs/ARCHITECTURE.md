@@ -77,6 +77,7 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 | `tasks` | Tareas. `source` (`manual`, `github`, `mcp`, `agent`) + `external_id`/`external_url` para el origen. `completed_at` se gestiona solo al entrar/salir de una columna `done`. |
 | `task_checklist_items` | Subtareas (la barra de progreso de las tarjetas). |
 | `notes` | Notas Markdown, opcionalmente vinculadas a proyecto o tarea. |
+| `note_comments` | Comentarios de las notas en hilos, anclados a una cita del texto visible (`anchor`), con «Para Claude» (`for_agent`) ([ADR-0079](adr/0079-comentarios-anclados-en-las-notas.md)). |
 | `activity` | Log inmutable de eventos. |
 | `user_settings` | Módulos activados y preferencias. |
 | `finance_accounts` | Cuentas (corriente, ahorro, inversión, efectivo…) con su saldo inicial. El saldo **no se guarda**: lo suma la vista `finance_account_totals` ([ADR-0037](adr/0037-modelo-de-datos-de-finanzas.md)). |
