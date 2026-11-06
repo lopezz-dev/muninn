@@ -7,7 +7,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router'
-import { i18n } from './i18n'
+import { i18n, type NAMESPACES } from './i18n'
 import { accountSheet, isPhone, settingsViewOf } from './lib/account-sheet'
 import { getAuth, onAuthChange, safeRedirect } from './lib/auth'
 import {
@@ -45,10 +45,22 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFound,
 })
 
+type Namespace = (typeof NAMESPACES)[number]
+
+/**
+ * Pantalla diferida con sus textos (ADR-0084): el chunk y sus namespaces de i18next se piden a la vez y el router no la
+ * pinta hasta tener los dos. Si los textos llegaran después, `useTranslation` suspendería ya montada y se vería el
+ * contenido vacío un instante. Si la pantalla usa un namespace que no está en la lista, sigue funcionando (suspende).
+ */
 const screen = <T extends Record<string, unknown>, K extends keyof T & string>(
   load: () => Promise<T>,
   name: K,
-) => lazyRouteComponent(load, name)
+  ns: readonly Namespace[] = [],
+) =>
+  lazyRouteComponent(
+    () => Promise.all([load(), ns.length ? i18n.loadNamespaces([...ns]) : null]).then(([m]) => m),
+    name,
+  )
 
 export interface LoginSearch {
   /** Ruta interna a la que volver tras entrar. */
@@ -73,7 +85,7 @@ const loginRoute = createRoute({
       throw redirect({ href: safeRedirect(search.redirect), replace: true })
   },
   // El formulario o, con el segundo factor pendiente, su código (ADR-0061).
-  component: screen(() => import('./screens/login/Entrada'), 'Entrada'),
+  component: screen(() => import('./screens/login/Entrada'), 'Entrada', ['auth']),
 })
 
 export interface OAuthConsentSearch {
@@ -98,7 +110,7 @@ const oauthConsentRoute = createRoute({
     if (context.auth.kind !== 'user')
       throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
   },
-  component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent'),
+  component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent', ['auth']),
 })
 
 /** Todo lo que necesita datos: sin sesión ni demo, a /login (y vuelta aquí al entrar). */
@@ -137,19 +149,19 @@ function AppFrame() {
 const homeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/',
-  component: screen(() => import('./screens/Inicio'), 'Inicio'),
+  component: screen(() => import('./screens/Inicio'), 'Inicio', ['home', 'finance', 'task']),
 })
 
 const projectsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'projects',
-  component: screen(() => import('./screens/Proyectos'), 'Proyectos'),
+  component: screen(() => import('./screens/Proyectos'), 'Proyectos', ['projects', 'task']),
 })
 
 const boardRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'projects/$projectId',
-  component: screen(() => import('./screens/Tablero'), 'Tablero'),
+  component: screen(() => import('./screens/Tablero'), 'Tablero', ['board', 'task']),
 })
 
 /**
@@ -159,13 +171,13 @@ const boardRoute = createRoute({
 const taskRoute = createRoute({
   getParentRoute: () => boardRoute,
   path: 'tasks/$taskId',
-  component: screen(() => import('./screens/TareaDetalle'), 'TareaDetalle'),
+  component: screen(() => import('./screens/TareaDetalle'), 'TareaDetalle', ['task', 'home']),
 })
 
 const notesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'notes',
-  component: screen(() => import('./screens/Notas'), 'Notas'),
+  component: screen(() => import('./screens/Notas'), 'Notas', ['notes']),
 })
 
 /**
@@ -175,7 +187,7 @@ const notesRoute = createRoute({
 const noteRoute = createRoute({
   getParentRoute: () => notesRoute,
   path: '$noteId',
-  component: screen(() => import('./screens/NotaDetalle'), 'NotaDetalle'),
+  component: screen(() => import('./screens/NotaDetalle'), 'NotaDetalle', ['notes']),
 })
 
 export type FinanceView = 'overview' | 'transactions' | 'subscriptions' | 'accounts'
@@ -195,7 +207,7 @@ const financeRoute = createRoute({
       ? (search.view as FinanceView)
       : undefined,
   }),
-  component: screen(() => import('./screens/Finanzas'), 'Finanzas'),
+  component: screen(() => import('./screens/Finanzas'), 'Finanzas', ['finance']),
 })
 
 export interface AssistantSearch {
@@ -209,7 +221,7 @@ const assistantRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): AssistantSearch => ({
     q: typeof search.q === 'string' && search.q.trim() ? search.q.slice(0, 500) : undefined,
   }),
-  component: screen(() => import('./screens/Asistente'), 'Asistente'),
+  component: screen(() => import('./screens/Asistente'), 'Asistente', ['assistant']),
 })
 
 export interface NewsSearch {
@@ -223,19 +235,19 @@ const newsRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): NewsSearch => ({
     q: typeof search.q === 'string' && search.q.trim() ? search.q.slice(0, 200) : undefined,
   }),
-  component: screen(() => import('./screens/Noticias'), 'Noticias'),
+  component: screen(() => import('./screens/Noticias'), 'Noticias', ['news']),
 })
 
 const githubRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'github',
-  component: screen(() => import('./screens/GitHub'), 'GitHub'),
+  component: screen(() => import('./screens/GitHub'), 'GitHub', ['github']),
 })
 
 // ─── Documentación: en inglés en /docs y en español en /es/docs (ADR-0077) ─────
 
-const docsScreen = screen(() => import('./screens/Documentacion'), 'Documentacion')
-const docPageScreen = screen(() => import('./screens/DocPagina'), 'DocPagina')
+const docsScreen = screen(() => import('./screens/Documentacion'), 'Documentacion', ['docs'])
+const docPageScreen = screen(() => import('./screens/DocPagina'), 'DocPagina', ['docs'])
 
 /**
  * Una guía con el slug del otro idioma (`/docs/notas`, o un enlace de antes de la fase 4) va a su ruta. Lo que no es
@@ -303,7 +315,7 @@ const settingsRoute = createRoute({
     if (!view || !isPhone() || (view !== 'root' && !settingsSection(view))) return
     throw redirect({ href: sheetInstead(view), replace: true })
   },
-  component: screen(() => import('./screens/ajustes/Ajustes'), 'Ajustes'),
+  component: screen(() => import('./screens/ajustes/Ajustes'), 'Ajustes', ['settings']),
 })
 
 const settingsIndexRoute = createRoute({
@@ -321,7 +333,11 @@ const settingsSectionRoute = createRoute({
   beforeLoad: ({ params }) => {
     if (!settingsSection(params.seccion)) throw notFound()
   },
-  component: screen(() => import('./screens/ajustes/Seccion'), 'Seccion'),
+  component: screen(() => import('./screens/ajustes/Seccion'), 'Seccion', [
+    'settings',
+    'security',
+    'integrations',
+  ]),
 })
 
 // ─── Desarrollo ──────────────────────────────────────────────────────────────

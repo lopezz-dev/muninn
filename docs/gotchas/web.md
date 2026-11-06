@@ -73,6 +73,17 @@
   router y abre la hoja sin tocar el historial. Evita `navigate({ to: '/settings/…' })` en lo que se use en el móvil; si hace falta, llama
   a `accountSheet.open(sección)` cuando `isPhone()`. El primer valor de la ruta resuelta no cierra la hoja (`AppShell`).
 
+### Una pantalla nueva declara sus namespaces en `screen()`
+
+- **Síntoma:** la primera vez que abres una pantalla tras arrancar la app (o tras actualizarla), el contenido desaparece un instante y
+  aparece de golpe unos 300 ms después. Las siguientes veces, no.
+- **Causa:** `useTranslation('x')` suspende si el namespace `x` aún no está cargado. Si eso pasa con la pantalla ya montada, React
+  enseña el *fallback* del router (vacío) y la revela con su retardo de ~300 ms. El precache del service worker no influye.
+- **Solución:** declara en `screen(() => import(…), 'Nombre', [namespaces])` (`router.tsx`) todos los que use la pantalla, también los
+  de sus componentes (`task-meta` usa `task`, `TaskBody` usa `home`…): se piden con el chunk y el router no la pinta hasta tenerlos.
+  Lo que no es una ruta (diálogos, buscador) lo cubre el precalentado de `lib/warm-up.ts`.
+- **Ref:** [ADR-0084](../adr/0084-pantallas-con-sus-textos-y-precalentado.md)
+
 ### `@muninn/core` se importa como TypeScript fuente
 
 - Vite lo transpila sin problema, pero no importes `@muninn/core/file-store` (usa `node:fs`).
