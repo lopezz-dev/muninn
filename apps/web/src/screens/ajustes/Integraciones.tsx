@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { type ReactNode, useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { GuideLink } from '../../components/GuideLink'
 import { EmptyState } from '../../components/Page'
 import { SelectMenu } from '../../components/SelectMenu'
 import { timeAgo } from '../../lib/dates'
@@ -254,9 +255,7 @@ export function Integraciones() {
       <p className="px-0.5 text-xs text-fg-faint">
         {t('github.footer')}{' '}
         <Button asChild variant="ghost" className="h-auto px-0 text-xs text-accent">
-          <Link to="/docs/$pagina" params={{ pagina: 'github' }}>
-            {t('github.howItWorks')}
-          </Link>
+          <GuideLink doc="github">{t('github.howItWorks')}</GuideLink>
         </Button>
       </p>
     </>

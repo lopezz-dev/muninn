@@ -1,10 +1,10 @@
 import { cn, icons, Kbd } from '@muninn/ui'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { type KeyboardEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type DocHit, searchDocs } from '../../lib/docs'
 import { typingIn } from '../../lib/keyboard'
-import { DOCS } from './content'
+import { DocRouteLink, useDocLang, useDocs } from './content'
 import { DocTile } from './look'
 import { StatusBadge } from './StatusBadge'
 
@@ -18,7 +18,9 @@ export function useDocSearch() {
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const searching = query.trim().length > 0
-  const hits = useMemo(() => (searching ? searchDocs(DOCS, query) : []), [query, searching])
+  const docs = useDocs()
+  const lang = useDocLang()
+  const hits = useMemo(() => (searching ? searchDocs(docs, query) : []), [docs, query, searching])
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -39,7 +41,7 @@ export function useDocSearch() {
   const open = (hit: DocHit) => {
     change('')
     void navigate({
-      to: '/docs/$pagina',
+      to: lang === 'es' ? '/es/docs/$pagina' : '/docs/$pagina',
       params: { pagina: hit.doc.slug },
       hash: hit.section?.id,
     })
@@ -134,9 +136,9 @@ export function DocResults({ search, dense }: { search: DocSearch; dense?: boole
       >
         {search.hits.map((hit, i) => (
           <li key={hit.doc.slug} id={`resultado-ayuda-${i}`}>
-            <Link
-              to="/docs/$pagina"
-              params={{ pagina: hit.doc.slug }}
+            <DocRouteLink
+              lang={hit.doc.lang}
+              slug={hit.doc.slug}
               hash={hit.section?.id}
               onClick={() => search.change('')}
               className={cn(
@@ -175,7 +177,7 @@ export function DocResults({ search, dense }: { search: DocSearch; dense?: boole
                   <span className="text-2xs text-fg-faint">{t(`groups.${hit.doc.group}`)}</span>
                 )}
               </span>
-            </Link>
+            </DocRouteLink>
           </li>
         ))}
       </ul>

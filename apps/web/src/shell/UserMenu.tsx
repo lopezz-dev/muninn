@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../lib/muninn'
 import { useEndSession } from '../lib/session'
+import { SECTIONS } from './nav'
 import { UserButton } from './UserButton'
 
 const PROVIDER = { github: 'account.viaGithub', email: 'account.viaEmail' } as const
@@ -85,7 +86,7 @@ export function UserMenu({ rail }: { rail: boolean }) {
         <MenuItem icon={<icons.keyboard />} onSelect={() => go('shortcuts')}>
           {t('account.shortcuts')}
         </MenuItem>
-        <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: '/docs' })}>
+        <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: SECTIONS.docs.to })}>
           {t('nav.docsLong')}
         </MenuItem>
         <MenuSeparator />

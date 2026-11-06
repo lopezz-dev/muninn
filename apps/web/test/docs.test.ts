@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { DOC_LANGS, DOC_SLUGS, docSlug } from '../src/lib/doc-slugs'
+import type { Doc } from '../src/lib/docs'
 import {
   buildDocs,
   docLink,
@@ -10,6 +12,7 @@ import {
   splitFrontMatter,
 } from '../src/lib/docs'
 import { makeSlugger, nestOutline, outline, slugify } from '../src/markdown/outline'
+import { SETTINGS_SECTIONS } from '../src/screens/ajustes/sections'
 import { DOCS } from '../src/screens/docs/content'
 import { isDocIcon } from '../src/screens/docs/look'
 
@@ -79,8 +82,8 @@ describe('guías', () => {
     expect(neighbours(docs, 'instalacion').next?.slug).toBe('notas')
     expect(neighbours(docs, 'bienvenida').prev).toBeUndefined()
     expect(neighbours(docs, 'nada')).toEqual({})
-    expect(docLink('05-notas.md#archivar')).toEqual({ slug: 'notas', hash: 'archivar' })
-    expect(docLink('./02-instalacion.md')).toEqual({ slug: 'instalacion', hash: '' })
+    expect(docLink('05-notas.md#archivar')).toEqual({ n: '05', hash: 'archivar' })
+    expect(docLink('./02-instalacion.md')).toEqual({ n: '02', hash: '' })
     expect(docLink('https://muninn.app/05-notas.md')).toBeNull()
     expect(docLink('ROADMAP.md')).toBeNull()
   })
@@ -169,7 +172,7 @@ describe('grupos, iconos y apartados (ADR-0052)', () => {
       'modulos',
       'otras',
     ])
-    expect(groupDocs(docs).map((x) => [x.label, x.docs.length])).toEqual([
+    expect(groupDocs(docs).map((x) => [x.label.es, x.docs.length])).toEqual([
       ['Primeros pasos', 2],
       ['Módulos', 1],
       ['Más guías', 1],
@@ -213,10 +216,67 @@ describe('grupos, iconos y apartados (ADR-0052)', () => {
 
 describe('las guías de docs/user', () => {
   it('tienen un icono que existe y un grupo conocido', () => {
-    expect(DOCS.length).toBeGreaterThan(5)
-    for (const d of DOCS) {
-      expect(isDocIcon(d.icon), `${d.slug}: icono «${d.icon}»`).toBe(true)
-      expect(d.group, `${d.slug}: falta \`group\``).not.toBe('otras')
+    for (const lang of DOC_LANGS) {
+      expect(DOCS[lang].length).toBeGreaterThan(5)
+      for (const d of DOCS[lang]) {
+        expect(isDocIcon(d.icon), `${lang}/${d.slug}: icono «${d.icon}»`).toBe(true)
+        expect(d.group, `${lang}/${d.slug}: falta \`group\``).not.toBe('otras')
+      }
+    }
+  })
+
+  it('están en los dos idiomas, con los mismos metadatos y los slugs de lib/doc-slugs', () => {
+    const keys = Object.keys(DOC_SLUGS).sort()
+    for (const lang of DOC_LANGS) {
+      expect(DOCS[lang].map((d) => d.key).sort(), lang).toEqual(keys)
+      for (const d of DOCS[lang])
+        expect(d.key && docSlug(d.key, lang), `${lang}/${d.n}`).toBe(d.slug)
+    }
+    const pick = (d?: Doc) =>
+      d && { order: d.order, status: d.status, group: d.group, icon: d.icon }
+    for (const es of DOCS.es) {
+      const en = DOCS.en.find((d) => d.n === es.n)
+      expect(pick(en), `guía ${es.n}`).toEqual(pick(es))
+      expect(
+        sections(en?.body ?? '').filter((p) => p.id).length,
+        `apartados de la guía ${es.n}`,
+      ).toBe(sections(es.body).filter((p) => p.id).length)
+    }
+  })
+
+  it('enlazan a guías y apartados que existen en su idioma', () => {
+    for (const lang of DOC_LANGS) {
+      const ids = new Map(DOCS[lang].map((d) => [d.n, new Set(sections(d.body).map((p) => p.id))]))
+      for (const d of DOCS[lang]) {
+        for (const [, href = ''] of d.body.matchAll(/\]\(([^)\s]+)\)/g)) {
+          const where = `${lang}/${d.slug} → ${href}`
+          const link = href.startsWith('#') ? { n: d.n, hash: href.slice(1) } : docLink(href)
+          if (!link) continue
+          expect(ids.has(link.n), where).toBe(true)
+          if (link.hash) {
+            expect(ids.get(link.n)?.has(slugify(decodeURIComponent(link.hash))), where).toBe(true)
+          }
+        }
+      }
+    }
+  })
+})
+
+describe('enlaces de la app a la ayuda', () => {
+  it('las secciones de Ajustes llevan a guías y apartados que existen en cada idioma', () => {
+    for (const s of SETTINGS_SECTIONS) {
+      if (!s.doc) continue
+      for (const lang of DOC_LANGS) {
+        const doc = DOCS[lang].find((d) => d.key === s.doc?.key)
+        expect(doc, `${s.id} (${lang})`).toBeDefined()
+        const hash = typeof s.doc.hash === 'string' ? s.doc.hash : s.doc.hash?.[lang]
+        if (hash) {
+          expect(
+            sections(doc?.body ?? '').map((p) => p.id),
+            `${s.id} (${lang})`,
+          ).toContain(hash)
+        }
+      }
     }
   })
 })

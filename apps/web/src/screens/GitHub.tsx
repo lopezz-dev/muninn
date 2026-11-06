@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GuideLink } from '../components/GuideLink'
 import { EmptyState, Page, PageHeader } from '../components/Page'
 import { SelectMenu } from '../components/SelectMenu'
 import { canBeAgentColumn, setAgentColumn } from '../lib/agent'
@@ -369,13 +370,9 @@ function AgentCard({
       )}
       <p className="text-xs leading-relaxed text-fg-faint">
         {t('agent.about')}{' '}
-        <Link
-          to="/docs/$pagina"
-          params={{ pagina: 'github' }}
-          className="text-accent hover:underline"
-        >
+        <GuideLink doc="github" className="text-accent hover:underline">
           {t('agent.setup')}
-        </Link>
+        </GuideLink>
       </p>
     </Card>
   )

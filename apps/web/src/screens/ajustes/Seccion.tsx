@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GuidesLink } from '../../components/GuideLink'
 import { EmptyState } from '../../components/Page'
 import { type Swatch, SwatchPicker } from '../../components/SwatchPicker'
 import { t } from '../../i18n'
@@ -363,7 +364,7 @@ function Acerca() {
       </PrefRow>
       <PrefRow icon="docs" title={t('about.docs')} description={t('about.docsText')}>
         <Button asChild size="sm">
-          <Link to="/docs">{t('about.open')}</Link>
+          <GuidesLink>{t('about.open')}</GuidesLink>
         </Button>
       </PrefRow>
       <PrefRow icon="github" title={t('about.code')} description={t('about.codeText')}>

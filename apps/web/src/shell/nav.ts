@@ -1,6 +1,7 @@
 import type { ModuleName } from '@muninn/core'
 import type { IconName } from '@muninn/ui'
-import { t } from '../i18n'
+import { currentLocale, t } from '../i18n'
+import { isDocsPath } from '../lib/doc-slugs'
 
 /**
  * Secciones de la app. El orden de `SIDEBAR_MAIN` y `DOCK_OPTIONS` sigue el diseño. `label` se lee al pintar, en el idioma
@@ -61,7 +62,10 @@ export const SECTIONS = {
       return t('nav.docsLong')
     },
     icon: 'docs',
-    to: '/docs',
+    /** La ayuda en el idioma de la interfaz (ADR-0077): `/docs` o `/es/docs`. */
+    get to(): '/docs' | '/es/docs' {
+      return currentLocale() === 'es' ? '/es/docs' : '/docs'
+    },
   },
   settings: {
     get label() {
@@ -86,6 +90,7 @@ export const SIDEBAR_MAIN: SectionId[] = [
 
 /** Sección a la que pertenece una ruta (`/projects/abc` → `projects`). */
 export function sectionOf(pathname: string): SectionId | null {
+  if (isDocsPath(pathname)) return 'docs'
   const first = `/${pathname.split('/').filter(Boolean)[0] ?? ''}`
   for (const [id, s] of Object.entries(SECTIONS)) {
     if (s.to === first) return id as SectionId

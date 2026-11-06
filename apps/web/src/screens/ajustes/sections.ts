@@ -1,6 +1,8 @@
 import type { AppIconName } from '../../components/AppIcon'
+import type { GuideHash } from '../../components/GuideLink'
 import { t } from '../../i18n'
 import type { settings as en } from '../../i18n/locales/en/settings'
+import type { DocKey as GuideKey } from '../../lib/doc-slugs'
 
 export interface SettingsSection {
   id: string
@@ -12,7 +14,7 @@ export interface SettingsSection {
   /** Color del recuadro del icono en el móvil y en la cabecera (el de su módulo, si tiene). */
   tile: string
   /** La guía que lo explica, para la columna «En la documentación». */
-  doc?: { pagina: string; hash?: string; title: string; text: string }
+  doc?: { key: GuideKey; hash?: GuideHash; title: string; text: string }
   /** Si aún no está disponible: qué será y cuándo llega. */
   soon?: { phase: string; text: string }
 }
@@ -39,7 +41,7 @@ type DocKey = keyof typeof en.docs
 function section(
   id: SectionKey,
   rest: Omit<SettingsSection, 'id' | 'label' | 'subtitle' | 'doc'> & {
-    doc?: { pagina: string; hash?: string }
+    doc?: { key: GuideKey; hash?: GuideHash }
   },
 ): SettingsSection {
   const { doc, ...base } = rest
@@ -74,61 +76,73 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     icon: 'user',
     group: 'tu',
     tile: 'bg-project-blue/15 text-project-blue',
-    doc: { pagina: 'cuenta-y-seguridad' },
+    doc: { key: 'account-and-security' },
   }),
   section('appearance', {
     icon: 'palette',
     group: 'tu',
     tile: 'bg-accent-soft text-accent',
-    doc: { pagina: 'moverte-por-muninn', hash: 'cambiar-la-apariencia' },
+    doc: {
+      key: 'getting-around',
+      hash: { en: 'change-the-appearance', es: 'cambiar-la-apariencia' },
+    },
   }),
   section('dock', {
     icon: 'dock',
     group: 'tu',
     tile: 'bg-accent-soft text-accent',
-    doc: { pagina: 'moverte-por-muninn', hash: 'elegir-las-pestanas-de-abajo' },
+    doc: {
+      key: 'getting-around',
+      hash: { en: 'choose-the-bottom-tabs', es: 'elegir-las-pestanas-de-abajo' },
+    },
   }),
   section('shortcuts', {
     icon: 'keyboard',
     group: 'tu',
     tile: 'bg-surface-raised text-fg-muted',
-    doc: { pagina: 'moverte-por-muninn', hash: 'atajos-de-teclado' },
+    doc: {
+      key: 'getting-around',
+      hash: { en: 'keyboard-shortcuts', es: 'atajos-de-teclado' },
+    },
   }),
   section('modules', {
     icon: 'more',
     group: 'espacio',
     tile: 'bg-project-teal/15 text-project-teal',
-    doc: { pagina: 'moverte-por-muninn', hash: 'activar-y-desactivar-modulos' },
+    doc: {
+      key: 'getting-around',
+      hash: { en: 'turn-modules-on-and-off', es: 'activar-y-desactivar-modulos' },
+    },
   }),
   section('notifications', {
     icon: 'bell',
     group: 'espacio',
     tile: 'bg-project-amber/15 text-project-amber',
-    doc: { pagina: 'notificaciones' },
+    doc: { key: 'notifications' },
   }),
   section('assistant', {
     icon: 'assistant',
     group: 'asistente',
     tile: 'bg-project-green/15 text-project-green',
-    doc: { pagina: 'asistente', hash: 'instalar-ollama' },
+    doc: { key: 'assistant', hash: { en: 'install-ollama', es: 'instalar-ollama' } },
   }),
   section('report', {
     icon: 'sun',
     group: 'asistente',
     tile: 'bg-project-amber/15 text-project-amber',
-    doc: { pagina: 'asistente', hash: 'informe-de-la-manana' },
+    doc: { key: 'assistant', hash: { en: 'morning-report', es: 'informe-de-la-manana' } },
   }),
   section('integrations', {
     icon: 'github',
     group: 'integraciones',
     tile: 'bg-project-violet/15 text-project-violet',
-    doc: { pagina: 'github' },
+    doc: { key: 'github' },
   }),
   section('data', {
     icon: 'sync',
     group: 'datos',
     tile: 'bg-project-blue/15 text-project-blue',
-    doc: { pagina: 'datos-y-privacidad' },
+    doc: { key: 'data-and-privacy' },
   }),
 ]
 

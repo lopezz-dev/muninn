@@ -203,7 +203,7 @@ El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha h
 
 ## 4d. Seguridad de la cuenta (≈ 20 min)
 
-Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
+Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/es/14-cuenta-y-seguridad.md)). Con la web
 y el iPhone con la sesión abierta. **29 de octubre:** probado en la vista previa de `develop` (`https://muninn-git-develop-kodemaru.vercel.app`,
 pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de producción.
 - [x] Aplicar **juntas** las migraciones `20261029120000_account_sessions` y `20261029150000_aal2_en_el_servidor` ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)),
@@ -417,7 +417,7 @@ actualizaciones.
      `latest.json`: el repo es público de verdad.
 6. **Instalar en Windows:**
    - [ ] Si tienes una versión compilada a mano, desinstálala (Configuración › Aplicaciones). Esa no se actualiza nunca.
-   - [ ] Instala el `-setup.exe` siguiendo [la guía](user/02-instalacion.md#windows) y entra con tu cuenta. En la barra lateral sale la versión
+   - [ ] Instala el `-setup.exe` siguiendo [la guía](user/es/02-instalacion.md#windows) y entra con tu cuenta. En la barra lateral sale la versión
      publicada.
 7. **Probar la actualización**, cuando salga la siguiente versión (cualquier `fix` que llegue a `main` y su Release PR):
    - [ ] Al abrir Muninn sale «Hay una versión nueva · Reiniciar» con el número nuevo. Pulsa **Reiniciar**: se instala sin pedir

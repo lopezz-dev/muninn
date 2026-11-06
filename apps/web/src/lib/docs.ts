@@ -1,25 +1,29 @@
 import { Lexer } from 'marked'
 import { makeSlugger } from '../markdown/outline'
 import { plainText } from '../markdown/plain'
+import { type DocKey, type DocLang, docKeyByNumber } from './doc-slugs'
 import { matchesAll, normalize, words } from './text'
 
 /**
- * Las guías de `docs/user/*.md` como datos. Aquí solo hay lógica pura (con tests): los ficheros los
- * importa en tiempo de compilación `screens/docs/content.ts`.
+ * Las guías de `docs/user/<idioma>/*.md` como datos. Aquí solo hay lógica pura (con tests): los ficheros los
+ * importa al compilar `screens/docs/content.ts`, y el prerender (`vite/seo.ts`) los lee del disco.
  */
 
 export type DocStatus = 'disponible' | 'parcial' | 'proximamente'
 
-/** Grupos del menú, en su orden (ADR-0052). Una guía con otro `group` (o sin él) va a «Más guías», al final. */
+/**
+ * Grupos del menú, en su orden (ADR-0052). Una guía con otro `group` (o sin él) va a «Más guías», al final. La
+ * pantalla los nombra con i18next (`docs` › `groups`); estas etiquetas son para el prerender, que no lo usa.
+ */
 export const DOC_GROUPS = [
-  { id: 'primeros-pasos', label: 'Primeros pasos' },
-  { id: 'tu-trabajo', label: 'Tu trabajo' },
-  { id: 'modulos', label: 'Módulos' },
-  { id: 'ia', label: 'Asistentes e IA' },
-  { id: 'cuenta', label: 'Cuenta' },
+  { id: 'primeros-pasos', label: { en: 'Getting started', es: 'Primeros pasos' } },
+  { id: 'tu-trabajo', label: { en: 'Your work', es: 'Tu trabajo' } },
+  { id: 'modulos', label: { en: 'Modules', es: 'Módulos' } },
+  { id: 'ia', label: { en: 'Assistants and AI', es: 'Asistentes e IA' } },
+  { id: 'cuenta', label: { en: 'Account', es: 'Cuenta' } },
 ] as const
 
-const OTHER_GROUP = { id: 'otras', label: 'Más guías' } as const
+const OTHER_GROUP = { id: 'otras', label: { en: 'More guides', es: 'Más guías' } } as const
 const ALL_GROUPS = [...DOC_GROUPS, OTHER_GROUP]
 
 export type DocGroupId = (typeof ALL_GROUPS)[number]['id']
@@ -27,6 +31,11 @@ export type DocGroupId = (typeof ALL_GROUPS)[number]['id']
 export interface Doc {
   /** `proyectos-y-tablero`: el nombre del fichero sin el número ni la extensión. */
   slug: string
+  /** El número del fichero (`03`): el mismo en los dos idiomas, empareja una guía con su traducción. */
+  n: string
+  /** La guía en `lib/doc-slugs.ts` (su slug en inglés); `undefined` si no está ahí. */
+  key?: DocKey
+  lang: DocLang
   title: string
   description: string
   order: number
@@ -42,7 +51,7 @@ export interface Doc {
 
 export interface DocGroup {
   id: DocGroupId
-  label: string
+  label: { en: string; es: string }
   docs: Doc[]
 }
 
@@ -67,6 +76,9 @@ export function slugOf(file: string): string | null {
   return /(?:^|[/\\])\d{2}-([\w-]+)\.md$/.exec(file)?.[1] ?? null
 }
 
+/** `03-proyectos-y-tablero.md` → `03`. */
+const numberOf = (file: string) => /(?:^|[/\\])(\d{2})-[\w-]+\.md$/.exec(file)?.[1] ?? ''
+
 /** Quita el `# Título` con que empiezan las guías. */
 const withoutTitle = (body: string) => body.replace(/^\s*#\s+.*\r?\n/, '')
 
@@ -76,10 +88,10 @@ const groupRank = (id: DocGroupId) => {
 }
 
 /**
- * Todas las guías en el orden del menú: por grupo y, dentro, por `order`. Las que no tienen nombre numerado
+ * Las guías de un idioma en el orden del menú: por grupo y, dentro, por `order`. Las que no tienen nombre numerado
  * o título se ignoran.
  */
-export function buildDocs(files: Record<string, string>): Doc[] {
+export function buildDocs(files: Record<string, string>, lang: DocLang = 'es'): Doc[] {
   const docs: Doc[] = []
   for (const [file, raw] of Object.entries(files)) {
     const slug = slugOf(file)
@@ -88,8 +100,12 @@ export function buildDocs(files: Record<string, string>): Doc[] {
     if (!meta.title) continue
     const text = withoutTitle(body)
     const words = plainText(text, Number.POSITIVE_INFINITY).split(' ').length
+    const n = numberOf(file)
     docs.push({
       slug,
+      n,
+      key: docKeyByNumber(n),
+      lang,
       title: meta.title,
       description: meta.description ?? '',
       order: Number(meta.order) || 0,
@@ -104,7 +120,7 @@ export function buildDocs(files: Record<string, string>): Doc[] {
     (a, b) =>
       groupRank(a.group) - groupRank(b.group) ||
       a.order - b.order ||
-      a.title.localeCompare(b.title, 'es'),
+      a.title.localeCompare(b.title, lang),
   )
 }
 
@@ -117,8 +133,8 @@ export function groupDocs(docs: Doc[]): DocGroup[] {
   })).filter((g) => g.docs.length > 0)
 }
 
-export const groupLabel = (id: DocGroupId) =>
-  ALL_GROUPS.find((g) => g.id === id)?.label ?? OTHER_GROUP.label
+export const groupLabel = (id: DocGroupId, lang: DocLang) =>
+  (ALL_GROUPS.find((g) => g.id === id)?.label ?? OTHER_GROUP.label)[lang]
 
 export interface Section {
   /** `id` del título, el mismo que pinta el renderizador; vacío antes del primer título. */
@@ -192,8 +208,18 @@ export function neighbours(docs: Doc[], slug: string): { prev?: Doc; next?: Doc 
   return i < 0 ? {} : { prev: docs[i - 1], next: docs[i + 1] }
 }
 
-/** Un enlace entre guías (`05-notas.md#archivar`): a qué guía y a qué apartado va; `null` si no lo es. */
-export function docLink(href: string): { slug: string; hash: string } | null {
-  const m = /^(?:\.\/)?\d{2}-([\w-]+)\.md(?:#(.*))?$/.exec(href.trim())
-  return m?.[1] ? { slug: m[1], hash: m[2] ?? '' } : null
+/**
+ * Un enlace entre guías (`05-notas.md#archivar`): el número de la guía y el apartado; `null` si no lo es. Se
+ * resuelve por el número: cada idioma enlaza con sus propios nombres de fichero.
+ */
+export function docLink(href: string): { n: string; hash: string } | null {
+  const m = /^(?:\.\/)?(\d{2})-[\w-]+\.md(?:#(.*))?$/.exec(href.trim())
+  return m?.[1] ? { n: m[1], hash: m[2] ?? '' } : null
+}
+
+/** La guía a la que lleva un enlace entre guías, entre las de su mismo idioma; `null` si no es uno o no existe. */
+export function linkedDoc(docs: Doc[], href: string): { doc: Doc; hash: string } | null {
+  const link = docLink(href)
+  const doc = link ? docs.find((d) => d.n === link.n) : undefined
+  return link && doc ? { doc, hash: link.hash } : null
 }

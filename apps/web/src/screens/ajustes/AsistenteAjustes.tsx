@@ -1,8 +1,9 @@
 import { Button, Icon, notify, Switch, TextField } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GuideLink } from '../../components/GuideLink'
 import {
   DEFAULT_ASSISTANT,
   normalizeUrl,
@@ -150,14 +151,13 @@ export function AsistenteAjustes() {
       </PrefGroup>
       <p className="px-0.5 text-xs text-fg-faint">
         {auth.kind === 'user' ? t('assistant.savedInAccount') : t('assistant.demo')}{' '}
-        <Link
-          to="/docs/$pagina"
-          params={{ pagina: 'asistente' }}
-          hash="instalar-ollama"
+        <GuideLink
+          doc="assistant"
+          hash={{ en: 'install-ollama', es: 'instalar-ollama' }}
           className="underline"
         >
           {t('assistant.howToInstall')}
-        </Link>
+        </GuideLink>
       </p>
     </>
   )

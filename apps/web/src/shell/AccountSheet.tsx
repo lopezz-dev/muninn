@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppIcon } from '../components/AppIcon'
+import { GuidesLink } from '../components/GuideLink'
 import { t } from '../i18n'
 import { accountSheet, useAccountSheet } from '../lib/account-sheet'
 import { isTauri } from '../lib/auth'
@@ -200,13 +201,13 @@ function Root() {
       ))}
 
       <div className="glass overflow-hidden rounded-lg border border-border">
-        <Link to="/docs" onClick={accountSheet.close} className={rowClass}>
+        <GuidesLink onClick={accountSheet.close} className={rowClass}>
           <span className="grid size-[30px] shrink-0 place-items-center rounded-md bg-project-blue/15 text-project-blue">
             <Icon name="docs" size={17} />
           </span>
           <span className="min-w-0 flex-1 truncate">{t('nav.docsLong')}</span>
           <icons.chevronRight aria-hidden="true" className="text-fg-faint" />
-        </Link>
+        </GuidesLink>
         <SectionRow section={ABOUT_SECTION} hint={hints.acerca} />
       </div>
     </div>

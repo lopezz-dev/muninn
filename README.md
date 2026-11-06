@@ -38,7 +38,7 @@ pnpm typecheck
 Supabase: crea un proyecto, aplica `supabase/migrations/*.sql` (SQL editor o `supabase db push`)
 y copia `apps/web/.env.example` a `apps/web/.env.local`.
 
-MCP: ver [docs/user/06-asistentes-ia.md](docs/user/06-asistentes-ia.md). Funciona sin Supabase (guarda en `~/.muninn/data.json`).
+MCP: ver [docs/user/es/06-asistentes-ia.md](docs/user/es/06-asistentes-ia.md). Funciona sin Supabase (guarda en `~/.muninn/data.json`).
 
 ## Documentación
 

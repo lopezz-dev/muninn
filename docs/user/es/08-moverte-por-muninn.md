@@ -160,7 +160,7 @@ En **Ajustes › Apariencia**:
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
 
-> **Estado:** toda la app está en inglés y en español. Estas guías siguen solo en español mientras se traducen, y lo
+> **Estado:** toda la app y estas guías están en inglés y en español. Lo
 > que Muninn crea por ti al empezar (las columnas del tablero, las categorías de Finanzas) sale en español aunque uses
 > el inglés: puedes renombrarlo.
 
