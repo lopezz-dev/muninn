@@ -196,6 +196,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
+- [ADR-0084](0084-pantallas-con-sus-textos-y-precalentado.md) — Cada pantalla se carga con sus textos y las de la navegación se precalientan en segundo plano
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

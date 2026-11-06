@@ -1,7 +1,7 @@
 import type { Project } from '@muninn/core'
 import { cn } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Outlet, useRouterState } from '@tanstack/react-router'
+import { Outlet, useRouter, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
@@ -11,7 +11,7 @@ import { registerLinkMenuHost, useLinkAsk } from '../lib/link-menu'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import { keys, settingsQuery } from '../lib/queries'
-import { sectionEnabled, sectionOf } from './nav'
+import { SECTIONS, type SectionId, sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
 import { TabBar } from './TabBar'
@@ -104,6 +104,28 @@ export function AppShell() {
   const reportOn =
     (settings?.preferences.morningReport as { enabled?: unknown } | undefined)?.enabled === true
   const tasksOn = sectionEnabled('projects', modules)
+  const router = useRouter()
+  // Las pantallas de las secciones activas, descargadas con el navegador ocioso (ADR-0084): la primera visita no espera.
+  const warmKey = modules ? [...modules].sort().join() : null
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `warmKey` resume `modules`; se repite solo si cambian.
+  useEffect(() => {
+    if (warmKey === null) return
+    const ids = (Object.keys(SECTIONS) as SectionId[]).filter((id) => sectionEnabled(id, modules))
+    // El precalentado va en su propio chunk: no suma al arranque.
+    let live = true
+    let cancel = () => {}
+    void import('../lib/warm-up').then((w) => {
+      if (live)
+        cancel = w.warmUp(
+          router,
+          ids.map((id) => SECTIONS[id].to),
+        )
+    })
+    return () => {
+      live = false
+      cancel()
+    }
+  }, [router, warmKey])
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
   const openNewProject = useCallback(() => setProjectDialog({ open: true, loaded: true }), [])
