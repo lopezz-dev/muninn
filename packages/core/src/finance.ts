@@ -15,7 +15,6 @@ import {
   createCategoryInput,
   createTransactionInput,
   type FinanceAccount,
-  type FinanceColor,
   MAX_CENTS,
   type Transaction,
   type TransactionQuery,
