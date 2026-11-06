@@ -56,3 +56,11 @@ describe('editor de notas: ida y vuelta de Markdown (ADR-0078)', () => {
     expect(editorWith('').getMarkdown()).toBe('')
   })
 })
+
+describe('el editor no toca el marked de la app', () => {
+  it('después de abrir el editor, el lexer global sigue sin extensiones', async () => {
+    const { marked } = await import('marked')
+    editorWith(NOTES_CORPUS.compra as string).getMarkdown()
+    expect(marked.defaults.extensions).toBeNull()
+  })
+})

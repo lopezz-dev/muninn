@@ -4,6 +4,7 @@ import { TableKit } from '@tiptap/extension-table'
 import { Placeholder } from '@tiptap/extensions'
 import { Markdown } from '@tiptap/markdown'
 import StarterKit from '@tiptap/starter-kit'
+import { Marked, type marked } from 'marked'
 import { t } from '../../../i18n'
 import { safeHref } from '../../../markdown/Markdown'
 import { MdImage, RawBlock, RawInline } from './raw-nodes'
@@ -57,6 +58,11 @@ export function noteExtensions(options: NoteExtensionsOptions = {}): AnyExtensio
     MdImage,
     RawInline,
     RawBlock,
-    Markdown.configure({ markedOptions: { gfm: true } }),
+    // Su propia instancia de marked: `@tiptap/markdown` registra sus tokenizadores con `use()`, y en la global cambiaría
+    // lo que leen `noteText` del core (el ancla de los comentarios) y `Markdown.tsx` en el resto de la app.
+    Markdown.configure({
+      marked: new Marked() as unknown as typeof marked,
+      markedOptions: { gfm: true },
+    }),
   ]
 }

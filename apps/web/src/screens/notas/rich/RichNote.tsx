@@ -8,7 +8,7 @@ import {
   MenuTrigger,
   screenIcons,
 } from '@muninn/ui'
-import type { Editor } from '@tiptap/core'
+import type { AnyExtension, Editor } from '@tiptap/core'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import {
   type FormEvent,
@@ -38,6 +38,8 @@ export interface RichNoteOptions {
   /** ⌘⌥M o el botón «Comentar» de la selección; sin esto no se ofrece. */
   onComment?: () => void
   label: string
+  /** Más extensiones (los subrayados de los comentarios). Se leen una vez, al crear el editor. */
+  extensions?: AnyExtension[]
 }
 
 /** ¿Pantalla táctil? Decide dónde sale la barra de la selección (el menú del sistema va encima). */
@@ -68,6 +70,7 @@ export function useRichNote({
   onBlur,
   onComment,
   label,
+  extensions = [],
 }: RichNoteOptions) {
   // El último Markdown que salió del editor o que se le dio: si el borrador vuelve con él, no hay nada que hacer.
   const known = useRef(content)
@@ -76,7 +79,7 @@ export function useRichNote({
   const linkRequest = useRef<() => void>(() => {})
 
   const editor = useEditor({
-    extensions: noteExtensions({ placeholder, onReadOnlyChecked: () => true }),
+    extensions: [...noteExtensions({ placeholder, onReadOnlyChecked: () => true }), ...extensions],
     content,
     contentType: 'markdown',
     editable,
@@ -437,7 +440,8 @@ interface SelectionInfo {
   rect: DOMRect
 }
 
-function readSelection(editor: Editor): SelectionInfo | null {
+/** La selección que se ve en el documento, en posiciones de ProseMirror; `null` si no hay o está fuera del editor. */
+export function readSelection(editor: Editor): SelectionInfo | null {
   const view = editor.view
   const sel = view.dom.ownerDocument.getSelection()
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null
@@ -458,7 +462,14 @@ function readSelection(editor: Editor): SelectionInfo | null {
 
 /** La selección: la de ProseMirror si se está editando; la del documento si se lee (ahí ProseMirror no la sigue). */
 function currentSelection(editor: Editor): SelectionInfo | null {
-  if (!editor.isEditable || !editor.isFocused) return readSelection(editor)
+  const dom = readSelection(editor)
+  if (!editor.isEditable || !editor.isFocused) return dom
+  // ProseMirror no siempre lee la selección que deja un doble clic: manda la que se ve, y se le pasa a él (así la
+  // negrita o el comentario van sobre lo seleccionado de verdad).
+  if (dom && (dom.from !== editor.state.selection.from || dom.to !== editor.state.selection.to)) {
+    editor.commands.setTextSelection({ from: dom.from, to: dom.to })
+    return dom
+  }
   const { from, to, empty } = editor.state.selection
   if (empty || !editor.state.doc.textBetween(from, to, ' ').trim()) return null
   const a = editor.view.coordsAtPos(from)

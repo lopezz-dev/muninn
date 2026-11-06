@@ -25,6 +25,8 @@ import { ancestorsOf, childrenOf, treeNeighbours } from '../../lib/notes-tree'
 import { projectsQuery } from '../../lib/queries'
 import { applyEdit } from '../../markdown/edit'
 import { applyFormat, continueList, type FormatCommand } from '../../markdown/format'
+import { CommentHighlights } from './comments/highlights'
+import { COMMENTS_RAIL_PX, useNoteComments } from './comments/NoteComments'
 import { EditorContent, FormatBar, SelectionBar, useRichNote } from './rich/RichNote'
 import { useNoteDraft } from './use-note-draft'
 
@@ -82,7 +84,17 @@ export function NoteEditor({ note, desktop }: EditorProps) {
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const isFolderish = note.kind === 'folder'
+  const bodyBoxRef = useRef<HTMLDivElement>(null)
 
+  // Los comentarios necesitan el editor y el editor les avisa: se conectan por referencias (ADR-0079).
+  const commentHooks = useRef({
+    activate: (_id: string) => {},
+    start: (_range?: { from: number; to: number }) => {},
+  })
+  const commentExtensions = useMemo(
+    () => [CommentHighlights.configure({ onActivate: (id) => commentHooks.current.activate(id) })],
+    [],
+  )
   const { editor, linkRequest } = useRichNote({
     content: draft.content,
     editable,
@@ -90,7 +102,11 @@ export function NoteEditor({ note, desktop }: EditorProps) {
     label: t('editor.richLabel'),
     onChange: (content) => change({ content }),
     onBlur: () => void save(),
+    onComment: () => commentHooks.current.start(),
+    extensions: commentExtensions,
   })
+  const comments = useNoteComments({ editor, note, desktop, flush: save, bodyRef: bodyBoxRef })
+  commentHooks.current = { activate: comments.activate, start: comments.startComment }
 
   // Una nota recién creada empieza por el título. Solo al abrir: el editor se monta de nuevo por cada nota (`key`).
   // biome-ignore lint/correctness/useExhaustiveDependencies: ver arriba
@@ -104,8 +120,10 @@ export function NoteEditor({ note, desktop }: EditorProps) {
       return
     }
     // Ya editable (el ordenador): el foco va al texto en el acto, o se perdería la primera tecla.
-    if (editable) {
-      editor?.commands.focus('start', { scrollIntoView: false })
+    // (`commands.focus` espera a un `requestAnimationFrame`: aquí el foco va síncrono con `view.focus`).
+    if (editable && editor) {
+      editor.commands.setTextSelection(1)
+      editor.view.focus()
       return
     }
     setEditing(true)
@@ -304,6 +322,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           >
             {t(`status.${status}`)}
           </span>
+          {mode === 'rich' ? comments.counter : null}
           {touch && mode === 'rich' ? (
             // El lápiz: en el teléfono la nota se lee, y se edita solo para retocar (ADR-0078).
             <IconButton
@@ -462,11 +481,25 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           />
         ) : editor ? (
           // Una carpeta o una página con hijas: su contenido son las hijas y el texto es opcional (sin alto mínimo).
-          <div className={cn((isFolderish || children.length > 0) && '[&_.note-prose]:min-h-0')}>
+          <div
+            ref={bodyBoxRef}
+            className={cn(
+              'relative',
+              (isFolderish || children.length > 0) && '[&_.note-prose]:min-h-0',
+            )}
+            style={comments.railOn ? { paddingRight: COMMENTS_RAIL_PX } : undefined}
+          >
             <EditorContent editor={editor} />
-            <SelectionBar editor={editor} linkRequest={linkRequest} />
+            <SelectionBar
+              editor={editor}
+              linkRequest={linkRequest}
+              onComment={(range) => comments.startComment(range)}
+            />
+            {comments.rail}
           </div>
         ) : null}
+
+        {mode === 'rich' ? comments.sheet : null}
 
         {children.length || note.kind === 'folder' ? (
           <section

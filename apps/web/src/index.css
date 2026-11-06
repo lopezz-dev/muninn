@@ -185,3 +185,46 @@
     caret-color: transparent;
   }
 }
+
+/*
+ * Subrayado de un comentario (ADR-0079): una línea del color de acento bajo la cita, que se dibuja de izquierda a derecha
+ * al nacer (0,6 s) y se ilumina al pasar por encima o con su hilo abierto. Con «menos movimiento», sin animación.
+ */
+@layer components {
+  .mn-comment {
+    background-image: linear-gradient(var(--mn-color-accent), var(--mn-color-accent));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 2px;
+    padding-bottom: 1px;
+    cursor: pointer;
+    transition: background-color 150ms ease-out;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .mn-comment:hover,
+  .mn-comment.is-active {
+    background-color: var(--mn-color-accent-soft);
+  }
+  .mn-comment.is-draft {
+    background-color: var(--mn-color-accent-soft);
+    background-image: none;
+    cursor: default;
+  }
+  .mn-comment.is-fresh {
+    animation: mn-comment-draw 600ms var(--mn-motion-ease-out, ease-out) both;
+  }
+  @keyframes mn-comment-draw {
+    from {
+      background-size: 0% 2px;
+    }
+    to {
+      background-size: 100% 2px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mn-comment.is-fresh {
+      animation: none;
+    }
+  }
+}
