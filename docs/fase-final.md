@@ -407,7 +407,9 @@ actualizaciones.
      `apps/desktop/src-tauri/tauri.conf.json`, en lugar de `PENDIENTE_CLAVE_PUBLICA_DE_TAURI_SIGNER_GENERATE`. PR a `develop` con
      `chore(desktop): clave pública del actualizador` (o pásale el `.pub` a Claude y que lo haga). Después, `develop` → `main` otra vez.
 5. **Publicar:**
-   - [ ] Fusiona el Release PR de release-please (`chore(main): release 0.x.0`).
+   - [ ] En el Release PR de release-please (`chore(main): release 0.x.0`), aprueba sus checks (**Approve and run**) y espera
+     el verde: los PRs del bot no lanzan el CI solos ([gotcha](gotchas/ci.md#el-ci-del-release-pr-espera-tu-aprobación)).
+   - [ ] Fusiona el Release PR.
    - [ ] En **Actions › Release**, en verde: `release-please`, `back-merge` y los tres `desktop` (macOS es el que más tarda).
    - [ ] En la release: `Muninn_<versión>_x64-setup.exe`, el `.dmg`, `Muninn_universal.app.tar.gz`, el `.AppImage`, el `.deb` y el `.rpm`, un `.sig`
      junto a cada instalador que se actualiza, y `latest.json` con una `signature` no vacía en cada plataforma.
