@@ -141,6 +141,16 @@
   `skip_subscription_charge` y `archive_subscription`. Muninn no apunta cobros solo (ADR-0038): el modelo los apunta cuando se lo pides.
 - Panel: `finance_month_report` devuelve el mismo informe que Finanzas › Resumen (ADR-0039), con céntimos y `text` ya formateado.
 
+### Comentarios: la cita es el texto que se lee
+
+- **Síntoma:** `comment_on_note` responde «Ese texto no está en la nota» con un trozo que sí está.
+- **Causa:** `quote` se busca en el texto **visible** (sin marcas de Markdown): `**negrita**` no está, `negrita` sí. Una cita repetida
+  se elige con `occurrence` (1 = la primera).
+- **Flujo de un encargo «Para Claude»:** `list_note_comments` con `forAgent: true` → cambiar la nota con `update_note` (el core vuelve a
+  anclar los hilos) → `reply_to_comment` con lo hecho → `resolve_comment`. Si algo no está claro, se pregunta en el hilo y se deja
+  abierto. Está escrito en las descripciones de las herramientas.
+- **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md)
+
 ### Las herramientas viven en `@muninn/assistant/tools`, no en el MCP
 
 - **Síntoma:** cambias una descripción en `packages/mcp/src/server.ts` y no la encuentras, o el asistente de la app y Claude ven

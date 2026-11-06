@@ -9,6 +9,7 @@ import type {
   NewsItem,
   NewsSource,
   Note,
+  NoteComment,
   Project,
   PushDevice,
   Subscription,
@@ -26,6 +27,7 @@ import {
   type ColumnStoreQuery,
   type NewRow,
   type NewsItemStoreQuery,
+  type NoteCommentStoreQuery,
   type NoteStoreQuery,
   NotFoundError,
   type OutboxEntry,
@@ -41,6 +43,8 @@ export interface MemorySnapshot {
   tasks: Task[]
   checklist: ChecklistItem[]
   notes: Note[]
+  /** Comentarios de las notas (ADR-0079); los ficheros de antes no lo traen. */
+  noteComments?: NoteComment[]
   activity: Activity[]
   settings: UserSettings | null
   githubOutbox: (OutboxEntry & { processedAt: string | null })[]
@@ -62,6 +66,7 @@ export const emptySnapshot = (): MemorySnapshot => ({
   tasks: [],
   checklist: [],
   notes: [],
+  noteComments: [],
   activity: [],
   settings: null,
   githubOutbox: [],
@@ -176,6 +181,8 @@ export function createMemoryStore(
       kind: n.kind ?? 'page',
     })),
   )
+  // Ni los de antes de los comentarios.
+  const noteComments = toMap(initial.noteComments ?? [])
   const activity = [...initial.activity]
   let nextActivityId = activity.reduce((max, a) => Math.max(max, a.id), 0) + 1
   let settings = initial.settings ?? null
@@ -211,6 +218,7 @@ export function createMemoryStore(
       tasks: [...tasks.values()],
       checklist: [...checklist.values()],
       notes: [...notes.values()],
+      noteComments: [...noteComments.values()],
       activity,
       settings,
       githubOutbox: outbox,
@@ -586,6 +594,27 @@ export function createMemoryStore(
       'Elemento de checklist',
       checklist,
       (rows, q) => rows.filter((i) => q.taskIds.includes(i.taskId)).sort(byPosition),
+      changed,
+      now,
+    ),
+    noteComments: new MemoryCollection<NoteComment, NoteCommentStoreQuery>(
+      'Comentario',
+      noteComments,
+      (rows, q) =>
+        rows
+          .filter((c) => q.includeArchived || !c.archivedAt)
+          .filter((c) => !q.noteId || c.noteId === q.noteId)
+          .filter((c) => !q.roots || c.parentId === null)
+          .filter((c) => !q.threadIds || q.threadIds.includes(c.parentId ?? c.id))
+          .filter((c) => q.forAgent === undefined || c.forAgent === q.forAgent)
+          .filter(
+            (c) =>
+              !q.status ||
+              q.status === 'all' ||
+              (q.status === 'open' ? c.resolvedAt === null : c.resolvedAt !== null),
+          )
+          .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0))
+          .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
       changed,
       now,
     ),

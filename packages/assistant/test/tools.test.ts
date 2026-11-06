@@ -165,3 +165,66 @@ describe('notas en árbol', () => {
     expect((await app.notes.get(child?.id ?? '')).projectId).toBe(p.id)
   })
 })
+
+describe('comentarios de notas (ADR-0079)', () => {
+  it('flujo de un encargo «Para Claude»: listar, cambiar la nota, responder y resolver, con deshacer', async () => {
+    const app = setup()
+    const note = await app.notes.create({
+      title: 'Plan',
+      content: 'El **corte** de la 0.11 es el 27-11.',
+    })
+    const { result: opened, changes: c1 } = await call(app, 'comment_on_note', {
+      noteId: note.id,
+      quote: 'corte de la 0.11',
+      body: 'Muévelo al 04-12',
+      forAgent: true,
+    })
+    const threadId = (opened as { id: string }).id
+    expect(c1[0]?.summary).toContain('corte de la 0.11')
+
+    const { result: listed } = await call(app, 'list_note_comments', { forAgent: true })
+    expect(listed).toEqual([
+      expect.objectContaining({
+        id: threadId,
+        noteId: note.id,
+        noteTitle: 'Plan',
+        quote: 'corte de la 0.11',
+        orphaned: false,
+        forAgent: true,
+        resolvedAt: null,
+        comments: [expect.objectContaining({ actor: 'mcp', body: 'Muévelo al 04-12' })],
+      }),
+    ])
+
+    await call(app, 'update_note', {
+      noteId: note.id,
+      content: 'El **corte** de la 0.11 es el 04-12.',
+    })
+    const { changes: c2 } = await call(app, 'reply_to_comment', { threadId, body: 'Cambiado' })
+    const { result: resolved, changes: c3 } = await call(app, 'resolve_comment', { threadId })
+    expect(resolved).toMatchObject({ resolvedBy: 'mcp' })
+    expect((await call(app, 'list_note_comments', { forAgent: true })).result).toEqual([])
+
+    const { result: all } = await call(app, 'list_note_comments', {
+      noteId: note.id,
+      status: 'all',
+    })
+    expect((all as { comments: unknown[] }[])[0]?.comments).toHaveLength(2)
+
+    // Deshacer: reabrir, archivar la respuesta y archivar el hilo.
+    await c3[0]?.undo(app)
+    expect((await app.comments.get(threadId)).resolvedAt).toBeNull()
+    await c2[0]?.undo(app)
+    expect(await app.comments.list({ noteId: note.id })).toHaveLength(1)
+    await c1[0]?.undo(app)
+    expect(await app.comments.list({ noteId: note.id, status: 'all' })).toHaveLength(0)
+  })
+
+  it('una cita con marcas de Markdown no está en el texto visible: error de validación', async () => {
+    const app = setup()
+    const note = await app.notes.create({ content: '**Hola**' })
+    await expect(
+      call(app, 'comment_on_note', { noteId: note.id, quote: '**Hola**', body: 'x' }),
+    ).rejects.toThrow(/no está en la nota/)
+  })
+})

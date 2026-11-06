@@ -18,6 +18,7 @@ export type Table =
   | 'tasks'
   | 'task_checklist_items'
   | 'notes'
+  | 'note_comments'
   | 'user_settings'
   | 'finance_accounts'
   | 'finance_categories'
@@ -33,6 +34,7 @@ export const SYNC_TABLES: Table[] = [
   'tasks',
   'task_checklist_items',
   'notes',
+  'note_comments',
   'user_settings',
   'finance_accounts',
   'finance_categories',
@@ -53,7 +55,8 @@ export interface Change {
 
 /**
  * Qué refrescar, como etiquetas:
- * `projects` · `project:<id>` (sus datos y su tablero) · `boards` (todos) · `task:<id>` · `notes` · `note:<id>` · `settings` · `finance`.
+ * `projects` · `project:<id>` (sus datos y su tablero) · `boards` (todos) · `task:<id>` · `notes` · `note:<id>` · `settings` · `finance`
+ * · `comments` (las listas de todas las notas, `['comments']`) · `comments:<noteId>` (los hilos de una nota, `['notes', id, 'comments']`).
  */
 export type Scope = string
 
@@ -82,6 +85,11 @@ export function scopesOf({ table, row, old }: Change): Scope[] {
     }
     case 'notes':
       return id ? ['notes', `note:${id}`] : ['notes']
+    case 'note_comments': {
+      // Un borrado solo trae la clave (no pasa: se archivan), así que sin nota se refrescan todas las listas.
+      const n = str(row.note_id) ?? str(old?.note_id)
+      return n ? ['comments', `comments:${n}`] : ['comments']
+    }
     case 'user_settings':
       return ['settings']
     // Saldos, listas y resumen dependen unos de otros: Finanzas se refresca entera (es poco).
@@ -104,7 +112,7 @@ const busyKey = (scope: Scope): string | undefined =>
     ? scope.slice('project:'.length)
     : scope === 'settings' || scope === 'finance' || scope === 'news'
       ? scope
-      : scope.startsWith('note:')
+      : scope.startsWith('note:') || scope.startsWith('comments:')
         ? scope
         : undefined
 
@@ -148,6 +156,12 @@ export function createSync(qc: QueryClient, opts: SyncOptions = {}): Sync {
       void qc.invalidateQueries({
         predicate: (q) =>
           q.queryKey[0] === 'notes' || (q.queryKey[0] === 'tasks' && q.queryKey[2] === 'notes'),
+      })
+    } else if (scope === 'comments') {
+      void qc.invalidateQueries({ queryKey: ['comments'] })
+    } else if (scope.startsWith('comments:')) {
+      void qc.invalidateQueries({
+        queryKey: ['notes', scope.slice('comments:'.length), 'comments'],
       })
     } else if (scope === 'settings') {
       void qc.invalidateQueries({ queryKey: ['settings'] })

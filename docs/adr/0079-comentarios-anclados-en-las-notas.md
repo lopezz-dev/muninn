@@ -1,6 +1,6 @@
 # ADR-0079: Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-11-04
 - **Área:** core, db, mcp, web
 
