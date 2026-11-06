@@ -564,6 +564,85 @@ export type UpdateNoteInput = z.input<typeof updateNoteInput>
 export type MoveNoteInput = z.input<typeof moveNoteInput>
 export type NoteKind = z.infer<typeof noteKind>
 export type NoteQuery = z.infer<typeof noteQuery>
+
+// ─── Comentarios en las notas (ADR-0079) ─────────────────────────────────────
+
+/**
+ * Ancla de un hilo sobre el **texto visible** de la nota (`noteText`): la cita, hasta 32 caracteres de contexto a cada lado
+ * y su posición como pista. El Markdown no lleva ninguna marca.
+ */
+export const commentAnchor = z.object({
+  quote: z.string().min(1).max(2000),
+  prefix: z.string().max(64),
+  suffix: z.string().max(64),
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+})
+
+export interface NoteComment {
+  id: string
+  noteId: string
+  /** `null` en el comentario que abre el hilo; las respuestas apuntan a él (un solo nivel). */
+  parentId: string | null
+  /** Markdown en línea. */
+  body: string
+  /** Solo en el primero del hilo. */
+  anchor: CommentAnchor | null
+  /** La cita ya no se encuentra en la nota: se ve en «Sin sitio». */
+  orphaned: boolean
+  /** «Para Claude»: un encargo que debe atender un agente. */
+  forAgent: boolean
+  resolvedAt: string | null
+  resolvedBy: ActorKind | null
+  /** Quién lo escribió («Alex» o «Claude» en la UI). */
+  actor: ActorKind
+  /** El «Deshacer» de crear; no hay borrado definitivo. */
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+const commentBody = z.string().trim().min(1).max(10000)
+
+export const createCommentInput = z.object({
+  noteId: id,
+  /** El texto comentado, tal como se lee (sin marcas de Markdown). */
+  quote: z.string().min(1).max(2000),
+  /** Contexto de la selección para desempatar si la cita se repite. */
+  prefix: z.string().max(64).optional(),
+  suffix: z.string().max(64).optional(),
+  /** Si la cita se repite: cuál (1 = la primera). Gana sobre el contexto. */
+  occurrence: z.number().int().min(1).optional(),
+  body: commentBody,
+  forAgent: z.boolean().optional(),
+})
+
+export const replyCommentInput = z.object({
+  /** El hilo (su primer comentario); con una respuesta, se usa su hilo. */
+  threadId: id,
+  body: commentBody,
+})
+
+export const editCommentInput = z.object({ body: commentBody })
+
+export const commentStatus = z.enum(['open', 'resolved', 'all'])
+
+export const commentQuery = z.object({
+  noteId: id.optional(),
+  /** Por defecto, los abiertos. */
+  status: commentStatus.default('open'),
+  forAgent: z.boolean().optional(),
+  includeArchived: z.boolean().optional(),
+  /** Hilos como mucho (las respuestas de cada uno van aparte). */
+  limit: z.number().int().min(1).max(500).optional(),
+})
+
+export type CommentAnchor = z.infer<typeof commentAnchor>
+export type CommentStatus = z.infer<typeof commentStatus>
+export type CreateCommentInput = z.input<typeof createCommentInput>
+export type ReplyCommentInput = z.input<typeof replyCommentInput>
+export type EditCommentInput = z.input<typeof editCommentInput>
+export type CommentQuery = z.input<typeof commentQuery>
 export type UpdateSettingsInput = z.input<typeof updateSettingsInput>
 
 // ─── Noticias (ADR-0042) ──────────────────────────────────────────────────────

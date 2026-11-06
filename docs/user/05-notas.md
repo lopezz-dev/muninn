@@ -1,6 +1,6 @@
 ---
 title: Notas
-description: Apuntes en Markdown, ordenados en carpetas y páginas con hijas, y vinculados a proyectos y tareas.
+description: Apuntes que se leen y se editan en el mismo sitio, con comentarios, ordenados en carpetas y vinculados a proyectos y tareas.
 order: 5
 status: disponible
 group: tu-trabajo
@@ -10,7 +10,8 @@ icon: notes
 # Notas
 
 Las notas sirven para todo lo que no es una tarea: ideas, actas de reuniones, documentación de un proyecto…
-Se escriben en **Markdown** y se guardan solas mientras escribes.
+Se leen y se editan en el mismo sitio, ya con su formato, y se guardan solas mientras escribes. Por dentro son **Markdown**,
+así que Claude y los demás asistentes las leen y las escriben sin problema.
 
 > **Modo demo:** sin cuenta, tus notas solo viven en memoria y desaparecen al recargar la página.
 
@@ -34,6 +35,8 @@ cualquier nivel, y una **carpeta** es una página pensada para agrupar otras (pu
   mueve con todo lo que tiene dentro, y el aviso trae **Deshacer**. En el móvil, mantén pulsada la nota antes de arrastrar.
 - **Plegar:** la flecha de una nota con páginas dentro las esconde o las enseña; se recuerda en este navegador.
 - **Carpeta o página:** **⋯ › Convertir en carpeta** (o en página) solo cambia cómo se ve.
+- **Archivar:** **⋯ › Archivar**, desde el árbol o desde la propia nota, la quita de la lista con todo lo que tiene dentro.
+  El aviso trae **Deshacer**; si era la nota abierta, vuelves a la lista y **Deshacer** te devuelve a ella.
 
 Al abrir una nota, arriba ves **dónde está** (Notas › espacio › las notas que la contienen) y al pie sus **páginas dentro**
 y la **anterior** y la **siguiente** del árbol. Al buscar o filtrar por **Fijadas**, la lista deja el árbol y enseña los
@@ -48,34 +51,69 @@ También puedes crearla desde una tarea, con **Añadir nota** en su panel: nace 
 
 ## Escribir
 
-La nota tiene dos modos, arriba a la derecha:
+**En el ordenador** la nota se lee y se edita en el mismo sitio: pulsa en el texto y escribe. No hay modo de edición
+ni vista previa.
 
-- **Editar:** el texto en Markdown, con una barra de formato: título (**H**, pulsa otra vez para cambiar de nivel o quitarlo),
-  **negrita**, *cursiva*, lista, lista de tareas, código y enlace. Selecciona un texto antes de pulsar un botón para
-  aplicárselo; si ya lo tiene, se quita. En el ordenador, **Ctrl B** y **Ctrl I** (⌘ en Mac) ponen negrita y cursiva.
-- **Vista previa:** la nota ya con su formato. Las casillas de las listas de tareas se pueden marcar aquí mismo. Pulsa sobre el
-  texto para volver a editar; si seleccionas un trozo para copiarlo, la nota sigue en vista previa.
+- **Barra de arriba:** el tipo de bloque (**Texto** o **Título 1, 2 y 3**), **negrita**, *cursiva*, ~~tachado~~, código, enlace,
+  listas con viñetas o numeradas, lista de tareas, cita, bloque de código, **tabla**, y **Deshacer** y **Rehacer**. Con el cursor
+  dentro de una tabla, su botón añade o quita filas y columnas.
+- **Al seleccionar texto** sale una barra encima con negrita, cursiva, tachado, código, enlace y **Comentar**.
+- **Atajos:** **Ctrl B** negrita, **Ctrl I** cursiva, **Ctrl E** código, **Ctrl K** enlace (con texto seleccionado), **Ctrl Z**
+  deshacer y **Ctrl Mayús Z** rehacer (en Mac, ⌘ en lugar de Ctrl). **Ctrl Alt M** (⌘ ⌥ M) comenta lo seleccionado.
+- **Escribir como en Markdown:** `## ` al principio de una línea hace un título, `- ` una lista, `1. ` una lista numerada,
+  `[ ] ` una tarea (también después de `- `), `> ` una cita y tres acentos graves un bloque de código.
+- **Enlaces:** con el cursor dentro de un enlace ves su dirección, con **Abrir**, **Cambiar** y **Quitar**. **Ctrl clic** lo abre
+  directamente.
 
-Al pulsar **Intro** dentro de una lista, la siguiente línea ya empieza con su viñeta, su número o su casilla; **Intro** sobre
-un elemento vacío termina la lista. **Esc** pasa a la vista previa. Ctrl/⌘ Z deshace lo último que escribiste.
+**En el móvil** la nota se abre **para leer**: puedes desplazarte, seleccionar, copiar y **comentar** sin que salga el teclado,
+y marcar las casillas de las tareas. Para retocar algo, pulsa el **lápiz** de arriba; con **✓** vuelves a leer.
+
+¿Prefieres el Markdown en crudo? **⋯ › Editar como Markdown** abre el texto tal cual, con su barra de siempre; **⋯ › Volver al
+editor** te devuelve.
 
 Arriba verás **Guardado**, **Guardando…** o **Sin guardar**: Muninn guarda poco después de que dejes de escribir, al salir
-del campo, al cambiar de nota y al ocultar la ventana. Si falla, te avisa y puedes **Reintentar**.
+del texto, al cambiar de nota y al ocultar la ventana. Si falla, te avisa y puedes **Reintentar**. Abrir una nota nunca la
+cambia: solo se guarda lo que tú escribes.
 
-### Qué Markdown se entiende
+### Qué se puede escribir
 
-Títulos (`##`), **negrita**, *cursiva*, ~~tachado~~, listas con viñetas o numeradas, listas de tareas (`- [ ]`), citas
-(`>`), código en línea y en bloque, tablas, separadores y enlaces.
+Títulos, **negrita**, *cursiva*, ~~tachado~~, listas con viñetas o numeradas (también unas dentro de otras), listas de tareas,
+citas, código en línea y en bloque, tablas, separadores y enlaces.
 
-En las **tablas**, las columnas cortas (fechas, códigos, versiones) se ajustan a lo que ocupan y no se
-parten; la de texto largo se reparte el ancho que queda. Si la tabla no cabe (en el móvil, por ejemplo), se desliza
-de lado dentro de la nota.
+En las **tablas**, si no caben (en el móvil, por ejemplo), se deslizan de lado dentro de la nota.
 
 Por seguridad:
 
-- El **HTML** que escribas se muestra tal cual, como texto: no se interpreta.
+- El **HTML** que haya en una nota se ve como texto y se guarda tal cual: no se interpreta.
 - Los **enlaces** solo pueden llevar a páginas web (`http`/`https`), correo (`mailto:`) y teléfono (`tel:`).
-- Las **imágenes** no se cargan: verás su texto alternativo (como enlace, si es una dirección web).
+- Las **imágenes** no se cargan: verás su texto alternativo, y la imagen se conserva en el Markdown.
+
+## Comentarios
+
+Selecciona un trozo del texto y pulsa **Comentar** (o **Ctrl Alt M**). Escribe el comentario y pulsa **Comentar**
+(o **Ctrl Intro**). El trozo queda **subrayado**; pasa el ratón por encima o púlsalo para abrir su hilo.
+
+- **Dónde se ven:** si la nota tiene sitio, los hilos van **al margen derecho**, cada uno a la altura de su texto. Si no (una
+  ventana estrecha, el móvil), se abren en un panel. El contador de arriba (el bocadillo con un número) abre la **lista de
+  comentarios** de la nota.
+- **Responder, resolver y reabrir:** cada hilo tiene su caja para responder y el botón **Resolver**. Un hilo resuelto deja de
+  subrayarse; lo encuentras en la lista, en **resueltos**, con **Reabrir**. Desde **⋯ › Quitar el hilo** lo quitas. Todo avisa y se
+  puede **Deshacer**.
+- **Si cambias el texto:** el subrayado sigue a su trozo aunque escribas antes o después. Si borras o cambias del todo lo que
+  comentaste, el hilo pasa a **Sin sitio**, con la cita tachada: no se pierde, y si el texto vuelve, recupera su sitio.
+- Los comentarios **no se escriben en la nota**: el Markdown queda limpio, también para los asistentes.
+
+### Para Claude
+
+Al comentar, activa **Para Claude** y el hilo queda como un **encargo** («resume esto», «revisa estas cifras»…). Es pensado sobre
+todo para el móvil: dejas la petición fuera de casa y Claude la atiende cuando se lo pidas por el [MCP de Muninn](06-asistentes-ia.md)
+(por ejemplo, «revisa los comentarios para ti»).
+
+Claude lee los encargos abiertos, cambia la nota si hace falta, **contesta en el hilo** lo que ha hecho y lo resuelve: lo verás
+como **Resuelto por Claude**, y puedes **Reabrir** si no te convence. Si algo no está claro, te pregunta en el hilo y lo deja
+abierto.
+
+> **Próximamente:** que Claude revise los encargos solo, cada cierto tiempo, sin tener que pedírselo.
 
 ## Vincular una nota
 
@@ -104,14 +142,15 @@ Claude y otros [asistentes](06-asistentes-ia.md) pueden crear, leer, buscar y ed
 aparece aquí igual que lo tuyo.
 
 También pueden **colgar una nota de otra** (una nota madre con sus hijas) y moverlas, para repartir un texto largo en
-partes, y lo verás en el árbol al momento.
+partes, y lo verás en el árbol al momento. Y pueden leer los **comentarios**, responderlos y resolverlos (ver
+[Para Claude](#para-claude)); nunca borran uno.
 
 Si activas el [informe de la mañana](11-asistente.md#informe-de-la-mañana), cada día te deja una **nota fijada** con tus
 tareas, los cobros próximos y el resumen de noticias.
 
 ## En todos tus dispositivos
 
-Con cuenta, lo que escribes o cambias en un dispositivo aparece en los demás al momento, sin recargar.
+Con cuenta, lo que escribes o cambias en un dispositivo (también los comentarios) aparece en los demás al momento, sin recargar.
 
 También puedes encontrar una nota desde el buscador (**⌘K** / **Ctrl K**): escribe parte del título o del texto. Y para
 empezar una sin ir a Notas, busca «nueva nota».

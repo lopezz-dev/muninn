@@ -22,9 +22,19 @@ describe('servidor MCP', () => {
     const { client } = await connect()
     const names = (await client.listTools()).tools.map((t) => t.name)
     expect(names).toEqual(
-      expect.arrayContaining(['overview', 'create_task', 'move_task', 'project_status']),
+      expect.arrayContaining([
+        'overview',
+        'create_task',
+        'move_task',
+        'project_status',
+        'list_note_comments',
+        'comment_on_note',
+        'reply_to_comment',
+        'resolve_comment',
+      ]),
     )
     expect(names).not.toContain('delete_task')
+    expect(names.some((n) => /delete|remove/.test(n))).toBe(false)
   })
 
   it('se presenta con el nombre, la descripción y el logo de Muninn', async () => {

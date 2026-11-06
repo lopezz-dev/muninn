@@ -1,6 +1,6 @@
 # ADR-0078: Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-11-04
 - **Área:** web, ui
 - **Reemplaza a:** [ADR-0026](0026-markdown-marked-a-react-y-textarea.md), en parte (el editor; mostrar Markdown en el resto de la app no cambia)

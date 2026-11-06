@@ -9,6 +9,7 @@ import type {
   NewsItem,
   NewsSource,
   Note,
+  NoteComment,
   Project,
   PushDevice,
   UserSettings,
@@ -27,6 +28,7 @@ import {
   type NewsFetchSummary,
   type NewsItemStore,
   type NewsItemStoreQuery,
+  type NoteCommentStoreQuery,
   type NoteStoreQuery,
   NotFoundError,
   type OutboxEntry,
@@ -794,6 +796,25 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       'task_checklist_items',
       'Elemento de checklist',
       (qb, q: { taskIds: string[] }) => qb.in('task_id', q.taskIds).order('position'),
+    ),
+    noteComments: col<NoteComment, NoteCommentStoreQuery>(
+      'note_comments',
+      'Comentario',
+      (qb, q) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        if (q.noteId) qb = qb.eq('note_id', q.noteId)
+        if (q.roots) qb = qb.is('parent_id', null)
+        if (q.threadIds) {
+          // Ids de la base (uuid): no llevan caracteres que haya que escapar en `or()`.
+          const ids = q.threadIds.join(',')
+          qb = qb.or(`id.in.(${ids}),parent_id.in.(${ids})`)
+        }
+        if (q.forAgent !== undefined) qb = qb.eq('for_agent', q.forAgent)
+        if (q.status === 'open') qb = qb.is('resolved_at', null)
+        else if (q.status === 'resolved') qb = qb.not('resolved_at', 'is', null)
+        qb = qb.order('created_at').order('id')
+        return q.limit ? qb.limit(q.limit) : qb
+      },
     ),
     notes: Object.assign(
       col<Note, NoteStoreQuery>('notes', 'Nota', (qb, q) => {

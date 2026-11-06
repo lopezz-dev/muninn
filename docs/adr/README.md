@@ -72,7 +72,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0069](0069-noticias-equilibradas-por-fuente.md) — Noticias equilibradas por fuente: rachas plegadas en «Todas» y resumen repartido
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
-- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP
 - [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
 - [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
@@ -100,7 +100,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
 - [ADR-0074](0074-avisos-push-atados-a-la-sesion.md) — Cada suscripción push va atada a su sesión de Auth y se borra en cascada al cerrarla
-- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP
 - [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
@@ -114,7 +114,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0062](0062-aal2-para-integraciones-sensibles.md) — El servidor exige el segundo factor (AAL2) para los datos y para conectar integraciones sensibles
 - [ADR-0064](0064-apps-oauth-aprobadas-con-segundo-factor.md) — Una app OAuth aprobada con el segundo factor cuenta como `aal2`, y el servidor lo comprueba *(reemplazado en parte por ADR-0066)*
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
-- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
 
 ### ui
@@ -136,7 +136,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 - [ADR-0068](0068-vista-calendario-del-tablero.md) — Vista Calendario del tablero: arrastrar cambia solo la fecha, bandeja «Sin fecha» y móvil sin arrastre
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
-- [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar *(propuesto)*
+- [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
@@ -191,8 +191,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0075](0075-codigos-de-recuperacion-del-segundo-factor.md) — Códigos de recuperación del segundo factor con la API experimental de Supabase
 - [ADR-0076](0076-guias-publicas-prerenderizadas-y-url-unica.md) — Guías públicas y prerenderizadas en el build, y la URL pública en un solo sitio (`SITE_URL`)
 - [ADR-0077](0077-i18n-ingles-por-defecto-con-i18next.md) — La app en varios idiomas con i18next: inglés por defecto, español con prefijo `/es` y rutas en inglés
-- [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar *(propuesto)*
-- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP *(propuesto)*
+- [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar
+- [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP
 - [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto

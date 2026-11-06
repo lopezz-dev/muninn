@@ -58,6 +58,25 @@
   espacio distinto del de su madre y el trigger la rechazaría.
 - **Ref:** [ADR-0083](../adr/0083-notas-en-arbol-con-un-espacio-por-proyecto.md)
 
+### Trigger `enforce_note_comment` (comentarios de las notas)
+
+- **Síntoma:** `note does not belong to owner …` o `parent … is not a thread of note …` al comentar o responder.
+- **Causa:** la nota es de otro dueño, o la respuesta cuelga de otra respuesta (solo hay un nivel) o de un hilo de otra nota. Además,
+  dos `check` impiden ancla o `resolved_at` en una respuesta: solo los lleva el comentario que abre el hilo.
+- **Solución:** el core ya lo valida (`m.comments.reply` usa siempre la raíz del hilo); el trigger es la última barrera.
+- **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md)
+
+### Comentarios de las notas (pasos manuales)
+
+- **Síntoma:** la app o el MCP fallan al comentar con `relation "public.note_comments" does not exist`, o las herramientas
+  `list_note_comments`… no salen en claude.ai.
+- **Causa:** la tabla llega con la migración `20261106120000_comentarios_en_notas`, y las herramientas con el MCP recompilado.
+- **Solución:** aplica la migración en Supabase (lleva RLS y `require_mfa`, y añade la tabla a `supabase_realtime`) y vuelve a desplegar la
+  función `mcp` (`pnpm --filter @muninn/mcp build:edge` y el `functions deploy` de [gotchas/mcp](mcp.md#mcp-remoto-pasos-manuales)). En
+  claude.ai, el conector puede tardar en ver las herramientas nuevas: desconéctalo y vuelve a conectarlo.
+- **Probado:** la migración pasó en PGlite (Postgres 17 en WASM) con *stubs* de `auth` y de las funciones de Supabase: RLS por dueño,
+  `require_mfa`, los triggers, los `check` y el borrado en cascada con la nota. No se ha aplicado aún contra el Supabase de verdad.
+
 ### `or()` de PostgREST y caracteres especiales
 
 - **Síntoma:** una búsqueda con comas, paréntesis o comillas rompe la consulta.
