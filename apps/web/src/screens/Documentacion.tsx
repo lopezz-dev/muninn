@@ -1,17 +1,23 @@
 import { cn, icons } from '@muninn/ui'
-import { Link, Outlet, useMatch } from '@tanstack/react-router'
+import { Outlet, useParams } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Page } from '../components/Page'
 import { TreeItem, TreeList } from '../components/TreeBranch'
+import { docAlternates } from '../lib/doc-slugs'
 import { type Doc, type DocGroupId, groupDocs } from '../lib/docs'
 import { usePageMeta } from '../lib/seo'
 import { useIsDesktop } from '../lib/use-media'
-import { DOCS } from './docs/content'
+import { DocRouteLink, useDocLang, useDocs } from './docs/content'
 import { DocIcon, DocTile, GROUP_ICON } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
 import { DocResults, DocSearchField, useDocSearch } from './docs/search'
 
-const GROUPS = groupDocs(DOCS)
+/** Las guías del idioma de la URL, por grupo. */
+const useGroups = () => {
+  const docs = useDocs()
+  return useMemo(() => groupDocs(docs), [docs])
+}
 
 /** Título de grupo: mayúsculas pequeñas con su icono. Sin `label`, el nombre del grupo en el idioma activo. */
 function GroupTitle({
@@ -41,9 +47,9 @@ function GroupTitle({
 function DocCard({ doc, featured }: { doc: Doc; featured?: boolean }) {
   const soon = doc.status === 'proximamente'
   return (
-    <Link
-      to="/docs/$pagina"
-      params={{ pagina: doc.slug }}
+    <DocRouteLink
+      lang={doc.lang}
+      slug={doc.slug}
       className={cn(
         'flex gap-3 rounded-lg border border-border p-4 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
         featured ? 'glass-raised md:p-5' : 'glass',
@@ -60,7 +66,7 @@ function DocCard({ doc, featured }: { doc: Doc; featured?: boolean }) {
           <span className="text-sm leading-snug text-fg-subtle">{doc.description}</span>
         ) : null}
       </span>
-    </Link>
+    </DocRouteLink>
   )
 }
 
@@ -90,8 +96,14 @@ function Leyenda() {
 function Portada() {
   const { t } = useTranslation('docs')
   const search = useDocSearch()
-  usePageMeta({ title: t('title'), description: t('description') })
-  const [first, ...rest] = GROUPS
+  const lang = useDocLang()
+  usePageMeta({
+    title: t('title'),
+    description: t('description'),
+    lang,
+    alternates: docAlternates(),
+  })
+  const [first, ...rest] = useGroups()
 
   return (
     <Page className="gap-7 md:gap-8">
@@ -150,31 +162,33 @@ function Portada() {
 function Indice() {
   const { t } = useTranslation('docs')
   const search = useDocSearch()
+  const lang = useDocLang()
+  const groups = useGroups()
   return (
     <nav
       aria-label={t('helpPages')}
       className="flex min-h-0 w-[248px] shrink-0 flex-col gap-3 overflow-y-auto"
     >
-      <Link
-        to="/docs"
+      <DocRouteLink
+        lang={lang}
         className="flex items-center gap-2 px-1 text-xl font-semibold tracking-tight text-fg"
       >
         <icons.docs size={18} aria-hidden="true" className="text-accent" />
         {t('title')}
-      </Link>
+      </DocRouteLink>
       <DocSearchField search={search} />
       {search.searching ? (
         <DocResults search={search} dense />
       ) : (
-        GROUPS.map((g) => (
+        groups.map((g) => (
           <div key={g.id} className="flex flex-col">
             <GroupTitle id={g.id} className="px-2.5 pt-2 pb-1" />
             <TreeList className="ml-4">
               {g.docs.map((d) => (
                 <TreeItem key={d.slug}>
-                  <Link
-                    to="/docs/$pagina"
-                    params={{ pagina: d.slug }}
+                  <DocRouteLink
+                    lang={lang}
+                    slug={d.slug}
                     className={cn(
                       'group flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13.5px] text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
                       'data-[status=active]:bg-fg/[0.07] data-[status=active]:text-fg',
@@ -187,7 +201,7 @@ function Indice() {
                     />
                     <span className="min-w-0 flex-1 truncate">{d.title}</span>
                     <StatusBadge status={d.status} compact />
-                  </Link>
+                  </DocRouteLink>
                 </TreeItem>
               ))}
             </TreeList>
@@ -209,7 +223,7 @@ function Indice() {
  */
 export function Documentacion() {
   const desktop = useIsDesktop()
-  const open = useMatch({ from: '/_app/docs/$pagina', shouldThrow: false })?.params.pagina
+  const open = useParams({ strict: false }).pagina
 
   if (!open) return <Portada />
   if (!desktop) return <Outlet />

@@ -26,7 +26,7 @@ Pulsa una tarjeta para abrirla: en el ordenador sale un panel a la derecha, en e
 enlace propio, así que puedes copiarlo o recargar la página. Desde ahí cambias:
 
 - **Título** y **descripción** (se guardan al salir del campo). La descripción se escribe en **Markdown** (negrita, listas,
-  enlaces, `código`…, como en las [notas](05-notas.md#qué-markdown-se-entiende)): al salir del campo se ve ya con su formato; pulsa sobre
+  enlaces, `código`…, como en las [notas](05-notas.md#que-se-puede-escribir)): al salir del campo se ve ya con su formato; pulsa sobre
   el texto o **Editar** para volver a escribir. Las casillas de una lista de tareas (`- [ ] algo`) se marcan sin entrar a editar.
 - **Estado** (la columna), **prioridad** (ninguna, baja, media, alta o urgente) y **fecha límite**.
 - **Etiquetas** libres: escribe y pulsa **Intro**.

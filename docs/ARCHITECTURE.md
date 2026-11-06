@@ -61,8 +61,9 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
   que Documentación y la descripción de tareas reutilizan.
 - **Finanzas:** `/finance?view=overview|transactions|subscriptions|accounts` ([ADR-0037](adr/0037-modelo-de-datos-de-finanzas.md)). Las consultas cuelgan de
   `['finance', …]` y las escrituras van por una sola cola (`lib/finance-actions.ts`), con los saldos actualizados al instante.
-- **Documentación:** `/docs` y `/docs/$pagina`. Las guías de `docs/user` se importan al compilar
-  ([ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md)).
+- **Documentación:** `/docs` y `/docs/$pagina` en inglés, `/es/docs` y `/es/docs/$pagina` en español. Las guías de
+  `docs/user/<idioma>` se importan al compilar ([ADR-0027](adr/0027-documentacion-en-la-app-desde-docs-user.md),
+  [ADR-0077](adr/0077-i18n-ingles-por-defecto-con-i18next.md)); `lib/doc-slugs.ts` las enlaza sin cargarlas.
 - **Sesión:** `src/lib/auth.ts` (Supabase Auth: código por correo y GitHub; modo demo en memoria). Al cambiar
   de usuario se vacían el core y react-query: ver [ADR-0022](adr/0022-auth-y-sesion.md).
 - **Apariencia:** `src/lib/appearance.ts` (en `user_settings.preferences`, con localStorage como caché).

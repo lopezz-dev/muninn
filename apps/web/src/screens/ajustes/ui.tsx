@@ -1,8 +1,9 @@
 import { Button, cn, IconButton, icons } from '@muninn/ui'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { useRouterState } from '@tanstack/react-router'
 import { type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppIcon, type AppIconName } from '../../components/AppIcon'
+import { GuideLink } from '../../components/GuideLink'
 import type { SettingsSection } from './sections'
 
 /** Punto ámbar de «cambiado»: el ajuste no está en su valor de fábrica. `decorative` si al lado ya se dice con texto. */
@@ -242,9 +243,8 @@ export function HelpAside({ section }: { section: SettingsSection }) {
       className="sticky top-7 ml-auto hidden w-[280px] shrink-0 flex-col gap-3 self-start 2xl:flex"
     >
       <MicroTitle icon="docs">{t('help.inDocs')}</MicroTitle>
-      <Link
-        to="/docs/$pagina"
-        params={{ pagina: doc.pagina }}
+      <GuideLink
+        doc={doc.key}
         hash={doc.hash}
         className="glass flex gap-3 rounded-lg border border-border p-4 text-fg transition-colors hover:border-border-strong hover:bg-surface-hover"
       >
@@ -259,7 +259,7 @@ export function HelpAside({ section }: { section: SettingsSection }) {
             <icons.move size={13} aria-hidden="true" />
           </span>
         </span>
-      </Link>
+      </GuideLink>
       <p className="flex flex-col gap-1 rounded-lg bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-fg-subtle">
         <span className="flex items-center gap-1.5 font-medium text-fg-muted">
           <ChangedDot decorative />

@@ -2,6 +2,7 @@ import { Button, Card, Icon } from '@muninn/ui'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { GuideLink } from '../../components/GuideLink'
 import type { AssistantAvailability } from '../../lib/assistant-status'
 
 /** El chip del cerebro en la cabecera: verde si está listo, ámbar si falta algo. */
@@ -72,14 +73,10 @@ export function ModelState({ status, url, onRetry }: Props) {
         <p className="text-sm text-fg-muted text-pretty">{t('state.handheldBody')}</p>
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to="/docs/$pagina" params={{ pagina: 'asistente' }}>
-              {t('state.howItWorks')}
-            </Link>
+            <GuideLink doc="assistant">{t('state.howItWorks')}</GuideLink>
           </Button>
           <Button asChild variant="ghost">
-            <Link to="/docs/$pagina" params={{ pagina: 'asistentes-ia' }}>
-              {t('state.useClaude')}
-            </Link>
+            <GuideLink doc="ai-assistants">{t('state.useClaude')}</GuideLink>
           </Button>
         </div>
       </Card>
@@ -130,9 +127,7 @@ export function ModelState({ status, url, onRetry }: Props) {
           {t('state.retry')}
         </Button>
         <Button asChild>
-          <Link to="/docs/$pagina" params={{ pagina: 'asistente' }}>
-            {t('state.guide')}
-          </Link>
+          <GuideLink doc="assistant">{t('state.guide')}</GuideLink>
         </Button>
         <Button asChild variant="ghost">
           <Link to="/settings/$seccion" params={{ seccion: 'assistant' }}>

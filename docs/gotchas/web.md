@@ -931,3 +931,27 @@
   - El core genera dos enlaces de la app (avisos push y el correo de dispositivo nuevo): tras cambiarlos, recompila `build:edge` y
     redespliega `push` y `security`. Hasta entonces mandan la ruta vieja, que redirige.
 - **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)
+
+### Guías en dos idiomas: el idioma lo pone la URL, y se emparejan por número
+
+- **Síntoma:** un enlace a una guía abre «Esta guía no existe»; un enlace entre guías lleva al principio y no al apartado; una
+  guía nueva no sale en un idioma; o con la app en inglés se abre una guía en español.
+- **Causa:** desde la fase 4 de ADR-0077 cada guía está en `docs/user/en/NN-slug.md` (en `/docs/slug`) y en
+  `docs/user/es/NN-slug.md` (en `/es/docs/slug`), con un slug distinto en cada idioma. El idioma de la guía lo dice la URL, no el
+  de la interfaz; las anclas salen del título traducido, así que tampoco coinciden entre idiomas.
+- **Solución:**
+  - Desde fuera de la Documentación, enlaza con `<GuideLink doc="clave">` (o `<GuidesLink>` para la portada) de
+    `components/GuideLink.tsx`: abre la guía en el idioma de la interfaz y no carga el texto de las guías. Un apartado distinto en
+    cada idioma va como `hash={{ en: '…', es: '…' }}`. Nunca `to="/docs/$pagina"` con un slug a mano.
+  - Dentro de la Documentación, `DocRouteLink` y `useDocs()` / `useDocLang()` de `screens/docs/content.tsx`.
+  - Una guía nueva: su número y sus dos slugs en `lib/doc-slugs.ts` y los dos ficheros. `test/doc-slugs.test.ts` y
+    `test/docs.test.ts` comprueban que coinciden, que tienen los mismos metadatos y apartados, y que cada enlace y cada ancla
+    existen (también las de las secciones de Ajustes).
+  - Un slug del otro idioma (`/docs/notas`) redirige a su ruta en el `beforeLoad` de la guía; `/documentacion/…` (antes de la
+    fase 3) va a `/es/docs/…`, en la app y en Vercel.
+  - Sin sesión, la interfaz cambia al idioma de la URL al entrar en la ayuda (el `beforeLoad` de `_app`), sin guardarlo. El aviso
+    «Esta página también está en español» (`shell/DocsLangNotice.tsx`) solo sale sin sesión, en el idioma del navegador, y se
+    recuerda en `localStorage['muninn.docsLangNotice']`.
+  - El prerender (`vite/seo.ts`) escribe `dist/docs/…` y `dist/es/docs/…` con `lang`, `og:locale`, `hreflang` (con `x-default` en
+    inglés) y el `<noscript>` de cada idioma; `index.html`, la plantilla, está en inglés.
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

@@ -10,7 +10,8 @@ const SECTIONS: Record<string, string> = {
   finanzas: 'finance',
   asistente: 'assistant',
   noticias: 'news',
-  documentacion: 'docs',
+  // Las guías de antes estaban en español: van a su versión en español (ADR-0077, fase 4).
+  documentacion: 'es/docs',
   ajustes: 'settings',
 }
 

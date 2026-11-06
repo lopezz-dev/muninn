@@ -272,14 +272,14 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     final). Falta la *Site URL* de Supabase y probarla en el iPhone: [fase final](fase-final.md), pasos 4 y 5
   - [x] Implementar la suscripción (Ajustes › Notificaciones, con dispositivos y «Deshacer»), las tablas `push_subscriptions` y `push_log`
     (migración `20261028180000_push_subscriptions`, **sin aplicar**), `m.push` en el core con tests y la Edge Function `push` con cron
-    diario (28 de octubre); guía [Notificaciones](user/13-notificaciones.md)
+    diario (28 de octubre); guía [Notificaciones](user/es/13-notificaciones.md)
   - [ ] Claves VAPID, migración, despliegue de `push`, cron y `VITE_VAPID_PUBLIC_KEY` en Vercel, y probarlo en el iPhone:
     [fase final](fase-final.md), paso 4b
 - [ ] Finanzas: cuentas, gastos, ingresos, ahorro, inversión, categorías
   - [x] Modelo de datos (ADR-0037): cuentas con saldo derivado, categorías de serie y propias, movimientos (gasto, ingreso, traspaso)
     en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
   - [x] Pantalla Finanzas: Resumen (cuentas y últimos movimientos), Movimientos (mes, filtros, alta fija en escritorio y hoja en móvil)
-    y Cuentas (cuentas y categorías editables), con escrituras optimistas, «Deshacer» y tiempo real; guía [Finanzas](user/10-finanzas.md)
+    y Cuentas (cuentas y categorías editables), con escrituras optimistas, «Deshacer» y tiempo real; guía [Finanzas](user/es/10-finanzas.md)
   - [ ] Ajuste de valor de una inversión (hoy, un ingreso o gasto en esa cuenta) y multidivisa: fuera de esta fase
 - [ ] Suscripciones recurrentes con aviso antes del cobro
   - [x] Suscripciones semanales, mensuales y anuales (ADR-0038): al llegar la fecha la app **avisa** (Inicio y Finanzas) y el cobro se
@@ -323,7 +323,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [x] Pantalla **Asistente** (lienzo): conversación en streaming, chips de las herramientas usadas, «Ha cambiado» con «Abrir» y
     «Deshacer», ⌘K «Preguntar a Muninn» (`?q=`, se envía solo), estados «Ollama no responde», «Falta el modelo» y «en el móvil no hay
     modelo» con los pasos, historial de las últimas 30 conversaciones en el dispositivo y Ajustes › Asistente e IA (dirección y modelo).
-    En la demo responde con un guion. Guía [Asistente](user/11-asistente.md). Sin el selector «Local · Claude» del diseño: el cerebro es
+    En la demo responde con un guion. Guía [Asistente](user/es/11-asistente.md). Sin el selector «Local · Claude» del diseño: el cerebro es
     siempre local (Claude se usa por MCP) y el proveedor en la nube queda como opción futura (ADR-0041)
   - [ ] Elegir el modelo con el banco contra Ollama (`qwen3:8b` por defecto; `qwen3:14b` y `llama3.1:8b` como alternativas) → [Pruebas finales](#pruebas-finales)
 - [ ] Voz: Whisper (STT) + Piper/Kokoro (TTS), todo en local
@@ -339,7 +339,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [x] Edge Function `news` (cron cada hora y «Actualizar» con la sesión) **desplegada el 26 de octubre**, con su cron: pasos en
     [gotchas/db](gotchas/db.md#noticias-descarga-con-la-edge-function-pasos-manuales)
   - [x] Pantalla **Noticias** (lienzo): resumen del día generado en local, temas, guardadas, búsqueda, artículos con «Relacionada con…»,
-    «Crear tarea», «Guardar como nota», «Leer luego» y fuentes (añadir, pausar y quitar con «Deshacer»). Guía [Noticias](user/12-noticias.md).
+    «Crear tarea», «Guardar como nota», «Leer luego» y fuentes (añadir, pausar y quitar con «Deshacer»). Guía [Noticias](user/es/12-noticias.md).
     Sin «Escuchar» del diseño: llega con la voz (bloque E)
   - [x] Asistente y MCP: `list_news` y `news_digest` (solo lectura); ⌘K «Buscar en Noticias»
 - [ ] Agentes programados que informan del estado de las tareas
@@ -399,8 +399,9 @@ Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (AD
 - [x] Fase 3: rutas en inglés (`/projects`, `/notes`, `/finance?view=…`, `/settings/account`, `/docs`…). Las antiguas en
   español redirigen a las nuevas (`lib/legacy-routes.ts`, y Vercel con 301 las guías prerenderizadas). Los slugs de las guías siguen
   en español hasta la fase 4
-- [ ] Fase 4: guías en los dos idiomas, prerender por idioma con `hreflang` y sitemap, y el aviso «Esta página también está en
-  español» (abajo a la derecha; en el móvil, encima del dock)
+- [x] Fase 4: guías en los dos idiomas (`docs/user/en` y `docs/user/es`, emparejadas por número), `/docs/notes` y
+  `/es/docs/notas`, prerender por idioma con `hreflang`, `og:locale` y sitemap, y el aviso «Esta página también está en
+  español» para quien entra sin sesión (abajo a la derecha; en el móvil, abajo)
 - [ ] Fase 5: correos de Supabase, avisos push y lo que escriben el asistente y el MCP para el usuario
 
 ## Backlog

@@ -7,8 +7,17 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router'
+import { i18n } from './i18n'
 import { accountSheet, isPhone, settingsViewOf } from './lib/account-sheet'
 import { getAuth, onAuthChange, safeRedirect } from './lib/auth'
+import {
+  type DocLang,
+  docKeyOf,
+  docLangOf,
+  docPath,
+  isDocsPath,
+  otherDocLang,
+} from './lib/doc-slugs'
 import { legacyHref } from './lib/legacy-routes'
 import { loadMuninn } from './lib/muninn'
 import { forgetUserData } from './lib/session'
@@ -92,19 +101,22 @@ const oauthConsentRoute = createRoute({
   component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent'),
 })
 
-/** La documentación es pública (ADR-0076): sin sesión se lee en un marco propio, sin datos. */
-const isPublicPath = (pathname: string) => /^\/docs(?:\/|$)/.test(pathname)
-
 /** Todo lo que necesita datos: sin sesión ni demo, a /login (y vuelta aquí al entrar). */
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: '_app',
-  beforeLoad: ({ context, location }) => {
+  beforeLoad: async ({ context, location }) => {
     const { auth } = context
-    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí), salvo lo público.
+    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí), salvo la documentación, que
+    // es pública (ADR-0076) y se lee en un marco propio, sin datos.
     if (auth.kind === 'anonymous' || auth.kind === 'mfa') {
-      if (isPublicPath(location.pathname)) return { auth: null }
-      throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+      if (!isDocsPath(location.pathname)) {
+        throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+      }
+      // Sin sesión, la interfaz va en el idioma de la URL (ADR-0077); no se guarda como preferencia.
+      const lang = docLangOf(location.pathname)
+      if (i18n.language !== lang) await i18n.changeLanguage(lang)
+      return { auth: null }
     }
     return { auth }
   },
@@ -220,17 +232,46 @@ const githubRoute = createRoute({
   component: screen(() => import('./screens/GitHub'), 'GitHub'),
 })
 
+// ─── Documentación: en inglés en /docs y en español en /es/docs (ADR-0077) ─────
+
+const docsScreen = screen(() => import('./screens/Documentacion'), 'Documentacion')
+const docPageScreen = screen(() => import('./screens/DocPagina'), 'DocPagina')
+
+/**
+ * Una guía con el slug del otro idioma (`/docs/notas`, o un enlace de antes de la fase 4) va a su ruta. Lo que no es
+ * de ningún idioma se queda: la pantalla dice que no existe.
+ */
+const guideInItsLanguage = (lang: DocLang, slug: string) => {
+  if (docKeyOf(slug, lang)) return
+  const other = otherDocLang(lang)
+  if (docKeyOf(slug, other)) throw redirect({ href: docPath(other, slug), replace: true })
+}
+
 const docsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'docs',
-  component: screen(() => import('./screens/Documentacion'), 'Documentacion'),
+  component: docsScreen,
 })
 
 /** Una guía: ruta propia, con enlace compartible; cuelga de la lista como el detalle de tarea del tablero. */
 const docPageRoute = createRoute({
   getParentRoute: () => docsRoute,
   path: '$pagina',
-  component: screen(() => import('./screens/DocPagina'), 'DocPagina'),
+  beforeLoad: ({ params }) => guideInItsLanguage('en', params.pagina),
+  component: docPageScreen,
+})
+
+const esDocsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'es/docs',
+  component: docsScreen,
+})
+
+const esDocPageRoute = createRoute({
+  getParentRoute: () => esDocsRoute,
+  path: '$pagina',
+  beforeLoad: ({ params }) => guideInItsLanguage('es', params.pagina),
+  component: docPageScreen,
 })
 
 /**
@@ -305,6 +346,7 @@ const routeTree = rootRoute.addChildren([
     newsRoute,
     githubRoute,
     docsRoute.addChildren([docPageRoute]),
+    esDocsRoute.addChildren([esDocPageRoute]),
     moreRoute,
     settingsRoute.addChildren([settingsIndexRoute, settingsSectionRoute]),
     devFundamentosRoute,

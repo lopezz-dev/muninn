@@ -14,7 +14,7 @@ diseñado para venderse. Índice de documentación: `docs/README.md`.
   al índice por área. Los ADRs no se reescriben: se reemplazan con uno nuevo.
 - **Trampa no obvia** (algo que te ha costado depurar o que fallaría sin avisar) → entrada en
   `docs/gotchas/<área>.md` con Síntoma / Causa / Solución. Borra los gotchas que dejen de aplicar.
-- **Cambio visible para el usuario** → actualiza `docs/user/` (con su front matter `title`, `description`,
+- **Cambio visible para el usuario** → actualiza la guía en `docs/user/en/` y en `docs/user/es/` (con su front matter `title`, `description`,
   `order` y `status`). Tono de tú, sin jerga, y honesto con lo que está disponible y lo que no.
 - Fases o alcance → `docs/ROADMAP.md`. Visión de conjunto → `docs/ARCHITECTURE.md`.
 

@@ -128,6 +128,12 @@ export const common = {
   publicShell: {
     docs: 'Documentation',
     signIn: 'Sign in',
+    /** Se enseña en el idioma de la otra versión: lo lee quien habla ese idioma (ADR-0077). */
+    langNotice: {
+      text: 'This page is also in English',
+      switch: 'Switch to English',
+      dismiss: 'No, thanks',
+    },
   },
   dates: {
     today: 'Today',

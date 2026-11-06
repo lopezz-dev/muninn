@@ -1,18 +1,17 @@
 import { Button, cn, icons } from '@muninn/ui'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../components/Page'
 import { TreeItem, TreeList } from '../components/TreeBranch'
-import { type Doc, docLink, neighbours } from '../lib/docs'
+import { type DocLang, docAlternates } from '../lib/doc-slugs'
+import { type Doc, linkedDoc, neighbours } from '../lib/docs'
 import { useNoIndex, usePageMeta } from '../lib/seo'
 import { type CalloutLook, Markdown } from '../markdown/Markdown'
 import { nestOutline, type OutlineItem, outline, slugify } from '../markdown/outline'
-import { DOCS } from './docs/content'
+import { DOCS, DocRouteLink, useDocLang } from './docs/content'
 import { DocIcon, DocTile } from './docs/look'
 import { StatusBadge } from './docs/StatusBadge'
-
-const route = getRouteApi('/_app/docs/$pagina')
 
 const linkClass = 'text-accent underline-offset-2 hover:underline'
 
@@ -25,35 +24,45 @@ function jump(e: MouseEvent<HTMLAnchorElement>, id: string) {
   history.replaceState(history.state, '', `#${id}`)
 }
 
-/** Enlaces dentro de una guía: a un apartado (`#id`) o a otra guía (`05-notas.md#archivar`). */
-function renderLink(href: string, children: ReactNode): ReactNode | undefined {
-  if (href.startsWith('#')) {
-    const id = slugify(decodeURIComponent(href.slice(1)))
+/**
+ * Enlaces dentro de una guía: a un apartado (`#id`) o a otra guía (`05-notas.md#archivar`), que se busca por su
+ * número entre las del mismo idioma.
+ */
+const linkRenderer =
+  (lang: DocLang) =>
+  (href: string, children: ReactNode): ReactNode | undefined => {
+    if (href.startsWith('#')) {
+      const id = slugify(decodeURIComponent(href.slice(1)))
+      return (
+        <a href={`#${id}`} onClick={(e) => jump(e, id)} className={linkClass}>
+          {children}
+        </a>
+      )
+    }
+    const target = linkedDoc(DOCS[lang], href)
+    if (!target) return undefined
     return (
-      <a href={`#${id}`} onClick={(e) => jump(e, id)} className={linkClass}>
+      <DocRouteLink
+        lang={lang}
+        slug={target.doc.slug}
+        hash={target.hash ? slugify(decodeURIComponent(target.hash)) : undefined}
+        className={linkClass}
+      >
         {children}
-      </a>
+      </DocRouteLink>
     )
   }
-  const doc = docLink(href)
-  if (!doc) return undefined
-  return (
-    <Link
-      to="/docs/$pagina"
-      params={{ pagina: doc.slug }}
-      hash={doc.hash ? slugify(decodeURIComponent(doc.hash)) : undefined}
-      className={linkClass}
-    >
-      {children}
-    </Link>
-  )
-}
 
-/** Los avisos de las guías: «Estado» con el círculo a medias, «Próximamente» en neutro con reloj. */
+/**
+ * Los avisos de las guías: «Estado» (Status) con el círculo a medias, «Próximamente» (Coming soon) en neutro con
+ * reloj. La etiqueta es la de la guía, en su idioma.
+ */
 function calloutLook(label: string): CalloutLook {
   const l = slugify(label)
-  if (l.startsWith('proximamente')) return { icon: <icons.clock size={17} />, tone: 'neutral' }
-  if (l.startsWith('estado')) return { icon: <DocIcon name="partial" size={17} /> }
+  if (l.startsWith('proximamente') || l.startsWith('coming-soon'))
+    return { icon: <icons.clock size={17} />, tone: 'neutral' }
+  if (l.startsWith('estado') || l.startsWith('status'))
+    return { icon: <DocIcon name="partial" size={17} /> }
   return { icon: <icons.info size={17} /> }
 }
 
@@ -145,9 +154,9 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
   const next = dir === 'next'
   const Arrow = next ? icons.move : icons.chevronLeft
   return (
-    <Link
-      to="/docs/$pagina"
-      params={{ pagina: doc.slug }}
+    <DocRouteLink
+      lang={doc.lang}
+      slug={doc.slug}
       className={cn(
         'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3.5 text-fg md:py-2.5 outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent',
         next && 'flex-row-reverse text-right',
@@ -161,12 +170,12 @@ function Neighbour({ doc, dir }: { doc: Doc; dir: 'prev' | 'next' }) {
         </span>
         <span className="truncate text-base font-medium">{doc.title}</span>
       </span>
-    </Link>
+    </DocRouteLink>
   )
 }
 
 /** Guía que no existe (enlace de otra versión de la ayuda): fuera del índice de los buscadores. */
-function DocNotFound() {
+function DocNotFound({ lang }: { lang: DocLang }) {
   const { t } = useTranslation('docs')
   useNoIndex()
   return (
@@ -176,7 +185,7 @@ function DocNotFound() {
       className="mt-10 flex-1"
       actions={
         <Button asChild variant="primary">
-          <Link to="/docs">{t('page.seeDocs')}</Link>
+          <DocRouteLink lang={lang}>{t('page.seeDocs')}</DocRouteLink>
         </Button>
       }
     >
@@ -194,19 +203,23 @@ function DocNotFound() {
  */
 export function DocPagina() {
   const { t } = useTranslation('docs')
-  const { pagina } = route.useParams()
-  const doc = DOCS.find((d) => d.slug === pagina)
+  const lang = useDocLang()
+  const pagina = useParams({ strict: false }).pagina
+  const doc = DOCS[lang].find((d) => d.slug === pagina)
   const toc = useMemo(() => (doc ? outline(doc.body) : []), [doc])
   const active = useActiveHeading(toc.map((t) => t.id))
+  const renderLink = useMemo(() => linkRenderer(lang), [lang])
 
   usePageMeta({
     title: doc?.title ?? t('title'),
     description: doc?.description || undefined,
+    lang,
+    alternates: doc?.key ? docAlternates(doc.key) : undefined,
   })
 
-  if (!doc) return <DocNotFound />
+  if (!doc) return <DocNotFound lang={lang} />
 
-  const { prev, next } = neighbours(DOCS, doc.slug)
+  const { prev, next } = neighbours(DOCS[lang], doc.slug)
   const sections = toc.filter((t) => t.depth === 2).length
 
   return (
@@ -217,21 +230,21 @@ export function DocPagina() {
           data-scroll-restoration-id="guia"
           className="flex min-w-0 flex-col gap-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-3 md:pb-6"
         >
-          <Link
-            to="/docs"
+          <DocRouteLink
+            lang={lang}
             className="-mb-1 flex h-11 items-center gap-1.5 self-start text-md text-accent md:hidden"
           >
             <icons.chevronLeft size={18} aria-hidden="true" />
             {t('title')}
-          </Link>
+          </DocRouteLink>
           <nav
             aria-label={t('page.youAreHere')}
             className="hidden items-center gap-1.5 text-sm text-fg-subtle md:flex"
           >
-            <Link to="/docs" className="flex items-center gap-1.5 hover:text-fg">
+            <DocRouteLink lang={lang} className="flex items-center gap-1.5 hover:text-fg">
               <icons.docs size={14} aria-hidden="true" />
               {t('title')}
-            </Link>
+            </DocRouteLink>
             <icons.chevronRight size={12} aria-hidden="true" className="text-fg-faint" />
             <span>{t(`groups.${doc.group}`)}</span>
             <icons.chevronRight size={12} aria-hidden="true" className="text-fg-faint" />

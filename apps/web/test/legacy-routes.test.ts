@@ -8,7 +8,7 @@ describe('legacyHref', () => {
     expect(legacyHref('/asistente', '?q=hola')).toBe('/assistant?q=hola')
     expect(legacyHref('/noticias')).toBe('/news')
     expect(legacyHref('/documentacion/tareas', '', '#fecha-limite')).toBe(
-      '/docs/tareas#fecha-limite',
+      '/es/docs/tareas#fecha-limite',
     )
     expect(legacyHref('/dev/fundamentos')).toBe('/dev/foundations')
   })
