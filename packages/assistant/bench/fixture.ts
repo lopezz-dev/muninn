@@ -11,7 +11,11 @@ export const BENCH_TODAY = '2026-10-22'
 export async function benchFixture(): Promise<Muninn> {
   let clock = BENCH_NOW
   const store = createMemoryStore(undefined, { now: () => clock.toISOString() })
-  const app = createMuninn(store, { now: () => clock, timeZone: 'Europe/Madrid' })
+  const app = createMuninn(store, {
+    now: () => clock,
+    timeZone: 'Europe/Madrid',
+    locale: () => 'es',
+  })
 
   const muninn = await app.projects.create({ name: 'Muninn' })
   const huginn = await app.projects.create({ name: 'HuginnDB' })

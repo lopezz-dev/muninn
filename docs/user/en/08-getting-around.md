@@ -160,9 +160,10 @@ In **Settings › Appearance**:
 Each change applies right away and you can undo it from the notification. With an account, it's saved to it and
 follows you to all your devices; in demo mode, only on this one.
 
-> **Status:** the whole app and these guides are in English and Spanish. But
-> what Muninn creates for you when you start (the board columns, the Finance categories) comes out in Spanish even if you use
-> English: you can rename it.
+> **Keep in mind:** the whole app and these guides are in English and Spanish. What Muninn creates for you (the columns of a
+> new project, the Finance categories, the news topics you add from the suggestions) comes out in the language you're using at
+> that moment. Changing the language later doesn't rename it, but you can rename it yourself. When Claude creates a project
+> for you, it uses the language set here; with **Automatic**, English.
 
 > **Coming soon:** light theme.
 

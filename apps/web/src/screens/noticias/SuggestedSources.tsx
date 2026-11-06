@@ -71,7 +71,7 @@ export function SuggestedSources({
                       size={desktop ? 'sm' : 'md'}
                       aria-label={t('suggested.addNamed', { title: s.title })}
                       disabled={busy !== null}
-                      onClick={() => void add(s.url, s.title, g.topic)}
+                      onClick={() => void add(s.url, s.title, g.label)}
                       className="shrink-0"
                     >
                       <icons.plus size={13} />

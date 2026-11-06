@@ -160,9 +160,10 @@ En **Ajustes › Apariencia**:
 Cada cambio se aplica al momento y puedes deshacerlo desde el aviso. Con cuenta, se guarda en ella y te
 sigue a todos tus dispositivos; en modo demo, solo en este.
 
-> **Estado:** toda la app y estas guías están en inglés y en español. Lo
-> que Muninn crea por ti al empezar (las columnas del tablero, las categorías de Finanzas) sale en español aunque uses
-> el inglés: puedes renombrarlo.
+> **Ten en cuenta:** toda la app y estas guías están en inglés y en español. Lo que Muninn crea por ti (las columnas de un
+> proyecto nuevo, las categorías de Finanzas, los temas de noticias que añades desde las sugerencias) sale en el idioma que
+> uses en ese momento. Cambiar de idioma después no lo renombra, pero puedes renombrarlo tú. Cuando Claude te crea un
+> proyecto, usa el idioma que elijas aquí; con **Automático**, inglés.
 
 > **Próximamente:** tema claro.
 
