@@ -34,6 +34,14 @@ describe('qué refresca cada cambio', () => {
     expect(scopesOf(c('user_settings', { owner_id: 'u' }))).toEqual(['settings'])
   })
 
+  it('comentarios: los hilos de su nota y las listas de todas', () => {
+    expect(scopesOf(c('note_comments', { id: 'c1', note_id: 'n1' }))).toEqual([
+      'comments',
+      'comments:n1',
+    ])
+    expect(scopesOf(c('note_comments', {}, { id: 'c1' }))).toEqual(['comments'])
+  })
+
   it('finanzas: cualquier tabla refresca Finanzas entera', () => {
     for (const t of ['news_sources', 'news_items', 'news_digests'] as const) {
       expect(scopesOf(c(t, { id: 'x' }))).toEqual(['news'])
@@ -98,6 +106,18 @@ describe('aplicar los cambios sobre la caché', () => {
     busy = new Set()
     vi.advanceTimersByTime(400)
     expect(keys().some((k) => k?.[0] === 'settings')).toBe(true)
+  })
+
+  it('los comentarios de una nota esperan a su cola y refrescan sus hilos', () => {
+    let busy = new Set(['comments:n1'])
+    const s = createSync(qc, { busy: (k) => !!k && busy.has(k) })
+    s.handle({ table: 'note_comments', row: { id: 'c1', note_id: 'n1' } })
+    vi.advanceTimersByTime(400)
+    expect(keys()).toContainEqual(['comments'])
+    expect(keys()).not.toContainEqual(['notes', 'n1', 'comments'])
+    busy = new Set()
+    vi.advanceTimersByTime(400)
+    expect(keys()).toContainEqual(['notes', 'n1', 'comments'])
   })
 
   it('Finanzas espera a que se vacíe su cola', () => {
