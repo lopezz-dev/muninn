@@ -6,6 +6,7 @@ import type {
   BoardColumn,
   CategoryKind,
   ChecklistItem,
+  CommentStatus,
   FinanceAccount,
   FinanceCategory,
   GithubRepoSummary,
@@ -16,6 +17,7 @@ import type {
   NewsItem,
   NewsSource,
   Note,
+  NoteComment,
   OAuthAppGrant,
   OutboxKind,
   Project,
@@ -45,6 +47,8 @@ export interface Store {
   tasks: Collection<Task, TaskStoreQuery>
   checklist: Collection<ChecklistItem, { taskIds: string[] }>
   notes: NoteStore
+  /** Comentarios de las notas (ADR-0079). */
+  noteComments: Collection<NoteComment, NoteCommentStoreQuery>
   activity: ActivityLog
   settings: SettingsStore
   githubOutbox: GithubOutbox
@@ -274,6 +278,20 @@ export interface NoteStoreQuery {
   /** `null` = la raíz. Con él, por posición en vez de fijadas y recientes. */
   parentId?: string | null
   search?: string
+  includeArchived?: boolean
+  limit?: number
+}
+
+/** Comentarios por fecha de creación, el más antiguo primero. */
+export interface NoteCommentStoreQuery {
+  noteId?: string
+  /** Solo los que abren hilo (`parentId` null). */
+  roots?: boolean
+  /** Los de estos hilos: sus raíces y sus respuestas. */
+  threadIds?: string[]
+  forAgent?: boolean
+  /** Abiertos o resueltos (solo tiene sentido con `roots`); por defecto, todos. */
+  status?: CommentStatus
   includeArchived?: boolean
   limit?: number
 }

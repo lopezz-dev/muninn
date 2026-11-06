@@ -4,6 +4,7 @@ import { ValidationError } from './errors'
 import { createFinance } from './finance'
 import { DEFAULT_SETTINGS } from './memory-store'
 import { createNews } from './news'
+import { createNoteComments } from './note-comments'
 import { positionAt, positionsAfter, positionsFor } from './ordering'
 import { createPush } from './push'
 import {
@@ -291,6 +292,15 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     if (!v) throw new NotFoundError(entity, id)
     return v
   }
+
+  const { reanchorNote, ...comments } = createNoteComments({
+    store,
+    actor,
+    nowIso,
+    parse,
+    log,
+    getNote: (id) => must(store.notes.get(id), 'Nota', id),
+  })
 
   /** Inserta/mueve con clave de orden; persiste el rebalanceo si hubo colisión. */
   async function place(
@@ -1286,6 +1296,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     }
     const note = await store.notes.update(id, { ...patch, ...tree })
     await moveDescendants(descendants, note.projectId)
+    // Los comentarios siguen a su texto, cambie quien cambie la nota (ADR-0079).
+    if (fields.includes('content')) await reanchorNote(id, before.content, note.content)
 
     if (fields.length === 1 && fields[0] === 'pinned') {
       await log('note', id, note.pinned ? 'pinned' : 'unpinned', note.projectId, {
@@ -1647,6 +1659,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       archive: archiveNote,
       restore: restoreNote,
     },
+    /** Comentarios de las notas (ADR-0079). Sin borrado definitivo. */
+    comments,
     settings: {
       get: getSettings,
       update: updateSettings,
