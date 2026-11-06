@@ -9,7 +9,6 @@ import {
   MenuItem,
   MenuTrigger,
   notify,
-  SegmentedControl,
   screenIcons,
 } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -26,19 +25,13 @@ import { ancestorsOf, childrenOf, treeNeighbours } from '../../lib/notes-tree'
 import { projectsQuery } from '../../lib/queries'
 import { applyEdit } from '../../markdown/edit'
 import { applyFormat, continueList, type FormatCommand } from '../../markdown/format'
-import { Markdown } from '../../markdown/Markdown'
+import { EditorContent, FormatBar, SelectionBar, useRichNote } from './rich/RichNote'
 import { useNoteDraft } from './use-note-draft'
 
-type Mode = 'edit' | 'preview'
+/** `rich`: el editor en sitio (ADR-0078). `markdown`: el texto en crudo, el escape de «⋯ › Editar como Markdown». */
+type Mode = 'rich' | 'markdown'
 
-/** Si hay texto seleccionado dentro de `el`: el clic que acaba una selección no debe pasar a editar. */
-export function isSelecting(el: HTMLElement): boolean {
-  const sel = el.ownerDocument.getSelection()
-  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false
-  return el.contains(sel.getRangeAt(0).commonAncestorContainer)
-}
-
-/** Botones de la barra de formato; su nombre sale de `tools.<command>`, en el idioma activo. */
+/** Botones de la barra de formato del modo Markdown; su nombre sale de `tools.<command>`, en el idioma activo. */
 interface Tool {
   command: FormatCommand
   shortcut?: string
@@ -70,30 +63,59 @@ interface EditorProps {
 }
 
 /**
- * Editor de una nota: título, propiedades (proyecto y tarea), y el texto en Markdown con barra de formato
- * o vista previa. Se guarda solo (`useNoteDraft`). La barra de formato va arriba y no sobre el teclado:
- * en iOS el teclado no avisa a la página de su altura y una barra inferior quedaría tapada.
+ * Editor de una nota: título, propiedades (proyecto y tarea) y el texto, que se lee y se edita en el mismo sitio
+ * (ADR-0078): en el ordenador, siempre editable; en el teléfono, lectura por defecto y el lápiz para retocar. Se guarda
+ * solo (`useNoteDraft`). La barra de formato va arriba y no sobre el teclado: en iOS el teclado no avisa a la página
+ * de su altura y una barra inferior quedaría tapada.
  */
 export function NoteEditor({ note, desktop }: EditorProps) {
   const { t } = useTranslation(['notes', 'common'])
   const m = useMuninn()
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const { draft, status, change, toggle, save } = useNoteDraft(note)
+  const { draft, status, change, save } = useNoteDraft(note)
   const empty = !note.title.trim() && !note.content.trim()
-  const [mode, setMode] = useState<Mode>(empty ? 'edit' : 'preview')
+  const [mode, setMode] = useState<Mode>('rich')
+  // En táctil se lee por defecto; una nota vacía se abre ya para escribir.
+  const [editing, setEditing] = useState(empty)
+  const editable = desktop || editing
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const isFolderish = note.kind === 'folder'
 
-  // Una nota recién creada empieza por el título; al pasar a editar, el cursor va al texto.
-  // Solo al abrir: el editor se monta de nuevo por cada nota (`key`).
+  const { editor, linkRequest } = useRichNote({
+    content: draft.content,
+    editable,
+    placeholder: isFolderish ? t('tree.addDescription') : t('editor.richPlaceholder'),
+    label: t('editor.richLabel'),
+    onChange: (content) => change({ content }),
+    onBlur: () => void save(),
+  })
+
+  // Una nota recién creada empieza por el título. Solo al abrir: el editor se monta de nuevo por cada nota (`key`).
   // biome-ignore lint/correctness/useExhaustiveDependencies: ver arriba
   useEffect(() => {
     if (empty) titleRef.current?.focus({ preventScroll: true })
   }, [])
+  /** Al texto: desde el título con Enter, o al pulsar el lápiz. */
   const edit = () => {
-    setMode('edit')
-    queueMicrotask(() => bodyRef.current?.focus({ preventScroll: true }))
+    if (mode === 'markdown') {
+      queueMicrotask(() => bodyRef.current?.focus({ preventScroll: true }))
+      return
+    }
+    // Ya editable (el ordenador): el foco va al texto en el acto, o se perdería la primera tecla.
+    if (editable) {
+      editor?.commands.focus('start', { scrollIntoView: false })
+      return
+    }
+    setEditing(true)
+    // En táctil, tras el render que lo hace editable.
+    setTimeout(() => editor?.commands.focus('start', { scrollIntoView: false }), 0)
+  }
+  const switchMode = (next: Mode) => {
+    void save()
+    setMode(next)
+    if (next === 'markdown') queueMicrotask(() => bodyRef.current?.focus({ preventScroll: true }))
   }
 
   const format = (command: FormatCommand) => {
@@ -118,8 +140,8 @@ export function NoteEditor({ note, desktop }: EditorProps) {
         applyEdit(el, next)
       }
     } else if (e.key === 'Escape') {
-      setMode('preview')
       void save()
+      e.currentTarget.blur()
     }
   }
 
@@ -224,6 +246,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
   }
 
   const touch = !desktop
+  const showRichBar = mode === 'rich' && editable && editor
   const toolBtn = cn(
     'grid cursor-pointer place-items-center rounded-sm text-sm text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent',
     touch ? 'size-10' : 'size-7',
@@ -243,27 +266,32 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           role="toolbar"
           aria-label={t('editor.format')}
           className={cn(
-            'order-last -mx-1 flex w-full gap-0.5 overflow-x-auto px-1 md:order-none md:mx-0 md:w-auto md:px-0',
-            mode === 'preview' && 'hidden',
+            'order-last -mx-1 flex w-full items-center gap-0.5 overflow-x-auto px-1 md:order-none md:mx-0 md:w-auto md:min-w-0 md:flex-1 md:px-0',
+            mode === 'rich' && !showRichBar && 'hidden',
           )}
         >
-          {TOOLS.map((tool) => {
-            const label = t(`tools.${tool.command}`)
-            return (
-              <button
-                key={tool.command}
-                type="button"
-                aria-label={label}
-                title={tool.shortcut ? `${label} (${tool.shortcut})` : label}
-                // No quitar el foco ni la selección del texto (en iOS, tampoco cerrar el teclado).
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => format(tool.command)}
-                className={toolBtn}
-              >
-                {tool.content}
-              </button>
-            )
-          })}
+          {showRichBar ? (
+            <FormatBar editor={editor} touch={touch} onLink={() => linkRequest.current()} />
+          ) : null}
+          {mode === 'markdown'
+            ? TOOLS.map((tool) => {
+                const label = t(`tools.${tool.command}`)
+                return (
+                  <button
+                    key={tool.command}
+                    type="button"
+                    aria-label={label}
+                    title={tool.shortcut ? `${label} (${tool.shortcut})` : label}
+                    // No quitar el foco ni la selección del texto (en iOS, tampoco cerrar el teclado).
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => format(tool.command)}
+                    className={toolBtn}
+                  >
+                    {tool.content}
+                  </button>
+                )
+              })
+            : null}
         </div>
         <div className="ml-auto flex items-center gap-1.5 md:h-12">
           <span
@@ -276,16 +304,21 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           >
             {t(`status.${status}`)}
           </span>
-          <SegmentedControl<Mode>
-            aria-label={t('editor.mode')}
-            size={touch ? 'lg' : 'md'}
-            value={mode}
-            onValueChange={(v) => (v === 'edit' ? edit() : setMode('preview'))}
-            options={[
-              { value: 'edit', label: t('editor.edit') },
-              { value: 'preview', label: t('editor.preview') },
-            ]}
-          />
+          {touch && mode === 'rich' ? (
+            // El lápiz: en el teléfono la nota se lee, y se edita solo para retocar (ADR-0078).
+            <IconButton
+              aria-label={editing ? t('editor.doneEditing') : t('editor.edit')}
+              aria-pressed={editing}
+              icon={editing ? <icons.check /> : <icons.edit />}
+              onClick={() => {
+                if (editing) {
+                  setEditing(false)
+                  void save()
+                } else edit()
+              }}
+              className={cn('size-11', editing && 'text-accent')}
+            />
+          ) : null}
           <IconButton
             aria-label={note.pinned ? t('editor.unpin') : t('editor.pin')}
             aria-pressed={note.pinned}
@@ -321,6 +354,9 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               </MenuItem>
               <MenuItem onSelect={copyLink}>{t('link.copy', { ns: 'common' })}</MenuItem>
               <MenuItem onSelect={copyMarkdown}>{t('editor.copyMarkdown')}</MenuItem>
+              <MenuItem onSelect={() => switchMode(mode === 'rich' ? 'markdown' : 'rich')}>
+                {mode === 'rich' ? t('editor.markdownMode') : t('editor.richMode')}
+              </MenuItem>
               <MenuItem danger onSelect={archive}>
                 {t('editor.archive')}
               </MenuItem>
@@ -410,7 +446,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           </span>
         </div>
 
-        {mode === 'edit' ? (
+        {mode === 'markdown' ? (
           <textarea
             ref={bodyRef}
             aria-label={t('editor.bodyLabel')}
@@ -424,36 +460,13 @@ export function NoteEditor({ note, desktop }: EditorProps) {
             // 16 px en móvil: con menos, iOS hace zoom al enfocar el campo.
             className="min-h-[55dvh] w-full resize-none bg-transparent font-mono text-[16px] leading-relaxed text-fg outline-none [field-sizing:content] placeholder:text-fg-faint md:min-h-[40dvh] md:text-sm"
           />
-        ) : draft.content.trim() ? (
-          // Un clic en el texto (no en un enlace ni en una casilla) pasa a editar, salvo si termina una
-          // selección: seleccionar para copiar es leer, no editar.
-          // biome-ignore lint/a11y/useKeyWithClickEvents: el botón «Editar» del modo es la vía de teclado
-          // biome-ignore lint/a11y/noStaticElementInteractions: ver arriba
-          <div
-            onClick={(e) => {
-              if ((e.target as HTMLElement).closest('a, input, button')) return
-              if (isSelecting(e.currentTarget)) return
-              edit()
-            }}
-            className="min-h-[40dvh] cursor-text"
-          >
-            <Markdown source={draft.content} onToggleTask={toggle} />
+        ) : editor ? (
+          // Una carpeta o una página con hijas: su contenido son las hijas y el texto es opcional (sin alto mínimo).
+          <div className={cn((isFolderish || children.length > 0) && '[&_.note-prose]:min-h-0')}>
+            <EditorContent editor={editor} />
+            <SelectionBar editor={editor} linkRequest={linkRequest} />
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={edit}
-            // Una carpeta o una página con hijas: su contenido son las hijas, el texto es opcional.
-            className={cn(
-              'cursor-text text-left text-md text-fg-faint',
-              note.kind === 'folder' || children.length ? 'py-1 text-sm' : 'min-h-[30dvh]',
-            )}
-          >
-            {note.kind === 'folder' || children.length
-              ? t('tree.addDescription')
-              : t('editor.empty')}
-          </button>
-        )}
+        ) : null}
 
         {children.length || note.kind === 'folder' ? (
           <section
