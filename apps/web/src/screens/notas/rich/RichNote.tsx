@@ -548,7 +548,7 @@ export function SelectionBar({
       setFrozen(new DOMRect(a.left, a.top, Math.max(1, b.right - a.left), a.bottom - a.top))
       setEditingLink(String(editor.getAttributes('link').href ?? ''))
     }
-  }, [editor, linkRequest, refresh])
+  }, [editor, linkRequest])
 
   const anchor = editingLink !== null ? frozen : (sel?.rect ?? link?.rect ?? null)
   const showFormat = Boolean(sel) && editor.isEditable
