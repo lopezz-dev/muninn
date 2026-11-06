@@ -46,6 +46,7 @@ export const notes: Messages<typeof en> = {
     emptyFolder: 'Esta carpeta está vacía.',
     addDescription: 'Añadir una descripción…',
     emptySpace: 'Todavía no hay notas en este espacio.',
+    archive: 'Archivar',
   },
   detail: {
     notFoundTitle: 'No encontramos esta nota',

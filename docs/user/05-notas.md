@@ -35,6 +35,8 @@ cualquier nivel, y una **carpeta** es una página pensada para agrupar otras (pu
   mueve con todo lo que tiene dentro, y el aviso trae **Deshacer**. En el móvil, mantén pulsada la nota antes de arrastrar.
 - **Plegar:** la flecha de una nota con páginas dentro las esconde o las enseña; se recuerda en este navegador.
 - **Carpeta o página:** **⋯ › Convertir en carpeta** (o en página) solo cambia cómo se ve.
+- **Archivar:** **⋯ › Archivar**, desde el árbol o desde la propia nota, la quita de la lista con todo lo que tiene dentro.
+  El aviso trae **Deshacer**; si era la nota abierta, vuelves a la lista y **Deshacer** te devuelve a ella.
 
 Al abrir una nota, arriba ves **dónde está** (Notas › espacio › las notas que la contienen) y al pie sus **páginas dentro**
 y la **anterior** y la **siguiente** del árbol. Al buscar o filtrar por **Fijadas**, la lista deja el árbol y enseña los

@@ -7,6 +7,7 @@ import {
   Menu,
   MenuContent,
   MenuItem,
+  MenuSeparator,
   MenuTrigger,
   notify,
   screenIcons,
@@ -354,8 +355,11 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               />
             </MenuTrigger>
             <MenuContent align="end">
-              <MenuItem onSelect={createChild}>{t('tree.newSubpage')}</MenuItem>
+              <MenuItem icon={<screenIcons.page />} onSelect={createChild}>
+                {t('tree.newSubpage')}
+              </MenuItem>
               <MenuItem
+                icon={<icons.sync />}
                 onSelect={() =>
                   patchNote(
                     m,
@@ -371,12 +375,21 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               >
                 {note.kind === 'folder' ? t('tree.toPage') : t('tree.toFolder')}
               </MenuItem>
-              <MenuItem onSelect={copyLink}>{t('link.copy', { ns: 'common' })}</MenuItem>
-              <MenuItem onSelect={copyMarkdown}>{t('editor.copyMarkdown')}</MenuItem>
-              <MenuItem onSelect={() => switchMode(mode === 'rich' ? 'markdown' : 'rich')}>
+              <MenuSeparator />
+              <MenuItem icon={<icons.link />} onSelect={copyLink}>
+                {t('link.copy', { ns: 'common' })}
+              </MenuItem>
+              <MenuItem icon={<screenIcons.copy />} onSelect={copyMarkdown}>
+                {t('editor.copyMarkdown')}
+              </MenuItem>
+              <MenuItem
+                icon={mode === 'rich' ? <screenIcons.codeBlock /> : <icons.edit />}
+                onSelect={() => switchMode(mode === 'rich' ? 'markdown' : 'rich')}
+              >
                 {mode === 'rich' ? t('editor.markdownMode') : t('editor.richMode')}
               </MenuItem>
-              <MenuItem danger onSelect={archive}>
+              <MenuSeparator />
+              <MenuItem icon={<icons.archive />} danger onSelect={archive}>
                 {t('editor.archive')}
               </MenuItem>
             </MenuContent>

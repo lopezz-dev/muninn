@@ -26,16 +26,17 @@ import {
   screenIcons,
 } from '@muninn/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TreeItem, TreeList } from '../../components/TreeBranch'
 import { useMuninn } from '../../lib/muninn'
-import { createNote, moveNote, patchNote } from '../../lib/note-actions'
+import { archiveNote, createNote, moveNote, patchNote } from '../../lib/note-actions'
 import { noteTitle } from '../../lib/notes'
 import {
   buildSpaces,
   type DropZone,
+  descendantIds,
   dropTarget,
   MAX_INDENT,
   type MoveTarget,
@@ -158,6 +159,19 @@ export function NoteTree({ notes, projects, onlyProjectId, touch }: Props) {
       { message: kind === 'folder' ? t('toast.kindFolder') : t('toast.kindPage'), icon: 'notes' },
     )
 
+  // La nota abierta: si se archiva (ella o una que la contiene), se vuelve a la lista; «Deshacer» la vuelve a abrir.
+  const openId = useParams({ strict: false }).noteId as string | undefined
+  const archive = async (note: Note) => {
+    const affected = new Set([note.id, ...descendantIds(notes, note.id)])
+    const wasOpen = openId && affected.has(openId) ? openId : null
+    const ok = await archiveNote(m, qc, note, {
+      onUndo: wasOpen
+        ? () => navigate({ to: '/notas/$noteId', params: { noteId: wasOpen } })
+        : undefined,
+    })
+    if (ok && wasOpen) navigate({ to: '/notas', replace: true })
+  }
+
   const onDragStart = ({ active }: DragStartEvent) =>
     setDragging(byId.get(String(active.id)) ?? null)
 
@@ -209,6 +223,7 @@ export function NoteTree({ notes, projects, onlyProjectId, touch }: Props) {
     onCreate: (parentId: string, kind: NoteKind) => create({ parentId, kind }),
     onKind: setKind,
     onToRoot: (note: Note) => moveNote(m, qc, note.id, { parentId: null, projectId }),
+    onArchive: archive,
   })
 
   return (
@@ -326,8 +341,12 @@ function SpaceBlock({ projectId, name, color, touch, empty, onCreate, children }
             />
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuItem onSelect={() => onCreate('page')}>{t('tree.newPageIn', { name })}</MenuItem>
-            <MenuItem onSelect={() => onCreate('folder')}>{t('tree.newFolder')}</MenuItem>
+            <MenuItem icon={<screenIcons.page />} onSelect={() => onCreate('page')}>
+              {t('tree.newPageIn', { name })}
+            </MenuItem>
+            <MenuItem icon={<screenIcons.folder />} onSelect={() => onCreate('folder')}>
+              {t('tree.newFolder')}
+            </MenuItem>
           </MenuContent>
         </Menu>
       </div>
@@ -353,6 +372,7 @@ interface BranchProps {
   onCreate: (parentId: string, kind: NoteKind) => void
   onKind: (note: Note, kind: NoteKind) => void
   onToRoot: (note: Note) => void
+  onArchive: (note: Note) => void
 }
 
 /**
@@ -361,7 +381,7 @@ interface BranchProps {
  */
 function Branch(props: BranchProps) {
   const { node, depth, touch, collapsed, hint, draggingId, spaceName } = props
-  const { onToggle, onCreate, onKind, onToRoot } = props
+  const { onToggle, onCreate, onKind, onToRoot, onArchive } = props
   const { t } = useTranslation('notes')
   const { note, children } = node
   const hasChildren = children.length > 0
@@ -462,21 +482,31 @@ function Branch(props: BranchProps) {
             />
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuItem onSelect={() => onCreate(note.id, 'page')}>{t('tree.newSubpage')}</MenuItem>
-            <MenuItem onSelect={() => onCreate(note.id, 'folder')}>
+            <MenuItem icon={<screenIcons.page />} onSelect={() => onCreate(note.id, 'page')}>
+              {t('tree.newSubpage')}
+            </MenuItem>
+            <MenuItem icon={<screenIcons.folder />} onSelect={() => onCreate(note.id, 'folder')}>
               {t('tree.newFolderInside')}
             </MenuItem>
             <MenuSeparator />
             {note.kind === 'folder' ? (
-              <MenuItem onSelect={() => onKind(note, 'page')}>{t('tree.toPage')}</MenuItem>
+              <MenuItem icon={<icons.sync />} onSelect={() => onKind(note, 'page')}>
+                {t('tree.toPage')}
+              </MenuItem>
             ) : (
-              <MenuItem onSelect={() => onKind(note, 'folder')}>{t('tree.toFolder')}</MenuItem>
+              <MenuItem icon={<icons.sync />} onSelect={() => onKind(note, 'folder')}>
+                {t('tree.toFolder')}
+              </MenuItem>
             )}
             {note.parentId ? (
-              <MenuItem onSelect={() => onToRoot(note)}>
+              <MenuItem icon={<icons.chevronUp />} onSelect={() => onToRoot(note)}>
                 {t('tree.toRoot', { name: spaceName })}
               </MenuItem>
             ) : null}
+            <MenuSeparator />
+            <MenuItem icon={<icons.archive />} danger onSelect={() => onArchive(note)}>
+              {t('tree.archive')}
+            </MenuItem>
           </MenuContent>
         </Menu>
       </div>

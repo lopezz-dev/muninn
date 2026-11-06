@@ -43,6 +43,7 @@ export const notes = {
     emptyFolder: 'This folder is empty.',
     addDescription: 'Add a description…',
     emptySpace: 'No notes in this space yet.',
+    archive: 'Archive',
   },
   detail: {
     notFoundTitle: 'We couldn’t find this note',
