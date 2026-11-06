@@ -61,16 +61,16 @@
 - `CommandPalette` no viaja en el JS del arranque: `AppShell` lo monta dentro de `<Suspense>` y el navegador lo pide en cuanto
   se pinta el shell. Si pulsas ⌘K antes de que llegue, se abre al terminar de cargar. No lo importes de forma estática desde el shell.
 
-### En el teléfono, `/ajustes/…` no es una pantalla: abre la hoja «Tu cuenta»
+### En el teléfono, `/settings/…` no es una pantalla: abre la hoja «Tu cuenta»
 
 - **Síntoma:** un enlace a un ajuste en el móvil abre la hoja y se cierra al instante; o al entrar de cero por
-  `/ajustes/notificaciones` se ve Inicio sin la hoja; o el botón atrás repite la misma pantalla.
+  `/settings/notifications` se ve Inicio sin la hoja; o el botón atrás repite la misma pantalla.
 - **Causa:** la hoja no es una ruta ([ADR-0072](../adr/0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md)): su estado vive en
   `lib/account-sheet.ts` y `AppShell` la cierra cuando cambia la ruta **resuelta** (`resolvedLocation`). Al arrancar, esa ruta pasa de
-  `undefined` a `/`: si eso contara como «cambio», cerraría la hoja que acaba de abrir el `beforeLoad`. Y un `navigate()` a `/ajustes/…`
+  `undefined` a `/`: si eso contara como «cambio», cerraría la hoja que acaba de abrir el `beforeLoad`. Y un `navigate()` a `/settings/…`
   ya ha empujado la entrada al historial cuando el `beforeLoad` la redirige a la pantalla de antes, así que queda repetida.
 - **Solución:** los enlaces a Ajustes, siempre con `<Link>` (un `<a>` de verdad): el shell intercepta el clic en el teléfono antes que el
-  router y abre la hoja sin tocar el historial. Evita `navigate({ to: '/ajustes/…' })` en lo que se use en el móvil; si hace falta, llama
+  router y abre la hoja sin tocar el historial. Evita `navigate({ to: '/settings/…' })` en lo que se use en el móvil; si hace falta, llama
   a `accountSheet.open(sección)` cuando `isPhone()`. El primer valor de la ruta resuelta no cierra la hoja (`AppShell`).
 
 ### `@muninn/core` se importa como TypeScript fuente
@@ -95,18 +95,18 @@
 
 ### Los ids de ruta llevan el prefijo `/_app`
 
-- **Síntoma:** `Argument of type '"/asistente"' is not assignable…` en `getRouteApi`.
+- **Síntoma:** `Argument of type '"/assistant"' is not assignable…` en `getRouteApi`.
 - **Causa:** las pantallas cuelgan de la ruta de layout `_app` (sin path), y su id incluye el del padre.
-- **Solución:** `getRouteApi('/_app/asistente')`. En `<Link to>` y `navigate` se sigue usando la ruta
-  (`/asistente`): el prefijo es solo del id.
+- **Solución:** `getRouteApi('/_app/assistant')`. En `<Link to>` y `navigate` se sigue usando la ruta
+  (`/assistant`): el prefijo es solo del id.
 - **Ref:** [ADR-0022](../adr/0022-auth-y-sesion.md)
 
 ### Rutas tipadas: los parámetros van aparte
 
-- **Síntoma:** `Type '"/ajustes/apariencia"' is not assignable to type …` al compilar.
+- **Síntoma:** `Type '"/settings/appearance"' is not assignable to type …` al compilar.
 - **Causa:** TanStack Router solo acepta rutas registradas. Las que tienen parámetros se escriben con su
   plantilla.
-- **Solución:** `<Link to="/ajustes/$seccion" params={{ seccion: 'apariencia' }}>`. Una sección de Ajustes
+- **Solución:** `<Link to="/settings/$seccion" params={{ seccion: 'appearance' }}>`. Una sección de Ajustes
   nueva se añade a `screens/ajustes/sections.ts`: el `beforeLoad` de la ruta da «no encontrado» a lo demás.
 
 ### Grupos de chunks: solo librerías del shell
@@ -212,7 +212,7 @@
 
 ### Rutas profundas y recargas: hace falta *fallback* a `index.html`
 
-- **Síntoma:** recargar `/proyectos/abc` da 404 en el servidor.
+- **Síntoma:** recargar `/projects/abc` da 404 en el servidor.
 - **Causa:** el router usa el historial del navegador; esas rutas no existen como ficheros.
 - **Solución:** el hosting de la PWA debe reescribir cualquier ruta desconocida a `index.html` (por ejemplo,
   en Vercel, un `rewrites` a `/`). `vite dev` y `vite preview` ya lo hacen. En Tauri, comprueba al recargar una ruta
@@ -402,7 +402,7 @@
 ### `useMatch` con `shouldThrow: false` para saber si hay una tarea abierta
 
 - El tablero (`Tablero.tsx`) es la ruta padre del detalle y necesita saber si hay una tarea abierta: `useMatch({ from:
-  '/_app/proyectos/$projectId/tareas/$taskId', shouldThrow: false })`. En móvil, con tarea abierta, el tablero no se pinta
+  '/_app/projects/$projectId/tasks/$taskId', shouldThrow: false })`. En móvil, con tarea abierta, el tablero no se pinta
   (solo `<Outlet />`); en escritorio se pinta debajo del panel.
 
 ### Las tareas de «Hechas hoy» incluyen archivadas
@@ -548,7 +548,7 @@
   real refresca ese prefijo entero (`scope` `finance`) y espera a que se vacíe la cola. Lo optimista (`cacheTransaction`, `cacheBalances`)
   calcula el saldo igual que la vista del servidor (`applyToBalances`, con tests); si cambias la regla del saldo, cambia las dos.
 - **Ojo:** la lista del mes se filtra en el navegador (`filterTransactions`): el core solo recibe el mes. La pestaña va en la URL
-  (`/finanzas?vista=movimientos`); el mes, no (vuelve al actual al entrar).
+  (`/finance?view=transactions`); el mes, no (vuelve al actual al entrar).
 
 ### Publicar la PWA y activar Web Push (pasos manuales)
 
@@ -759,16 +759,16 @@
 
 ### Guías prerenderizadas: lo que hay que saber
 
-- **Síntoma:** en Vercel, `/documentacion/notas` sale como la app vacía o con 404; o en `pnpm preview` se ve la app y no el HTML
+- **Síntoma:** en Vercel, `/docs/notas` sale como la app vacía o con 404; o en `pnpm preview` se ve la app y no el HTML
   prerenderizado; o el texto de una guía aparece un instante sin estilo antes de pintarse la pantalla.
 - **Causa:** el plugin `vite/seo.ts` escribe, al cerrar el build, `dist/documentacion/<guía>/index.html` (y `robots.txt`,
   `sitemap.xml` y `404.html`). Vercel los sirve por las *rewrites* de `vercel.json`; `vite preview` no resuelve
-  `/documentacion/notas` sin la barra final y cae en el `index.html` normal, y el *service worker* siempre sirve el `index.html`
+  `/docs/notas` sin la barra final y cae en el `index.html` normal, y el *service worker* siempre sirve el `index.html`
   (las páginas prerenderizadas no se precachean, a propósito). El texto prerenderizado está dentro de `#root` y React lo
   sustituye al arrancar.
 - **Solución:**
   - Para ver el HTML que lee un buscador, pídelo sin *service worker*: `curl -s http://localhost:4173/documentacion/notas/`.
-  - Si cambias la ruta `/documentacion`, cambia también las *rewrites* de `vercel.json`, el `globIgnores` del PWA
+  - Si cambias la ruta `/docs`, cambia también las *rewrites* de `vercel.json`, el `globIgnores` del PWA
     (`vite.config.ts`) e `isPublicPath` (`router.tsx`).
   - Las metas que cambia el prerender (`description`, `og:*`, `twitter:title`, `twitter:description`) tienen que seguir en
     `index.html`: si falta una, el build falla con «index.html no tiene la meta …».
@@ -911,4 +911,23 @@
     («Módulo activado: Notas»).
   - La preferencia vive en `preferences.locale` de la cuenta (`auto`, `en` o `es`) y en `localStorage['muninn.locale']`
     para el primer pintado (`lib/locale-pref.ts`, como la apariencia).
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)
+
+### Rutas en inglés: las antiguas en español se redirigen, no se borran
+
+- **Síntoma:** un enlace viejo (`/proyectos/…`, `/ajustes/cuenta`, `/finanzas?vista=suscripciones`) da «No encontrado»; o una
+  sección de Ajustes nueva no abre desde un enlace antiguo.
+- **Causa:** desde la fase 3 de ADR-0077 las rutas privadas están en inglés (`/projects/$projectId/tasks/$taskId`, `/notes`,
+  `/finance?view=…`, `/assistant`, `/news`, `/docs`, `/settings/<sección>`, `/dev/foundations`). Pero las antiguas siguen llegando:
+  enlaces dentro de notas y tareas, la PWA instalada, avisos push ya enviados y el correo del aviso de dispositivo nuevo.
+- **Solución:**
+  - El `beforeLoad` de la raíz del router las pasa por `legacyHref` (`lib/legacy-routes.ts`, con tests) antes de nada: traduce la
+    sección, `tareas` → `tasks`, el slug de Ajustes (`LEGACY_SETTINGS_SECTIONS`) y `?vista=` → `?view=`, y conserva búsqueda y ancla.
+    No quites una entrada de ahí aunque ya no la use nadie en el código.
+  - Los ids de las secciones de Ajustes son el slug de la ruta y la clave de `sections.*`/`docs.*` en `settings` (en inglés). Los
+    ids de los grupos (`tu`, `espacio`…) y las anclas (`#ajuste-sesiones`) no van en la ruta y siguen igual.
+  - Las guías prerenderizadas viven en `dist/docs/`: Vercel redirige `/documentacion/*` con 301 (`vercel.json`). Los slugs de las
+    guías siguen en español hasta la fase 4.
+  - El core genera dos enlaces de la app (avisos push y el correo de dispositivo nuevo): tras cambiarlos, recompila `build:edge` y
+    redespliega `push` y `security`. Hasta entonces mandan la ruta vieja, que redirige.
 - **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

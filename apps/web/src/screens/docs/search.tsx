@@ -39,7 +39,7 @@ export function useDocSearch() {
   const open = (hit: DocHit) => {
     change('')
     void navigate({
-      to: '/documentacion/$pagina',
+      to: '/docs/$pagina',
       params: { pagina: hit.doc.slug },
       hash: hit.section?.id,
     })
@@ -135,7 +135,7 @@ export function DocResults({ search, dense }: { search: DocSearch; dense?: boole
         {search.hits.map((hit, i) => (
           <li key={hit.doc.slug} id={`resultado-ayuda-${i}`}>
             <Link
-              to="/documentacion/$pagina"
+              to="/docs/$pagina"
               params={{ pagina: hit.doc.slug }}
               hash={hit.section?.id}
               onClick={() => search.change('')}

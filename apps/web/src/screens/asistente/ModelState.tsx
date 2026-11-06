@@ -72,12 +72,12 @@ export function ModelState({ status, url, onRetry }: Props) {
         <p className="text-sm text-fg-muted text-pretty">{t('state.handheldBody')}</p>
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to="/documentacion/$pagina" params={{ pagina: 'asistente' }}>
+            <Link to="/docs/$pagina" params={{ pagina: 'asistente' }}>
               {t('state.howItWorks')}
             </Link>
           </Button>
           <Button asChild variant="ghost">
-            <Link to="/documentacion/$pagina" params={{ pagina: 'asistentes-ia' }}>
+            <Link to="/docs/$pagina" params={{ pagina: 'asistentes-ia' }}>
               {t('state.useClaude')}
             </Link>
           </Button>
@@ -130,12 +130,12 @@ export function ModelState({ status, url, onRetry }: Props) {
           {t('state.retry')}
         </Button>
         <Button asChild>
-          <Link to="/documentacion/$pagina" params={{ pagina: 'asistente' }}>
+          <Link to="/docs/$pagina" params={{ pagina: 'asistente' }}>
             {t('state.guide')}
           </Link>
         </Button>
         <Button asChild variant="ghost">
-          <Link to="/ajustes/$seccion" params={{ seccion: 'asistente' }}>
+          <Link to="/settings/$seccion" params={{ seccion: 'assistant' }}>
             {t('state.settings')}
           </Link>
         </Button>

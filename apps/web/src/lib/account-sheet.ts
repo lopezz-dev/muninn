@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 
 /**
  * Hoja «Tu cuenta» del teléfono (ADR-0072). No es una ruta: se abre encima de la pantalla en la que estés y, al
- * cerrarla, sigues ahí. Vive fuera de React para que el router (enlaces directos a `/ajustes/<sección>`, `/mas`) la
+ * cerrarla, sigues ahí. Vive fuera de React para que el router (enlaces directos a `/settings/<sección>`, `/mas`) la
  * pueda abrir antes de pintar.
  *
  * `stack` es la navegación dentro de la hoja: `'root'` y, encima, las secciones de Ajustes abiertas («‹» vuelve).
@@ -52,9 +52,9 @@ export const useAccountSheet = () => useSyncExternalStore(accountSheet.subscribe
 export const isPhone = () =>
   typeof matchMedia === 'function' && matchMedia('(max-width: 767px)').matches
 
-/** La sección de Ajustes de una ruta (`/ajustes/notificaciones` → `notificaciones`; `/ajustes` → `root`). */
+/** La sección de Ajustes de una ruta (`/settings/notifications` → `notifications`; `/settings` → `root`). */
 export function settingsViewOf(pathname: string): string | null {
-  const m = /^\/ajustes(?:\/([^/?#]+))?\/?$/.exec(pathname)
+  const m = /^\/settings(?:\/([^/?#]+))?\/?$/.exec(pathname)
   if (!m) return null
   return m[1] ? decodeURIComponent(m[1]) : 'root'
 }

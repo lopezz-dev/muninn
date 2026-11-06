@@ -11,7 +11,7 @@ describe('applyPageMeta', () => {
     document.head.innerHTML =
       '<meta name="description" content="General"><meta property="og:title" content="Muninn">'
     document.title = 'Muninn · Tu sistema operativo personal'
-    history.replaceState(null, '', '/documentacion/notas?q=x#archivar')
+    history.replaceState(null, '', '/docs/notas?q=x#archivar')
   })
 
   it('pone título, descripción y canónica sin búsqueda ni ancla', () => {
@@ -20,7 +20,7 @@ describe('applyPageMeta', () => {
     expect(meta('meta[name="description"]')).toBe('Apuntes en Markdown.')
     expect(meta('meta[property="og:title"]')).toBe('Notas · Muninn')
     expect(meta('meta[name="twitter:description"]')).toBe('Apuntes en Markdown.')
-    const url = `${location.origin}/documentacion/notas`
+    const url = `${location.origin}/docs/notas`
     expect(meta('meta[property="og:url"]')).toBe(url)
     expect(canonicals()).toHaveLength(1)
     expect((canonicals()[0] as HTMLLinkElement).href).toBe(url)
@@ -58,13 +58,10 @@ describe('applyNoIndex', () => {
 
 describe('applyPageMeta en una página prerenderizada', () => {
   it('sustituye la canónica que ya traía el HTML', () => {
-    document.head.innerHTML =
-      '<link rel="canonical" href="https://muninn.test/documentacion/notas">'
-    history.replaceState(null, '', '/documentacion/tareas')
+    document.head.innerHTML = '<link rel="canonical" href="https://muninn.test/docs/notas">'
+    history.replaceState(null, '', '/docs/tareas')
     applyPageMeta(document, { title: 'Tareas' })
     expect(canonicals()).toHaveLength(1)
-    expect((canonicals()[0] as HTMLLinkElement).href).toBe(
-      `${location.origin}/documentacion/tareas`,
-    )
+    expect((canonicals()[0] as HTMLLinkElement).href).toBe(`${location.origin}/docs/tareas`)
   })
 })

@@ -145,9 +145,9 @@ export function NoteTree({ notes, projects, onlyProjectId, touch }: Props) {
   }) => {
     if (input.parentId && collapsed.has(input.parentId)) toggle(input.parentId)
     const note = await createNote(m, qc, input, {
-      onUndo: () => navigate({ to: '/notas', replace: true }),
+      onUndo: () => navigate({ to: '/notes', replace: true }),
     })
-    if (note) navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+    if (note) navigate({ to: '/notes/$noteId', params: { noteId: note.id } })
   }
 
   const setKind = (note: Note, kind: NoteKind) =>
@@ -166,10 +166,10 @@ export function NoteTree({ notes, projects, onlyProjectId, touch }: Props) {
     const wasOpen = openId && affected.has(openId) ? openId : null
     const ok = await archiveNote(m, qc, note, {
       onUndo: wasOpen
-        ? () => navigate({ to: '/notas/$noteId', params: { noteId: wasOpen } })
+        ? () => navigate({ to: '/notes/$noteId', params: { noteId: wasOpen } })
         : undefined,
     })
-    if (ok && wasOpen) navigate({ to: '/notas', replace: true })
+    if (ok && wasOpen) navigate({ to: '/notes', replace: true })
   }
 
   const onDragStart = ({ active }: DragStartEvent) =>
@@ -420,7 +420,7 @@ function Branch(props: BranchProps) {
           {...drag.attributes}
           // Un enlace, no un botón de arrastrar: el arrastre es un extra del ratón y del tacto.
           role="link"
-          to="/notas/$noteId"
+          to="/notes/$noteId"
           params={{ noteId: note.id }}
           className={cn(
             'group/link flex min-w-0 flex-1 touch-manipulation items-center gap-2 rounded-md px-2 text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',

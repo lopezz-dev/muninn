@@ -38,14 +38,14 @@ export type PushSender = (
 /** El servicio de push ya no conoce la suscripción (se desinstaló la PWA o se retiró el permiso): se borra. */
 export const isGone = (status: number) => status === 404 || status === 410
 
-export const SUBSCRIPTIONS_URL = '/finanzas?vista=suscripciones'
+export const SUBSCRIPTIONS_URL = '/finance?view=subscriptions'
 
 /** El aviso de «Probar» en Ajustes › Notificaciones. Sin clave: no se apunta en `push_log`. */
 export const TEST_ALERT: PushAlert = {
   key: '',
   title: 'Muninn',
   body: 'Los avisos funcionan en este dispositivo.',
-  url: '/ajustes/notificaciones',
+  url: '/settings/notifications',
   tag: 'test',
 }
 

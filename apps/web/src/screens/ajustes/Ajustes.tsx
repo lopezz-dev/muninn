@@ -64,7 +64,7 @@ function RailLink({
 }) {
   return (
     <Link
-      to="/ajustes/$seccion"
+      to="/settings/$seccion"
       params={{ seccion: section.id }}
       className={cn(
         'group flex h-8 shrink-0 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] whitespace-nowrap text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',

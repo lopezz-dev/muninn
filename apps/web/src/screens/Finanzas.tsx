@@ -26,10 +26,10 @@ import { SubscriptionsCard, SubscriptionsView, UpcomingCharges } from './finanza
 import { TransactionForm } from './finanzas/TransactionForm'
 import { useFinanceBase } from './finanzas/use-finance'
 
-const route = getRouteApi('/_app/finanzas')
+const route = getRouteApi('/_app/finance')
 
 // Los valores van en la URL y no se traducen; las etiquetas, al pintar.
-const VIEWS: FinanceView[] = ['resumen', 'movimientos', 'suscripciones', 'cuentas']
+const VIEWS: FinanceView[] = ['overview', 'transactions', 'subscriptions', 'accounts']
 
 /**
  * Finanzas (Finanzas.dc.html, Movimientos.dc.html y sus versiones móviles; ADR-0037): cuentas con su saldo,
@@ -40,7 +40,7 @@ export function Finanzas() {
   const m = useMuninn()
   const desktop = useIsDesktop()
   const navigate = useNavigate()
-  const view = route.useSearch().vista ?? 'resumen'
+  const view = route.useSearch().view ?? 'overview'
   const today = m.today()
   const [month, setMonth] = useState(today.slice(0, 7))
   const { accounts, categories, accountById, categoryById, loading, error } = useFinanceBase()
@@ -53,13 +53,13 @@ export function Finanzas() {
     editing?: AccountWithBalance
   }>({ open: false })
 
-  const setView = (vista: FinanceView) =>
-    navigate({ to: '/finanzas', search: vista === 'resumen' ? {} : { vista }, replace: true })
+  const setView = (next: FinanceView) =>
+    navigate({ to: '/finance', search: next === 'overview' ? {} : { view: next }, replace: true })
   const openTx = (tx?: Transaction) => setTxDialog({ open: true, editing: tx })
 
   const hasAccounts = Boolean(accounts?.some((a) => !a.archivedAt))
   // En escritorio, la vista Movimientos lleva el alta fija a la derecha (como el diseño).
-  const inlineForm = desktop && view === 'movimientos'
+  const inlineForm = desktop && view === 'transactions'
 
   const monthNav = (
     <div className="flex items-center gap-1">
@@ -132,9 +132,9 @@ export function Finanzas() {
         {t('empty.text')}
       </EmptyState>
     )
-  } else if (view === 'suscripciones') {
+  } else if (view === 'subscriptions') {
     body = <SubscriptionsView accounts={accounts} categories={categories} today={today} />
-  } else if (view === 'cuentas') {
+  } else if (view === 'accounts') {
     body = (
       <Accounts
         accounts={accounts}
@@ -143,7 +143,7 @@ export function Finanzas() {
         onEditAccount={(a) => setAccountDialog({ open: true, editing: a })}
       />
     )
-  } else if (view === 'movimientos') {
+  } else if (view === 'transactions') {
     const list = (
       <Movements
         month={month}
@@ -180,9 +180,9 @@ export function Finanzas() {
         accountById={accountById}
         categoryById={categoryById}
         onOpen={openTx}
-        onAllMovements={() => setView('movimientos')}
-        onAccounts={() => setView('cuentas')}
-        aside={<SubscriptionsCard today={today} onManage={() => setView('suscripciones')} />}
+        onAllMovements={() => setView('transactions')}
+        onAccounts={() => setView('accounts')}
+        aside={<SubscriptionsCard today={today} onManage={() => setView('subscriptions')} />}
       >
         <UpcomingCharges today={today} />
       </Overview>
@@ -195,11 +195,11 @@ export function Finanzas() {
     <Page className={inlineForm ? 'lg:min-h-0' : undefined}>
       <PageHeader
         title={t('title')}
-        description={view === 'movimientos' || view === 'resumen' ? undefined : t('description')}
+        description={view === 'transactions' || view === 'overview' ? undefined : t('description')}
         actions={
           hasAccounts ? (
             <>
-              {view === 'movimientos' || view === 'resumen' ? monthNav : null}
+              {view === 'transactions' || view === 'overview' ? monthNav : null}
               {inlineForm ? null : (
                 <Button variant="primary" size={desktop ? 'md' : 'lg'} onClick={() => openTx()}>
                   <Icon name="plus" />

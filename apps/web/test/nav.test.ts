@@ -22,9 +22,9 @@ import {
 describe('navegación', () => {
   it('sabe a qué sección pertenece cada ruta', () => {
     expect(sectionOf('/')).toBe('home')
-    expect(sectionOf('/proyectos')).toBe('projects')
-    expect(sectionOf('/proyectos/abc-123')).toBe('projects')
-    expect(sectionOf('/ajustes/apariencia')).toBe('settings')
+    expect(sectionOf('/projects')).toBe('projects')
+    expect(sectionOf('/projects/abc-123')).toBe('projects')
+    expect(sectionOf('/settings/appearance')).toBe('settings')
     expect(sectionOf('/no-existe')).toBeNull()
   })
 

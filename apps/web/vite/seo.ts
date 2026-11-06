@@ -22,14 +22,14 @@ const DOCS_DIR = new URL('../../../docs/user/', import.meta.url)
 
 /** Lo que pide sesión: los buscadores no tienen nada que ver ahí (redirige a /login). */
 const PRIVATE_PATHS = [
-  '/proyectos',
-  '/notas',
-  '/finanzas',
-  '/asistente',
-  '/noticias',
+  '/projects',
+  '/notes',
+  '/finance',
+  '/assistant',
+  '/news',
   '/github',
   '/mas',
-  '/ajustes',
+  '/settings',
   '/dev/',
   '/oauth/',
 ]
@@ -64,11 +64,7 @@ export function robotsTxt(site = SITE_URL): string {
 
 /** Lo que ve alguien sin sesión: la entrada, la portada de la documentación y cada guía. */
 export function sitemapXml(docs: Doc[], site = SITE_URL): string {
-  const urls = [
-    `${site}/login`,
-    `${site}/documentacion`,
-    ...docs.map((d) => `${site}/documentacion/${d.slug}`),
-  ]
+  const urls = [`${site}/login`, `${site}/docs`, ...docs.map((d) => `${site}/docs/${d.slug}`)]
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<!-- Generado en el build (vite/seo.ts). -->',
@@ -96,7 +92,7 @@ export function docHtml(body: string): string {
         const doc = docLink(href)
         if (doc) {
           const hash = doc.hash ? `#${slugify(decodeURIComponent(doc.hash))}` : ''
-          return `<a href="/documentacion/${doc.slug}${hash}">${inner}</a>`
+          return `<a href="/docs/${doc.slug}${hash}">${inner}</a>`
         }
         return `<a href="${escapeHtml(href)}" rel="noopener">${inner}</a>`
       },
@@ -162,13 +158,13 @@ const breadcrumbs = (items: { name: string; url: string }[]) => ({
 
 /** La página de una guía. */
 export function docPage(doc: Doc, site = SITE_URL): PageSeo {
-  const url = `${site}/documentacion/${doc.slug}`
+  const url = `${site}/docs/${doc.slug}`
   const description = doc.description || plainText(doc.body, 155)
   return {
     title: doc.title,
     description,
     url,
-    content: `<nav><a href="/documentacion">Documentación</a> › ${escapeHtml(groupLabel(doc.group))}</nav>\n<h1>${escapeHtml(doc.title)}</h1>\n<p>${escapeHtml(description)}</p>\n${docHtml(doc.body)}`,
+    content: `<nav><a href="/docs">Documentación</a> › ${escapeHtml(groupLabel(doc.group))}</nav>\n<h1>${escapeHtml(doc.title)}</h1>\n<p>${escapeHtml(description)}</p>\n${docHtml(doc.body)}`,
     structured: [
       {
         '@context': 'https://schema.org',
@@ -182,7 +178,7 @@ export function docPage(doc: Doc, site = SITE_URL): PageSeo {
         publisher: { '@type': 'Organization', name: 'Muninn', url: site },
       },
       breadcrumbs([
-        { name: 'Documentación', url: `${site}/documentacion` },
+        { name: 'Documentación', url: `${site}/docs` },
         { name: doc.title, url },
       ]),
     ],
@@ -197,7 +193,7 @@ export function docsIndexPage(docs: Doc[], site = SITE_URL): PageSeo {
         `<h2>${escapeHtml(g.label)}</h2>\n<ul>\n${g.docs
           .map(
             (d) =>
-              `<li><a href="/documentacion/${d.slug}">${escapeHtml(d.title)}</a>${d.description ? ` — ${escapeHtml(d.description)}` : ''}</li>`,
+              `<li><a href="/docs/${d.slug}">${escapeHtml(d.title)}</a>${d.description ? ` — ${escapeHtml(d.description)}` : ''}</li>`,
           )
           .join('\n')}\n</ul>`,
     )
@@ -206,9 +202,9 @@ export function docsIndexPage(docs: Doc[], site = SITE_URL): PageSeo {
     title: 'Documentación',
     description:
       'Guías de Muninn: primeros pasos, proyectos y tablero, tareas, notas, finanzas, GitHub, noticias, el asistente y tu cuenta.',
-    url: `${site}/documentacion`,
+    url: `${site}/docs`,
     content: `<h1>Documentación de Muninn</h1>\n${groups}`,
-    structured: [breadcrumbs([{ name: 'Documentación', url: `${site}/documentacion` }])],
+    structured: [breadcrumbs([{ name: 'Documentación', url: `${site}/docs` }])],
   }
 }
 
@@ -238,8 +234,8 @@ export function seo({ enabled }: { enabled: boolean }): Plugin {
         mkdirSync(join(outDir, path), { recursive: true })
         writeFileSync(join(outDir, path, 'index.html'), pageHtml(template, page))
       }
-      write('documentacion', docsIndexPage(docs))
-      for (const doc of docs) write(join('documentacion', doc.slug), docPage(doc))
+      write('docs', docsIndexPage(docs))
+      for (const doc of docs) write(join('docs', doc.slug), docPage(doc))
       // Lo que no existe responde 404 (no un 200 con la app): Vercel sirve este fichero.
       writeFileSync(
         join(outDir, '404.html'),

@@ -243,7 +243,7 @@ export function HelpAside({ section }: { section: SettingsSection }) {
     >
       <MicroTitle icon="docs">{t('help.inDocs')}</MicroTitle>
       <Link
-        to="/documentacion/$pagina"
+        to="/docs/$pagina"
         params={{ pagina: doc.pagina }}
         hash={doc.hash}
         className="glass flex gap-3 rounded-lg border border-border p-4 text-fg transition-colors hover:border-border-strong hover:bg-surface-hover"

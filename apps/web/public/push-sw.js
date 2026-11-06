@@ -2,7 +2,7 @@
 // solo escucha `push` y `notificationclick`, sin tocar la caché. Los avisos los manda la Edge Function `push`
 // (cobros de suscripciones, y el de prueba de Ajustes › Notificaciones); el texto lo arma el core (`push.ts`).
 //
-// Carga esperada (JSON): { "title": "…", "body": "…", "url": "/finanzas?vista=suscripciones", "tag": "…" }
+// Carga esperada (JSON): { "title": "…", "body": "…", "url": "/finance?view=subscriptions", "tag": "…" }
 
 /**
  * Solo enlaces dentro de Muninn. Un camino como `//otro.com` o `/\otro.com` empieza por «/» pero `new URL` lo

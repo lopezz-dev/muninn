@@ -151,7 +151,7 @@ export function AsistenteAjustes() {
       <p className="px-0.5 text-xs text-fg-faint">
         {auth.kind === 'user' ? t('assistant.savedInAccount') : t('assistant.demo')}{' '}
         <Link
-          to="/documentacion/$pagina"
+          to="/docs/$pagina"
           params={{ pagina: 'asistente' }}
           hash="instalar-ollama"
           className="underline"
@@ -193,7 +193,7 @@ export function InformeAjustes() {
           id: `morning-report-${note.id}`,
           action: {
             label: t('report.open'),
-            onClick: () => void navigate({ to: '/notas/$noteId', params: { noteId: note.id } }),
+            onClick: () => void navigate({ to: '/notes/$noteId', params: { noteId: note.id } }),
           },
         })
       }

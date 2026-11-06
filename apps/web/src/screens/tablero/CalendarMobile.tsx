@@ -99,7 +99,7 @@ function DayTask({
       {/* Una sola tarjeta: el enlace ocupa casi todo y el botón de la fecha va dentro, a la derecha. */}
       <div className="flex items-stretch rounded-md border border-border bg-surface-raised transition-colors hover:border-border-strong">
         <Link
-          to="/proyectos/$projectId/tareas/$taskId"
+          to="/projects/$projectId/tasks/$taskId"
           params={{ projectId, taskId: task.id }}
           data-task-id={task.id}
           draggable={false}
@@ -442,7 +442,7 @@ export function CalendarMobile({
               >
                 <ColumnDot column={task.column} />
                 <Link
-                  to="/proyectos/$projectId/tareas/$taskId"
+                  to="/projects/$projectId/tasks/$taskId"
                   params={{ projectId, taskId: task.id }}
                   onClick={() => setUndatedOpen(false)}
                   className="min-w-0 flex-1 text-md text-fg no-underline"

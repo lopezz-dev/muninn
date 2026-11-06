@@ -167,8 +167,8 @@ export function Integraciones() {
               />
               {moduleOn ? t('github.on') : t('github.off')}
               <Link
-                to="/ajustes/$seccion"
-                params={{ seccion: 'modulos' }}
+                to="/settings/$seccion"
+                params={{ seccion: 'modules' }}
                 className="text-accent hover:underline"
               >
                 {t('github.change')}
@@ -254,7 +254,7 @@ export function Integraciones() {
       <p className="px-0.5 text-xs text-fg-faint">
         {t('github.footer')}{' '}
         <Button asChild variant="ghost" className="h-auto px-0 text-xs text-accent">
-          <Link to="/documentacion/$pagina" params={{ pagina: 'github' }}>
+          <Link to="/docs/$pagina" params={{ pagina: 'github' }}>
             {t('github.howItWorks')}
           </Link>
         </Button>

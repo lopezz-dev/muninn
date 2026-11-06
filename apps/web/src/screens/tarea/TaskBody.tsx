@@ -463,7 +463,7 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
   // La nota nace vinculada a esta tarea (y a su proyecto) y se abre para escribir.
   const add = async () => {
     const note = await createNote(m, qc, { taskId: task.id })
-    if (note) navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+    if (note) navigate({ to: '/notes/$noteId', params: { noteId: note.id } })
   }
 
   return (
@@ -486,7 +486,7 @@ function Notes({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
       {notes.map((n) => (
         <Link
           key={n.id}
-          to="/notas/$noteId"
+          to="/notes/$noteId"
           params={{ noteId: n.id }}
           className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-base transition-colors hover:border-border-strong"
         >

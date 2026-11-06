@@ -11,9 +11,9 @@ import { noteQuery } from '../lib/notes-queries'
 import { useIsDesktop } from '../lib/use-media'
 import { NoteEditor } from './notas/NoteEditor'
 
-const route = getRouteApi('/_app/notas/$noteId')
+const route = getRouteApi('/_app/notes/$noteId')
 
-/** La nota abierta. Una sola ruta (`/notas/$noteId`) con enlace compartible; `Notas.tsx` decide dónde se pinta. */
+/** La nota abierta. Una sola ruta (`/notes/$noteId`) con enlace compartible; `Notas.tsx` decide dónde se pinta. */
 export function NotaDetalle() {
   const { t } = useTranslation('notes')
   const { noteId } = route.useParams()
@@ -34,7 +34,7 @@ export function NotaDetalle() {
         className="mt-10"
         actions={
           <Button asChild variant="primary">
-            <Link to="/notas">{t('detail.seeNotes')}</Link>
+            <Link to="/notes">{t('detail.seeNotes')}</Link>
           </Button>
         }
       >
@@ -56,7 +56,7 @@ export function NotaDetalle() {
               {t('detail.restore')}
             </Button>
             <Button asChild variant="secondary">
-              <Link to="/notas">{t('detail.seeNotes')}</Link>
+              <Link to="/notes">{t('detail.seeNotes')}</Link>
             </Button>
           </>
         }

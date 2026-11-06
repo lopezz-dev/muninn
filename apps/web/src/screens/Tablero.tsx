@@ -40,7 +40,7 @@ import { BoardMobile } from './tablero/BoardMobile'
 import { ColumnDialog } from './tablero/ColumnDialog'
 import { FilterBar, FilterSheet, FilterSummary } from './tablero/FilterBar'
 
-const route = getRouteApi('/_app/proyectos/$projectId')
+const route = getRouteApi('/_app/projects/$projectId')
 
 // La lista y el calendario no viajan con el tablero: solo los descarga quien los abre.
 const BoardList = lazy(() =>
@@ -149,7 +149,7 @@ export function Tablero() {
   // El mismo reparto que pinta la vista (memorizado igual): aquí solo se cuenta.
   const shown = useBoardGroups(board.data, filter, m.today()).visible.length
   const openTask = useMatch({
-    from: '/_app/proyectos/$projectId/tareas/$taskId',
+    from: '/_app/projects/$projectId/tasks/$taskId',
     shouldThrow: false,
   })?.params.taskId
 
@@ -174,7 +174,7 @@ export function Tablero() {
           title={t('notFound.title')}
           actions={
             <Button asChild variant="primary">
-              <Link to="/proyectos">{t('notFound.action')}</Link>
+              <Link to="/projects">{t('notFound.action')}</Link>
             </Button>
           }
         >
@@ -197,7 +197,7 @@ export function Tablero() {
   }
 
   const archive = async () => {
-    if (await archiveProjectWithUndo(m, qc, p)) navigate({ to: '/proyectos' })
+    if (await archiveProjectWithUndo(m, qc, p)) navigate({ to: '/projects' })
   }
 
   return (
@@ -207,7 +207,7 @@ export function Tablero() {
           aria-label={t('breadcrumb')}
           className="-mb-2 flex items-center gap-1.5 text-sm text-fg-subtle"
         >
-          <Link to="/proyectos" className="transition-colors hover:text-fg">
+          <Link to="/projects" className="transition-colors hover:text-fg">
             {t('nav.projects', { ns: 'common' })}
           </Link>
           <icons.chevronRight size={12} aria-hidden="true" />
@@ -218,7 +218,7 @@ export function Tablero() {
         // selector de vista, solo con iconos, comparte su fila. Así la cabecera son dos filas y no tres.
         <div className="-mb-2 flex items-center justify-between gap-2">
           <Link
-            to="/proyectos"
+            to="/projects"
             className="-ml-1 inline-flex h-11 items-center gap-0.5 pr-2 text-sm text-fg-subtle transition-colors hover:text-fg"
           >
             <icons.chevronLeft size={16} aria-hidden="true" />

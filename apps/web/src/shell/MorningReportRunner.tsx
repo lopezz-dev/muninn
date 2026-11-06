@@ -41,7 +41,7 @@ export function MorningReportRunner() {
             id: `morning-report-${note.id}`,
             action: {
               label: t('shell.open'),
-              onClick: () => void navigate({ to: '/notas/$noteId', params: { noteId: note.id } }),
+              onClick: () => void navigate({ to: '/notes/$noteId', params: { noteId: note.id } }),
             },
           })
         }

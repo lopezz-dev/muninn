@@ -177,7 +177,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
   const createChild = async () => {
     await save()
     const child = await createNote(m, qc, { parentId: note.id })
-    if (child) navigate({ to: '/notas/$noteId', params: { noteId: child.id } })
+    if (child) navigate({ to: '/notes/$noteId', params: { noteId: child.id } })
   }
   const projectOptions = useMemo<SelectOption<string>[]>(() => {
     const opts: SelectOption<string>[] = [
@@ -247,10 +247,10 @@ export function NoteEditor({ note, desktop }: EditorProps) {
       qc,
       { id: note.id, title: draft.title },
       {
-        onUndo: () => navigate({ to: '/notas/$noteId', params: { noteId: note.id } }),
+        onUndo: () => navigate({ to: '/notes/$noteId', params: { noteId: note.id } }),
       },
     )
-    if (ok) navigate({ to: '/notas', replace: true })
+    if (ok) navigate({ to: '/notes', replace: true })
   }
 
   const copyLink = async () => {
@@ -275,7 +275,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
     <article aria-label={t('editor.label')} className="flex min-w-0 flex-col">
       <div className="glass sticky top-0 z-10 -mx-5 flex flex-wrap items-center gap-x-1 gap-y-1 border-b border-border-subtle px-5 pt-[env(safe-area-inset-top)] pb-1.5 md:mx-0 md:rounded-lg md:border md:px-2 md:pt-0 md:pb-0">
         <Link
-          to="/notas"
+          to="/notes"
           aria-label={t('editor.back')}
           className="grid size-11 place-items-center rounded-md text-fg md:hidden"
         >
@@ -403,7 +403,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
           aria-label={t('tree.breadcrumbs')}
           className="-mb-2 flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-fg-subtle"
         >
-          <Link to="/notas" className="flex items-center gap-1.5 hover:text-fg">
+          <Link to="/notes" className="flex items-center gap-1.5 hover:text-fg">
             <icons.notes size={14} aria-hidden="true" />
             {t('list.title')}
           </Link>
@@ -413,7 +413,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
             <span key={a.id} className="flex min-w-0 items-center gap-1.5">
               <icons.chevronRight size={12} aria-hidden="true" className="shrink-0 text-fg-faint" />
               <Link
-                to="/notas/$noteId"
+                to="/notes/$noteId"
                 params={{ noteId: a.id }}
                 className="max-w-[14rem] truncate hover:text-fg"
               >
@@ -462,7 +462,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
               />
               {note.taskId ? (
                 <Link
-                  to="/proyectos/$projectId/tareas/$taskId"
+                  to="/projects/$projectId/tasks/$taskId"
                   params={{ projectId: note.projectId, taskId: note.taskId }}
                   aria-label={t('editor.openTask')}
                   title={t('editor.openTask')}
@@ -531,7 +531,7 @@ export function NoteEditor({ note, desktop }: EditorProps) {
                 return (
                   <li key={c.id}>
                     <Link
-                      to="/notas/$noteId"
+                      to="/notes/$noteId"
                       params={{ noteId: c.id }}
                       className={cn(
                         'flex items-center gap-2 rounded-md px-2 text-fg transition-colors hover:bg-surface-hover',
@@ -591,7 +591,7 @@ function Neighbour({ note, dir }: { note: Note; dir: 'prev' | 'next' }) {
   const KindIcon = note.kind === 'folder' ? screenIcons.folder : screenIcons.page
   return (
     <Link
-      to="/notas/$noteId"
+      to="/notes/$noteId"
       params={{ noteId: note.id }}
       className={cn(
         'glass flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3 text-fg outline-none transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent md:py-2.5',
