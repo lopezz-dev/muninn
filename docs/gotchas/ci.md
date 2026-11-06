@@ -29,6 +29,18 @@
 - **Solución:** `biome.json` formatea `tauri.conf.json` con `expand: "always"`, igual que lo escribe release-please. No quites ese
   `override`.
 
+### El CI del Release PR espera tu aprobación
+
+- **Síntoma:** en el Release PR de release-please, **CI** y **Desktop CI** no arrancan ningún job. Si fusionas el PR sin
+  tocarlos, acaban en `failure` con «This run likely failed because of a workflow file issue», sin log. Pasó con la 0.10.0 (#141).
+- **Causa:** el PR lo abre `github-actions[bot]` con el `GITHUB_TOKEN`, y GitHub deja sus runs en `action_required` hasta que
+  alguien los aprueba. Hasta la 0.9.0 los aprobaba Alex a mano (el run que pasa es el intento 2, lanzado por él); al fusionar sin
+  aprobar, GitHub cierra los runs en espera como fallidos. Los workflows no tienen nada roto.
+- **Solución:** antes de fusionar el Release PR, en su pestaña **Checks** (o en **Actions**) pulsa **Approve and run** y espera el
+  verde. Importa: es el único CI que ve los ficheros que reescribe release-please (ver el gotcha de `tauri.conf.json`). Para que
+  arranque solo haría falta que release-please firmara con un token de una GitHub App o un PAT (`token:` en `release.yml`), no con
+  el `GITHUB_TOKEN`.
+
 ### El back-merge a `develop` puede fallar
 
 - **Síntoma:** el job `back-merge` falla tras una release.
