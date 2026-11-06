@@ -1,5 +1,6 @@
 import type { Muninn } from '@muninn/core'
 import { useLoaderData, useRouteContext } from '@tanstack/react-router'
+import { currentLocale } from '../i18n'
 import { connectAppearance } from './appearance'
 import type { AppAuthState } from './auth'
 import { loadSupabase } from './auth'
@@ -19,11 +20,13 @@ function stopBackground() {
 
 async function create(auth: AppAuthState): Promise<Muninn> {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  // Lo que el core crea por su cuenta (columnas, categorías) sale en el idioma de la interfaz (ADR-0077).
+  const locale = currentLocale
   if (auth.kind === 'demo') {
     const { createMemoryStore, createMuninn } = await import('@muninn/core')
     connectAppearance(null)
     connectLocale(null)
-    const demo = createMuninn(createMemoryStore(), { timeZone })
+    const demo = createMuninn(createMemoryStore(), { timeZone, locale })
     queryClient.setQueryData(keys.settings, await demo.settings.get())
     return demo
   }
@@ -34,7 +37,7 @@ async function create(auth: AppAuthState): Promise<Muninn> {
     import('./offline'),
     import('./sync'),
   ])
-  const m = createMuninn(createSupabaseStore(client, auth.account.id), { timeZone })
+  const m = createMuninn(createSupabaseStore(client, auth.account.id), { timeZone, locale })
   // Lo último que vio este usuario, antes del primer pintado (ADR-0029); lo nuevo llega por detrás.
   teardown.push(await offline.enableOfflineCache(queryClient, auth.account.id))
   // La apariencia de la cuenta manda sobre la caché local; si falla la red, seguimos con la caché.

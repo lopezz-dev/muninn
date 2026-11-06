@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import { createAccount } from './account'
+import { type DataLocale, defaultColumns, isDataLocale } from './defaults'
 import { ValidationError } from './errors'
 import { createFinance } from './finance'
 import { DEFAULT_SETTINGS } from './memory-store'
@@ -61,13 +62,8 @@ import {
 } from './schemas'
 import { byPosition, NotFoundError, type OutboxEntry, type Store } from './store'
 
-export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = [
-  { name: 'Backlog', kind: 'backlog' },
-  { name: 'Pendiente', kind: 'todo' },
-  { name: 'En curso', kind: 'in_progress' },
-  { name: 'Revisión', kind: 'review' },
-  { name: 'Hecho', kind: 'done' },
-]
+/** Las columnas de un proyecto nuevo en inglés; en cada idioma, `defaultColumns` (`defaults.ts`). */
+export const DEFAULT_COLUMNS: { name: string; kind: ColumnKind }[] = defaultColumns('en')
 
 const OPEN_ACTIVE_KINDS: ColumnKind[] = ['in_progress', 'review']
 
@@ -160,6 +156,12 @@ export interface MuninnOptions {
    * y la herramienta, ADR-0041). Se lee en cada escritura: puede cambiar entre llamadas.
    */
   activityContext?: () => Record<string, unknown> | undefined
+  /**
+   * Idioma de lo que el core crea por su cuenta: columnas de un proyecto nuevo y categorías de Finanzas (ADR-0077). Se lee
+   * al crearlas. Sin él (o si devuelve `undefined`), el de la cuenta (`preferences.locale`); si la cuenta tiene
+   * «automático», inglés.
+   */
+  locale?: () => DataLocale | undefined
 }
 
 export { ValidationError }
@@ -282,7 +284,15 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
     return r.data
   }
 
-  const finance = createFinance({ store, nowIso, today, parse, log })
+  /** El idioma de lo que se crea por defecto: el que diga quien llama o, si no, el de la cuenta. */
+  const dataLocale = async (): Promise<DataLocale> => {
+    const given = options.locale?.()
+    if (given) return given
+    const locale = (await store.settings.get())?.preferences.locale
+    return isDataLocale(locale) ? locale : 'en'
+  }
+
+  const finance = createFinance({ store, nowIso, today, parse, log, dataLocale })
   const news = createNews({ store, nowIso, today, parse, log })
   const push = createPush({ store, nowIso, today, parse })
   const account = createAccount({ store, parse })
@@ -343,9 +353,10 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       position: await place('projects', siblings),
     })
     // Las posiciones ya vienen calculadas: el orden de llegada no importa y van a la vez.
-    const positions = positionsFor(DEFAULT_COLUMNS.length)
+    const columns = defaultColumns(await dataLocale())
+    const positions = positionsFor(columns.length)
     await Promise.all(
-      DEFAULT_COLUMNS.map((c, i) =>
+      columns.map((c, i) =>
         store.columns.insert({
           projectId: project.id,
           name: c.name,

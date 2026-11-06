@@ -48,7 +48,7 @@ On that same screen you can see whether the **GitHub** module is turned on and w
 
 ## What syncing does
 
-- Each **open issue** in the repository shows up as a task in the project, in the first column of the **To do** kind ("Pendiente" on a
+- Each **open issue** in the repository shows up as a task in the project, in the first column of the **To do** kind ("To do" on a
   new board), with its labels. Issues that were already closed aren't brought in, and neither are *pull requests*.
 - **Closing the issue completes the task**, and reopening it sends it back to that column. It works the other way too: **completing the task closes the issue**,
   and reopening the task reopens the issue. Changes from GitHub arrive in a few seconds; changes from Muninn take at most about 5 minutes to reach GitHub.

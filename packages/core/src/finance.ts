@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { type DataLocale, defaultCategories } from './defaults'
 import { ValidationError } from './errors'
 import { createFinanceReport } from './finance-report'
 import { positionAt, positionsFor } from './ordering'
@@ -14,7 +15,6 @@ import {
   createCategoryInput,
   createTransactionInput,
   type FinanceAccount,
-  type FinanceColor,
   MAX_CENTS,
   type Transaction,
   type TransactionQuery,
@@ -29,25 +29,11 @@ import {
 import { NotFoundError, type Store } from './store'
 import { createSubscriptions } from './subscriptions'
 
-/** Categorías con las que empieza todo usuario (ADR-0037). Son filas normales: se renombran y se archivan. */
-export const DEFAULT_CATEGORIES: {
-  key: string
-  name: string
-  kind: CategoryKind
-  color: FinanceColor
-}[] = [
-  { key: 'housing', name: 'Vivienda', kind: 'expense', color: 'blue' },
-  { key: 'groceries', name: 'Supermercado', kind: 'expense', color: 'teal' },
-  { key: 'subscriptions', name: 'Suscripciones', kind: 'expense', color: 'amber' },
-  { key: 'transport', name: 'Transporte', kind: 'expense', color: 'violet' },
-  { key: 'restaurants', name: 'Restaurantes', kind: 'expense', color: 'green' },
-  { key: 'leisure', name: 'Ocio', kind: 'expense', color: 'pink' },
-  { key: 'health', name: 'Salud', kind: 'expense', color: 'teal' },
-  { key: 'other_expense', name: 'Otros', kind: 'expense', color: 'gray' },
-  { key: 'salary', name: 'Nómina', kind: 'income', color: 'green' },
-  { key: 'invoices', name: 'Facturas', kind: 'income', color: 'blue' },
-  { key: 'other_income', name: 'Otros ingresos', kind: 'income', color: 'gray' },
-]
+/**
+ * Categorías con las que empieza todo usuario (ADR-0037), en inglés. Son filas normales: se renombran y se archivan.
+ * Se crean en el idioma de la cuenta con `defaultCategories` (`defaults.ts`).
+ */
+export const DEFAULT_CATEGORIES = defaultCategories('en')
 
 /** Grupo de una cuenta para los informes: dinero disponible, ahorro o inversión. */
 export const accountGroup = (kind: AccountKind): 'liquid' | 'savings' | 'investment' =>
@@ -121,10 +107,19 @@ export interface FinanceContext {
     projectId: string | null,
     payload?: Record<string, unknown>,
   ) => Promise<Activity>
+  /** Idioma de lo que se crea por defecto (las categorías de serie). */
+  dataLocale?: () => Promise<DataLocale>
 }
 
 /** Finanzas (ADR-0037): cuentas con su saldo derivado, categorías y movimientos. Lo monta `createMuninn`. */
-export function createFinance({ store, nowIso, today, parse, log }: FinanceContext) {
+export function createFinance({
+  store,
+  nowIso,
+  today,
+  parse,
+  log,
+  dataLocale = async () => 'en',
+}: FinanceContext) {
   const getAccountRow = async (id: string) => {
     const a = await store.financeAccounts.get(id)
     if (!a) throw new NotFoundError('Cuenta', id)
@@ -235,8 +230,9 @@ export function createFinance({ store, nowIso, today, parse, log }: FinanceConte
   function ensureDefaults() {
     seeding ??= (async () => {
       if ((await store.financeCategories.list({ includeArchived: true })).length > 0) return
-      const positions = positionsFor(DEFAULT_CATEGORIES.length)
-      for (const [i, c] of DEFAULT_CATEGORIES.entries()) {
+      const categories = defaultCategories(await dataLocale())
+      const positions = positionsFor(categories.length)
+      for (const [i, c] of categories.entries()) {
         try {
           await store.financeCategories.insert({
             name: c.name,

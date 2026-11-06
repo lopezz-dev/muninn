@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { type Change, catalog, resolveProject } from '../src/tools'
 
-const setup = () => createMuninn(createMemoryStore(), { actor: 'mcp', timeZone: 'UTC' })
+const setup = () =>
+  createMuninn(createMemoryStore(), { actor: 'mcp', timeZone: 'UTC', locale: () => 'es' })
 
 /** Ejecuta una herramienta del catálogo como lo hace el MCP, validando los argumentos con su esquema. */
 async function call(app: Muninn, name: string, args: Record<string, unknown>) {

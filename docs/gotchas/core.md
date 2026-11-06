@@ -227,3 +227,19 @@
 - **Solución:** `tasks.remove` y `projects.remove` del store de memoria pasan por `dropTask`, que imita las claves ajenas (subtareas y
   cola fuera, notas sin tarea, actividad intacta). Si añades una tabla que cuelga de las tareas, añádela ahí también. Y
   `m.tasks.delete` solo acepta tareas archivadas ([ADR-0067](../adr/0067-eliminar-tareas-archivadas.md)).
+
+### Columnas y categorías de serie: en el idioma de quien las crea, y con «automático» en inglés
+
+- **Síntoma:** un proyecto que crea Claude por el MCP sale con «To do» aunque uses la app en español; o un test que busca la columna
+  «Pendiente» o la categoría «Supermercado» no la encuentra.
+- **Causa:** las columnas de un proyecto nuevo y las categorías de Finanzas se crean en un idioma (ADR-0077, `defaults.ts`). Lo
+  elige `options.locale` de `createMuninn` (la web pasa el de la interfaz, `currentLocale`) y, sin él, `preferences.locale` de
+  la cuenta. Con «automático» el idioma real depende del navegador, que el servidor no conoce: ahí el core usa inglés, el idioma por
+  defecto.
+- **Solución:**
+  - Quien quiera las cosas en español desde Claude elige «Español» en Ajustes › Apariencia (no «Automático»).
+  - En los tests que resuelven columnas o categorías por su nombre en español, `createMuninn(store, { locale: () => 'es' })`.
+  - Se lee al crear: cambiar de idioma no renombra lo que ya existe (son filas normales). La `key` de las categorías es la misma en
+    los dos idiomas: no compares por nombre.
+  - Un dato de serie nuevo va en `defaults.ts`, con su nombre en los dos idiomas.
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

@@ -393,16 +393,15 @@ Inglés por defecto y español con prefijo `/es`, i18next y rutas en inglés (AD
   - [x] Inicio, Proyectos, tablero (filtros, columnas, Lista y Calendario), detalle de tarea, Notas, Finanzas (importes con
     el formato de cada idioma), Asistente, Noticias, GitHub, Documentación (la interfaz; las guías, en la fase 4), login,
     `/oauth/consent` y las pantallas de error
-  - [ ] Decidir: los datos que se crean por defecto (columnas del tablero, categorías de Finanzas, temas del catálogo de
-    Noticias) se guardan en español; en inglés se ven «Pendiente», «Supermercado» o «Tecnología». Propuesta: crearlos en
-    el idioma de quien los crea
+  - [x] Los datos que se crean por defecto (columnas de un proyecto nuevo, categorías de Finanzas y temas de las fuentes
+    sugeridas de Noticias) salen en el idioma de quien los crea (decisión de Alex del 06-11-2026; `packages/core/src/defaults.ts`)
 - [x] Fase 3: rutas en inglés (`/projects`, `/notes`, `/finance?view=…`, `/settings/account`, `/docs`…). Las antiguas en
   español redirigen a las nuevas (`lib/legacy-routes.ts`, y Vercel con 301 las guías prerenderizadas). Los slugs de las guías siguen
   en español hasta la fase 4
 - [x] Fase 4: guías en los dos idiomas (`docs/user/en` y `docs/user/es`, emparejadas por número), `/docs/notes` y
   `/es/docs/notas`, prerender por idioma con `hreflang`, `og:locale` y sitemap, y el aviso «Esta página también está en
   español» para quien entra sin sesión (abajo a la derecha; en el móvil, abajo)
-- [ ] Fase 5: correos de Supabase, avisos push y lo que escriben el asistente y el MCP para el usuario
+- [ ] Fase 5 (0.12): correos de Supabase, avisos push y lo que escriben el asistente y el MCP para el usuario
 
 ## Backlog
 - GitHub para varios usuarios: GitHub App con instalación por usuario en lugar de un token personal (ADR-0031, consecuencias)

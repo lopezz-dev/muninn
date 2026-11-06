@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest'
 import { createMuninnMcpServer } from '../src/server'
 
 async function connect() {
-  const server = createMuninnMcpServer(createMuninn(createMemoryStore(), { actor: 'mcp' }))
+  const server = createMuninnMcpServer(
+    createMuninn(createMemoryStore(), { actor: 'mcp', locale: () => 'es' }),
+  )
   const client = new Client({ name: 'test', version: '0.0.0' })
   const [a, b] = InMemoryTransport.createLinkedPair()
   await Promise.all([server.connect(a), client.connect(b)])
