@@ -60,3 +60,10 @@
   rechaza raíces anidadas. Ignorarlo solo en `.gitignore` no basta: Biome sigue descubriendo esas configuraciones.
 - **Solución:** `.claude/worktrees/` en `.gitignore` y `"!!.claude/worktrees"` en `files.includes` de `biome.json`. El doble `!!`
   (Biome 2.2+) excluye la carpeta entera, sin entrar en ella; un `!` simple la sigue recorriendo.
+
+### pnpm no instala versiones recién publicadas
+
+- **Síntoma:** `pnpm add` falla con `ERR_PNPM_NO_MATURE_MATCHING_VERSION … does not meet the minimumReleaseAge constraint`.
+- **Causa:** la configuración de pnpm del equipo exige una antigüedad mínima a cada versión (protección de la cadena de suministro).
+- **Solución:** fija la última versión que ya la cumple (TipTap entró en 3.32.2 por esto). No añadas el paquete a
+  `minimumReleaseAgeExclude` salvo que haga falta de verdad un arreglo de seguridad.

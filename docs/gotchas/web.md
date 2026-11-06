@@ -441,7 +441,51 @@
 - **Solución:** `NotaDetalle` monta `<NoteEditor key={noteId}>`: cada nota tiene su propio editor, que guarda lo pendiente
   al desmontarse (`useNoteDraft`), al ocultarse la pestaña y al salir del campo. Todas las escrituras de una nota van en
   cola (`serial('note:<id>')`, `lib/note-actions.ts`). El autoguardado **no** usa `notify`: el estado «Guardado» está en la barra.
-- **Ref:** [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)
+- **Ref:** [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md), [ADR-0078](../adr/0078-editor-de-notas-en-sitio-con-tiptap.md)
+
+### Notas: TipTap necesita su propia instancia de marked
+
+- **Síntoma:** al abrir Notas, las listas de tareas desaparecen del texto que ve el core (`noteText`): no se puede comentar una tarea, y
+  los subrayados de los comentarios no casan. También podría cambiar cómo pinta `Markdown.tsx` la ayuda o el asistente.
+- **Causa:** `@tiptap/markdown` registra sus tokenizadores con `marked.use()`. Con la instancia global, eso cambia el lexer de toda la
+  app, también el que usan el core y `Markdown.tsx`.
+- **Solución:** `rich/extensions.ts` le da `new Marked()`. Hay un test que comprueba que `marked.defaults.extensions` sigue a `null`
+  tras abrir el editor. `@tiptap/markdown` pide `marked ^17`: el `override` de `pnpm-workspace.yaml` le da el 18 de la app.
+
+### Notas: el Markdown que sale del editor
+
+- **Síntoma:** una nota guardada con `&nbsp;` sueltos o con huecos de tres líneas; o una imagen o un `<div>` que pierden su URL o sus
+  etiquetas al editar la nota.
+- **Causa:** TipTap marca así los párrafos vacíos seguidos, y no tiene nodo para imágenes ni HTML.
+- **Solución:** `tidyMarkdown` (`rich/tidy.ts`) limpia la salida fuera de los bloques de código; `raw-nodes.ts` guarda imágenes y HTML
+  en bloque en nodos atómicos con su Markdown original. El HTML en línea que el esquema entiende (`<b>`) sí pasa a su marca. Y solo se
+  guarda si la persona cambia algo: abrir una nota nunca la reescribe. Un cambio de fuera entra con `addToHistory: false`, o ⌘Z
+  devolvería la versión anterior entera.
+
+### Notas: la selección que se ve manda sobre la de ProseMirror
+
+- **Síntoma:** tras un doble clic, la palabra se ve seleccionada pero la barra flotante no sale, ⌘⌥M no comenta y la negrita va a otro
+  sitio. Pasa sobre todo después de comentar (el foco estuvo en el recuadro del comentario).
+- **Causa:** ProseMirror no siempre lee la selección que deja el navegador con un doble clic, y su estado se queda colapsado.
+- **Solución:** `currentSelection` (`rich/RichNote.tsx`) lee la del documento y, si no coincide, se la pasa a ProseMirror. Al
+  comentar, se parte también de la del documento (`readSelection`).
+
+### Notas: `commands.focus` llega tarde
+
+- **Síntoma:** al pulsar Intro en el título y escribir enseguida, la primera letra acaba en el título.
+- **Causa:** el comando `focus` de TipTap espera un `requestAnimationFrame`.
+- **Solución:** para pasar el foco al texto en el acto, `setTextSelection` y `editor.view.focus()`, que es síncrono.
+
+### Comentarios: el texto del editor y el del core tienen que ser el mismo
+
+- **Síntoma:** un comentario que se crea bien pero no se subraya, o se subraya en otro sitio.
+- **Causa:** la interfaz manda la cita con su contexto sacados del texto visible del editor (`comments/text-map.ts`), y el core la busca
+  en `noteText(content)`. Si las dos proyecciones difieren, el contexto no casa.
+- **Solución:** `text-map.ts` recorre el documento igual que `Node.textBetween` (bloques con `
+`, `leafText` para los nodos atómicos)
+  y `test/note-comments-text.test.ts` compara las dos con el corpus de notas. Si añades un nodo al editor, dale su `leafText` y
+  amplía el corpus. Antes de comentar se guarda lo pendiente (`flush`): el core busca la cita en lo guardado.
+- **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md), [gotchas/core](core.md)
 
 ### Editar un `textarea` por código sin perder el deshacer
 
