@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.11.0](https://github.com/lopezz-dev/muninn/compare/v0.10.0...v0.11.0) (2026-11-07)
+
+
+### Features
+
+* **core:** columnas y categorías de serie en el idioma de quien las crea (ADR-0077) ([805091d](https://github.com/lopezz-dev/muninn/commit/805091dc06143849439036dbef5443b2b5a4f6fc))
+* **core:** columnas y categorías de serie en el idioma de quien las crea (ADR-0077) ([82b3191](https://github.com/lopezz-dev/muninn/commit/82b3191bcb6f3c6f05306bf60a8d26dda1bfd351))
+* **core:** comentarios en las notas con ancla por cita y reanclaje (ADR-0079) ([57e30ce](https://github.com/lopezz-dev/muninn/commit/57e30ceaf3aaa76fe298b08a34241093180db045))
+* **mcp:** herramientas para leer, abrir, responder y resolver comentarios de notas ([c92fefe](https://github.com/lopezz-dev/muninn/commit/c92fefe134603e49906ffbd1fddd69d3aee5d7f1))
+* notas editadas en sitio y comentarios con «Para Claude» (ADR-0078, ADR-0079) ([003e755](https://github.com/lopezz-dev/muninn/commit/003e75536a32962e0a1cffdf39b73903b356189c))
+* notas en árbol con un espacio por proyecto (ADR-0083) ([b79cf3f](https://github.com/lopezz-dev/muninn/commit/b79cf3ff68dcdc538d5d28e148ddb5899c8e920f))
+* **web:** árbol de notas por espacios, enlazado como la ayuda ([3626af6](https://github.com/lopezz-dev/muninn/commit/3626af6574bfccfa7944f970a701d776f3669ed3))
+* **web:** comentarios en las notas, con «Para Claude» (ADR-0079) ([7a649e9](https://github.com/lopezz-dev/muninn/commit/7a649e96cf81e0b92eaa4fc722f755ad3dff1c6f))
+* **web:** guías en inglés y en español con prerender por idioma (ADR-0077, fase 4) ([8585f01](https://github.com/lopezz-dev/muninn/commit/8585f0194e29de72974d9c63eaa9e27db7db5d43))
+* **web:** guías en inglés y en español con prerender por idioma (ADR-0077, fase 4) ([0dd8ac0](https://github.com/lopezz-dev/muninn/commit/0dd8ac015c98a5f173c1eaba1844f09d27f476f1))
+* **web:** iconos en los menús de las notas y «Archivar» desde el árbol ([c6ea20b](https://github.com/lopezz-dev/muninn/commit/c6ea20bc7ff19b0bffdbbb3782421d626de3d37e))
+* **web:** los comentarios de las notas se sincronizan en tiempo real ([12ce376](https://github.com/lopezz-dev/muninn/commit/12ce3767946986cb6d1768de3b1c03593b2c9e18))
+* **web:** notas editadas en sitio con TipTap, guardando Markdown (ADR-0078) ([e834fb2](https://github.com/lopezz-dev/muninn/commit/e834fb2131a5d2db4fedd303ca2635573b85829a))
+* **web:** rutas en inglés con redirección de las antiguas (ADR-0077, fase 3) ([fdc86ea](https://github.com/lopezz-dev/muninn/commit/fdc86ea29df999ab83e79526164c79cf0868561e))
+* **web:** rutas en inglés con redirección de las antiguas (ADR-0077, fase 3) ([e5c4dcf](https://github.com/lopezz-dev/muninn/commit/e5c4dcf9a8a6f8dcf5b257bd0fa2bacb8054c98a))
+
+
+### Bug Fixes
+
+* **web:** cada pantalla se carga con sus textos y se precalientan las de la navegación ([1af11d7](https://github.com/lopezz-dev/muninn/commit/1af11d76a58e7474e24e097f10bb32d68d325768))
+* **web:** cada pantalla se carga con sus textos y se precalientan las de la navegación ([b83657a](https://github.com/lopezz-dev/muninn/commit/b83657a810dcca1c4c3bd1eced7a3a325e867af6))
+
 ## [0.10.0](https://github.com/lopezz-dev/muninn/compare/v0.9.0...v0.10.0) (2026-11-05)
 
 
