@@ -13,91 +13,91 @@ export const settings: Messages<typeof en> = {
     datos: 'Datos',
   },
   sections: {
-    cuenta: {
+    account: {
       label: 'Cuenta',
       subtitle: 'Con qué entras, dónde está abierta tu sesión y qué apps usan tu cuenta.',
     },
-    apariencia: {
+    appearance: {
       label: 'Apariencia',
       subtitle: 'Cómo se ve Muninn. Te sigue a todos tus dispositivos.',
     },
-    barra: {
+    dock: {
       label: 'Barra de abajo',
       subtitle:
         'Las pestañas de abajo en el móvil: cuáles y en qué orden. Te sigue a todos tus dispositivos.',
     },
-    atajos: {
+    shortcuts: {
       label: 'Atajos de teclado',
       subtitle: 'Todo lo que puedes hacer sin soltar el teclado.',
     },
-    modulos: {
+    modules: {
       label: 'Módulos',
       subtitle:
         'Activa solo lo que uses. Lo desactivado sale del menú; tus datos siguen guardados.',
     },
-    notificaciones: {
+    notifications: {
       label: 'Notificaciones',
       subtitle: 'Avisos en el móvil y en el ordenador, aunque Muninn esté cerrada.',
     },
-    asistente: {
+    assistant: {
       label: 'Modelo local',
       subtitle: 'El modelo de tu ordenador que usa el Asistente, con Ollama.',
     },
-    informe: {
+    report: {
       label: 'Informe de la mañana',
       subtitle: 'Cada día, una nota fijada con lo que tienes para hoy.',
     },
-    integraciones: {
+    integrations: {
       label: 'GitHub',
       subtitle: 'Las issues de tus repositorios, como tareas de su proyecto.',
     },
-    datos: {
+    data: {
       label: 'Datos y sincronización',
       subtitle: 'Dónde se guardan tus datos y cómo viajan entre dispositivos.',
     },
-    acerca: {
+    about: {
       label: 'Acerca de Muninn',
       subtitle: 'Versión, documentación y código.',
     },
   },
   docs: {
-    cuenta: {
+    account: {
       title: 'Cuenta y seguridad',
       text: 'El segundo factor, las sesiones abiertas y las apps con acceso a tu cuenta.',
     },
-    apariencia: {
+    appearance: {
       title: 'Moverte por Muninn › Apariencia',
       text: 'Cristal y color de acento: qué cambia cada uno y dónde se guarda.',
     },
-    barra: {
+    dock: {
       title: 'Moverte por Muninn › Barra de abajo',
       text: 'Qué pestañas puedes poner, cuántas caben y dónde queda todo lo demás.',
     },
-    atajos: {
+    shortcuts: {
       title: 'Moverte por Muninn › Atajos',
       text: 'Los atajos del buscador, del tablero y de los diálogos.',
     },
-    modulos: {
+    modules: {
       title: 'Moverte por Muninn › Módulos',
       text: 'Qué pasa al desactivar un módulo y cómo volver a activarlo.',
     },
-    notificaciones: {
+    notifications: {
       title: 'Notificaciones',
       text: 'Cómo activar los avisos en el iPhone y qué te avisa Muninn.',
     },
-    asistente: {
+    assistant: {
       title: 'Asistente › Instalar Ollama',
       text: 'Cómo instalar Ollama y el modelo recomendado, paso a paso.',
     },
-    informe: {
+    report: {
       title: 'Asistente › Informe de la mañana',
       text: 'Qué incluye, cuándo se hace y qué pasa si el ordenador está apagado.',
     },
-    integraciones: {
+    integrations: {
       title: 'GitHub',
       text: 'Cómo se sincronizan las issues y qué cambia en cada lado.',
     },
-    datos: {
+    data: {
       title: 'Tus datos y privacidad',
       text: 'Dónde se guarda todo, quién puede verlo y qué queda sin conexión.',
     },

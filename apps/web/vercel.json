@@ -4,11 +4,17 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @muninn/web build",
   "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/documentacion", "destination": "/es/docs", "permanent": true },
+    { "source": "/documentacion/:pagina", "destination": "/es/docs/:pagina", "permanent": true }
+  ],
   "rewrites": [
-    { "source": "/documentacion", "destination": "/documentacion/index.html" },
-    { "source": "/documentacion/:pagina", "destination": "/documentacion/:pagina/index.html" },
+    { "source": "/docs", "destination": "/docs/index.html" },
+    { "source": "/docs/:pagina", "destination": "/docs/:pagina/index.html" },
+    { "source": "/es/docs", "destination": "/es/docs/index.html" },
+    { "source": "/es/docs/:pagina", "destination": "/es/docs/:pagina/index.html" },
     {
-      "source": "/((?!assets/|documentacion(?:/|$)|.*\\.[a-z0-9]+$).*)",
+      "source": "/((?!assets/|(?:es/)?docs(?:/|$)|.*\\.[a-z0-9]+$).*)",
       "destination": "/index.html"
     }
   ],

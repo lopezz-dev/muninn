@@ -1,5 +1,6 @@
 import type { ModuleName } from '@muninn/core'
 import { z } from 'zod'
+import { commentTools } from './comments'
 import type { AnyTool } from './define'
 import { financeTools } from './finance'
 import { newsTools } from './news'
@@ -10,7 +11,13 @@ export * from './define'
 export { resolveColumn, resolveProject } from './tasks'
 
 /** Todas las herramientas de Muninn, en el orden en que se ofrecen. Ninguna borra de forma definitiva (ADR-0009). */
-export const catalog: AnyTool[] = [...taskTools, ...noteTools, ...financeTools, ...newsTools]
+export const catalog: AnyTool[] = [
+  ...taskTools,
+  ...noteTools,
+  ...commentTools,
+  ...financeTools,
+  ...newsTools,
+]
 
 /** Las herramientas de los módulos activos (y las que no dependen de ninguno). Sin módulos, todas (el MCP). */
 export function toolsFor(modules?: readonly ModuleName[] | null, tools: AnyTool[] = catalog) {

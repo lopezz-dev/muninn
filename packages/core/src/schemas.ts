@@ -150,8 +150,14 @@ export interface ChecklistItem {
 
 export interface Note {
   id: string
+  /** Su espacio (ADR-0083): el proyecto, o `null` para «General». */
   projectId: string | null
   taskId: string | null
+  /** La madre en el árbol, o `null` en la raíz de su espacio. Siempre del mismo espacio. */
+  parentId: string | null
+  /** Orden entre hermanas (fractional indexing). */
+  position: string
+  kind: NoteKind
   title: string
   content: string
   pinned: boolean
@@ -290,25 +296,49 @@ export const taskQuery = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 })
 
+/** Una carpeta es una página que agrupa: solo cambia cómo se presenta (ADR-0083). */
+export const noteKind = z.enum(['page', 'folder'])
+
 export const createNoteInput = z.object({
   title: z.string().max(300).optional(),
   content: z.string().max(200000).optional(),
   projectId: id.nullable().optional(),
   taskId: id.nullable().optional(),
+  /** Colgarla de otra nota: hereda su espacio. */
+  parentId: id.nullable().optional(),
+  kind: noteKind.optional(),
+  /** Posición entre sus hermanas (0 = la primera). Por defecto, al final. */
+  index: z.number().int().min(0).optional(),
   pinned: z.boolean().optional(),
 })
 
 export const updateNoteInput = z.object({
   title: z.string().max(300).optional(),
   content: z.string().max(200000).optional(),
+  /** Cambiar de espacio la saca de su madre (a la raíz) y se lleva sus hijas. Para colgarla de otra, `notes.move`. */
   projectId: id.nullable().optional(),
   taskId: id.nullable().optional(),
+  kind: noteKind.optional(),
   pinned: z.boolean().optional(),
 })
 
+/**
+ * Destino de `notes.move`. Con `parentId`, el espacio es el de la madre; con `parentId: null`, la raíz del espacio
+ * `projectId` (o del suyo, si no se dice). Sin ninguno de los dos, se reordena entre sus hermanas.
+ */
+export const moveNoteInput = z.object({
+  parentId: id.nullable().optional(),
+  projectId: id.nullable().optional(),
+  /** Posición entre las nuevas hermanas (0 = la primera). Por defecto, al final. */
+  index: z.number().int().min(0).optional(),
+})
+
 export const noteQuery = z.object({
-  projectId: id.optional(),
+  /** El espacio: un proyecto, o `null` para «General». Sin él, todos. */
+  projectId: id.nullable().optional(),
   taskId: id.optional(),
+  /** Un nivel del árbol: las hijas de esa nota, o `null` para la raíz. Ordenadas por posición. */
+  parentId: id.nullable().optional(),
   search: z.string().trim().min(1).max(200).optional(),
   includeArchived: z.boolean().optional(),
   limit: z.number().int().min(1).max(500).optional(),
@@ -531,7 +561,88 @@ export type MoveTaskInput = z.input<typeof moveTaskInput>
 export type TaskQuery = z.infer<typeof taskQuery>
 export type CreateNoteInput = z.input<typeof createNoteInput>
 export type UpdateNoteInput = z.input<typeof updateNoteInput>
+export type MoveNoteInput = z.input<typeof moveNoteInput>
+export type NoteKind = z.infer<typeof noteKind>
 export type NoteQuery = z.infer<typeof noteQuery>
+
+// ─── Comentarios en las notas (ADR-0079) ─────────────────────────────────────
+
+/**
+ * Ancla de un hilo sobre el **texto visible** de la nota (`noteText`): la cita, hasta 32 caracteres de contexto a cada lado
+ * y su posición como pista. El Markdown no lleva ninguna marca.
+ */
+export const commentAnchor = z.object({
+  quote: z.string().min(1).max(2000),
+  prefix: z.string().max(64),
+  suffix: z.string().max(64),
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+})
+
+export interface NoteComment {
+  id: string
+  noteId: string
+  /** `null` en el comentario que abre el hilo; las respuestas apuntan a él (un solo nivel). */
+  parentId: string | null
+  /** Markdown en línea. */
+  body: string
+  /** Solo en el primero del hilo. */
+  anchor: CommentAnchor | null
+  /** La cita ya no se encuentra en la nota: se ve en «Sin sitio». */
+  orphaned: boolean
+  /** «Para Claude»: un encargo que debe atender un agente. */
+  forAgent: boolean
+  resolvedAt: string | null
+  resolvedBy: ActorKind | null
+  /** Quién lo escribió («Alex» o «Claude» en la UI). */
+  actor: ActorKind
+  /** El «Deshacer» de crear; no hay borrado definitivo. */
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+const commentBody = z.string().trim().min(1).max(10000)
+
+export const createCommentInput = z.object({
+  noteId: id,
+  /** El texto comentado, tal como se lee (sin marcas de Markdown). */
+  quote: z.string().min(1).max(2000),
+  /** Contexto de la selección para desempatar si la cita se repite. */
+  prefix: z.string().max(64).optional(),
+  suffix: z.string().max(64).optional(),
+  /** Si la cita se repite: cuál (1 = la primera). Gana sobre el contexto. */
+  occurrence: z.number().int().min(1).optional(),
+  body: commentBody,
+  forAgent: z.boolean().optional(),
+})
+
+export const replyCommentInput = z.object({
+  /** El hilo (su primer comentario); con una respuesta, se usa su hilo. */
+  threadId: id,
+  body: commentBody,
+})
+
+export const editCommentInput = z.object({ body: commentBody })
+
+export const commentStatus = z.enum(['open', 'resolved', 'all'])
+
+export const commentQuery = z.object({
+  noteId: id.optional(),
+  /** Por defecto, los abiertos. */
+  status: commentStatus.default('open'),
+  forAgent: z.boolean().optional(),
+  includeArchived: z.boolean().optional(),
+  /** Hilos como mucho (las respuestas de cada uno van aparte). */
+  limit: z.number().int().min(1).max(500).optional(),
+})
+
+export type CommentAnchor = z.infer<typeof commentAnchor>
+export type CommentStatus = z.infer<typeof commentStatus>
+export type CreateCommentInput = z.input<typeof createCommentInput>
+export type ReplyCommentInput = z.input<typeof replyCommentInput>
+export type EditCommentInput = z.input<typeof editCommentInput>
+export type CommentQuery = z.input<typeof commentQuery>
 export type UpdateSettingsInput = z.input<typeof updateSettingsInput>
 
 // ─── Noticias (ADR-0042) ──────────────────────────────────────────────────────

@@ -144,7 +144,7 @@ Un solo despliegue de `mcp` cubre lo pendiente de F3 (Finanzas) y F4 (catálogo 
 Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-y-activar-web-push-pasos-manuales).
 
 > **26 de octubre:** publicada en **https://muninn-sepia.vercel.app** (proyecto `muninn` del equipo Kodemaru, rama de producción `develop`,
-> primer despliegue de `e17cfec`). Comprobado con `curl` y en el navegador: la URL de producción es pública, `/finanzas` no da 404
+> primer despliegue de `e17cfec`). Comprobado con `curl` y en el navegador: la URL de producción es pública, `/finance` no da 404
 > (redirige al login), el service worker se registra y el build lleva la dirección de Supabase.
 - [x] Proyecto en Vercel con *Root Directory* `apps/web` y la rama del paso 0.
 - [x] Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Despliega.
@@ -161,8 +161,8 @@ Pasos 1–5 de [gotchas/web › Publicar la PWA](gotchas/web.md#publicar-la-pwa-
   - entrar con GitHub vuelve a la URL publicada;
   - la pestaña lleva el logo, `/robots.txt` y `/sitemap.xml` se abren, y al pegar la URL en un chat sale la tarjeta con la imagen
     (ADR-0045). *(Hecho el 27 de octubre: la tarjeta sale bien en WhatsApp y los ficheros responden en producción.)*
-  - sin sesión, `/documentacion/notas` se lee con la cabecera «Entrar»; al pegar su enlace en un chat, la tarjeta dice «Notas · Muninn»;
-    una guía que no existe (`/documentacion/xyz`) responde 404
+  - sin sesión, `/docs/notas` se lee con la cabecera «Entrar»; al pegar su enlace en un chat, la tarjeta dice «Notas · Muninn»;
+    una guía que no existe (`/docs/xyz`) responde 404
     (ADR-0076)
 - [ ] (Opcional, con tu cuenta de Google) Search Console: verificar la URL publicada y enviar `sitemap.xml`. *(Más adelante.)*
 - [ ] En el navegador del ordenador, el Asistente de la web publicada también llega a Ollama. Si Chrome pide el permiso de «acceso a la red
@@ -203,7 +203,7 @@ El código está montado desde el 28 de octubre (ADR-0060); nada de esto se ha h
 
 ## 4d. Seguridad de la cuenta (≈ 20 min)
 
-Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/14-cuenta-y-seguridad.md)). Con la web
+Ajustes › Cuenta ([ADR-0061](adr/0061-seguridad-de-la-cuenta.md), guía [Cuenta y seguridad](user/es/14-cuenta-y-seguridad.md)). Con la web
 y el iPhone con la sesión abierta. **29 de octubre:** probado en la vista previa de `develop` (`https://muninn-git-develop-kodemaru.vercel.app`,
 pide sesión de Vercel; `main` aún no tiene esta pantalla), contra la base de producción.
 - [x] Aplicar **juntas** las migraciones `20261029120000_account_sessions` y `20261029150000_aal2_en_el_servidor` ([ADR-0062](adr/0062-aal2-para-integraciones-sensibles.md)),
@@ -407,7 +407,9 @@ actualizaciones.
      `apps/desktop/src-tauri/tauri.conf.json`, en lugar de `PENDIENTE_CLAVE_PUBLICA_DE_TAURI_SIGNER_GENERATE`. PR a `develop` con
      `chore(desktop): clave pública del actualizador` (o pásale el `.pub` a Claude y que lo haga). Después, `develop` → `main` otra vez.
 5. **Publicar:**
-   - [ ] Fusiona el Release PR de release-please (`chore(main): release 0.x.0`).
+   - [ ] En el Release PR de release-please (`chore(main): release 0.x.0`), aprueba sus checks (**Approve and run**) y espera
+     el verde: los PRs del bot no lanzan el CI solos ([gotcha](gotchas/ci.md#el-ci-del-release-pr-espera-tu-aprobación)).
+   - [ ] Fusiona el Release PR.
    - [ ] En **Actions › Release**, en verde: `release-please`, `back-merge` y los tres `desktop` (macOS es el que más tarda).
    - [ ] En la release: `Muninn_<versión>_x64-setup.exe`, el `.dmg`, `Muninn_universal.app.tar.gz`, el `.AppImage`, el `.deb` y el `.rpm`, un `.sig`
      junto a cada instalador que se actualiza, y `latest.json` con una `signature` no vacía en cada plataforma.
@@ -415,7 +417,7 @@ actualizaciones.
      `latest.json`: el repo es público de verdad.
 6. **Instalar en Windows:**
    - [ ] Si tienes una versión compilada a mano, desinstálala (Configuración › Aplicaciones). Esa no se actualiza nunca.
-   - [ ] Instala el `-setup.exe` siguiendo [la guía](user/02-instalacion.md#windows) y entra con tu cuenta. En la barra lateral sale la versión
+   - [ ] Instala el `-setup.exe` siguiendo [la guía](user/es/02-instalacion.md#windows) y entra con tu cuenta. En la barra lateral sale la versión
      publicada.
 7. **Probar la actualización**, cuando salga la siguiente versión (cualquier `fix` que llegue a `main` y su Release PR):
    - [ ] Al abrir Muninn sale «Hay una versión nueva · Reiniciar» con el número nuevo. Pulsa **Reiniciar**: se instala sin pedir

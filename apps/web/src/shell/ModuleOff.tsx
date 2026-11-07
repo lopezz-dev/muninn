@@ -39,7 +39,7 @@ export function ModuleOff({ section }: { section: SectionId }) {
               </Button>
             ) : null}
             <Button asChild>
-              <Link to="/ajustes/$seccion" params={{ seccion: 'modulos' }}>
+              <Link to="/settings/$seccion" params={{ seccion: 'modules' }}>
                 {t('module.goToModules')}
               </Link>
             </Button>

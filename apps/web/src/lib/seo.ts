@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { type DocLang, OG_LOCALE } from './doc-slugs'
 
 /**
  * Título, descripción y URL canónica de una página pública (login, guías). `index.html` trae los valores de
@@ -10,6 +11,10 @@ export interface PageMeta {
   title: string
   /** Sin ella se queda la de `index.html`. */
   description?: string
+  /** Idioma del contenido (ADR-0077): `<html lang>` y `og:locale`. */
+  lang?: DocLang
+  /** Rutas de la misma página en cada idioma: `<link rel="alternate" hreflang>`, con `x-default` en inglés. */
+  alternates?: Record<DocLang, string>
 }
 
 function metaTag(doc: Document, attr: 'name' | 'property', key: string) {
@@ -22,8 +27,20 @@ function metaTag(doc: Document, attr: 'name' | 'property', key: string) {
   return el
 }
 
+function link(doc: Document, rel: string, href: string, hreflang?: string) {
+  const el = doc.createElement('link')
+  el.rel = rel
+  el.href = href
+  if (hreflang) el.hreflang = hreflang
+  doc.head.append(el)
+  return el
+}
+
 /** Aplica las metas de la página y devuelve cómo deshacerlo. La canónica es la ruta sin `?…` ni `#…`. */
-export function applyPageMeta(doc: Document, { title, description }: PageMeta): () => void {
+export function applyPageMeta(
+  doc: Document,
+  { title, description, lang, alternates }: PageMeta,
+): () => void {
   const loc = doc.location
   const url = `${loc.origin}${loc.pathname}`
   const full = `${title} · Muninn`
@@ -34,9 +51,14 @@ export function applyPageMeta(doc: Document, { title, description }: PageMeta): 
     metaTag(doc, 'property', 'og:url'),
     metaTag(doc, 'name', 'twitter:title'),
     metaTag(doc, 'name', 'twitter:description'),
+    metaTag(doc, 'property', 'og:locale'),
   ] as const
-  const before = { title: doc.title, contents: tags.map((t) => t.content) }
-  const [desc, ogTitle, ogDesc, ogUrl, twTitle, twDesc] = tags
+  const before = {
+    title: doc.title,
+    lang: doc.documentElement.lang,
+    contents: tags.map((t) => t.content),
+  }
+  const [desc, ogTitle, ogDesc, ogUrl, twTitle, twDesc, ogLocale] = tags
   const text = description || desc.content
 
   doc.title = full
@@ -46,26 +68,49 @@ export function applyPageMeta(doc: Document, { title, description }: PageMeta): 
   ogUrl.content = url
   twTitle.content = full
   twDesc.content = text
-  // La guía prerenderizada (ADR-0076) ya trae la suya en el HTML: una sola canónica por página.
-  for (const old of doc.head.querySelectorAll('link[rel="canonical"]')) old.remove()
-  const canonical = doc.createElement('link')
-  canonical.rel = 'canonical'
-  canonical.href = url
-  doc.head.append(canonical)
+  if (lang) {
+    doc.documentElement.lang = lang
+    ogLocale.content = OG_LOCALE[lang]
+  }
+  // La guía prerenderizada (ADR-0076) ya trae las suyas en el HTML: una sola canónica y un juego de alternativas.
+  for (const old of doc.head.querySelectorAll(
+    'link[rel="canonical"], link[rel="alternate"][hreflang]',
+  ))
+    old.remove()
+  const added = [link(doc, 'canonical', url)]
+  if (alternates) {
+    added.push(
+      link(doc, 'alternate', `${loc.origin}${alternates.en}`, 'en'),
+      link(doc, 'alternate', `${loc.origin}${alternates.es}`, 'es'),
+      link(doc, 'alternate', `${loc.origin}${alternates.en}`, 'x-default'),
+    )
+  }
 
   return () => {
     // El título lo pone la siguiente pantalla; solo se devuelve si nadie lo ha cambiado.
     if (doc.title === full) doc.title = before.title
+    doc.documentElement.lang = before.lang
     tags.forEach((t, i) => {
       t.content = before.contents[i] ?? ''
     })
-    canonical.remove()
+    for (const el of added) el.remove()
   }
 }
 
 /** `applyPageMeta` mientras el componente está montado. */
-export function usePageMeta({ title, description }: PageMeta) {
-  useEffect(() => applyPageMeta(document, { title, description }), [title, description])
+export function usePageMeta({ title, description, lang, alternates }: PageMeta) {
+  const en = alternates?.en
+  const es = alternates?.es
+  useEffect(
+    () =>
+      applyPageMeta(document, {
+        title,
+        description,
+        lang,
+        alternates: en && es ? { en, es } : undefined,
+      }),
+    [title, description, lang, en, es],
+  )
 }
 
 /** Pide a los buscadores que no indexen la página mientras está abierta (rutas que no existen). */

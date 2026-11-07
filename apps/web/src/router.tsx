@@ -7,8 +7,18 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router'
+import { i18n, type NAMESPACES } from './i18n'
 import { accountSheet, isPhone, settingsViewOf } from './lib/account-sheet'
 import { getAuth, onAuthChange, safeRedirect } from './lib/auth'
+import {
+  type DocLang,
+  docKeyOf,
+  docLangOf,
+  docPath,
+  isDocsPath,
+  otherDocLang,
+} from './lib/doc-slugs'
+import { legacyHref } from './lib/legacy-routes'
 import { loadMuninn } from './lib/muninn'
 import { forgetUserData } from './lib/session'
 import { settingsSection } from './screens/ajustes/sections'
@@ -23,16 +33,34 @@ import { PublicShell } from './shell/PublicShell'
  * El shell (barra lateral, barra de pestañas, ⌘K) va en el bundle inicial.
  */
 const rootRoute = createRootRoute({
-  // Quién usa la app (ADR-0022). Memorizado: solo la primera navegación espera.
-  beforeLoad: async () => ({ auth: await getAuth() }),
+  beforeLoad: async ({ location }) => {
+    // Las rutas en español de antes (ADR-0077, fase 3): a la nueva, antes de resolver nada.
+    const hash = location.hash ? `#${location.hash}` : ''
+    const legacy = legacyHref(location.pathname, location.searchStr, hash)
+    if (legacy) throw redirect({ href: legacy, replace: true })
+    // Quién usa la app (ADR-0022). Memorizado: solo la primera navegación espera.
+    return { auth: await getAuth() }
+  },
   component: Outlet,
   notFoundComponent: NotFound,
 })
 
+type Namespace = (typeof NAMESPACES)[number]
+
+/**
+ * Pantalla diferida con sus textos (ADR-0084): el chunk y sus namespaces de i18next se piden a la vez y el router no la
+ * pinta hasta tener los dos. Si los textos llegaran después, `useTranslation` suspendería ya montada y se vería el
+ * contenido vacío un instante. Si la pantalla usa un namespace que no está en la lista, sigue funcionando (suspende).
+ */
 const screen = <T extends Record<string, unknown>, K extends keyof T & string>(
   load: () => Promise<T>,
   name: K,
-) => lazyRouteComponent(load, name)
+  ns: readonly Namespace[] = [],
+) =>
+  lazyRouteComponent(
+    () => Promise.all([load(), ns.length ? i18n.loadNamespaces([...ns]) : null]).then(([m]) => m),
+    name,
+  )
 
 export interface LoginSearch {
   /** Ruta interna a la que volver tras entrar. */
@@ -57,7 +85,7 @@ const loginRoute = createRoute({
       throw redirect({ href: safeRedirect(search.redirect), replace: true })
   },
   // El formulario o, con el segundo factor pendiente, su código (ADR-0061).
-  component: screen(() => import('./screens/login/Entrada'), 'Entrada'),
+  component: screen(() => import('./screens/login/Entrada'), 'Entrada', ['auth']),
 })
 
 export interface OAuthConsentSearch {
@@ -82,22 +110,25 @@ const oauthConsentRoute = createRoute({
     if (context.auth.kind !== 'user')
       throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
   },
-  component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent'),
+  component: screen(() => import('./screens/OAuthConsent'), 'OAuthConsent', ['auth']),
 })
-
-/** La documentación es pública (ADR-0076): sin sesión se lee en un marco propio, sin datos. */
-const isPublicPath = (pathname: string) => /^\/documentacion(?:\/|$)/.test(pathname)
 
 /** Todo lo que necesita datos: sin sesión ni demo, a /login (y vuelta aquí al entrar). */
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: '_app',
-  beforeLoad: ({ context, location }) => {
+  beforeLoad: async ({ context, location }) => {
     const { auth } = context
-    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí), salvo lo público.
+    // Sin sesión, o con el segundo factor por escribir: a /login (ese paso sale allí), salvo la documentación, que
+    // es pública (ADR-0076) y se lee en un marco propio, sin datos.
     if (auth.kind === 'anonymous' || auth.kind === 'mfa') {
-      if (isPublicPath(location.pathname)) return { auth: null }
-      throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+      if (!isDocsPath(location.pathname)) {
+        throw redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+      }
+      // Sin sesión, la interfaz va en el idioma de la URL (ADR-0077); no se guarda como preferencia.
+      const lang = docLangOf(location.pathname)
+      if (i18n.language !== lang) await i18n.changeLanguage(lang)
+      return { auth: null }
     }
     return { auth }
   },
@@ -118,19 +149,19 @@ function AppFrame() {
 const homeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/',
-  component: screen(() => import('./screens/Inicio'), 'Inicio'),
+  component: screen(() => import('./screens/Inicio'), 'Inicio', ['home', 'finance', 'task']),
 })
 
 const projectsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'proyectos',
-  component: screen(() => import('./screens/Proyectos'), 'Proyectos'),
+  path: 'projects',
+  component: screen(() => import('./screens/Proyectos'), 'Proyectos', ['projects', 'task']),
 })
 
 const boardRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'proyectos/$projectId',
-  component: screen(() => import('./screens/Tablero'), 'Tablero'),
+  path: 'projects/$projectId',
+  component: screen(() => import('./screens/Tablero'), 'Tablero', ['board', 'task']),
 })
 
 /**
@@ -139,14 +170,14 @@ const boardRoute = createRoute({
  */
 const taskRoute = createRoute({
   getParentRoute: () => boardRoute,
-  path: 'tareas/$taskId',
-  component: screen(() => import('./screens/TareaDetalle'), 'TareaDetalle'),
+  path: 'tasks/$taskId',
+  component: screen(() => import('./screens/TareaDetalle'), 'TareaDetalle', ['task', 'home']),
 })
 
 const notesRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'notas',
-  component: screen(() => import('./screens/Notas'), 'Notas'),
+  path: 'notes',
+  component: screen(() => import('./screens/Notas'), 'Notas', ['notes']),
 })
 
 /**
@@ -156,27 +187,27 @@ const notesRoute = createRoute({
 const noteRoute = createRoute({
   getParentRoute: () => notesRoute,
   path: '$noteId',
-  component: screen(() => import('./screens/NotaDetalle'), 'NotaDetalle'),
+  component: screen(() => import('./screens/NotaDetalle'), 'NotaDetalle', ['notes']),
 })
 
-export type FinanceView = 'resumen' | 'movimientos' | 'suscripciones' | 'cuentas'
+export type FinanceView = 'overview' | 'transactions' | 'subscriptions' | 'accounts'
 
 export interface FinanceSearch {
   /** Pestaña de Finanzas; sin ella, «Resumen». */
-  vista?: FinanceView
+  view?: FinanceView
 }
 
-const FINANCE_VIEWS: FinanceView[] = ['resumen', 'movimientos', 'suscripciones', 'cuentas']
+const FINANCE_VIEWS: FinanceView[] = ['overview', 'transactions', 'subscriptions', 'accounts']
 
 const financeRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'finanzas',
+  path: 'finance',
   validateSearch: (search: Record<string, unknown>): FinanceSearch => ({
-    vista: FINANCE_VIEWS.includes(search.vista as FinanceView)
-      ? (search.vista as FinanceView)
+    view: FINANCE_VIEWS.includes(search.view as FinanceView)
+      ? (search.view as FinanceView)
       : undefined,
   }),
-  component: screen(() => import('./screens/Finanzas'), 'Finanzas'),
+  component: screen(() => import('./screens/Finanzas'), 'Finanzas', ['finance']),
 })
 
 export interface AssistantSearch {
@@ -186,11 +217,11 @@ export interface AssistantSearch {
 
 const assistantRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'asistente',
+  path: 'assistant',
   validateSearch: (search: Record<string, unknown>): AssistantSearch => ({
     q: typeof search.q === 'string' && search.q.trim() ? search.q.slice(0, 500) : undefined,
   }),
-  component: screen(() => import('./screens/Asistente'), 'Asistente'),
+  component: screen(() => import('./screens/Asistente'), 'Asistente', ['assistant']),
 })
 
 export interface NewsSearch {
@@ -200,30 +231,59 @@ export interface NewsSearch {
 
 const newsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'noticias',
+  path: 'news',
   validateSearch: (search: Record<string, unknown>): NewsSearch => ({
     q: typeof search.q === 'string' && search.q.trim() ? search.q.slice(0, 200) : undefined,
   }),
-  component: screen(() => import('./screens/Noticias'), 'Noticias'),
+  component: screen(() => import('./screens/Noticias'), 'Noticias', ['news']),
 })
 
 const githubRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'github',
-  component: screen(() => import('./screens/GitHub'), 'GitHub'),
+  component: screen(() => import('./screens/GitHub'), 'GitHub', ['github']),
 })
+
+// ─── Documentación: en inglés en /docs y en español en /es/docs (ADR-0077) ─────
+
+const docsScreen = screen(() => import('./screens/Documentacion'), 'Documentacion', ['docs'])
+const docPageScreen = screen(() => import('./screens/DocPagina'), 'DocPagina', ['docs'])
+
+/**
+ * Una guía con el slug del otro idioma (`/docs/notas`, o un enlace de antes de la fase 4) va a su ruta. Lo que no es
+ * de ningún idioma se queda: la pantalla dice que no existe.
+ */
+const guideInItsLanguage = (lang: DocLang, slug: string) => {
+  if (docKeyOf(slug, lang)) return
+  const other = otherDocLang(lang)
+  if (docKeyOf(slug, other)) throw redirect({ href: docPath(other, slug), replace: true })
+}
 
 const docsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'documentacion',
-  component: screen(() => import('./screens/Documentacion'), 'Documentacion'),
+  path: 'docs',
+  component: docsScreen,
 })
 
 /** Una guía: ruta propia, con enlace compartible; cuelga de la lista como el detalle de tarea del tablero. */
 const docPageRoute = createRoute({
   getParentRoute: () => docsRoute,
   path: '$pagina',
-  component: screen(() => import('./screens/DocPagina'), 'DocPagina'),
+  beforeLoad: ({ params }) => guideInItsLanguage('en', params.pagina),
+  component: docPageScreen,
+})
+
+const esDocsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: 'es/docs',
+  component: docsScreen,
+})
+
+const esDocPageRoute = createRoute({
+  getParentRoute: () => esDocsRoute,
+  path: '$pagina',
+  beforeLoad: ({ params }) => guideInItsLanguage('es', params.pagina),
+  component: docPageScreen,
 })
 
 /**
@@ -249,13 +309,13 @@ const moreRoute = createRoute({
 
 const settingsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'ajustes',
+  path: 'settings',
   beforeLoad: ({ location }) => {
     const view = settingsViewOf(location.pathname)
     if (!view || !isPhone() || (view !== 'root' && !settingsSection(view))) return
     throw redirect({ href: sheetInstead(view), replace: true })
   },
-  component: screen(() => import('./screens/ajustes/Ajustes'), 'Ajustes'),
+  component: screen(() => import('./screens/ajustes/Ajustes'), 'Ajustes', ['settings']),
 })
 
 const settingsIndexRoute = createRoute({
@@ -263,7 +323,7 @@ const settingsIndexRoute = createRoute({
   path: '/',
   // El menú va a la izquierda: se abre una sección. En el teléfono no se llega aquí (lo lleva la hoja).
   beforeLoad: () => {
-    throw redirect({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' }, replace: true })
+    throw redirect({ to: '/settings/$seccion', params: { seccion: 'appearance' }, replace: true })
   },
 })
 
@@ -273,7 +333,11 @@ const settingsSectionRoute = createRoute({
   beforeLoad: ({ params }) => {
     if (!settingsSection(params.seccion)) throw notFound()
   },
-  component: screen(() => import('./screens/ajustes/Seccion'), 'Seccion'),
+  component: screen(() => import('./screens/ajustes/Seccion'), 'Seccion', [
+    'settings',
+    'security',
+    'integrations',
+  ]),
 })
 
 // ─── Desarrollo ──────────────────────────────────────────────────────────────
@@ -281,7 +345,7 @@ const settingsSectionRoute = createRoute({
 /** Galería de Fundamentos (tokens y componentes). Sin enlace en la navegación. */
 const devFundamentosRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'dev/fundamentos',
+  path: 'dev/foundations',
   component: screen(() => import('./dev/Fundamentos'), 'Fundamentos'),
 })
 
@@ -298,6 +362,7 @@ const routeTree = rootRoute.addChildren([
     newsRoute,
     githubRoute,
     docsRoute.addChildren([docPageRoute]),
+    esDocsRoute.addChildren([esDocPageRoute]),
     moreRoute,
     settingsRoute.addChildren([settingsIndexRoute, settingsSectionRoute]),
     devFundamentosRoute,

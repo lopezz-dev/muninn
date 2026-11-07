@@ -61,7 +61,7 @@ function TaskRow({ task, progress, today, projectId }: RowProps) {
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <Link
-          to="/proyectos/$projectId/tareas/$taskId"
+          to="/projects/$projectId/tasks/$taskId"
           params={{ projectId, taskId: task.id }}
           data-task-id={task.id}
           className={cn(

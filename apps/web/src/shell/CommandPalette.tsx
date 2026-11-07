@@ -119,7 +119,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         label: t('ask.muninn', { query: q }),
         icon: 'assistant',
         keywords: q,
-        run: () => navigate({ to: '/asistente', search: { q } }),
+        run: () => navigate({ to: '/assistant', search: { q } }),
       })
       if (sectionEnabled('news', modules)) {
         all.push({
@@ -128,7 +128,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
           label: t('ask.news', { query: q }),
           icon: 'news',
           keywords: q,
-          run: () => navigate({ to: '/noticias', search: { q } }),
+          run: () => navigate({ to: '/news', search: { q } }),
         })
       }
     }
@@ -154,7 +154,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         icon: 'projects',
         color: p.color,
         hint: t('items.board'),
-        run: () => navigate({ to: '/proyectos/$projectId', params: { projectId: p.id } }),
+        run: () => navigate({ to: '/projects/$projectId', params: { projectId: p.id } }),
       })
     }
     // Con la búsqueda a medio llegar se queda lo anterior, pero solo si sigue valiendo para lo escrito.
@@ -163,10 +163,10 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         ...searchResultItems(found, projects, q, {
           task: (task) =>
             navigate({
-              to: '/proyectos/$projectId/tareas/$taskId',
+              to: '/projects/$projectId/tasks/$taskId',
               params: { projectId: task.projectId, taskId: task.id },
             }),
-          note: (n) => navigate({ to: '/notas/$noteId', params: { noteId: n.id } }),
+          note: (n) => navigate({ to: '/notes/$noteId', params: { noteId: n.id } }),
         }),
       )
     }
@@ -183,10 +183,10 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
             qc,
             {},
             {
-              onUndo: () => navigate({ to: '/notas', replace: true }),
+              onUndo: () => navigate({ to: '/notes', replace: true }),
             },
           )
-          if (note) navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+          if (note) navigate({ to: '/notes/$noteId', params: { noteId: note.id } })
         },
       })
     }
@@ -217,8 +217,8 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
         keywords: t('keywords.appearance'),
         run: () =>
           isPhone()
-            ? accountSheet.open('apariencia')
-            : navigate({ to: '/ajustes/$seccion', params: { seccion: 'apariencia' } }),
+            ? accountSheet.open('appearance')
+            : navigate({ to: '/settings/$seccion', params: { seccion: 'appearance' } }),
       },
       {
         id: 'sign-out',

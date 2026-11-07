@@ -1,5 +1,33 @@
 # Gotchas · core (`packages/core`)
 
+### `noteText` tiene que coincidir con el editor (comentarios)
+
+- **Síntoma:** al comentar desde la app sale «Ese texto no está en la nota», o un subrayado aparece desplazado.
+- **Causa:** el ancla de un comentario se guarda sobre el **texto visible** (`noteText`, en `note-text.ts`), y la app manda la cita tal
+  como la ve el editor (TipTap con `@tiptap/markdown`: `doc.textBetween(0, size, '
+', leaf)`, con `'
+'` en un salto duro y el
+  `alt` de una imagen en línea). `noteText` reproduce ese texto con el lexer de marked (el mismo que usa `@tiptap/markdown`): un `
+`
+  entre bloques (párrafo, título, bloque de código, celda de tabla, elemento de lista), los saltos suaves como `
+`, las líneas en
+  blanco de más como párrafos vacíos, solo `&lt; &gt; &quot; &amp;` y las numéricas como entidades, y el HTML como texto.
+- **Diferencias conocidas:** TipTap tiene su propio tokenizador de listas numeradas y conserva parte de la sangría de las líneas de
+  continuación; `noteText` no. Por eso `locateQuote`, si no encuentra la cita tal cual, la busca **sin tener en cuenta el espaciado**. En
+  el navegador, TipTap convierte el HTML que reconoce (`<b>`, `<em>`…) en marcas; `noteText` lo deja como texto (en Node, TipTap también).
+- **Solución:** si cambias las extensiones del editor (otra lista, imágenes, HTML…), compara `noteText` con lo que da el editor sobre
+  el corpus de `test/note-text.test.ts` (sus textos esperados salen de TipTap 3.33) y ajusta los dos a la vez.
+- **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md)
+
+### `notes.update` vuelve a anclar los comentarios
+
+- Cuando cambia el `content` de una nota, el core relee sus hilos (abiertos y resueltos, no archivados) y llama a `reanchor` con el texto
+  visible de antes y el de después; solo escribe los que cambian. Así vale igual para la app, el asistente y el MCP. Un hilo «Sin sitio»
+  (`orphaned`) conserva su ancla vieja y, si su cita vuelve (un «Deshacer»), se reancla en el siguiente guardado.
+- No escribas `content` en el store directamente: los comentarios se quedarían con anclas viejas.
+- La búsqueda aproximada (paso 3 del ADR) es Levenshtein con inicio libre (Sellers) en una zona alrededor de donde estaba la cita: coste
+  cita × zona. Citas de más de 2000 caracteres o de menos de 4 no se buscan así.
+
 ### Comparar posiciones con `<`, nunca con `localeCompare`
 
 - **Síntoma:** tarjetas que saltan de orden, sobre todo con claves que mezclan mayúsculas y minúsculas (`a0V` vs `a0b`).
@@ -85,6 +113,18 @@
   mucho una cada 10 minutos por actor (`NOTE_EDIT_WINDOW_MS`); fijar/desfijar tienen sus propias acciones (`pinned`,
   `unpinned`) y vincular se anota siempre. Sin esto, el autoguardado del editor escribiría un evento por pausa al teclear.
 - **Ref:** [ADR-0007](../adr/0007-registro-de-actividad.md), [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)
+
+### Notas en árbol: el subárbol se mueve y se archiva junto
+
+- **Espacio:** una hija está siempre en el espacio (`projectId`) de su madre. `notes.move` y cambiar `projectId` con
+  `notes.update` se llevan todas las descendientes; si alguna está ligada a una tarea, no se mueve nada (no puede salir del
+  proyecto de su tarea). Cambiar de espacio con `update` deja la nota en la raíz del nuevo.
+- **Archivar:** `notes.archive` pone **la misma fecha** a la nota y a las descendientes que no estaban archivadas, y
+  `notes.restore` devuelve solo las que tienen esa fecha: así un «Deshacer» lo trae todo sin traer lo que ya estaba archivado.
+  Si la madre sigue archivada, la nota restaurada va a la raíz de su espacio.
+- **Consultas:** `notes.list({ parentId })` devuelve un nivel por `position`; sin `parentId`, fijadas y recientes como siempre.
+  `projectId: null` es «General» (sin proyecto); sin `projectId`, todos los espacios.
+- **Ref:** [ADR-0083](../adr/0083-notas-en-arbol-con-un-espacio-por-proyecto.md)
 
 ### GitHub: el estado de una tarea con envío pendiente no lo cambia GitHub
 
@@ -187,3 +227,19 @@
 - **Solución:** `tasks.remove` y `projects.remove` del store de memoria pasan por `dropTask`, que imita las claves ajenas (subtareas y
   cola fuera, notas sin tarea, actividad intacta). Si añades una tabla que cuelga de las tareas, añádela ahí también. Y
   `m.tasks.delete` solo acepta tareas archivadas ([ADR-0067](../adr/0067-eliminar-tareas-archivadas.md)).
+
+### Columnas y categorías de serie: en el idioma de quien las crea, y con «automático» en inglés
+
+- **Síntoma:** un proyecto que crea Claude por el MCP sale con «To do» aunque uses la app en español; o un test que busca la columna
+  «Pendiente» o la categoría «Supermercado» no la encuentra.
+- **Causa:** las columnas de un proyecto nuevo y las categorías de Finanzas se crean en un idioma (ADR-0077, `defaults.ts`). Lo
+  elige `options.locale` de `createMuninn` (la web pasa el de la interfaz, `currentLocale`) y, sin él, `preferences.locale` de
+  la cuenta. Con «automático» el idioma real depende del navegador, que el servidor no conoce: ahí el core usa inglés, el idioma por
+  defecto.
+- **Solución:**
+  - Quien quiera las cosas en español desde Claude elige «Español» en Ajustes › Apariencia (no «Automático»).
+  - En los tests que resuelven columnas o categorías por su nombre en español, `createMuninn(store, { locale: () => 'es' })`.
+  - Se lee al crear: cambiar de idioma no renombra lo que ya existe (son filas normales). La `key` de las categorías es la misma en
+    los dos idiomas: no compares por nombre.
+  - Un dato de serie nuevo va en `defaults.ts`, con su nombre en los dos idiomas.
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

@@ -2,18 +2,29 @@ import type { IconProps } from '@phosphor-icons/react/dist/lib/types'
 import type { ComponentType } from 'react'
 import {
   ArrowCounterClockwise,
+  ArrowUUpLeft,
+  ArrowUUpRight,
+  ChatCircleText,
+  CheckCircle,
   CircleHalf,
+  CodeBlock,
   Compass,
   Copy,
   Devices,
+  FileText,
+  Folder,
+  FolderOpen,
   Key,
   ListBullets,
   ListChecks,
+  ListNumbers,
   Plug,
   QrCode,
+  Quotes,
   ShieldCheck,
   SquareHalfBottom,
   Sun,
+  Table,
 } from './screen-icons.generated'
 
 /**
@@ -38,6 +49,19 @@ export const screenIcons = {
   copy: Copy,
   qr: QrCode,
   dock: SquareHalfBottom,
+  // Notas en árbol (ADR-0083): página y carpeta.
+  page: FileText,
+  folder: Folder,
+  folderOpen: FolderOpen,
+  // Editor de notas en sitio (ADR-0078) y comentarios (ADR-0079).
+  listNumbers: ListNumbers,
+  quote: Quotes,
+  codeBlock: CodeBlock,
+  table: Table,
+  undo: ArrowUUpLeft,
+  redo: ArrowUUpRight,
+  comment: ChatCircleText,
+  resolve: CheckCircle,
 } satisfies Record<string, ComponentType<IconProps>>
 
 export type ScreenIconName = keyof typeof screenIcons

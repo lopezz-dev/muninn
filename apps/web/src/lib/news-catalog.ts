@@ -1,7 +1,8 @@
 /**
  * Fuentes sugeridas de Noticias: RSS oficiales, publicados por el propio medio, organismo o empresa (no agregadores
- * ni feeds hechos por terceros). Comprobadas el 27-10-2026: responden 200 y son RSS o Atom con artículos. El tema de
- * cada grupo se guarda como `topic` de la fuente, así salen como pestaña en Noticias.
+ * ni feeds hechos por terceros). Comprobadas el 27-10-2026: responden 200 y son RSS o Atom con artículos. El nombre de
+ * cada grupo, en el idioma de la interfaz (`label`), se guarda como `topic` de la fuente, así sale como pestaña en
+ * Noticias (ADR-0077). `topic` es solo su identificador.
  *
  * Para añadir una: que sea el feed oficial, que responda con `<rss>` o `<feed>` y que esté vivo (artículos recientes).
  */

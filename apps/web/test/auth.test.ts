@@ -5,7 +5,7 @@ import { authErrorMessage } from '../src/lib/login-actions'
 
 describe('safeRedirect', () => {
   it('solo acepta rutas internas', () => {
-    expect(safeRedirect('/proyectos/abc?x=1')).toBe('/proyectos/abc?x=1')
+    expect(safeRedirect('/projects/abc?x=1')).toBe('/projects/abc?x=1')
     expect(safeRedirect('https://evil.example')).toBe('/')
     expect(safeRedirect('//evil.example')).toBe('/')
     expect(safeRedirect(undefined)).toBe('/')

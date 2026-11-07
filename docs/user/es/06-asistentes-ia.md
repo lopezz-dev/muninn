@@ -124,8 +124,9 @@ args = ["C:/sourcecode/muninn/packages/mcp/dist/index.js"]
 | `list_projects` | `create_task` (con su checklist), `create_tasks` (hasta 50 a la vez), `update_task` |
 | `project_status`: informe de un proyecto | `move_task`, `complete_task`, `archive_task` |
 | `list_tasks`: con filtros | `add_checklist_item`, `set_checklist_item_done` |
-| `get_task`: con subtareas y notas | `create_note`, `update_note` |
+| `get_task`: con subtareas y notas | `create_note` (también como hija de otra), `update_note`, `move_note` |
 | `list_columns`, `list_notes`, `recent_activity` | |
+| `list_note_comments`: los hilos de una nota o los encargos «Para Claude» | `comment_on_note`, `reply_to_comment`, `resolve_comment` (también reabrir) |
 | `list_finance_accounts`, `list_transactions`, `finance_month_report` | `create_transaction`, `update_transaction`, `archive_transaction` |
 | `list_news`, `news_digest` (con Noticias) | |
 | `list_finance_categories`, `list_subscriptions` | `create_finance_account`, `update_finance_account`, `archive_finance_account` |

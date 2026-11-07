@@ -21,7 +21,7 @@ import { Composer, type ComposerHandle } from './asistente/Composer'
 import { BrainChip, ModelState } from './asistente/ModelState'
 import { Reply, UserBubble } from './asistente/TurnView'
 
-const route = getRouteApi('/_app/asistente')
+const route = getRouteApi('/_app/assistant')
 
 /** Conversaciones del dispositivo, agrupadas como en el diseño (Hoy, Esta semana, Antes). */
 function ConversationList({
@@ -57,7 +57,7 @@ function ConversationList({
       </Button>
       {report ? (
         <Link
-          to="/notas/$noteId"
+          to="/notes/$noteId"
           params={{ noteId: report.noteId }}
           className="flex flex-col gap-0.5 rounded-md px-3 py-2 text-[13.5px] text-fg outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent"
         >

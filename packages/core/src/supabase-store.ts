@@ -8,6 +8,8 @@ import type {
   NewsDigest,
   NewsItem,
   NewsSource,
+  Note,
+  NoteComment,
   Project,
   PushDevice,
   UserSettings,
@@ -26,6 +28,7 @@ import {
   type NewsFetchSummary,
   type NewsItemStore,
   type NewsItemStoreQuery,
+  type NoteCommentStoreQuery,
   type NoteStoreQuery,
   NotFoundError,
   type OutboxEntry,
@@ -794,17 +797,58 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       'Elemento de checklist',
       (qb, q: { taskIds: string[] }) => qb.in('task_id', q.taskIds).order('position'),
     ),
-    notes: col('notes', 'Nota', (qb, q: NoteStoreQuery) => {
-      if (!q.includeArchived) qb = qb.is('archived_at', null)
-      if (q.projectId) qb = qb.eq('project_id', q.projectId)
-      if (q.taskId) qb = qb.eq('task_id', q.taskId)
-      if (q.search) {
-        const filter = allWordsFilter(q.search, ['title', 'content'])
-        if (filter) qb = qb.or(filter)
-      }
-      qb = qb.order('pinned', { ascending: false }).order('updated_at', { ascending: false })
-      return q.limit ? qb.limit(q.limit) : qb
-    }),
+    noteComments: col<NoteComment, NoteCommentStoreQuery>(
+      'note_comments',
+      'Comentario',
+      (qb, q) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        if (q.noteId) qb = qb.eq('note_id', q.noteId)
+        if (q.roots) qb = qb.is('parent_id', null)
+        if (q.threadIds) {
+          // Ids de la base (uuid): no llevan caracteres que haya que escapar en `or()`.
+          const ids = q.threadIds.join(',')
+          qb = qb.or(`id.in.(${ids}),parent_id.in.(${ids})`)
+        }
+        if (q.forAgent !== undefined) qb = qb.eq('for_agent', q.forAgent)
+        if (q.status === 'open') qb = qb.is('resolved_at', null)
+        else if (q.status === 'resolved') qb = qb.not('resolved_at', 'is', null)
+        qb = qb.order('created_at').order('id')
+        return q.limit ? qb.limit(q.limit) : qb
+      },
+    ),
+    notes: Object.assign(
+      col<Note, NoteStoreQuery>('notes', 'Nota', (qb, q) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        if (q.projectId === null) qb = qb.is('project_id', null)
+        else if (q.projectId) qb = qb.eq('project_id', q.projectId)
+        if (q.taskId) qb = qb.eq('task_id', q.taskId)
+        if (q.parentId === null) qb = qb.is('parent_id', null)
+        else if (q.parentId) qb = qb.eq('parent_id', q.parentId)
+        if (q.search) {
+          const filter = allWordsFilter(q.search, ['title', 'content'])
+          if (filter) qb = qb.or(filter)
+        }
+        qb =
+          q.parentId !== undefined
+            ? qb.order('position')
+            : qb.order('pinned', { ascending: false }).order('updated_at', { ascending: false })
+        return q.limit ? qb.limit(q.limit) : qb
+      }),
+      {
+        // En trozos de 100 (los ids van en la URL) y en el orden recibido: el core pasa un subárbol de arriba abajo, así
+        // que cada nota cambia de espacio después de su madre y el trigger `enforce_note_tree` no la rechaza.
+        async updateMany(ids: string[], patch: Partial<NewRow<Note>>) {
+          for (let i = 0; i < ids.length; i += 100) {
+            const { error } = await client
+              .from('notes')
+              .update(toRow(patch))
+              .eq('owner_id', ownerId)
+              .in('id', ids.slice(i, i + 100))
+            if (error) throw error
+          }
+        },
+      },
+    ),
   }
 }
 

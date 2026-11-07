@@ -6,7 +6,6 @@ import { t } from '../../i18n'
 import { useMuninn } from '../../lib/muninn'
 import { reason } from '../../lib/mutations'
 import { saveNoteText } from '../../lib/note-actions'
-import { toggleTask } from '../../markdown/tasks'
 
 export type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error'
 
@@ -81,15 +80,6 @@ export function useNoteDraft(note: Note) {
     [save],
   )
 
-  /** Marca o desmarca una casilla de tarea en el texto (desde la vista previa). */
-  const toggle = useCallback(
-    (index: number) => {
-      const next = toggleTask(latest.current.content, index)
-      if (next !== null) change({ content: next })
-    },
-    [change],
-  )
-
   // Una versión nueva de otro dispositivo (o del propio MCP): se adopta si aquí no hay nada pendiente.
   useEffect(() => {
     const incoming = { title: note.title, content: note.content }
@@ -116,5 +106,5 @@ export function useNoteDraft(note: Note) {
     }
   }, [save])
 
-  return { draft, status, change, toggle, save }
+  return { draft, status, change, save }
 }

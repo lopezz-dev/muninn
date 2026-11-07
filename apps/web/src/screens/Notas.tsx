@@ -21,6 +21,7 @@ import {
 import { notesQuery } from '../lib/notes-queries'
 import { projectsQuery } from '../lib/queries'
 import { useIsDesktop } from '../lib/use-media'
+import { NoteTree } from './notas/NoteTree'
 
 const sectionLabel = 'px-3.5 pt-3 pb-1 text-xs font-semibold tracking-wider text-fg-faint uppercase'
 
@@ -34,7 +35,7 @@ function NoteItem({ note, project }: ItemProps) {
   const preview = notePreview(note)
   return (
     <Link
-      to="/notas/$noteId"
+      to="/notes/$noteId"
       params={{ noteId: note.id }}
       className="flex flex-col gap-1.5 px-3.5 py-3 text-fg outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent data-[status=active]:bg-fg/[0.07] md:rounded-md"
     >
@@ -85,7 +86,7 @@ export function Notas() {
   const desktop = useIsDesktop()
   const notes = useQuery(notesQuery(m))
   const projects = useQuery(projectsQuery(m)).data
-  const open = useMatch({ from: '/_app/notas/$noteId', shouldThrow: false })?.params.noteId
+  const open = useMatch({ from: '/_app/notes/$noteId', shouldThrow: false })?.params.noteId
   const [filter, setFilter] = useState<NoteFilter>(NO_FILTER)
   // Con una nota abierta, `NotaDetalle` pone su título; al volver a la lista, el de la sección.
   useEffect(() => {
@@ -99,6 +100,8 @@ export function Notas() {
   const filtering = isFiltering(filter)
   const pinned = shown.filter((n) => n.pinned)
   const recent = shown.filter((n) => !n.pinned)
+  // Sin buscar ni «Fijadas», la lista es el árbol por espacios (ADR-0083); buscando, una lista plana de resultados.
+  const treeMode = !filter.query.trim() && !filter.pinned
 
   // En móvil la nota abierta ocupa toda la pantalla; la lista se queda debajo, sin pintarse.
   if (open && !desktop) return <Outlet />
@@ -109,11 +112,11 @@ export function Notas() {
       m,
       qc,
       { projectId: filter.projectId ?? undefined },
-      { onUndo: () => navigate({ to: '/notas', replace: true }) },
+      { onUndo: () => navigate({ to: '/notes', replace: true }) },
     )
     if (note) {
       setFilter(NO_FILTER)
-      navigate({ to: '/notas/$noteId', params: { noteId: note.id } })
+      navigate({ to: '/notes/$noteId', params: { noteId: note.id } })
     }
   }
 
@@ -204,6 +207,26 @@ export function Notas() {
           <EmptyState icon="notes" title={t('list.emptyTitle')} actions={newButton}>
             {t('list.emptyText')}
           </EmptyState>
+        ) : treeMode ? (
+          <div className="flex flex-col gap-3">
+            {pinned.length ? (
+              <Group label={t('list.pinned')}>
+                {pinned.map((n) => (
+                  <NoteItem
+                    key={n.id}
+                    note={n}
+                    project={n.projectId ? projectOf.get(n.projectId) : undefined}
+                  />
+                ))}
+              </Group>
+            ) : null}
+            <NoteTree
+              notes={all}
+              projects={projects ?? []}
+              onlyProjectId={filter.projectId}
+              touch={!desktop}
+            />
+          </div>
         ) : shown.length === 0 ? (
           <p className="px-1 py-6 text-center text-sm text-fg-subtle text-pretty">
             {filter.query.trim()

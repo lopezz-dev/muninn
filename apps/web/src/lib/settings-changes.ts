@@ -27,12 +27,12 @@ import { settingsQuery } from './queries'
 export type PrefKey = 'glass' | 'accent' | 'locale' | 'reportEnabled' | 'reportTime'
 
 /** Sección de Ajustes de cada preferencia. */
-export const PREF_SECTION: Record<PrefKey, 'apariencia' | 'informe'> = {
-  glass: 'apariencia',
-  accent: 'apariencia',
-  locale: 'apariencia',
-  reportEnabled: 'informe',
-  reportTime: 'informe',
+export const PREF_SECTION: Record<PrefKey, 'appearance' | 'report'> = {
+  glass: 'appearance',
+  accent: 'appearance',
+  locale: 'appearance',
+  reportEnabled: 'report',
+  reportTime: 'report',
 }
 
 /** Qué preferencias no están en su valor de fábrica. */

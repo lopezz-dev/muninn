@@ -9,6 +9,7 @@ import type {
   NewsItem,
   NewsSource,
   Note,
+  NoteComment,
   Project,
   PushDevice,
   Subscription,
@@ -26,6 +27,7 @@ import {
   type ColumnStoreQuery,
   type NewRow,
   type NewsItemStoreQuery,
+  type NoteCommentStoreQuery,
   type NoteStoreQuery,
   NotFoundError,
   type OutboxEntry,
@@ -41,6 +43,8 @@ export interface MemorySnapshot {
   tasks: Task[]
   checklist: ChecklistItem[]
   notes: Note[]
+  /** Comentarios de las notas (ADR-0079); los ficheros de antes no lo traen. */
+  noteComments?: NoteComment[]
   activity: Activity[]
   settings: UserSettings | null
   githubOutbox: (OutboxEntry & { processedAt: string | null })[]
@@ -62,6 +66,7 @@ export const emptySnapshot = (): MemorySnapshot => ({
   tasks: [],
   checklist: [],
   notes: [],
+  noteComments: [],
   activity: [],
   settings: null,
   githubOutbox: [],
@@ -167,7 +172,17 @@ export function createMemoryStore(
   const columns = toMap(initial.columns)
   const tasks = toMap(initial.tasks)
   const checklist = toMap(initial.checklist)
-  const notes = toMap(initial.notes)
+  // Los ficheros y semillas de antes del árbol (ADR-0083) no traen sus campos: van a la raíz de su espacio.
+  const notes = toMap(
+    initial.notes.map((n) => ({
+      ...n,
+      parentId: n.parentId ?? null,
+      position: n.position ?? 'a0',
+      kind: n.kind ?? 'page',
+    })),
+  )
+  // Ni los de antes de los comentarios.
+  const noteComments = toMap(initial.noteComments ?? [])
   const activity = [...initial.activity]
   let nextActivityId = activity.reduce((max, a) => Math.max(max, a.id), 0) + 1
   let settings = initial.settings ?? null
@@ -203,6 +218,7 @@ export function createMemoryStore(
       tasks: [...tasks.values()],
       checklist: [...checklist.values()],
       notes: [...notes.values()],
+      noteComments: [...noteComments.values()],
       activity,
       settings,
       githubOutbox: outbox,
@@ -581,21 +597,58 @@ export function createMemoryStore(
       changed,
       now,
     ),
-    notes: new MemoryCollection<Note, NoteStoreQuery>(
-      'Nota',
-      notes,
+    noteComments: new MemoryCollection<NoteComment, NoteCommentStoreQuery>(
+      'Comentario',
+      noteComments,
       (rows, q) =>
         rows
-          .filter((n) => q.includeArchived || !n.archivedAt)
-          .filter((n) => !q.projectId || n.projectId === q.projectId)
-          .filter((n) => !q.taskId || n.taskId === q.taskId)
-          .filter((n) => !q.search || includesText([n.title, n.content], q.search))
-          .sort(
-            (a, b) => Number(b.pinned) - Number(a.pinned) || (a.updatedAt < b.updatedAt ? 1 : -1),
+          .filter((c) => q.includeArchived || !c.archivedAt)
+          .filter((c) => !q.noteId || c.noteId === q.noteId)
+          .filter((c) => !q.roots || c.parentId === null)
+          .filter((c) => !q.threadIds || q.threadIds.includes(c.parentId ?? c.id))
+          .filter((c) => q.forAgent === undefined || c.forAgent === q.forAgent)
+          .filter(
+            (c) =>
+              !q.status ||
+              q.status === 'all' ||
+              (q.status === 'open' ? c.resolvedAt === null : c.resolvedAt !== null),
           )
+          .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0))
           .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
       changed,
       now,
+    ),
+    notes: Object.assign(
+      new MemoryCollection<Note, NoteStoreQuery>(
+        'Nota',
+        notes,
+        (rows, q) =>
+          rows
+            .filter((n) => q.includeArchived || !n.archivedAt)
+            .filter((n) => q.projectId === undefined || n.projectId === q.projectId)
+            .filter((n) => !q.taskId || n.taskId === q.taskId)
+            .filter((n) => q.parentId === undefined || n.parentId === q.parentId)
+            .filter((n) => !q.search || includesText([n.title, n.content], q.search))
+            .sort(
+              q.parentId !== undefined
+                ? byPosition
+                : (a, b) =>
+                    Number(b.pinned) - Number(a.pinned) || (a.updatedAt < b.updatedAt ? 1 : -1),
+            )
+            .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+        changed,
+        now,
+      ),
+      {
+        async updateMany(ids: string[], patch: Partial<NewRow<Note>>) {
+          const ts = now()
+          for (const id of ids) {
+            const current = notes.get(id)
+            if (current) notes.set(id, { ...current, ...stripUndefined(patch), updatedAt: ts })
+          }
+          if (ids.length > 0) changed()
+        },
+      },
     ),
   }
 }

@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../lib/muninn'
 import { useEndSession } from '../lib/session'
+import { SECTIONS } from './nav'
 import { UserButton } from './UserButton'
 
 const PROVIDER = { github: 'account.viaGithub', email: 'account.viaEmail' } as const
@@ -43,7 +44,7 @@ export function UserMenu({ rail }: { rail: boolean }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const go = (seccion: string) => void navigate({ to: '/ajustes/$seccion', params: { seccion } })
+  const go = (seccion: string) => void navigate({ to: '/settings/$seccion', params: { seccion } })
 
   return (
     <Menu open={open} onOpenChange={setOpen}>
@@ -76,20 +77,20 @@ export function UserMenu({ rail }: { rail: boolean }) {
             </span>
           </span>
         </div>
-        <MenuItem icon={<icons.user />} onSelect={() => go('cuenta')}>
+        <MenuItem icon={<icons.user />} onSelect={() => go('account')}>
           {t('account.account')}
         </MenuItem>
-        <MenuItem icon={<icons.settings />} onSelect={() => void navigate({ to: '/ajustes' })}>
+        <MenuItem icon={<icons.settings />} onSelect={() => void navigate({ to: '/settings' })}>
           {t('nav.settings')}
         </MenuItem>
-        <MenuItem icon={<icons.keyboard />} onSelect={() => go('atajos')}>
+        <MenuItem icon={<icons.keyboard />} onSelect={() => go('shortcuts')}>
           {t('account.shortcuts')}
         </MenuItem>
-        <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: '/documentacion' })}>
+        <MenuItem icon={<icons.docs />} onSelect={() => void navigate({ to: SECTIONS.docs.to })}>
           {t('nav.docsLong')}
         </MenuItem>
         <MenuSeparator />
-        <MenuItem icon={<icons.info />} onSelect={() => go('acerca')}>
+        <MenuItem icon={<icons.info />} onSelect={() => go('about')}>
           <span className="flex items-center">
             {t('account.about')}
             <span className="ml-auto font-mono text-xs text-fg-faint">v{__APP_VERSION__}</span>

@@ -128,6 +128,11 @@ export const common: Messages<typeof en> = {
   publicShell: {
     docs: 'Documentación',
     signIn: 'Entrar',
+    langNotice: {
+      text: 'Esta página también está en español',
+      switch: 'Cambiar a español',
+      dismiss: 'No, gracias',
+    },
   },
   dates: {
     today: 'Hoy',

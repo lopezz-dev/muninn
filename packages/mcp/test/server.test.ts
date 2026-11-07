@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest'
 import { createMuninnMcpServer } from '../src/server'
 
 async function connect() {
-  const server = createMuninnMcpServer(createMuninn(createMemoryStore(), { actor: 'mcp' }))
+  const server = createMuninnMcpServer(
+    createMuninn(createMemoryStore(), { actor: 'mcp', locale: () => 'es' }),
+  )
   const client = new Client({ name: 'test', version: '0.0.0' })
   const [a, b] = InMemoryTransport.createLinkedPair()
   await Promise.all([server.connect(a), client.connect(b)])
@@ -22,9 +24,19 @@ describe('servidor MCP', () => {
     const { client } = await connect()
     const names = (await client.listTools()).tools.map((t) => t.name)
     expect(names).toEqual(
-      expect.arrayContaining(['overview', 'create_task', 'move_task', 'project_status']),
+      expect.arrayContaining([
+        'overview',
+        'create_task',
+        'move_task',
+        'project_status',
+        'list_note_comments',
+        'comment_on_note',
+        'reply_to_comment',
+        'resolve_comment',
+      ]),
     )
     expect(names).not.toContain('delete_task')
+    expect(names.some((n) => /delete|remove/.test(n))).toBe(false)
   })
 
   it('se presenta con el nombre, la descripción y el logo de Muninn', async () => {

@@ -1,7 +1,8 @@
 import { Button, Icon, type IconName, icons, notify, TextField } from '@muninn/ui'
-import { getRouteApi, Link, useRouter } from '@tanstack/react-router'
+import { getRouteApi, useRouter } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { GuidesLink } from '../components/GuideLink'
 import { t as tr } from '../i18n'
 import { enterDemo, hasSupabase, isTauri, loadSupabase, safeRedirect } from '../lib/auth'
 import { captchaSiteKey, useCaptcha } from '../lib/captcha'
@@ -405,9 +406,9 @@ export function Login() {
           {/* Pública (ADR-0076): también es por donde los buscadores llegan a las guías. */}
           <p className="text-[12.5px] leading-normal text-fg-faint">
             {t('login.docsBefore')}
-            <Link to="/documentacion" className="text-accent hover:text-accent-hover">
+            <GuidesLink className="text-accent hover:text-accent-hover">
               {t('login.docsLink')}
-            </Link>
+            </GuidesLink>
             {t('login.docsAfter')}
           </p>
         </div>

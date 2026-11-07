@@ -34,7 +34,7 @@ import { Markdown } from '../markdown/Markdown'
 import { useShell } from '../shell/shell-context'
 import { SuggestedSourcesButton } from './noticias/SuggestedSources'
 
-const route = getRouteApi('/_app/noticias')
+const route = getRouteApi('/_app/news')
 
 /** El resumen del día (Noticias.dc.html): generado en el ordenador con el modelo local. */
 function DigestCard({ hasItems }: { hasItems: boolean }) {

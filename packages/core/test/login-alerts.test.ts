@@ -148,7 +148,7 @@ describe('loginAlertMail', () => {
     expect(mail.text).toContain('9:30') // 08:30 UTC es 09:30 en Madrid (horario de invierno)
     expect(mail.text).toContain('IP: 203.0.113.7')
     expect(mail.text).toContain('ponle nombre')
-    expect(mail.text).toContain('https://app.example.com/ajustes/cuenta#ajuste-sesiones')
+    expect(mail.text).toContain('https://app.example.com/settings/account#ajuste-sesiones')
     expect(mail.html).toContain('lang="es"')
   })
 

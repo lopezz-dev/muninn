@@ -5,7 +5,7 @@ const clock = new Date('2026-10-21T10:00:00Z')
 
 async function setup() {
   const store = createMemoryStore(undefined, { now: () => clock.toISOString() })
-  const app = createMuninn(store, { now: () => clock, timeZone: 'UTC' })
+  const app = createMuninn(store, { now: () => clock, timeZone: 'UTC', locale: () => 'es' })
   const f = app.finance
   const checking = await f.accounts.create({ name: 'Imagin', kind: 'checking' })
   const savings = await f.accounts.create({ name: 'Hucha', kind: 'savings' })

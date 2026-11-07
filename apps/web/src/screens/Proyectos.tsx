@@ -126,7 +126,7 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 max-md:self-center">
               {/* El nombre lleva el enlace; su `::after` cubre la tarjeta para que se pueda tocar entera. */}
               <Link
-                to="/proyectos/$projectId"
+                to="/projects/$projectId"
                 params={{ projectId: project.id }}
                 className="truncate text-lg font-semibold after:absolute after:inset-0 md:text-md"
               >
@@ -189,7 +189,7 @@ function ProjectCard({ project, s, today }: { project: Project; s?: Stats; today
                   {s.next.map((task, i) => (
                     <Link
                       key={task.id}
-                      to="/proyectos/$projectId/tareas/$taskId"
+                      to="/projects/$projectId/tasks/$taskId"
                       params={{ projectId: project.id, taskId: task.id }}
                       className={cn(
                         'relative z-10 flex min-h-10 items-center gap-2.5 px-4 text-sm transition-colors hover:bg-surface-hover md:min-h-8',

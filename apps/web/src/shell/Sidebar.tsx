@@ -192,7 +192,7 @@ export function Sidebar({ className }: { className?: string }) {
             projects.map((p) => (
               <Link
                 key={p.id}
-                to="/proyectos/$projectId"
+                to="/projects/$projectId"
                 params={{ projectId: p.id }}
                 className="flex h-[30px] items-center gap-2.5 rounded-md px-2.5 text-sm text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-raised data-[status=active]:text-fg"
               >

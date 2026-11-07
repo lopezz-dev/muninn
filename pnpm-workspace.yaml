@@ -4,3 +4,7 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
+
+# @tiptap/markdown pide marked ^17; la app ya usa 18 y el lexer es compatible (ADR-0078): una sola copia en el chunk de Notas.
+overrides:
+  '@tiptap/markdown>marked': 18.1.1

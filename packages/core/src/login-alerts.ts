@@ -162,7 +162,7 @@ export function loginAlertMail(
     timeStyle: 'short',
     timeZone,
   })
-  const link = `${appUrl.replace(/\/+$/, '')}/ajustes/cuenta#ajuste-sesiones`
+  const link = `${appUrl.replace(/\/+$/, '')}/settings/account#ajuste-sesiones`
   const many = logins.length > 1
   const t = es
     ? {

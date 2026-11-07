@@ -1,7 +1,7 @@
 import type { Project } from '@muninn/core'
 import { cn } from '@muninn/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Outlet, useRouterState } from '@tanstack/react-router'
+import { Outlet, useRouter, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { accountSheet, isPhone, settingsViewOf, useAccountSheet } from '../lib/account-sheet'
@@ -11,7 +11,7 @@ import { registerLinkMenuHost, useLinkAsk } from '../lib/link-menu'
 import { useEnabledModules } from '../lib/modules'
 import { useMuninn } from '../lib/muninn'
 import { keys, settingsQuery } from '../lib/queries'
-import { sectionEnabled, sectionOf } from './nav'
+import { SECTIONS, type SectionId, sectionEnabled, sectionOf } from './nav'
 import { Sidebar } from './Sidebar'
 import { type NewTaskPreset, type ShellApi, ShellContext } from './shell-context'
 import { TabBar } from './TabBar'
@@ -41,9 +41,9 @@ const AccountSheet = lazy(() => import('./AccountSheet').then((m) => ({ default:
 const LinkMenu = lazy(() => import('./LinkMenu').then((m) => ({ default: m.LinkMenu })))
 
 /**
- * En el teléfono, un enlace a `/ajustes/<sección>` no cambia de pantalla: abre la hoja «Tu cuenta» en esa sección,
+ * En el teléfono, un enlace a `/settings/<sección>` no cambia de pantalla: abre la hoja «Tu cuenta» en esa sección,
  * encima de la que estás (ADR-0072). Se intercepta el clic antes que el `<Link>` (que respeta `defaultPrevented`);
- * lo que navega por código o entra de cero lo resuelve el `beforeLoad` de `/ajustes` en el router.
+ * lo que navega por código o entra de cero lo resuelve el `beforeLoad` de `/settings` en el router.
  */
 function useSettingsLinksInSheet() {
   useEffect(() => {
@@ -104,6 +104,28 @@ export function AppShell() {
   const reportOn =
     (settings?.preferences.morningReport as { enabled?: unknown } | undefined)?.enabled === true
   const tasksOn = sectionEnabled('projects', modules)
+  const router = useRouter()
+  // Las pantallas de las secciones activas, descargadas con el navegador ocioso (ADR-0084): la primera visita no espera.
+  const warmKey = modules ? [...modules].sort().join() : null
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `warmKey` resume `modules`; se repite solo si cambian.
+  useEffect(() => {
+    if (warmKey === null) return
+    const ids = (Object.keys(SECTIONS) as SectionId[]).filter((id) => sectionEnabled(id, modules))
+    // El precalentado va en su propio chunk: no suma al arranque.
+    let live = true
+    let cancel = () => {}
+    void import('../lib/warm-up').then((w) => {
+      if (live)
+        cancel = w.warmUp(
+          router,
+          ids.map((id) => SECTIONS[id].to),
+        )
+    })
+    return () => {
+      live = false
+      cancel()
+    }
+  }, [router, warmKey])
 
   const openPalette = useCallback((query = '') => setPalette({ open: true, query }), [])
   const openNewProject = useCallback(() => setProjectDialog({ open: true, loaded: true }), [])
@@ -154,7 +176,7 @@ export function AppShell() {
   }, [section])
 
   // Al llegar a otra pantalla (desde «Ir a», una pestaña o un enlace de dentro), la hoja «Tu cuenta» se cierra. Se mira
-  // la ruta ya resuelta: un enlace directo a `/ajustes/…` en el teléfono vuelve a la misma y no la cierra.
+  // la ruta ya resuelta: un enlace directo a `/settings/…` en el teléfono vuelve a la misma y no la cierra.
   const resolved = useRouterState({ select: (s) => s.resolvedLocation?.pathname })
   const prevResolved = useRef(resolved)
   useEffect(() => {
@@ -170,7 +192,7 @@ export function AppShell() {
 
   // El detalle de una tarea y una nota abierta ocupan toda la pantalla en móvil y traen sus propias barras.
   const immersive = useRouterState({
-    select: (s) => /^\/(?:proyectos\/[^/]+\/tareas|notas)\/./.test(s.location.pathname),
+    select: (s) => /^\/(?:projects\/[^/]+\/tasks|notes)\/./.test(s.location.pathname),
   })
 
   return (

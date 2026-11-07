@@ -4,6 +4,7 @@ import {
   createMemoryStore,
   createMuninn,
   DEFAULT_CATEGORIES,
+  defaultCategories,
   formatEuros,
   monthRange,
   NotFoundError,
@@ -14,7 +15,7 @@ import {
 let clock = new Date('2026-10-21T10:00:00Z')
 const setup = (actor?: 'user' | 'mcp') => {
   const store = createMemoryStore(undefined, { now: () => clock.toISOString() })
-  const app = createMuninn(store, { actor, now: () => clock, timeZone: 'UTC' })
+  const app = createMuninn(store, { actor, now: () => clock, timeZone: 'UTC', locale: () => 'es' })
   return { store, app, f: app.finance }
 }
 
@@ -123,7 +124,9 @@ describe('categorías', () => {
     ])
     // Los gastos no se mueven.
     expect((await f.categories.list({ kind: 'expense' })).map((c) => c.name)).toEqual(
-      DEFAULT_CATEGORIES.filter((c) => c.kind === 'expense').map((c) => c.name),
+      defaultCategories('es')
+        .filter((c) => c.kind === 'expense')
+        .map((c) => c.name),
     )
     const expenses = await f.categories.list({ kind: 'expense' })
     const first = expenses[0]

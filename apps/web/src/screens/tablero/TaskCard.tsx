@@ -89,7 +89,7 @@ export function SortableTaskCard({ task, progress, today, projectId, large }: Ta
   return (
     <Link
       ref={setNodeRef}
-      to="/proyectos/$projectId/tareas/$taskId"
+      to="/projects/$projectId/tasks/$taskId"
       params={{ projectId, taskId: task.id }}
       data-task-id={task.id}
       style={{ transform: CSS.Translate.toString(transform), transition }}

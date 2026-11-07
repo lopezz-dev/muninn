@@ -1,6 +1,7 @@
 import type { ModuleName } from '@muninn/core'
 import type { IconName } from '@muninn/ui'
-import { t } from '../i18n'
+import { currentLocale, t } from '../i18n'
+import { isDocsPath } from '../lib/doc-slugs'
 
 /**
  * Secciones de la app. El orden de `SIDEBAR_MAIN` y `DOCK_OPTIONS` sigue el diseño. `label` se lee al pintar, en el idioma
@@ -19,35 +20,35 @@ export const SECTIONS = {
       return t('nav.projects')
     },
     icon: 'projects',
-    to: '/proyectos',
+    to: '/projects',
   },
   notes: {
     get label() {
       return t('nav.notes')
     },
     icon: 'notes',
-    to: '/notas',
+    to: '/notes',
   },
   finance: {
     get label() {
       return t('nav.finance')
     },
     icon: 'finance',
-    to: '/finanzas',
+    to: '/finance',
   },
   assistant: {
     get label() {
       return t('nav.assistant')
     },
     icon: 'assistant',
-    to: '/asistente',
+    to: '/assistant',
   },
   news: {
     get label() {
       return t('nav.news')
     },
     icon: 'news',
-    to: '/noticias',
+    to: '/news',
   },
   github: {
     get label() {
@@ -61,14 +62,17 @@ export const SECTIONS = {
       return t('nav.docsLong')
     },
     icon: 'docs',
-    to: '/documentacion',
+    /** La ayuda en el idioma de la interfaz (ADR-0077): `/docs` o `/es/docs`. */
+    get to(): '/docs' | '/es/docs' {
+      return currentLocale() === 'es' ? '/es/docs' : '/docs'
+    },
   },
   settings: {
     get label() {
       return t('nav.settings')
     },
     icon: 'settings',
-    to: '/ajustes',
+    to: '/settings',
   },
 } as const satisfies Record<string, { label: string; icon: IconName; to: string }>
 
@@ -84,8 +88,9 @@ export const SIDEBAR_MAIN: SectionId[] = [
   'github',
 ]
 
-/** Sección a la que pertenece una ruta (`/proyectos/abc` → `projects`). */
+/** Sección a la que pertenece una ruta (`/projects/abc` → `projects`). */
 export function sectionOf(pathname: string): SectionId | null {
+  if (isDocsPath(pathname)) return 'docs'
   const first = `/${pathname.split('/').filter(Boolean)[0] ?? ''}`
   for (const [id, s] of Object.entries(SECTIONS)) {
     if (s.to === first) return id as SectionId

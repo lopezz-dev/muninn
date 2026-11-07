@@ -61,17 +61,28 @@
 - `CommandPalette` no viaja en el JS del arranque: `AppShell` lo monta dentro de `<Suspense>` y el navegador lo pide en cuanto
   se pinta el shell. Si pulsas ⌘K antes de que llegue, se abre al terminar de cargar. No lo importes de forma estática desde el shell.
 
-### En el teléfono, `/ajustes/…` no es una pantalla: abre la hoja «Tu cuenta»
+### En el teléfono, `/settings/…` no es una pantalla: abre la hoja «Tu cuenta»
 
 - **Síntoma:** un enlace a un ajuste en el móvil abre la hoja y se cierra al instante; o al entrar de cero por
-  `/ajustes/notificaciones` se ve Inicio sin la hoja; o el botón atrás repite la misma pantalla.
+  `/settings/notifications` se ve Inicio sin la hoja; o el botón atrás repite la misma pantalla.
 - **Causa:** la hoja no es una ruta ([ADR-0072](../adr/0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md)): su estado vive en
   `lib/account-sheet.ts` y `AppShell` la cierra cuando cambia la ruta **resuelta** (`resolvedLocation`). Al arrancar, esa ruta pasa de
-  `undefined` a `/`: si eso contara como «cambio», cerraría la hoja que acaba de abrir el `beforeLoad`. Y un `navigate()` a `/ajustes/…`
+  `undefined` a `/`: si eso contara como «cambio», cerraría la hoja que acaba de abrir el `beforeLoad`. Y un `navigate()` a `/settings/…`
   ya ha empujado la entrada al historial cuando el `beforeLoad` la redirige a la pantalla de antes, así que queda repetida.
 - **Solución:** los enlaces a Ajustes, siempre con `<Link>` (un `<a>` de verdad): el shell intercepta el clic en el teléfono antes que el
-  router y abre la hoja sin tocar el historial. Evita `navigate({ to: '/ajustes/…' })` en lo que se use en el móvil; si hace falta, llama
+  router y abre la hoja sin tocar el historial. Evita `navigate({ to: '/settings/…' })` en lo que se use en el móvil; si hace falta, llama
   a `accountSheet.open(sección)` cuando `isPhone()`. El primer valor de la ruta resuelta no cierra la hoja (`AppShell`).
+
+### Una pantalla nueva declara sus namespaces en `screen()`
+
+- **Síntoma:** la primera vez que abres una pantalla tras arrancar la app (o tras actualizarla), el contenido desaparece un instante y
+  aparece de golpe unos 300 ms después. Las siguientes veces, no.
+- **Causa:** `useTranslation('x')` suspende si el namespace `x` aún no está cargado. Si eso pasa con la pantalla ya montada, React
+  enseña el *fallback* del router (vacío) y la revela con su retardo de ~300 ms. El precache del service worker no influye.
+- **Solución:** declara en `screen(() => import(…), 'Nombre', [namespaces])` (`router.tsx`) todos los que use la pantalla, también los
+  de sus componentes (`task-meta` usa `task`, `TaskBody` usa `home`…): se piden con el chunk y el router no la pinta hasta tenerlos.
+  Lo que no es una ruta (diálogos, buscador) lo cubre el precalentado de `lib/warm-up.ts`.
+- **Ref:** [ADR-0084](../adr/0084-pantallas-con-sus-textos-y-precalentado.md)
 
 ### `@muninn/core` se importa como TypeScript fuente
 
@@ -95,18 +106,18 @@
 
 ### Los ids de ruta llevan el prefijo `/_app`
 
-- **Síntoma:** `Argument of type '"/asistente"' is not assignable…` en `getRouteApi`.
+- **Síntoma:** `Argument of type '"/assistant"' is not assignable…` en `getRouteApi`.
 - **Causa:** las pantallas cuelgan de la ruta de layout `_app` (sin path), y su id incluye el del padre.
-- **Solución:** `getRouteApi('/_app/asistente')`. En `<Link to>` y `navigate` se sigue usando la ruta
-  (`/asistente`): el prefijo es solo del id.
+- **Solución:** `getRouteApi('/_app/assistant')`. En `<Link to>` y `navigate` se sigue usando la ruta
+  (`/assistant`): el prefijo es solo del id.
 - **Ref:** [ADR-0022](../adr/0022-auth-y-sesion.md)
 
 ### Rutas tipadas: los parámetros van aparte
 
-- **Síntoma:** `Type '"/ajustes/apariencia"' is not assignable to type …` al compilar.
+- **Síntoma:** `Type '"/settings/appearance"' is not assignable to type …` al compilar.
 - **Causa:** TanStack Router solo acepta rutas registradas. Las que tienen parámetros se escriben con su
   plantilla.
-- **Solución:** `<Link to="/ajustes/$seccion" params={{ seccion: 'apariencia' }}>`. Una sección de Ajustes
+- **Solución:** `<Link to="/settings/$seccion" params={{ seccion: 'appearance' }}>`. Una sección de Ajustes
   nueva se añade a `screens/ajustes/sections.ts`: el `beforeLoad` de la ruta da «no encontrado» a lo demás.
 
 ### Grupos de chunks: solo librerías del shell
@@ -212,7 +223,7 @@
 
 ### Rutas profundas y recargas: hace falta *fallback* a `index.html`
 
-- **Síntoma:** recargar `/proyectos/abc` da 404 en el servidor.
+- **Síntoma:** recargar `/projects/abc` da 404 en el servidor.
 - **Causa:** el router usa el historial del navegador; esas rutas no existen como ficheros.
 - **Solución:** el hosting de la PWA debe reescribir cualquier ruta desconocida a `index.html` (por ejemplo,
   en Vercel, un `rewrites` a `/`). `vite dev` y `vite preview` ya lo hacen. En Tauri, comprueba al recargar una ruta
@@ -402,7 +413,7 @@
 ### `useMatch` con `shouldThrow: false` para saber si hay una tarea abierta
 
 - El tablero (`Tablero.tsx`) es la ruta padre del detalle y necesita saber si hay una tarea abierta: `useMatch({ from:
-  '/_app/proyectos/$projectId/tareas/$taskId', shouldThrow: false })`. En móvil, con tarea abierta, el tablero no se pinta
+  '/_app/projects/$projectId/tasks/$taskId', shouldThrow: false })`. En móvil, con tarea abierta, el tablero no se pinta
   (solo `<Outlet />`); en escritorio se pinta debajo del panel.
 
 ### Las tareas de «Hechas hoy» incluyen archivadas
@@ -441,7 +452,51 @@
 - **Solución:** `NotaDetalle` monta `<NoteEditor key={noteId}>`: cada nota tiene su propio editor, que guarda lo pendiente
   al desmontarse (`useNoteDraft`), al ocultarse la pestaña y al salir del campo. Todas las escrituras de una nota van en
   cola (`serial('note:<id>')`, `lib/note-actions.ts`). El autoguardado **no** usa `notify`: el estado «Guardado» está en la barra.
-- **Ref:** [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md)
+- **Ref:** [ADR-0026](../adr/0026-markdown-marked-a-react-y-textarea.md), [ADR-0078](../adr/0078-editor-de-notas-en-sitio-con-tiptap.md)
+
+### Notas: TipTap necesita su propia instancia de marked
+
+- **Síntoma:** al abrir Notas, las listas de tareas desaparecen del texto que ve el core (`noteText`): no se puede comentar una tarea, y
+  los subrayados de los comentarios no casan. También podría cambiar cómo pinta `Markdown.tsx` la ayuda o el asistente.
+- **Causa:** `@tiptap/markdown` registra sus tokenizadores con `marked.use()`. Con la instancia global, eso cambia el lexer de toda la
+  app, también el que usan el core y `Markdown.tsx`.
+- **Solución:** `rich/extensions.ts` le da `new Marked()`. Hay un test que comprueba que `marked.defaults.extensions` sigue a `null`
+  tras abrir el editor. `@tiptap/markdown` pide `marked ^17`: el `override` de `pnpm-workspace.yaml` le da el 18 de la app.
+
+### Notas: el Markdown que sale del editor
+
+- **Síntoma:** una nota guardada con `&nbsp;` sueltos o con huecos de tres líneas; o una imagen o un `<div>` que pierden su URL o sus
+  etiquetas al editar la nota.
+- **Causa:** TipTap marca así los párrafos vacíos seguidos, y no tiene nodo para imágenes ni HTML.
+- **Solución:** `tidyMarkdown` (`rich/tidy.ts`) limpia la salida fuera de los bloques de código; `raw-nodes.ts` guarda imágenes y HTML
+  en bloque en nodos atómicos con su Markdown original. El HTML en línea que el esquema entiende (`<b>`) sí pasa a su marca. Y solo se
+  guarda si la persona cambia algo: abrir una nota nunca la reescribe. Un cambio de fuera entra con `addToHistory: false`, o ⌘Z
+  devolvería la versión anterior entera.
+
+### Notas: la selección que se ve manda sobre la de ProseMirror
+
+- **Síntoma:** tras un doble clic, la palabra se ve seleccionada pero la barra flotante no sale, ⌘⌥M no comenta y la negrita va a otro
+  sitio. Pasa sobre todo después de comentar (el foco estuvo en el recuadro del comentario).
+- **Causa:** ProseMirror no siempre lee la selección que deja el navegador con un doble clic, y su estado se queda colapsado.
+- **Solución:** `currentSelection` (`rich/RichNote.tsx`) lee la del documento y, si no coincide, se la pasa a ProseMirror. Al
+  comentar, se parte también de la del documento (`readSelection`).
+
+### Notas: `commands.focus` llega tarde
+
+- **Síntoma:** al pulsar Intro en el título y escribir enseguida, la primera letra acaba en el título.
+- **Causa:** el comando `focus` de TipTap espera un `requestAnimationFrame`.
+- **Solución:** para pasar el foco al texto en el acto, `setTextSelection` y `editor.view.focus()`, que es síncrono.
+
+### Comentarios: el texto del editor y el del core tienen que ser el mismo
+
+- **Síntoma:** un comentario que se crea bien pero no se subraya, o se subraya en otro sitio.
+- **Causa:** la interfaz manda la cita con su contexto sacados del texto visible del editor (`comments/text-map.ts`), y el core la busca
+  en `noteText(content)`. Si las dos proyecciones difieren, el contexto no casa.
+- **Solución:** `text-map.ts` recorre el documento igual que `Node.textBetween` (bloques con `
+`, `leafText` para los nodos atómicos)
+  y `test/note-comments-text.test.ts` compara las dos con el corpus de notas. Si añades un nodo al editor, dale su `leafText` y
+  amplía el corpus. Antes de comentar se guarda lo pendiente (`flush`): el core busca la cita en lo guardado.
+- **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md), [gotchas/core](core.md)
 
 ### Editar un `textarea` por código sin perder el deshacer
 
@@ -504,7 +559,7 @@
   real refresca ese prefijo entero (`scope` `finance`) y espera a que se vacíe la cola. Lo optimista (`cacheTransaction`, `cacheBalances`)
   calcula el saldo igual que la vista del servidor (`applyToBalances`, con tests); si cambias la regla del saldo, cambia las dos.
 - **Ojo:** la lista del mes se filtra en el navegador (`filterTransactions`): el core solo recibe el mes. La pestaña va en la URL
-  (`/finanzas?vista=movimientos`); el mes, no (vuelve al actual al entrar).
+  (`/finance?view=transactions`); el mes, no (vuelve al actual al entrar).
 
 ### Publicar la PWA y activar Web Push (pasos manuales)
 
@@ -715,16 +770,16 @@
 
 ### Guías prerenderizadas: lo que hay que saber
 
-- **Síntoma:** en Vercel, `/documentacion/notas` sale como la app vacía o con 404; o en `pnpm preview` se ve la app y no el HTML
+- **Síntoma:** en Vercel, `/docs/notas` sale como la app vacía o con 404; o en `pnpm preview` se ve la app y no el HTML
   prerenderizado; o el texto de una guía aparece un instante sin estilo antes de pintarse la pantalla.
 - **Causa:** el plugin `vite/seo.ts` escribe, al cerrar el build, `dist/documentacion/<guía>/index.html` (y `robots.txt`,
   `sitemap.xml` y `404.html`). Vercel los sirve por las *rewrites* de `vercel.json`; `vite preview` no resuelve
-  `/documentacion/notas` sin la barra final y cae en el `index.html` normal, y el *service worker* siempre sirve el `index.html`
+  `/docs/notas` sin la barra final y cae en el `index.html` normal, y el *service worker* siempre sirve el `index.html`
   (las páginas prerenderizadas no se precachean, a propósito). El texto prerenderizado está dentro de `#root` y React lo
   sustituye al arrancar.
 - **Solución:**
   - Para ver el HTML que lee un buscador, pídelo sin *service worker*: `curl -s http://localhost:4173/documentacion/notas/`.
-  - Si cambias la ruta `/documentacion`, cambia también las *rewrites* de `vercel.json`, el `globIgnores` del PWA
+  - Si cambias la ruta `/docs`, cambia también las *rewrites* de `vercel.json`, el `globIgnores` del PWA
     (`vite.config.ts`) e `isPublicPath` (`router.tsx`).
   - Las metas que cambia el prerender (`description`, `og:*`, `twitter:title`, `twitter:description`) tienen que seguir en
     `index.html`: si falta una, el build falla con «index.html no tiene la meta …».
@@ -867,4 +922,47 @@
     («Módulo activado: Notas»).
   - La preferencia vive en `preferences.locale` de la cuenta (`auto`, `en` o `es`) y en `localStorage['muninn.locale']`
     para el primer pintado (`lib/locale-pref.ts`, como la apariencia).
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)
+
+### Rutas en inglés: las antiguas en español se redirigen, no se borran
+
+- **Síntoma:** un enlace viejo (`/proyectos/…`, `/ajustes/cuenta`, `/finanzas?vista=suscripciones`) da «No encontrado»; o una
+  sección de Ajustes nueva no abre desde un enlace antiguo.
+- **Causa:** desde la fase 3 de ADR-0077 las rutas privadas están en inglés (`/projects/$projectId/tasks/$taskId`, `/notes`,
+  `/finance?view=…`, `/assistant`, `/news`, `/docs`, `/settings/<sección>`, `/dev/foundations`). Pero las antiguas siguen llegando:
+  enlaces dentro de notas y tareas, la PWA instalada, avisos push ya enviados y el correo del aviso de dispositivo nuevo.
+- **Solución:**
+  - El `beforeLoad` de la raíz del router las pasa por `legacyHref` (`lib/legacy-routes.ts`, con tests) antes de nada: traduce la
+    sección, `tareas` → `tasks`, el slug de Ajustes (`LEGACY_SETTINGS_SECTIONS`) y `?vista=` → `?view=`, y conserva búsqueda y ancla.
+    No quites una entrada de ahí aunque ya no la use nadie en el código.
+  - Los ids de las secciones de Ajustes son el slug de la ruta y la clave de `sections.*`/`docs.*` en `settings` (en inglés). Los
+    ids de los grupos (`tu`, `espacio`…) y las anclas (`#ajuste-sesiones`) no van en la ruta y siguen igual.
+  - Las guías prerenderizadas viven en `dist/docs/`: Vercel redirige `/documentacion/*` con 301 (`vercel.json`). Los slugs de las
+    guías siguen en español hasta la fase 4.
+  - El core genera dos enlaces de la app (avisos push y el correo de dispositivo nuevo): tras cambiarlos, recompila `build:edge` y
+    redespliega `push` y `security`. Hasta entonces mandan la ruta vieja, que redirige.
+- **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)
+
+### Guías en dos idiomas: el idioma lo pone la URL, y se emparejan por número
+
+- **Síntoma:** un enlace a una guía abre «Esta guía no existe»; un enlace entre guías lleva al principio y no al apartado; una
+  guía nueva no sale en un idioma; o con la app en inglés se abre una guía en español.
+- **Causa:** desde la fase 4 de ADR-0077 cada guía está en `docs/user/en/NN-slug.md` (en `/docs/slug`) y en
+  `docs/user/es/NN-slug.md` (en `/es/docs/slug`), con un slug distinto en cada idioma. El idioma de la guía lo dice la URL, no el
+  de la interfaz; las anclas salen del título traducido, así que tampoco coinciden entre idiomas.
+- **Solución:**
+  - Desde fuera de la Documentación, enlaza con `<GuideLink doc="clave">` (o `<GuidesLink>` para la portada) de
+    `components/GuideLink.tsx`: abre la guía en el idioma de la interfaz y no carga el texto de las guías. Un apartado distinto en
+    cada idioma va como `hash={{ en: '…', es: '…' }}`. Nunca `to="/docs/$pagina"` con un slug a mano.
+  - Dentro de la Documentación, `DocRouteLink` y `useDocs()` / `useDocLang()` de `screens/docs/content.tsx`.
+  - Una guía nueva: su número y sus dos slugs en `lib/doc-slugs.ts` y los dos ficheros. `test/doc-slugs.test.ts` y
+    `test/docs.test.ts` comprueban que coinciden, que tienen los mismos metadatos y apartados, y que cada enlace y cada ancla
+    existen (también las de las secciones de Ajustes).
+  - Un slug del otro idioma (`/docs/notas`) redirige a su ruta en el `beforeLoad` de la guía; `/documentacion/…` (antes de la
+    fase 3) va a `/es/docs/…`, en la app y en Vercel.
+  - Sin sesión, la interfaz cambia al idioma de la URL al entrar en la ayuda (el `beforeLoad` de `_app`), sin guardarlo. El aviso
+    «Esta página también está en español» (`shell/DocsLangNotice.tsx`) solo sale sin sesión, en el idioma del navegador, y se
+    recuerda en `localStorage['muninn.docsLangNotice']`.
+  - El prerender (`vite/seo.ts`) escribe `dist/docs/…` y `dist/es/docs/…` con `lang`, `og:locale`, `hreflang` (con `x-default` en
+    inglés) y el `<noscript>` de cada idioma; `index.html`, la plantilla, está en inglés.
 - **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)

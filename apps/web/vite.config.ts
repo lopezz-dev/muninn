@@ -21,7 +21,10 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       // Avisos Web Push (ADR-0040): `public/push-sw.js` solo escucha `push` y `notificationclick`.
       // Las guías prerenderizadas y el 404 son para quien llega sin la app: dentro, el router pinta lo mismo.
-      workbox: { importScripts: ['push-sw.js'], globIgnores: ['documentacion/**', '404.html'] },
+      workbox: {
+        importScripts: ['push-sw.js'],
+        globIgnores: ['docs/**', 'es/docs/**', '404.html'],
+      },
       manifest: {
         id: '/',
         scope: '/',

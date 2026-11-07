@@ -25,7 +25,7 @@ import { archiveTask, completeTask, moveTask, reopenTask } from '../lib/task-act
 import { useIsDesktop } from '../lib/use-media'
 import { TaskBody } from './tarea/TaskBody'
 
-const route = getRouteApi('/_app/proyectos/$projectId/tareas/$taskId')
+const route = getRouteApi('/_app/projects/$projectId/tasks/$taskId')
 
 /**
  * Detalle de una tarea (Tarea.dc.html y M-Tarea.dc.html). Una sola ruta con dos presentaciones: panel
@@ -47,7 +47,7 @@ export function TareaDetalle() {
     if (task) document.title = `${task.title} · Muninn`
   }, [task])
 
-  const close = () => navigate({ to: '/proyectos/$projectId', params: { projectId } })
+  const close = () => navigate({ to: '/projects/$projectId', params: { projectId } })
 
   if (!board.data) return null
   if (!task) {
@@ -131,7 +131,7 @@ export function TareaDetalle() {
       <header className="flex items-center gap-2">
         <Button asChild variant="secondary" className="size-11 px-0">
           <Link
-            to="/proyectos/$projectId"
+            to="/projects/$projectId"
             params={{ projectId }}
             aria-label={t('detail.backToBoard')}
           >
@@ -187,7 +187,7 @@ function Missing({ projectId }: { projectId: string }) {
       title={t('detail.notFoundTitle')}
       actions={
         <Button asChild variant="primary">
-          <Link to="/proyectos/$projectId" params={{ projectId }}>
+          <Link to="/projects/$projectId" params={{ projectId }}>
             {t('detail.backToBoard')}
           </Link>
         </Button>
