@@ -5,7 +5,7 @@ import type { settings as en } from '../../i18n/locales/en/settings'
 import type { DocKey as GuideKey } from '../../lib/doc-slugs'
 
 export interface SettingsSection {
-  id: string
+  id: SectionKey
   label: string
   icon: AppIconName
   /** Una línea bajo el título de la sección: para qué es. */
@@ -31,7 +31,8 @@ export const SETTINGS_GROUPS = GROUP_IDS.map((id) => ({
   },
 }))
 
-type SectionKey = keyof typeof en.sections
+/** Los ids de las secciones: el slug de la ruta (`/settings/appearance`). */
+export type SectionKey = keyof typeof en.sections
 type DocKey = keyof typeof en.docs
 
 /**

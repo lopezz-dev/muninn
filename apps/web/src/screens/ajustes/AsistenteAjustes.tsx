@@ -174,7 +174,7 @@ export function InformeAjustes() {
   const navigate = useNavigate()
   const modules = useEnabledModules()
   const prefs = reportPrefs(useQuery(settingsQuery(m)).data)
-  const changed = bySection(useChangedPrefs()).informe ?? []
+  const changed = bySection(useChangedPrefs()).report ?? []
   const [time, setTime] = useState(prefs.time)
   const [busy, setBusy] = useState(false)
   useEffect(() => setTime(prefs.time), [prefs.time])
