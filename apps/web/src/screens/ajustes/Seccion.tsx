@@ -33,7 +33,12 @@ import { Modulos } from './Modulos'
 import { Notificaciones } from './Notificaciones'
 import { SegundoFactor } from './SegundoFactor'
 import { AvisoDispositivoNuevo, Sesiones } from './Seguridad'
-import { resetSectionLabel, type SettingsSection, settingsSection } from './sections'
+import {
+  resetSectionLabel,
+  type SectionKey,
+  type SettingsSection,
+  settingsSection,
+} from './sections'
 import { HelpAside, PrefGroup, PrefRow, SectionHeader, useFlashHash } from './ui'
 
 const route = getRouteApi('/_app/settings/$seccion')
@@ -54,7 +59,7 @@ const providerLabel = (provider: string) =>
       : provider
 
 /** Para resetear desde una fila o desde la cabecera de la sección. */
-export function useReset(section: string) {
+export function useReset(section: SectionKey) {
   const m = useMuninn()
   const qc = useQueryClient()
   const changed = bySection(useChangedPrefs())[section] ?? []
@@ -379,18 +384,19 @@ function Acerca() {
   )
 }
 
-const BODY: Record<string, () => ReactNode> = {
-  cuenta: () => <Cuenta />,
-  apariencia: () => <Apariencia />,
-  barra: () => <Barra />,
-  atajos: () => <Atajos />,
-  modulos: () => <Modulos />,
-  notificaciones: () => <Notificaciones />,
-  asistente: () => <AsistenteAjustes />,
-  informe: () => <InformeAjustes />,
-  integraciones: () => <Integraciones />,
-  datos: () => <Datos />,
-  acerca: () => <Acerca />,
+// Con los ids de `sections.ts` como tipo: si uno cambia de nombre, falla el typecheck en vez de quedar la sección vacía.
+const BODY: Partial<Record<SectionKey, () => ReactNode>> = {
+  account: () => <Cuenta />,
+  appearance: () => <Apariencia />,
+  dock: () => <Barra />,
+  shortcuts: () => <Atajos />,
+  modules: () => <Modulos />,
+  notifications: () => <Notificaciones />,
+  assistant: () => <AsistenteAjustes />,
+  report: () => <InformeAjustes />,
+  integrations: () => <Integraciones />,
+  data: () => <Datos />,
+  about: () => <Acerca />,
 }
 
 /** El contenido de una sección, sin su cabecera: lo comparten la pantalla de Ajustes y la hoja «Tu cuenta» del móvil. */

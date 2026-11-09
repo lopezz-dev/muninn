@@ -924,6 +924,17 @@
     para el primer pintado (`lib/locale-pref.ts`, como la apariencia).
 - **Ref:** [ADR-0077](../adr/0077-i18n-ingles-por-defecto-con-i18next.md)
 
+### Ajustes: la sección sale vacía, sin error
+
+- **Síntoma:** en Ajustes (y en la hoja «Tu cuenta» del móvil) se ven la cabecera, el menú y la columna de ayuda, pero no
+  el contenido de la sección. Nada en consola. Pasó en v0.11.0, al pasar los ids de las secciones a inglés.
+- **Causa:** `SectionContent` (`screens/ajustes/Seccion.tsx`) elige qué pintar con `BODY[section.id]`; si la clave no
+  coincide con el id de `sections.ts`, devuelve `null` en silencio. Igual con `bySection(…)[id]`: la marca de «cambiado» y
+  «Restablecer» desaparecen sin más.
+- **Solución:** `BODY`, `PREF_SECTION`, `bySection` y `useReset` van tipados con `SectionKey` (las claves de
+  `sections.*` en `locales/en/settings.ts`): renombrar un id rompe el typecheck en vez de vaciar la pantalla. No los
+  vuelvas a tipar con `string`.
+
 ### Rutas en inglés: las antiguas en español se redirigen, no se borran
 
 - **Síntoma:** un enlace viejo (`/proyectos/…`, `/ajustes/cuenta`, `/finanzas?vista=suscripciones`) da «No encontrado»; o una

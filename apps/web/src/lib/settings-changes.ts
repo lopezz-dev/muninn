@@ -3,6 +3,7 @@ import type { Appearance } from '@muninn/ui'
 import { type QueryClient, useQuery } from '@tanstack/react-query'
 import { t } from '../i18n'
 import type { LocalePref } from '../i18n/locale'
+import type { SectionKey } from '../screens/ajustes/sections'
 import {
   appearanceStore,
   defaultAppearance,
@@ -27,7 +28,7 @@ import { settingsQuery } from './queries'
 export type PrefKey = 'glass' | 'accent' | 'locale' | 'reportEnabled' | 'reportTime'
 
 /** Sección de Ajustes de cada preferencia. */
-export const PREF_SECTION: Record<PrefKey, 'appearance' | 'report'> = {
+export const PREF_SECTION: Record<PrefKey, SectionKey> = {
   glass: 'appearance',
   accent: 'appearance',
   locale: 'appearance',
@@ -52,9 +53,9 @@ export function changedPrefs(
   return out
 }
 
-/** Las preferencias cambiadas, agrupadas por sección (`{ apariencia: ['accent'] }`). */
-export function bySection(keys: PrefKey[]): Partial<Record<string, PrefKey[]>> {
-  const out: Partial<Record<string, PrefKey[]>> = {}
+/** Las preferencias cambiadas, agrupadas por sección (`{ appearance: ['accent'] }`). */
+export function bySection(keys: PrefKey[]): Partial<Record<SectionKey, PrefKey[]>> {
+  const out: Partial<Record<SectionKey, PrefKey[]>> = {}
   for (const k of keys) {
     const s = PREF_SECTION[k]
     out[s] = [...(out[s] ?? []), k]
