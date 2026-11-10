@@ -737,6 +737,46 @@ export type UpdateNewsSourceInput = z.input<typeof updateNewsSourceInput>
 export type NewsQuery = z.input<typeof newsQuery>
 export type SaveDigestInput = z.input<typeof saveDigestInput>
 
+// ─── Divisas (ADR-0085) ─────────────────────────────────────────────────────
+
+/** ISO 4217 en mayúsculas (`USD`, `GBP`…). Admite minúsculas y espacios al escribirla. */
+export const currencyCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z]{3}$/, 'Tiene que ser un código ISO 4217 de tres letras (USD, GBP…)')
+
+/** Fuente de un tipo de cambio: hoy solo el BCE. */
+export const fxSource = z.enum(['ecb'])
+export type FxSource = z.infer<typeof fxSource>
+
+/**
+ * Tipo de cambio de referencia de un día (tabla `fx_rates`, compartida): **unidades de la divisa por 1 EUR**, como lo
+ * publica el BCE, en **millonésimas** (1 EUR = 1,0876 USD → `1087600`). Para pasar a euros se divide: usa `convert`.
+ */
+export interface FxRate {
+  currency: string
+  date: string
+  rate: number
+  source: FxSource
+}
+
+export const fxRateQuery = z.object({
+  currency: currencyCode,
+  /** El de ese día o, si no hay (fin de semana, festivo), el último anterior. Por defecto, hoy. */
+  date: isoDate.optional(),
+})
+
+export const fxSeriesQuery = z
+  .object({ currency: currencyCode, from: isoDate, to: isoDate })
+  .refine((q) => q.from <= q.to, {
+    message: '`from` no puede ser posterior a `to`',
+    path: ['from'],
+  })
+
+export type FxRateQuery = z.input<typeof fxRateQuery>
+export type FxSeriesQuery = z.input<typeof fxSeriesQuery>
+
 // ─── Avisos push (ADR-0040) ─────────────────────────────────────────────────
 
 /** Un dispositivo que aceptó los avisos: la suscripción Web Push de su navegador. */

@@ -371,6 +371,9 @@ del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo 
     `text-4xl`, botones y chips en píldora, `Card` sin borde, la barra del teléfono en cápsula y una pasada por las pantallas en
     la demo. El paso 2 (rehacer el resto de pantallas), con el rediseño responsive
   - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
+    - [x] Código: migración `20261110120000_fx_rates`, función `fx` (sin desplegar), `m.fx` (`rate`, `series`, `convert`) con tipos
+      fijos en la demo, y `fx_rate` en el catálogo del MCP y el asistente
+    - [ ] Aplicar la migración, desplegar `fx` con su cron y redesplegar `mcp`: [gotchas/db](gotchas/db.md#divisas-tipos-del-bce-con-la-edge-function-pasos-manuales)
   - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
   - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests
   - [ ] La cuenta de inversión vale su cartera: valor, aportado y ganancia en Resumen y Cuentas

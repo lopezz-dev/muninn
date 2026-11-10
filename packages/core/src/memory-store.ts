@@ -1,3 +1,4 @@
+import { createDemoFxRates, createFixedFxRates } from './fx'
 import { createMemoryAccount, type MemoryAccountSeed } from './memory-account'
 import type {
   Activity,
@@ -5,6 +6,7 @@ import type {
   ChecklistItem,
   FinanceAccount,
   FinanceCategory,
+  FxRate,
   NewsDigest,
   NewsItem,
   NewsSource,
@@ -163,6 +165,11 @@ export function createMemoryStore(
     now?: () => string
     /** Sesiones de partida de la seguridad simulada (tests y demo). */
     account?: MemoryAccountSeed
+    /**
+     * Tipos de cambio fijos (tests). Sin ellos, los de la demo (`demoFxRate`), hasta hoy. No van en el snapshot: son
+     * un dato de referencia, no del usuario, y el fichero del MCP no los guarda.
+     */
+    fxRates?: FxRate[]
   } = {},
 ): Store & { snapshot(): MemorySnapshot } {
   const now = options.now ?? (() => new Date().toISOString())
@@ -322,6 +329,9 @@ export function createMemoryStore(
     projectImages,
     account: accountState,
     activity: activityLog,
+    fxRates: options.fxRates
+      ? createFixedFxRates(options.fxRates)
+      : createDemoFxRates(() => now().slice(0, 10)),
     newsSources: new MemoryCollection<NewsSource, { includeArchived?: boolean }>(
       'Fuente',
       newsSources,

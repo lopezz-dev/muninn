@@ -219,6 +219,22 @@
   bloquee rangos privados (ADR nuevo).
 - **Ref:** [ADR-0042](../adr/0042-noticias-rss-con-descarga-en-servidor.md)
 
+### Divisas: `rate` va «por 1 EUR», y para pasar a euros se divide
+
+- **Síntoma:** 100 $ salen como 112,14 € en vez de 89,17 €, o un importe grande en millonésimas pierde el último dígito.
+- **Causa:** los tipos del BCE son **unidades de la divisa por 1 EUR** (1 EUR = 1,1214 USD), en millonésimas
+  ([ADR-0085](../adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md)). Pasar a euros es dividir, no multiplicar. Y
+  cantidad × precio o importe × tipo, los dos en millonésimas, se salen de 2^53 enseguida.
+- **Solución:** usa `m.fx.convert(importe, de, a, fecha)` o, sin store, `convertCents`/`toEuroCents` de `fx.ts`: hacen el producto con
+  `BigInt` y redondean **una vez** (`divRound`, el medio lejos de cero). Para leer un tipo escrito (`'1,0876'` no; `'1.0876'` sí), usa
+  `millionthsFromDecimal`, que no pasa por coma flotante. `safeNumber` lanza antes que devolver un número redondeado sin avisar.
+- **Ojo:** `m.fx.rate` devuelve el del día **o el último anterior**, con su fecha: enséñala. `convert` devuelve `null` si falta alguna de
+  las dos divisas (el BCE no publica TWD, por ejemplo): no la cambies por 0 ni por el tipo de otro día lejano. El euro no tiene serie
+  (`series` devuelve `[]`).
+- **Demo y tests:** el store de memoria (y el de fichero, que se apoya en él) trae tipos generados (`demoFxRate`, deterministas,
+  ±5 % de los del BCE del 10-11-2026, sin fines de semana ni los festivos fijos, nunca del futuro). En un test, pasa los tuyos con
+  `createMemoryStore(undefined, { fxRates })` y fija `now`. No van en el snapshot: el fichero del MCP no guarda tipos.
+
 ### Borrar en el store de memoria: la cascada es a mano
 
 - **Síntoma:** en la demo o en los tests, tras eliminar una tarea quedan subtareas huérfanas, notas que apuntan a una tarea que no

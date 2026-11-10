@@ -3,6 +3,7 @@ import type { LoginRecord, PendingLogin } from './login-alerts'
 import type {
   AccountSession,
   Activity,
+  FxRate,
   GithubRepoSummary,
   GithubSyncScope,
   NewsDigest,
@@ -22,6 +23,7 @@ import {
   type CategoryStoreQuery,
   type Collection,
   type ColumnStoreQuery,
+  type FxRateStore,
   type GithubOutbox,
   type NewRow,
   type NewsDigestStore,
@@ -434,6 +436,39 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       return fromRow<NewsDigest>(data)
     },
   }
+  // Tipos de cambio (ADR-0085): tabla compartida, sin `owner_id`; la lee cualquier sesión y solo escribe la función `fx`.
+  const fxRates: FxRateStore = {
+    async latest(currency, onOrBefore) {
+      const { data, error } = await client
+        .from('fx_rates')
+        .select(FX_COLUMNS)
+        .eq('currency', currency)
+        .lte('date', onOrBefore)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data ? fxRow(data) : null
+    },
+    async list({ currency, from, to }) {
+      // Cinco años de un día laborable son unas 1300 filas: por páginas, como los movimientos.
+      const rows: Row[] = []
+      for (let start = 0; ; start += PAGE) {
+        const { data, error } = await client
+          .from('fx_rates')
+          .select(FX_COLUMNS)
+          .eq('currency', currency)
+          .gte('date', from)
+          .lte('date', to)
+          .order('date')
+          .range(start, start + PAGE - 1)
+        if (error) throw error
+        rows.push(...(data as Row[]))
+        if ((data as Row[]).length < PAGE) break
+      }
+      return rows.map(fxRow)
+    },
+  }
   // La descarga la hace la Edge Function `news` (POST /news/fetch con la sesión del usuario: solo sus fuentes).
   const newsFeeds = {
     async fetchNow() {
@@ -694,6 +729,7 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     newsItems,
     newsDigests,
     newsFeeds,
+    fxRates,
     pushDevices,
     pushLog,
     pushDelivery,
@@ -884,6 +920,41 @@ export async function pruneNews(client: Client, { itemDays = 30, digestDays = 12
     .lt('date', ago(digestDays).slice(0, 10))
   if (digests.error) throw digests.error
   return { items: items.count ?? 0, digests: digests.count ?? 0 }
+}
+
+const FX_COLUMNS = 'currency, date, rate, source'
+/** PostgREST devuelve `bigint` como número JSON; por si algún día llega como texto. */
+const fxRow = (r: Row): FxRate => ({
+  currency: r.currency as string,
+  date: r.date as string,
+  rate: Number(r.rate),
+  source: r.source as FxRate['source'],
+})
+
+/** El último día con tipos guardados (`null` si la tabla está vacía): la función `fx` decide con él qué fichero pide. */
+export async function latestFxDate(client: Client): Promise<string | null> {
+  const { data, error } = await client
+    .from('fx_rates')
+    .select('date')
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data ? (data.date as string) : null
+}
+
+/**
+ * Guarda tipos del BCE (solo la service role: la tabla no tiene política de escritura). `upsert` por divisa y día, en
+ * lotes de 1000: repetir la carga deja lo mismo. Devuelve cuántas filas se mandaron.
+ */
+export async function upsertFxRates(client: Client, rows: FxRate[]): Promise<number> {
+  for (let i = 0; i < rows.length; i += PAGE) {
+    const { error } = await client
+      .from('fx_rates')
+      .upsert(rows.slice(i, i + PAGE).map(toRow), { onConflict: 'currency,date' })
+    if (error) throw error
+  }
+  return rows.length
 }
 
 /** Dueños con algún dispositivo suscrito, para el cron de la Edge Function `push` (con la service role, ADR-0040). */

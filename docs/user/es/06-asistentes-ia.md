@@ -129,6 +129,7 @@ args = ["C:/sourcecode/muninn/packages/mcp/dist/index.js"]
 | `list_note_comments`: los hilos de una nota o los encargos «Para Claude» | `comment_on_note`, `reply_to_comment`, `resolve_comment` (también reabrir) |
 | `list_finance_accounts`, `list_transactions`, `finance_month_report` | `create_transaction`, `update_transaction`, `archive_transaction` |
 | `list_news`, `news_digest` (con Noticias) | |
+| `fx_rate`: tipo de cambio del BCE de una divisa frente al euro (con Finanzas; los tipos llegan cuando se ponga en marcha su descarga diaria) | |
 | `list_finance_categories`, `list_subscriptions` | `create_finance_account`, `update_finance_account`, `archive_finance_account` |
 | | `create_finance_category` (las categorías aún no se editan ni se archivan) |
 | | `create_subscription`, `record_subscription_charge`, `skip_subscription_charge`, `archive_subscription` |

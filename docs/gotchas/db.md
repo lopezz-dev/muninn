@@ -29,6 +29,11 @@
    tablas que existían. Una función `security definer` que lea datos del usuario se salta el RLS: que llame a `public.mfa_satisfied()`.
    Las de push (`20261028180000_push_subscriptions`) la reciben en `20261029180000_require_mfa_push`.
 
+**Excepción con nombre: `fx_rates`** ([ADR-0085](../adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md), migración
+`20261110120000_fx_rates`). Es un dato de referencia público (tipos del BCE), igual para todos: **sin `owner_id`**, RLS con una sola
+política de lectura para `authenticated`, sin permisos de escritura más que para la service role, **sin `require_mfa`** y fuera de
+Realtime. No copies este patrón para nada que escriba un usuario: eso va siempre con `owner_id` (los precios de Inversiones también).
+
 ### No editar migraciones ya aplicadas
 
 - **Síntoma:** el entorno local y el remoto divergen; `supabase db push` se niega o duplica objetos.
@@ -319,6 +324,46 @@
      news › Logs**.
 - **Ojo:** el cron borra los artículos **no guardados** de más de 30 días y los resúmenes de más de 120 (`pruneNews`). Es la única limpieza
   automática de datos de usuario: si cambias los plazos, cambia también el ADR.
+
+### Divisas: tipos del BCE con la Edge Function (pasos manuales)
+
+- **Síntoma:** `fx_rate` (MCP o asistente) dice «No hay tipo del BCE…» para el dólar, o la app falla con
+  `relation "public.fx_rates" does not exist`.
+- **Causa:** los tipos los trae la Edge Function `fx` con un cron ([ADR-0085](../adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md));
+  ni la tabla ni la función están en remoto hasta hacer estos pasos (subtarea 11 de «Inversiones I»).
+- **Solución**, en este orden:
+  1. **Migración:** aplica `supabase/migrations/20261110120000_fx_rates.sql`. Si usas `apply_migration` del MCP de Supabase, alinea la
+     versión (arriba).
+  2. **Empaquetar:** `pnpm --filter @muninn/core build:edge` (genera `supabase/functions/fx/_core/muninn.js`, fuera de git).
+  3. **Desplegar:** `npx supabase@2 functions deploy fx --no-verify-jwt --project-ref yjzzubpxikpvukymgfkt --use-api`. Solo usa
+     `MUNINN_SYNC_SECRET` (el del cron de GitHub); `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase.
+  4. **Primera carga (histórico desde 2015):** `curl -X POST -H "x-muninn-sync-secret: <MUNINN_SYNC_SECRET>"
+     https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/fx/fetch`. Con la tabla vacía pide `eurofxref-hist.xml` (unos 8 MB) y guarda
+     unas 94 000 filas en lotes de 1000; responde `{ file: "history", previous: null, latest, days, rows }`. Se puede repetir:
+     es un `upsert` por divisa y día. Para forzar el histórico otra vez, cuerpo `{"history": true}`.
+  5. **Cron de lunes a viernes** (SQL Editor). El BCE publica hacia las 16:00 de Fráncfort (14:00 o 15:00 UTC según el horario); el
+     segundo pase cubre un retraso:
+     ```sql
+     select cron.schedule('muninn-fx-fetch', '20 15 * * 1-5', $$
+       select net.http_post(
+         url := 'https://yjzzubpxikpvukymgfkt.supabase.co/functions/v1/fx/fetch',
+         headers := jsonb_build_object(
+           'content-type', 'application/json',
+           'x-muninn-sync-secret',
+           (select decrypted_secret from vault.decrypted_secrets where name = 'muninn_sync_secret')
+         ),
+         body := '{}'::jsonb,
+         timeout_milliseconds := 120000
+       );
+     $$);
+     select cron.schedule('muninn-fx-fetch-late', '20 18 * * 1-5', $$ <el mismo cuerpo> $$);
+     ```
+  6. **Comprobar:** `select currency, date, rate from fx_rates where currency = 'USD' order by date desc limit 3;` y, desde Claude,
+     «¿a cuánto está el dólar?» (`fx_rate`, tras redesplegar `mcp`).
+- **Ojo:** los ficheros del BCE no son iguales: el diario va con comillas simples y una línea por divisa; los históricos, con comillas
+  dobles y todo en una línea. `parseEcbRates` acepta los dos (tests con recortes reales). Si el cron se para, la siguiente pasada ve
+  el hueco y pide `eurofxref-hist-90d.xml` (más de 4 días) o el histórico (más de 85): no hay que rellenar a mano.
+- **Ojo:** el BCE no publica todas las divisas (falta TWD, por ejemplo). Lo que falte se queda sin tipo y el core devuelve `null`.
 
 ### Noticias: un artículo repetido no entra, aunque cambie el título
 

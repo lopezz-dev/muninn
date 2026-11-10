@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { commentTools } from './comments'
 import type { AnyTool } from './define'
 import { financeTools } from './finance'
+import { investTools } from './invest'
 import { newsTools } from './news'
 import { noteTools } from './notes'
 import { taskTools } from './tasks'
@@ -16,6 +17,7 @@ export const catalog: AnyTool[] = [
   ...noteTools,
   ...commentTools,
   ...financeTools,
+  ...investTools,
   ...newsTools,
 ]
 
