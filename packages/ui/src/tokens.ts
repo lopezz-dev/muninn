@@ -82,13 +82,17 @@ export const glass = {
     'radial-gradient(1200px 640px at 12% -12%, rgba(242, 169, 59, 0.10), transparent 60%), radial-gradient(900px 640px at 100% 110%, rgba(91, 141, 239, 0.09), transparent 60%)',
 } as const
 
+/**
+ * Radios por papel (ADR-0087): `xs` marcas y detalles, `sm` controles pequeños, `md` campos y lo que flota (menús,
+ * popovers), `lg` tarjetas y listas, `xl` diálogos y hojas. Botones, chips, pestañas y la barra van en píldora
+ * (`rounded-full`). Un elemento de menos de ~40 px con `lg` queda casi redondo: usa `md` o `sm`.
+ */
 export const radius = {
-  xs: '2px',
-  sm: '4px',
-  md: '5px',
-  lg: '6px',
-  xl: '8px',
-  dock: '12px',
+  xs: '4px',
+  sm: '8px',
+  md: '12px',
+  lg: '20px',
+  xl: '28px',
 } as const
 
 export const fonts = {
@@ -106,6 +110,8 @@ export const fontSize = {
   xl: '22px',
   '2xl': '28px',
   '3xl': '34px',
+  /** La cifra protagonista de una pantalla (ADR-0087): una sola por pantalla. */
+  '4xl': '44px',
 } as const
 
 export const shadow = {
@@ -127,7 +133,7 @@ export const motion = {
 
 export const layout = {
   sidebar: '240px',
-  'gutter-desktop': '32px',
+  'gutter-desktop': '40px',
   'gutter-mobile': '20px',
   touch: '44px',
 } as const

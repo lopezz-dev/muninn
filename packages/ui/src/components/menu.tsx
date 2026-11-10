@@ -22,7 +22,7 @@ export function MenuContent({
         sideOffset={sideOffset}
         align={align}
         className={cn(
-          'glass-floating z-50 min-w-[200px] rounded-lg border border-border-strong p-1 shadow-popover outline-none data-[state=open]:animate-pop-in',
+          'glass-floating z-50 min-w-[200px] rounded-md border border-border-strong p-1 shadow-popover outline-none data-[state=open]:animate-pop-in',
           className,
         )}
         {...props}
@@ -93,7 +93,7 @@ export function MenuSubContent({
       <DropdownMenu.SubContent
         sideOffset={sideOffset}
         className={cn(
-          'glass-floating z-50 min-w-[180px] rounded-lg border border-border-strong p-1 shadow-popover outline-none data-[state=open]:animate-pop-in',
+          'glass-floating z-50 min-w-[180px] rounded-md border border-border-strong p-1 shadow-popover outline-none data-[state=open]:animate-pop-in',
           className,
         )}
         {...props}

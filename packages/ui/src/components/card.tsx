@@ -1,9 +1,14 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from '../cn'
 
-/** Superficie base. Respeta el modo cristal. */
+/** Superficie base: se distingue por su fondo, sin borde (ADR-0087). Con el cristal activado, sí lo lleva. */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('glass rounded-lg border border-border', className)} {...props} />
+  return (
+    <div
+      className={cn('glass rounded-lg glass-on:border glass-on:border-border', className)}
+      {...props}
+    />
+  )
 }
 
 export interface CardHeaderProps {

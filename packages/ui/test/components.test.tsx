@@ -28,7 +28,7 @@ import {
 
 describe('cn', () => {
   it('conoce los tokens propios de Muninn', () => {
-    expect(cn('rounded-lg', 'rounded-dock')).toBe('rounded-dock')
+    expect(cn('rounded-lg', 'rounded-full')).toBe('rounded-full')
     expect(cn('shadow-drag', 'shadow-popover')).toBe('shadow-popover')
     expect(cn('bg-surface', 'bg-accent')).toBe('bg-accent')
   })
@@ -36,6 +36,7 @@ describe('cn', () => {
   it('no confunde tamaño de texto con color de texto', () => {
     expect(cn('text-sm', 'text-fg-muted')).toBe('text-sm text-fg-muted')
     expect(cn('text-2xs', 'text-md')).toBe('text-md')
+    expect(cn('text-3xl', 'text-4xl')).toBe('text-4xl')
   })
 })
 
