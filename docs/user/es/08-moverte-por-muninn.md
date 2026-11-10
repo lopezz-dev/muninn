@@ -36,9 +36,10 @@ barra completa.
 
 ## En el móvil: las pestañas y tu cuenta
 
-En el teléfono, abajo tienes hasta cuatro pestañas, cada una con su nombre. Al principio son **Inicio**, **Proyectos**,
+En el teléfono, abajo tienes hasta cuatro pestañas en una barra redondeada. Al principio son **Inicio**, **Proyectos**,
 **Finanzas** y **Notas** (las de un módulo desactivado no salen), pero **las eliges tú** (ver más abajo). La que está en color
-es donde estás.
+es donde estás, y es la única que enseña su nombre: las demás se quedan en su icono. A la derecha, en un círculo aparte,
+está tu cuenta.
 
 Al bajar por una pantalla, la barra se encoge y deja solo la pestaña en la que estás, para que veas más. Sube un poco,
 o tócala, y vuelve entera.

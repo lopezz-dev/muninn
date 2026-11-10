@@ -1,6 +1,6 @@
 # ADR-0072: Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado en parte por ADR-0087 (el aspecto de la barra del teléfono); lo demás sigue vigente
 - **Fecha:** 2026-10-30
 - **Área:** web, ui
 - **Reemplaza a:** [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) en lo que toca a las pestañas del teléfono, el botón

@@ -60,7 +60,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0043](0043-informe-de-la-manana-en-local.md) — Informe de la mañana generado en el ordenador y guardado como nota fijada
 - [ADR-0051](0051-imagenes-en-el-asistente.md) — Imágenes en el asistente: reducidas en el navegador, solo con modelos con visión y una sola vez
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador *(reemplazado en parte por ADR-0072)*
-- [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
+- [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador *(aspecto de la barra del teléfono: ADR-0087)*
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
 - [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core *(avisos al cerrar sesiones: ADR-0074; códigos de recuperación: ADR-0075)*
@@ -124,7 +124,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) — Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera
 
 ### ui
-- [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
+- [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades *(valores de los radios: ADR-0087)*
 - [ADR-0015](0015-modo-cristal.md) — Modo cristal (blur) global, activable
 - [ADR-0016](0016-iconos-phosphor-y-geist.md) — Iconos Phosphor y fuente Geist autoalojada
 - [ADR-0017](0017-componentes-radix-cva.md) — Componentes base sobre Radix, con variantes cva y `cn()`
@@ -138,16 +138,16 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0050](0050-scroll-dentro-de-la-pantalla-en-escritorio.md) — En escritorio la pantalla cabe en la ventana y el scroll va dentro de las listas
 - [ADR-0053](0053-ajustes-por-grupos-buscador-y-restablecer.md) — Ajustes por grupos, con buscador, marca de «cambiado» y «Restablecer» con Deshacer
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador *(reemplazado en parte por ADR-0072)*
-- [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
+- [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador *(aspecto de la barra del teléfono: ADR-0087)*
 - [ADR-0063](0063-codigos-con-casillas-sobre-un-solo-campo.md) — Códigos de una sola vez con casillas sobre un solo campo, y el segundo factor en su diálogo
 - [ADR-0068](0068-vista-calendario-del-tablero.md) — Vista Calendario del tablero: arrastrar cambia solo la fecha, bandeja «Sin fecha» y móvil sin arrastre
 - [ADR-0073](0073-menu-de-enlace-externo-en-tactil.md) — En táctil, un enlace que sale de Muninn abre antes un menú «Abrir enlace · Copiar enlace»
 - [ADR-0078](0078-editor-de-notas-en-sitio-con-tiptap.md) — Notas editadas en sitio con TipTap, guardando Markdown; en el teléfono, para leer y comentar
-- [ADR-0087](0087-estilo-nuevo-capsula-radios-y-margenes.md) — Estilo nuevo: barra de abajo en cápsula, radios más grandes por papel, superficies sin borde y cifra protagonista *(propuesto)*
+- [ADR-0087](0087-estilo-nuevo-capsula-radios-y-margenes.md) — Estilo nuevo: barra de abajo en cápsula, radios más grandes por papel, superficies sin borde y cifra protagonista
 
 ### web
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
-- [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
+- [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades *(valores de los radios: ADR-0087)*
 - [ADR-0020](0020-tanstack-router-carga-diferida.md) — TanStack Router con rutas en código y una pantalla por chunk
 - [ADR-0021](0021-shell-de-la-app.md) — Shell de la app: barra lateral en escritorio, dock con menisco en móvil y ⌘K *(reemplazado en parte por ADR-0054)*
 - [ADR-0022](0022-auth-y-sesion.md) — Auth y gestión de sesión: código por correo y GitHub con Supabase Auth *(GitHub en escritorio: ADR-0059)*
@@ -177,7 +177,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0071](0071-guia-de-documentacion-a-la-altura-de-la-ventana.md) — En escritorio la guía de Documentación cabe en la ventana, con «Anterior / Siguiente» fijo y el texto más ancho
 - [ADR-0053](0053-ajustes-por-grupos-buscador-y-restablecer.md) — Ajustes por grupos, con buscador, marca de «cambiado» y «Restablecer» con Deshacer
 - [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) — Shell en tres tamaños: barra de pestañas en el teléfono, raíl en tablet y barra lateral en el ordenador *(reemplazado en parte por ADR-0072)*
-- [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador
+- [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) — Dock configurable con tu avatar y hoja «Tu cuenta» en el teléfono; menú de usuario en el ordenador *(aspecto de la barra del teléfono: ADR-0087)*
 - [ADR-0055](0055-imagen-de-proyecto-en-storage.md) — Imagen de proyecto en Supabase Storage, reducida en el navegador y sin borrar la anterior *(reemplazado en parte por ADR-0056)*
 - [ADR-0056](0056-logo-y-portada-de-proyecto-con-color-del-logo.md) — Logo y portada de proyecto por separado, con el color del logo como color del proyecto
 - [ADR-0061](0061-seguridad-de-la-cuenta.md) — Seguridad de la cuenta (sesiones, segundo factor y permisos OAuth) en Ajustes › Cuenta, a través del core *(avisos al cerrar sesiones: ADR-0074; códigos de recuperación: ADR-0075)*
@@ -205,7 +205,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
 - [ADR-0084](0084-pantallas-con-sus-textos-y-precalentado.md) — Cada pantalla se carga con sus textos y las de la navegación se precalientan en segundo plano
 - [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) — Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera
-- [ADR-0087](0087-estilo-nuevo-capsula-radios-y-margenes.md) — Estilo nuevo: barra de abajo en cápsula, radios más grandes por papel, superficies sin borde y cifra protagonista *(propuesto)*
+- [ADR-0087](0087-estilo-nuevo-capsula-radios-y-margenes.md) — Estilo nuevo: barra de abajo en cápsula, radios más grandes por papel, superficies sin borde y cifra protagonista
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil

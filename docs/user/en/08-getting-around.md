@@ -36,9 +36,10 @@ bar comes back.
 
 ## On your phone: the tabs and your account
 
-On your phone, at the bottom you have up to four tabs, each with its name. At first they're **Home**, **Projects**,
+On your phone, at the bottom you have up to four tabs in a rounded bar. At first they're **Home**, **Projects**,
 **Finance** and **Notes** (tabs for a turned-off module don't show up), but **you choose them** (see below). The one in color
-is where you are.
+is where you are, and it's the only one that shows its name: the others stay as icons. On the right, in its own circle,
+is your account.
 
 As you scroll down a screen, the bar shrinks and leaves only the tab you're on, so you can see more. Scroll up a little,
 or tap it, and it comes back in full.
