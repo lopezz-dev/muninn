@@ -265,7 +265,7 @@ function CommentsButton({
       aria-label={t('comments.show', { count })}
       title={t('comments.show', { count })}
       className={cn(
-        'flex shrink-0 cursor-pointer items-center gap-1 rounded-md px-2 text-sm text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent',
+        'flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2 text-sm text-fg-muted outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent',
         touch ? 'h-11' : 'h-8',
         count > 0 && 'text-fg',
       )}

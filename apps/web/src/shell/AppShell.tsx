@@ -218,7 +218,7 @@ export function AppShell() {
           className={cn(
             // overflow-x-clip: red de seguridad para que nada empuje la pantalla hacia los lados en el teléfono. No
             // crea contenedor de scroll, así que los `sticky` siguen pegándose a la ventana.
-            'flex min-w-0 flex-1 flex-col px-5 max-md:overflow-x-clip pt-[calc(env(safe-area-inset-top)+24px)] outline-none md:overflow-y-auto md:px-7 md:pt-7 md:pb-8 lg:px-8',
+            'flex min-w-0 flex-1 flex-col px-5 max-md:overflow-x-clip pt-[calc(env(safe-area-inset-top)+24px)] outline-none md:overflow-y-auto md:px-7 md:pt-7 md:pb-8 lg:px-10',
             immersive
               ? 'pb-[calc(env(safe-area-inset-bottom)+104px)]'
               : 'pb-[calc(env(safe-area-inset-bottom)+112px)]',

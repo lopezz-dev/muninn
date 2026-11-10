@@ -71,7 +71,7 @@ function StateBar({ s }: { s: Stats }) {
 
 function Chips({ s }: { s: Stats }) {
   const { t } = useTranslation('projects')
-  const chip = 'inline-flex h-[22px] items-center rounded-sm px-1.5 text-xs font-medium'
+  const chip = 'inline-flex h-[22px] items-center rounded-full px-2 text-xs font-medium'
   const any = s.overdue || s.inProgress || s.agent || s.githubRepo
   return (
     <div className="flex flex-wrap gap-1.5">

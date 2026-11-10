@@ -39,12 +39,11 @@
   --mn-kind-done: #5CC08A;
   --mn-chart-income: #5B8DEF;
   --mn-chart-expense: #CF7A2E;
-  --mn-radius-xs: 2px;
-  --mn-radius-sm: 4px;
-  --mn-radius-md: 5px;
-  --mn-radius-lg: 6px;
-  --mn-radius-xl: 8px;
-  --mn-radius-dock: 12px;
+  --mn-radius-xs: 4px;
+  --mn-radius-sm: 8px;
+  --mn-radius-md: 12px;
+  --mn-radius-lg: 20px;
+  --mn-radius-xl: 28px;
   --mn-font-sans: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
   --mn-font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
   --mn-text-2xs: 11px;
@@ -56,6 +55,7 @@
   --mn-text-xl: 22px;
   --mn-text-2xl: 28px;
   --mn-text-3xl: 34px;
+  --mn-text-4xl: 44px;
   --mn-shadow-popover: 0 16px 48px rgba(0, 0, 0, 0.5);
   --mn-shadow-drag: 0 18px 40px rgba(0, 0, 0, 0.55);
   --mn-shadow-panel: -24px 0 60px rgba(0, 0, 0, 0.45);
@@ -66,7 +66,7 @@
   --mn-motion-base: 200ms;
   --mn-motion-slow: 450ms;
   --mn-layout-sidebar: 240px;
-  --mn-layout-gutter-desktop: 32px;
+  --mn-layout-gutter-desktop: 40px;
   --mn-layout-gutter-mobile: 20px;
   --mn-layout-touch: 44px;
   --mn-backdrop: none;

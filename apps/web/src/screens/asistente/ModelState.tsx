@@ -20,7 +20,7 @@ export function BrainChip({ status, label }: { status: AssistantAvailability; la
             ? t('brain.missing', { model: status.model })
             : label
   return (
-    <span className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-fg-muted">
+    <span className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border border-border px-2.5 text-xs text-fg-muted">
       <span
         aria-hidden="true"
         className={

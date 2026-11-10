@@ -80,7 +80,7 @@ export function TaskPill({
       {...attributes}
       {...listeners}
       className={cn(
-        'flex min-w-0 items-center gap-1.5 rounded-sm border border-border bg-surface-raised px-1.5 text-xs no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent',
+        'flex min-w-0 items-center gap-1.5 rounded-full border border-border bg-surface-raised px-1.5 text-xs no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent',
         row ? 'h-8 text-sm' : 'h-[22px]',
         done ? 'text-fg-subtle' : overdue ? 'text-danger' : 'text-fg',
         !disabled && 'touch-manipulation',
@@ -432,7 +432,7 @@ export function OverdueToggle({
       onClick={() => onFilterChange({ ...filter, due: toggle(filter.due, 'overdue') })}
       className={cn(
         'inline-flex shrink-0 cursor-pointer items-center gap-1.5 border font-medium whitespace-nowrap text-danger transition-colors',
-        touch ? 'h-9 rounded-full px-3 text-sm' : 'h-7 rounded-md px-2.5 text-[12.5px]',
+        touch ? 'h-9 rounded-full px-3 text-sm' : 'h-7 rounded-full px-2.5 text-[12.5px]',
         on ? 'border-danger bg-danger-soft' : 'border-danger/35 hover:bg-danger-soft',
       )}
     >

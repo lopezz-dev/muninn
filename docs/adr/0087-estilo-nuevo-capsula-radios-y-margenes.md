@@ -1,10 +1,10 @@
 # ADR-0087: Estilo nuevo: barra de abajo en cápsula, radios más grandes por papel, superficies sin borde y cifra protagonista
 
-- **Estado:** Propuesto (la barra y el alcance los decidió Alex el 10 de noviembre sobre el lienzo; se acepta al fusionar
-  [#152](https://github.com/lopezz-dev/muninn/pull/152); no hay código)
+- **Estado:** Aceptado (10 de noviembre de 2026, al fusionar [#152](https://github.com/lopezz-dev/muninn/pull/152)). El paso 1 está
+  hecho; el paso 2, en la 0.14
 - **Fecha:** 2026-11-10
 - **Área:** ui, web
-- **Reemplazaría a:** los valores de los radios de [ADR-0014](0014-tokens-y-tailwind-v4.md) (los nombres y el mecanismo siguen) y el
+- **Reemplaza a:** los valores de los radios de [ADR-0014](0014-tokens-y-tailwind-v4.md) (los nombres y el mecanismo siguen) y el
   aspecto de la barra del teléfono de [ADR-0054](0054-shell-responsive-en-tres-tamanos.md) y
   [ADR-0072](0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md) (lo que hace la barra sigue igual)
 - **Relacionado:** [ADR-0015](0015-modo-cristal.md), [ADR-0048](0048-pantallas-a-todo-el-ancho-y-alto.md),

@@ -121,7 +121,7 @@ export function Sidebar({ className }: { className?: string }) {
               aria-label={folded ? t('shell.expandSidebar') : t('shell.collapseSidebar')}
               aria-pressed={folded}
               onClick={toggleFold}
-              className="grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
+              className="grid size-6 cursor-pointer place-items-center rounded-full text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
             >
               <icons.sidebar size={15} />
             </button>
@@ -171,7 +171,7 @@ export function Sidebar({ className }: { className?: string }) {
                 type="button"
                 aria-label={t('shell.newProject')}
                 onClick={shell.openNewProject}
-                className="ml-auto grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
+                className="ml-auto grid size-6 cursor-pointer place-items-center rounded-full text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
               >
                 <icons.plus size={14} />
               </button>

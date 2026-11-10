@@ -74,13 +74,13 @@
   --text-xl: var(--mn-text-xl);
   --text-2xl: var(--mn-text-2xl);
   --text-3xl: var(--mn-text-3xl);
+  --text-4xl: var(--mn-text-4xl);
 
   --radius-xs: var(--mn-radius-xs);
   --radius-sm: var(--mn-radius-sm);
   --radius-md: var(--mn-radius-md);
   --radius-lg: var(--mn-radius-lg);
   --radius-xl: var(--mn-radius-xl);
-  --radius-dock: var(--mn-radius-dock);
 
   --shadow-popover: var(--mn-shadow-popover);
   --shadow-drag: var(--mn-shadow-drag);
@@ -146,6 +146,12 @@
     }
   }
 }
+
+/*
+ * Solo con el cristal activado (ADR-0087): una superficie sólida se distingue por su fondo y no lleva borde; una
+ * translúcida sí lo necesita. Uso: `glass-on:border glass-on:border-border`.
+ */
+@custom-variant glass-on (&:where([data-glass="on"] *));
 
 /* Superficies que se vuelven cristal cuando data-glass="on". */
 @utility glass {

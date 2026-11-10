@@ -37,7 +37,7 @@ export function SegmentedControl<T extends string>({
         if (v) onValueChange(v as T)
       }}
       className={cn(
-        'inline-flex gap-0.5 rounded-md border border-border bg-surface p-0.5',
+        'inline-flex gap-0.5 rounded-full border border-border bg-surface p-0.5',
         fill && 'flex w-full',
         className,
       )}
@@ -48,7 +48,7 @@ export function SegmentedControl<T extends string>({
           key={o.value}
           value={o.value}
           className={cn(
-            'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm px-2.5 font-medium text-fg-muted transition-colors duration-150 hover:text-fg data-[state=on]:bg-surface-raised data-[state=on]:text-fg',
+            'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 font-medium text-fg-muted transition-colors duration-150 hover:text-fg data-[state=on]:bg-surface-raised data-[state=on]:text-fg',
             size === 'lg' ? 'h-[38px] text-sm' : 'h-[26px] text-[12.5px]',
             // Repartido: cada opción parte de su texto y se reparte el sobrante (flex-auto). El relleno es
             // mínimo para que quepan cuatro en un móvil sin que una pise a otra.

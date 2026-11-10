@@ -34,7 +34,7 @@ export function UserButton({
       ) : (
         <span
           aria-hidden="true"
-          className="grid size-7 shrink-0 place-items-center rounded-md bg-border-strong text-fg-subtle"
+          className="grid size-7 shrink-0 place-items-center rounded-full bg-border-strong text-fg-subtle"
         >
           <Icon name="user" />
         </span>

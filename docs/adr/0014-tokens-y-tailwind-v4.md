@@ -1,6 +1,6 @@
 # ADR-0014: Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado en parte por ADR-0087 (los valores de los radios); lo demás sigue vigente
 - **Fecha:** 2026-10-19
 - **Área:** ui, web
 

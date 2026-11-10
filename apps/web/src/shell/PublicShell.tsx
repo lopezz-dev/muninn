@@ -15,7 +15,7 @@ export function PublicShell() {
   const { t } = useTranslation()
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-fg md:h-dvh">
-      <header className="glass flex shrink-0 items-center gap-3 border-b border-border-subtle px-5 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 md:px-7 md:py-3 lg:px-8">
+      <header className="glass flex shrink-0 items-center gap-3 border-b border-border-subtle px-5 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 md:px-7 md:py-3 lg:px-10">
         <Link to={es ? '/es/docs' : '/docs'} className="flex items-center gap-2.5 text-fg">
           <Logo />
           <span className="text-md font-semibold tracking-tight">Muninn</span>
@@ -32,7 +32,7 @@ export function PublicShell() {
         id="contenido"
         tabIndex={-1}
         data-scroll-restoration-id="contenido"
-        className="flex min-w-0 flex-1 flex-col px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+40px)] outline-none max-md:overflow-x-clip md:min-h-0 md:overflow-y-auto md:px-7 md:pt-7 md:pb-8 lg:px-8"
+        className="flex min-w-0 flex-1 flex-col px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+40px)] outline-none max-md:overflow-x-clip md:min-h-0 md:overflow-y-auto md:px-7 md:pt-7 md:pb-8 lg:px-10"
       >
         <Outlet />
       </main>

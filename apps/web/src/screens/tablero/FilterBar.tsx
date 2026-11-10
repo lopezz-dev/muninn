@@ -101,7 +101,7 @@ function FilterMenu({ g }: { g: ReturnType<typeof groups>[number] }) {
           type="button"
           aria-label={g.by}
           className={cn(
-            'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:outline-accent',
+            'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:outline-accent',
             on
               ? 'border-border-strong bg-surface-raised text-fg'
               : 'border-border text-fg-muted hover:text-fg',
@@ -160,7 +160,7 @@ function SearchField({
     <label
       className={cn(
         'flex items-center gap-2 border border-border text-fg-subtle focus-within:border-accent',
-        touch ? 'h-11 rounded-lg bg-surface px-3.5' : 'h-7 w-60 rounded-md px-2.5',
+        touch ? 'h-11 rounded-full bg-surface px-3.5' : 'h-7 w-60 rounded-full px-2.5',
       )}
     >
       <icons.search size={touch ? 16 : 14} aria-hidden="true" />
@@ -198,7 +198,7 @@ export function FilterBar({ filter, onChange, labels, shown, total }: BarProps) 
           <button
             type="button"
             onClick={() => onChange(NO_FILTER)}
-            className="h-7 cursor-pointer rounded-md px-2 text-[12.5px] font-medium text-accent hover:underline"
+            className="h-7 cursor-pointer rounded-full px-2 text-[12.5px] font-medium text-accent hover:underline"
           >
             {t('filter.clear')}
           </button>

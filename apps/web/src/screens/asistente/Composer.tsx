@@ -75,7 +75,7 @@ export function Composer({
     <div
       className={cn(
         // mt-auto: con pocos mensajes, la caja de escribir baja al pie de la pantalla.
-        'glass sticky z-10 -mx-2 mt-auto flex flex-col gap-2 rounded-xl px-2 pt-2 pb-2',
+        'glass sticky z-10 -mx-2 mt-auto flex flex-col gap-2 rounded-lg px-2 pt-2 pb-2',
         'bottom-[calc(env(safe-area-inset-bottom)+96px)] md:bottom-4',
       )}
     >
@@ -83,7 +83,7 @@ export function Composer({
       <div
         {...att.dropZone}
         className={cn(
-          'flex flex-col gap-2 rounded-xl border bg-surface-sunken p-2 transition-colors focus-within:border-accent',
+          'flex flex-col gap-2 rounded-lg border bg-surface-sunken p-2 transition-colors focus-within:border-accent',
           att.dragging ? 'border-accent bg-accent-soft' : 'border-border-strong',
         )}
       >

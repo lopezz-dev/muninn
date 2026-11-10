@@ -68,7 +68,7 @@ export function SectionHeader({
   }, [section.label, t])
   return (
     <header className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-border-subtle pb-5">
-      <span className={cn('grid size-11 shrink-0 place-items-center rounded-lg', section.tile)}>
+      <span className={cn('grid size-11 shrink-0 place-items-center rounded-full', section.tile)}>
         <AppIcon name={section.icon} size={22} />
       </span>
       <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
@@ -198,7 +198,7 @@ export function PrefRow({
       {icon ? (
         <span
           className={cn(
-            'grid size-8 shrink-0 place-items-center rounded-md',
+            'grid size-8 shrink-0 place-items-center rounded-full',
             tile ?? 'bg-surface-raised text-fg-muted',
           )}
         >
@@ -248,7 +248,7 @@ export function HelpAside({ section }: { section: SettingsSection }) {
         hash={doc.hash}
         className="glass flex gap-3 rounded-lg border border-border p-4 text-fg transition-colors hover:border-border-strong hover:bg-surface-hover"
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
           <icons.docs size={16} aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-col gap-1.5">

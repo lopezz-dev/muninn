@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import { cn } from '../cn'
 
 export const buttonVariants = cva(
-  'inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0',
+  'inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-medium transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -14,10 +14,10 @@ export const buttonVariants = cva(
         danger: 'border border-danger/35 text-danger hover:bg-danger-soft',
       },
       size: {
-        sm: 'h-7 px-2.5 text-xs',
-        md: 'h-8 px-3 text-sm',
+        sm: 'h-7 px-3 text-xs',
+        md: 'h-8 px-3.5 text-sm',
         /** Táctil: 44 px, para móvil. */
-        lg: 'h-11 px-4 text-md',
+        lg: 'h-11 px-5 text-md',
       },
     },
     defaultVariants: { variant: 'secondary', size: 'md' },

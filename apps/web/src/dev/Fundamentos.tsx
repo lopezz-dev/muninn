@@ -143,7 +143,7 @@ export function Fundamentos() {
                 aria-label={`Acento ${name}`}
                 aria-pressed={appearance.accent === name}
                 onClick={() => changeAppearance({ accent: name })}
-                className="size-[22px] cursor-pointer rounded-md aria-pressed:ring-2 aria-pressed:ring-fg aria-pressed:ring-offset-2 aria-pressed:ring-offset-bg"
+                className="size-[22px] cursor-pointer rounded-full aria-pressed:ring-2 aria-pressed:ring-fg aria-pressed:ring-offset-2 aria-pressed:ring-offset-bg"
                 style={{ background: ACCENTS[name] }}
               />
             ))}

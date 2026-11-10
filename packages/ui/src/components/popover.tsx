@@ -22,7 +22,7 @@ export function PopoverContent({
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
         className={cn(
-          'glass-floating z-50 origin-(--radix-popover-content-transform-origin) rounded-lg border border-border-strong p-1.5 shadow-popover outline-none data-[state=open]:animate-pop-in',
+          'glass-floating z-50 origin-(--radix-popover-content-transform-origin) rounded-md border border-border-strong p-1.5 shadow-popover outline-none data-[state=open]:animate-pop-in',
           className,
         )}
         {...props}

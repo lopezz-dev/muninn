@@ -44,8 +44,8 @@ export function Checkbox({ className, touch, size = 'md', ...props }: CheckboxPr
   return (
     <RCheckbox.Root
       className={cn(
-        'relative grid shrink-0 cursor-pointer place-items-center rounded-sm border-[1.5px] border-fg-faint/60 bg-transparent transition-colors duration-150 hover:border-fg-subtle data-[state=checked]:border-accent data-[state=checked]:bg-accent disabled:cursor-not-allowed disabled:opacity-50',
-        size === 'lg' ? 'size-[22px] rounded-md' : 'size-4',
+        'relative grid shrink-0 cursor-pointer place-items-center rounded-xs border-[1.5px] border-fg-faint/60 bg-transparent transition-colors duration-150 hover:border-fg-subtle data-[state=checked]:border-accent data-[state=checked]:bg-accent disabled:cursor-not-allowed disabled:opacity-50',
+        size === 'lg' ? 'size-[22px]' : 'size-4',
         touch && "before:absolute before:-inset-3 before:content-['']",
         className,
       )}

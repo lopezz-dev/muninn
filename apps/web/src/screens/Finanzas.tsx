@@ -74,7 +74,7 @@ export function Finanzas() {
         <button
           type="button"
           aria-label={t('month.pick', { month: monthLabel(month) })}
-          className="inline-flex h-11 min-w-[100px] cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent data-[state=open]:bg-surface-hover md:h-8 md:min-w-[120px]"
+          className="inline-flex h-11 min-w-[100px] cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium outline-none transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent data-[state=open]:bg-surface-hover md:h-8 md:min-w-[120px]"
         >
           <span aria-live="polite">{monthLabel(month)}</span>
           <icons.chevronDown size={12} className="text-fg-subtle" />

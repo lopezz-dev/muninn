@@ -3,7 +3,7 @@ import { type HTMLAttributes, type ReactNode, useState } from 'react'
 import { cn } from '../cn'
 import { projectColor } from '../tokens'
 
-/** Cuadradito de color de proyecto o categoría (`'blue'`, `'violet'`… o un hex). */
+/** Punto de color de proyecto o categoría (`'blue'`, `'violet'`… o un hex). */
 export function ColorDot({ color, className }: { color: string; className?: string }) {
   return (
     <span
@@ -15,7 +15,7 @@ export function ColorDot({ color, className }: { color: string; className?: stri
 }
 
 export const chipVariants = cva(
-  'inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm px-2 text-xs font-medium',
+  'inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium',
   {
     variants: {
       variant: {
@@ -33,7 +33,7 @@ export const chipVariants = cva(
 export interface ChipProps
   extends HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof chipVariants> {
-  /** Color del cuadradito a la izquierda (proyecto, categoría). */
+  /** Color del punto a la izquierda (proyecto, categoría). */
   dot?: string
   icon?: ReactNode
 }
@@ -62,7 +62,7 @@ export function Kbd({ className, ...props }: HTMLAttributes<HTMLElement>) {
 
 const avatarSizes = { sm: 'size-6 text-2xs', md: 'size-7 text-xs', lg: 'size-12 text-md' } as const
 
-/** Avatar cuadrado con iniciales (radio pequeño, coherente con el resto), o la foto si hay `src`. */
+/** Avatar redondo con iniciales (ADR-0087), o la foto si hay `src`. */
 export function Avatar({
   name,
   src,
@@ -91,7 +91,7 @@ export function Avatar({
         referrerPolicy="no-referrer"
         onError={() => setFailed(src)}
         className={cn(
-          'shrink-0 rounded-md bg-border-strong object-cover',
+          'shrink-0 rounded-full bg-border-strong object-cover',
           avatarSizes[size],
           className,
         )}
@@ -103,7 +103,7 @@ export function Avatar({
       role="img"
       aria-label={name}
       className={cn(
-        'inline-grid shrink-0 place-items-center rounded-md bg-border-strong font-semibold text-fg',
+        'inline-grid shrink-0 place-items-center rounded-full bg-border-strong font-semibold text-fg',
         avatarSizes[size],
         className,
       )}

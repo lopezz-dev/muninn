@@ -312,7 +312,7 @@ export function DatePicker({
 }
 
 const popoverBox =
-  'glass-floating z-50 origin-(--radix-popover-content-transform-origin) rounded-lg border border-border-strong p-2.5 shadow-popover outline-none data-[state=open]:animate-pop-in'
+  'glass-floating z-50 origin-(--radix-popover-content-transform-origin) rounded-md border border-border-strong p-2.5 shadow-popover outline-none data-[state=open]:animate-pop-in'
 
 /** Mes `AAAA-MM` desplazado `n` meses. */
 const shiftYm = (ym: string, n: number) => addMonths(`${ym}-01`, n).slice(0, 7)

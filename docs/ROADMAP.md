@@ -309,6 +309,9 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     en lugar de «Más» y de la pantalla de Ajustes en el móvil, y menú de usuario (⌘⇧U) y «Plegar barra» en el ordenador
     ([ADR-0072](adr/0072-dock-configurable-hoja-de-cuenta-y-menu-de-usuario.md); 30 de octubre)
   - [ ] Fase 4: Finanzas, Notas y el Asistente como hoja; repasar todas las pantallas a 390, 820 y 1280 px
+  - [ ] Estilo nuevo, paso 2 ([ADR-0087](adr/0087-estilo-nuevo-capsula-radios-y-margenes.md)): rehacer cada pantalla con la cifra
+    protagonista, las listas de filas altas y las tarjetas sin borde. El paso 1 (tokens, componentes y la barra en cápsula) está
+    hecho
 
 ## F4 · Jarvis
 > **Estado:** en código, salvo la voz. Cerebro, Asistente, Noticias e informe de la mañana están en `develop` desde el 26 de octubre
@@ -356,7 +359,7 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
 > [ADR-0086](adr/0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) (cartera). Diseño:
 > [lienzo «Muninn — Inversiones»](https://claude.ai/artifact/7YFqY6PCJEQ1k6eHCz6cer), en revisión. El lienzo trae un estilo nuevo
 > (barra en cápsula, radios, márgenes) que afecta a toda la app: [ADR-0087](adr/0087-estilo-nuevo-capsula-radios-y-margenes.md),
-> **propuesto**.
+> aceptado, con el paso 1 hecho.
 
 Que la cuenta de inversión enseñe lo que vale, como en el bróker, y saber cuánto de una subida o una bajada es del mercado y cuánto
 del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo real.
@@ -364,9 +367,9 @@ del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo 
 - [ ] **Inversiones I** (0.12): divisas y cartera
   - [x] Diseño: ADR-0085 y ADR-0086, aceptados ([#151](https://github.com/lopezz-dev/muninn/pull/151))
   - [ ] Lienzo «Muninn — Inversiones» (teléfono y ordenador): hecho, falta que Alex lo revise
-  - [ ] Estilo nuevo en toda la app (ADR-0087, propuesto), paso 1: tokens, componentes de `@muninn/ui`, barra en cápsula y una
-    pasada por todas las pantallas. Va antes de la pantalla de Inversiones. El paso 2 (rehacer el resto de pantallas), con el
-    rediseño responsive
+  - [x] Estilo nuevo en toda la app ([ADR-0087](adr/0087-estilo-nuevo-capsula-radios-y-margenes.md)), paso 1: radios nuevos,
+    `text-4xl`, botones y chips en píldora, `Card` sin borde, la barra del teléfono en cápsula y una pasada por las pantallas en
+    la demo. El paso 2 (rehacer el resto de pantallas), con el rediseño responsive
   - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
   - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
   - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests

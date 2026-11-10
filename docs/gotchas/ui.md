@@ -62,7 +62,7 @@
 ### Combinar clases siempre con `cn()`, que conoce nuestros tokens
 
 - **Síntoma:** al pasar `className` a un componente, una clase propia desaparece o conviven dos que chocan.
-- **Causa:** `tailwind-merge` sin configurar no sabe que `rounded-dock` es un radio ni que `shadow-drag` es una sombra.
+- **Causa:** `tailwind-merge` sin configurar no sabe que `shadow-drag` es una sombra ni que `text-2xs` es un tamaño.
 - **Solución:** usa `cn()` de `@muninn/ui`. Si añades un token con nombre nuevo (radio, sombra, tamaño de texto),
   regístralo también en `src/cn.ts` y añade un caso al test de `cn`.
 
@@ -258,3 +258,30 @@
   encuentra español en el texto, los `aria-label`, los `title` o los `placeholder`: añade ahí cada componente nuevo con texto.
 - **Ojo:** `AmountField` aún recibe `locale` por prop (`es-ES` por defecto); pasarlo al contexto queda para cuando se toque.
 
+### Radios por papel: un elemento pequeño con `rounded-lg` queda casi redondo
+
+- **Síntoma:** un icono en un cuadro de 44 px, un chip de 22 px o una casilla salen como un círculo deforme, ni círculo ni cuadro.
+- **Causa:** desde [ADR-0087](../adr/0087-estilo-nuevo-capsula-radios-y-margenes.md) los radios son grandes: `xs` 4, `sm` 8, `md` 12,
+  `lg` 20 y `xl` 28 px. Cuando el radio pasa de un tercio del lado corto sin llegar a la mitad, se ve mal.
+- **Solución:** elige el radio por lo que es el elemento, no por costumbre. Tarjetas y listas, `rounded-lg`; diálogos y hojas,
+  `rounded-xl`; campos, filas y **lo que flota** (menús, popovers), `rounded-md` (con el relleno de 4 px del menú, sus filas en
+  `rounded-sm` encajan); casillas y código en línea, `rounded-xs`. Botones, chips, pestañas, buscadores y cualquier cuadro de
+  icono o avatar de menos de ~52 px, `rounded-full`. `rounded-dock` ya no existe.
+- **Para comprobarlo:** en la consola, recorre los elementos y busca los que tengan `radio / lado corto` entre 0,36 y 0,5 (así se
+  hizo la pasada del paso 1). Las filas de 28–32 px con `rounded-md` del ordenador salen en esa lista y están bien así.
+
+### `Card` no lleva borde, salvo con el cristal: `glass-on:`
+
+- **Síntoma:** una tarjeta sobre otra superficie del mismo color no se distingue; o esperabas el borde y no está.
+- **Causa:** en sólido, una superficie se distingue por su fondo (ADR-0087). `Card` solo pinta el borde con el cristal activado,
+  con la variante `glass-on:` de `theme.css` (`glass-on:border glass-on:border-border`).
+- **Solución:** no pongas una `Card` sobre `bg-surface`: sepárala con espacio o usa `bg-surface-sunken`. Si haces una superficie
+  propia, usa la misma variante en vez de un borde fijo. Las tarjetas hechas a mano en las pantallas aún llevan borde: se quitan
+  en el paso 2 de ADR-0087.
+
+### La barra en cápsula: el ancho está contado
+
+- En un teléfono de 360 px con cuatro pestañas no sobra nada (`apps/web/src/shell/TabBar.tsx`). Los iconos inactivos ceden de 44 a
+  40 px antes de que se corte el nombre de la activa (`flex-[0_1000_44px]` frente a `flex-[0_1_auto]`). Caben «Proyectos» y
+  «Finanzas»; «Documentación» se corta con puntos suspensivos. Si cambias márgenes, relleno o el tamaño de la letra, vuelve a medir a
+  360 px en los dos idiomas.

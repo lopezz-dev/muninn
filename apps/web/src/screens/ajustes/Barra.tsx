@@ -23,20 +23,26 @@ const row =
 function Preview({ tabs }: { tabs: DockTab[] }) {
   const auth = useAuth()
   return (
-    <div
-      aria-hidden="true"
-      className="flex h-[54px] gap-1.5 rounded-dock border border-border bg-bg p-1.5"
-    >
-      {tabs.map((id) => (
-        <span
-          key={id}
-          className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md bg-surface text-2xs text-fg-muted"
-        >
-          <Icon name={DOCK_TAB[id].icon} size={17} />
-          <span className="max-w-full truncate px-1">{DOCK_TAB[id].label}</span>
-        </span>
-      ))}
-      <span className="grid w-11 shrink-0 place-items-center rounded-md bg-surface">
+    <div aria-hidden="true" className="flex h-[54px] items-stretch gap-1.5">
+      <div className="flex min-w-0 flex-1 items-center justify-evenly gap-0.5 rounded-full border border-border bg-bg p-1.5">
+        {/* Como en la barra de verdad (ADR-0087): solo la activa, aquí la primera, enseña su nombre. */}
+        {tabs.map((id, i) =>
+          i === 0 ? (
+            <span
+              key={id}
+              className="flex h-full min-w-0 items-center gap-1.5 rounded-full bg-accent-soft px-3 text-xs font-semibold text-accent"
+            >
+              <Icon name={DOCK_TAB[id].icon} size={17} weight="bold" className="shrink-0" />
+              <span className="truncate">{DOCK_TAB[id].label}</span>
+            </span>
+          ) : (
+            <span key={id} className="grid h-full w-10 shrink-0 place-items-center text-fg-muted">
+              <Icon name={DOCK_TAB[id].icon} size={17} />
+            </span>
+          ),
+        )}
+      </div>
+      <span className="grid w-[54px] shrink-0 place-items-center rounded-full border border-border bg-bg">
         {auth.kind === 'user' ? (
           <Avatar name={auth.account.name} src={auth.account.avatarUrl} size="sm" />
         ) : (
