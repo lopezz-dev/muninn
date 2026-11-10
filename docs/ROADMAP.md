@@ -280,7 +280,8 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     en céntimos; migración `20261021120000_finance` aplicada el 21 de octubre; core con tests y herramientas del MCP sin borrados
   - [x] Pantalla Finanzas: Resumen (cuentas y últimos movimientos), Movimientos (mes, filtros, alta fija en escritorio y hoja en móvil)
     y Cuentas (cuentas y categorías editables), con escrituras optimistas, «Deshacer» y tiempo real; guía [Finanzas](user/es/10-finanzas.md)
-  - [ ] Ajuste de valor de una inversión (hoy, un ingreso o gasto en esa cuenta) y multidivisa: fuera de esta fase
+  - [ ] Ajuste de valor de una inversión (hoy, un ingreso o gasto en esa cuenta) y multidivisa: fuera de esta fase; pasa a
+    [Inversiones](#inversiones-submódulo-de-finanzas)
 - [ ] Suscripciones recurrentes con aviso antes del cobro
   - [x] Suscripciones semanales, mensuales y anuales (ADR-0038): al llegar la fecha la app **avisa** (Inicio y Finanzas) y el cobro se
     apunta o se salta con un toque, con «Deshacer»; nunca se apunta solo. Migración `20261021140000_finance_subscriptions` aplicada el
@@ -348,6 +349,33 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
     fijada** con actor `assistant`. Si el ordenador estaba apagado, se hace al abrir Muninn ese día y lo dice; no recupera días pasados.
     Sale arriba en la lista del Asistente. Probado en la demo y con tests
   - [ ] Otros agentes (p. ej. resumen semanal, avisos de tareas atascadas): fuera de esta sesión; el mismo esquema sirve
+
+## Inversiones (submódulo de Finanzas)
+> **Estado:** en diseño desde el 10 de noviembre (decisión de Alex: adelantarlo de la 0.17 a la 0.12). Dos ADRs **propuestos**, sin
+> código: [ADR-0085](adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md) (divisas) y
+> [ADR-0086](adr/0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) (cartera). Nada empieza hasta que Alex los acepte.
+
+Que la cuenta de inversión enseñe lo que vale, como en el bróker, y saber cuánto de una subida o una bajada es del mercado y cuánto
+del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo real.
+
+- [ ] **Inversiones I** (0.12): divisas y cartera
+  - [x] Diseño: ADR-0085 y ADR-0086, propuestos
+  - [ ] Aceptar los ADRs y lienzo «Muninn — Inversiones» (escritorio y móvil)
+  - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
+  - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
+  - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests
+  - [ ] La cuenta de inversión vale su cartera: valor, aportado y ganancia en Resumen y Cuentas
+  - [ ] MCP y asistente: herramientas de cartera, y Claude como puente con el conector de IBKR
+  - [ ] Pantalla Finanzas › Inversiones: cartera, posiciones, detalle, alta de operación y reparto
+  - [ ] Panel de divisas: exposición, efecto divisa frente a mercado y simulador
+  - [ ] Guías en inglés y en español
+- [ ] **Inversiones II** (0.17): lo que se apoya en la primera
+  - [ ] Sincronización automática con IBKR (informes Flex), con las dos cuentas: el conector de IBKR solo ve una
+  - [ ] Rendimiento: evolución del valor, rentabilidad por periodos y comparación con un índice
+  - [ ] Dividendos, comisiones, retenciones y ganancia realizada por lotes, con resumen anual
+  - [ ] Alertas de cartera, de precio y de divisa
+  - [ ] Pesos objetivo y reparto de la próxima aportación
+  - [ ] Cuentas en otra divisa fuera de Inversiones
 
 ## Acceso y seguridad
 Hoy se entra con un código por correo o con GitHub ([ADR-0022](adr/0022-auth-y-sesion.md)). Siguientes pasos,
