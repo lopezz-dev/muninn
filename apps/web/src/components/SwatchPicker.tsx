@@ -55,7 +55,7 @@ export function SwatchPicker<T extends string>({
             />
             <span
               aria-hidden="true"
-              className="size-[22px] rounded-md bg-(--swatch) ring-offset-2 ring-offset-bg transition-shadow peer-checked:ring-2 peer-checked:ring-(--swatch) peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent"
+              className="size-[22px] rounded-full bg-(--swatch) ring-offset-2 ring-offset-bg transition-shadow peer-checked:ring-2 peer-checked:ring-(--swatch) peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent"
             />
           </label>
         ))}

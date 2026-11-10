@@ -305,7 +305,7 @@ function WeekColumn({
         total ? t('calendar.dayWithTasks', { day: dayLong(iso), count: total }) : dayLong(iso)
       }
       className={cn(
-        'group flex min-h-0 min-w-0 flex-col rounded-lg border transition-colors',
+        'group flex min-h-0 min-w-0 flex-col rounded-md border transition-colors',
         isToday ? 'border-accent/35 bg-accent-soft/40' : 'border-border-subtle',
         !isToday && (weekend ? 'bg-surface-sunken' : 'bg-surface'),
         isOver && 'border-accent bg-accent-soft',
@@ -829,7 +829,7 @@ function CalendarDesktop({
             aria-pressed={trayOpen}
             onClick={() => setTrayOpen((o) => !o)}
             className={cn(
-              'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+              'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors',
               trayOpen
                 ? 'border-border-strong bg-surface-raised text-fg'
                 : 'border-border text-fg-muted hover:text-fg',

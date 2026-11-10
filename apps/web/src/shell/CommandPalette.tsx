@@ -343,7 +343,7 @@ export function CommandPalette({ open, onOpenChange, initialQuery = '' }: Comman
                     )}
                   >
                     {it.group === 'ask' ? (
-                      <span className="grid size-[26px] place-items-center rounded-md bg-accent-soft text-accent">
+                      <span className="grid size-[26px] place-items-center rounded-full bg-accent-soft text-accent">
                         <Icon name={it.icon} size={14} />
                       </span>
                     ) : it.color ? (

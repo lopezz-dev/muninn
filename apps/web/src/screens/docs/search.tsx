@@ -86,8 +86,8 @@ export function DocSearchField({
   return (
     <label
       className={cn(
-        'flex items-center gap-2.5 rounded-lg border border-border bg-surface text-fg-subtle focus-within:border-accent',
-        lg ? 'h-11 px-3.5' : 'h-11 px-3.5 md:h-8 md:rounded-md md:bg-transparent md:px-2.5',
+        'flex items-center gap-2.5 rounded-full border border-border bg-surface text-fg-subtle focus-within:border-accent',
+        lg ? 'h-11 px-3.5' : 'h-11 px-3.5 md:h-8 md:bg-transparent md:px-2.5',
         className,
       )}
     >

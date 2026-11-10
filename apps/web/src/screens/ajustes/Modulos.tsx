@@ -95,7 +95,9 @@ export function Modulos() {
               id={`ajuste-modulo-${id}`}
               className="flex items-center gap-3.5 border-t border-border-subtle px-4 py-3.5 first:border-t-0 md:px-[18px]"
             >
-              <span className={cn('grid size-8 shrink-0 place-items-center rounded-md', info.tile)}>
+              <span
+                className={cn('grid size-8 shrink-0 place-items-center rounded-full', info.tile)}
+              >
                 <Icon name={info.icon} />
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">

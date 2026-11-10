@@ -91,7 +91,7 @@ export function SettingsSearchField({
   return (
     <label
       className={cn(
-        'flex h-11 items-center gap-2.5 rounded-lg border border-border bg-surface px-3.5 text-fg-subtle focus-within:border-accent md:h-8 md:gap-2 md:rounded-md md:bg-transparent md:px-2.5',
+        'flex h-11 items-center gap-2.5 rounded-full border border-border bg-surface px-3.5 text-fg-subtle focus-within:border-accent md:h-8 md:gap-2 md:bg-transparent md:px-2.5',
         className,
       )}
     >
@@ -127,7 +127,7 @@ export function SettingsResults({ search }: { search: SettingsSearch }) {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start gap-4 border-b border-border-subtle pb-5">
-        <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-surface-raised text-fg-muted">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-raised text-fg-muted">
           <icons.search size={20} aria-hidden="true" />
         </span>
         <div className="flex min-w-0 flex-col gap-1">

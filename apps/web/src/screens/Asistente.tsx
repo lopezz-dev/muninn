@@ -280,7 +280,7 @@ export function Asistente() {
                       key={sug}
                       type="button"
                       onClick={() => composer.current?.submit(sug)}
-                      className="cursor-pointer rounded-lg border border-border bg-surface px-3.5 py-3 text-left text-sm text-fg-muted transition-[background-color,color,border-color,scale] duration-150 ease-out hover:border-border-strong hover:bg-surface-hover hover:text-fg active:scale-[0.98]"
+                      className="cursor-pointer rounded-md border border-border bg-surface px-3.5 py-3 text-left text-sm text-fg-muted transition-[background-color,color,border-color,scale] duration-150 ease-out hover:border-border-strong hover:bg-surface-hover hover:text-fg active:scale-[0.98]"
                     >
                       {sug}
                     </button>

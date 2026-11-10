@@ -60,7 +60,7 @@ export function UserMenu({ rail }: { rail: boolean }) {
           {auth.kind === 'user' ? (
             <Avatar name={auth.account.name} src={auth.account.avatarUrl} />
           ) : (
-            <span className="grid size-7 place-items-center rounded-md bg-border-strong text-fg-subtle">
+            <span className="grid size-7 place-items-center rounded-full bg-border-strong text-fg-subtle">
               <Icon name="user" />
             </span>
           )}

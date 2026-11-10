@@ -432,7 +432,7 @@ export function OverdueToggle({
       onClick={() => onFilterChange({ ...filter, due: toggle(filter.due, 'overdue') })}
       className={cn(
         'inline-flex shrink-0 cursor-pointer items-center gap-1.5 border font-medium whitespace-nowrap text-danger transition-colors',
-        touch ? 'h-9 rounded-full px-3 text-sm' : 'h-7 rounded-md px-2.5 text-[12.5px]',
+        touch ? 'h-9 rounded-full px-3 text-sm' : 'h-7 rounded-full px-2.5 text-[12.5px]',
         on ? 'border-danger bg-danger-soft' : 'border-danger/35 hover:bg-danger-soft',
       )}
     >

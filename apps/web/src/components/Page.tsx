@@ -93,7 +93,7 @@ export function EmptyState({
         </div>
       ) : null}
       <div className="flex flex-col items-center gap-4 px-6 py-10">
-        <span className="grid size-12 place-items-center rounded-lg bg-accent-soft text-accent">
+        <span className="grid size-12 place-items-center rounded-full bg-accent-soft text-accent">
           <Icon name={icon} size={24} />
         </span>
         <div className="flex max-w-md flex-col items-center gap-1.5">

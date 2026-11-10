@@ -92,10 +92,10 @@
     @apply text-fg-subtle;
   }
   .note-prose code {
-    @apply rounded-sm bg-surface-raised px-1.5 py-px font-mono text-[0.9em] text-fg;
+    @apply rounded-xs bg-surface-raised px-1.5 py-px font-mono text-[0.9em] text-fg;
   }
   .note-prose pre {
-    @apply overflow-x-auto rounded-lg border border-border bg-surface-sunken p-3 font-mono text-sm leading-relaxed text-fg;
+    @apply overflow-x-auto rounded-md border border-border bg-surface-sunken p-3 font-mono text-sm leading-relaxed text-fg;
   }
   .note-prose pre code {
     @apply bg-transparent p-0 text-[1em];
@@ -149,7 +149,7 @@
     @apply text-fg-subtle line-through;
   }
   .note-prose .tableWrapper {
-    @apply max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-border;
+    @apply max-w-full overflow-x-auto overscroll-x-contain rounded-md border border-border;
   }
   .note-prose table {
     @apply w-full border-collapse text-sm;

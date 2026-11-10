@@ -96,7 +96,7 @@ function TaskRow({ task, color, today, progress, done, pending, onToggle }: RowP
         aria-label={t(done ? 'row.reopen' : 'row.complete', { title: task.title })}
         touch
         size="lg"
-        className="md:size-4 md:rounded-sm"
+        className="md:size-4 md:rounded-xs"
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <Link
@@ -151,7 +151,7 @@ function Clear({ next, today }: { next?: Task; today: string }) {
   return (
     <div className="border-t border-border-subtle">
       <div className="flex items-center gap-3.5 px-4 py-4">
-        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-success-soft text-success">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-success-soft text-success">
           <Icon name="check" size={20} />
         </span>
         <span className="flex min-w-0 flex-col gap-0.5">

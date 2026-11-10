@@ -65,7 +65,7 @@ function DigestCard({ hasItems }: { hasItems: boolean }) {
 
   return (
     <Card className="flex gap-3.5 p-[18px]">
-      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
         <Icon name="assistant" size={16} />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
@@ -356,7 +356,7 @@ export function Noticias() {
 
   const tabClass = (on: boolean) =>
     cn(
-      'h-7 cursor-pointer rounded-md border px-3 text-[12.5px] font-medium transition-colors',
+      'h-7 cursor-pointer rounded-full border px-3 text-[12.5px] font-medium transition-colors',
       on
         ? 'border-border-strong bg-surface-raised text-fg'
         : 'border-border text-fg-muted hover:bg-surface-hover',

@@ -45,7 +45,7 @@ const rowClass =
 function Tile({ icon, label, tile }: { icon: SectionId | 'search'; label: string; tile: string }) {
   return (
     <>
-      <span className={cn('grid size-[34px] place-items-center rounded-md', tile)}>
+      <span className={cn('grid size-[34px] place-items-center rounded-full', tile)}>
         <Icon name={icon === 'search' ? 'search' : SECTIONS[icon].icon} size={19} />
       </span>
       <span className="max-w-full truncate">{label}</span>
@@ -64,7 +64,9 @@ function SectionRow({
 }) {
   return (
     <button type="button" className={rowClass} onClick={() => accountSheet.push(section.id)}>
-      <span className={cn('grid size-[30px] shrink-0 place-items-center rounded-md', section.tile)}>
+      <span
+        className={cn('grid size-[30px] shrink-0 place-items-center rounded-full', section.tile)}
+      >
         <AppIcon name={section.icon} size={17} />
       </span>
       <span className={cn('min-w-0 flex-1 truncate', section.soon && 'text-fg-muted')}>
@@ -155,7 +157,7 @@ function Root() {
           )}
           {isTauri ? (
             <Link to="/assistant" onClick={accountSheet.close} className={tileClass}>
-              <span className="grid size-[34px] place-items-center rounded-md bg-project-amber/15 text-project-amber">
+              <span className="grid size-[34px] place-items-center rounded-full bg-project-amber/15 text-project-amber">
                 <Icon name="assistant" size={19} />
               </span>
               {t('nav.assistant')}
@@ -172,7 +174,7 @@ function Root() {
                 })
               }
             >
-              <span className="grid size-[34px] place-items-center rounded-md bg-project-amber/15 text-project-amber">
+              <span className="grid size-[34px] place-items-center rounded-full bg-project-amber/15 text-project-amber">
                 <Icon name="assistant" size={19} />
               </span>
               <span className="flex flex-col leading-tight">
@@ -202,7 +204,7 @@ function Root() {
 
       <div className="glass overflow-hidden rounded-lg border border-border">
         <GuidesLink onClick={accountSheet.close} className={rowClass}>
-          <span className="grid size-[30px] shrink-0 place-items-center rounded-md bg-project-blue/15 text-project-blue">
+          <span className="grid size-[30px] shrink-0 place-items-center rounded-full bg-project-blue/15 text-project-blue">
             <Icon name="docs" size={17} />
           </span>
           <span className="min-w-0 flex-1 truncate">{t('nav.docsLong')}</span>
@@ -224,7 +226,7 @@ function SectionView({ section }: { section: SettingsSection }) {
   return (
     <div className="flex flex-col gap-5">
       <header className="flex items-start gap-3">
-        <span className={cn('grid size-10 shrink-0 place-items-center rounded-lg', section.tile)}>
+        <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', section.tile)}>
           <AppIcon name={section.icon} size={20} />
         </span>
         <div className="flex min-w-0 flex-col gap-0.5">

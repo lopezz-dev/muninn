@@ -134,7 +134,7 @@ export function Column({
             ref={setActivatorNodeRef}
             type="button"
             aria-label={t('column.move', { name: column.name })}
-            className="grid size-6 shrink-0 cursor-grab touch-none place-items-center rounded-sm text-fg-faint outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent"
+            className="grid size-6 shrink-0 cursor-grab touch-none place-items-center rounded-full text-fg-faint outline-none transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-accent"
             {...attributes}
             {...listeners}
           >

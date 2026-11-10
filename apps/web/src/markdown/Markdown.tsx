@@ -111,7 +111,7 @@ function inlineToken(t: Token, ctx: Ctx): ReactNode {
       return <del className="text-fg-subtle">{inline((t as Tokens.Del).tokens, ctx)}</del>
     case 'codespan':
       return (
-        <code className="rounded-sm bg-surface-raised px-1.5 py-px font-mono text-[0.9em] text-fg">
+        <code className="rounded-xs bg-surface-raised px-1.5 py-px font-mono text-[0.9em] text-fg">
           {(t as Tokens.Codespan).text}
         </code>
       )
@@ -299,7 +299,7 @@ function block(t: Token, ctx: Ctx): ReactNode {
     }
     case 'code':
       return (
-        <pre className="overflow-x-auto rounded-lg border border-border bg-surface-sunken p-3 font-mono text-sm leading-relaxed text-fg">
+        <pre className="overflow-x-auto rounded-md border border-border bg-surface-sunken p-3 font-mono text-sm leading-relaxed text-fg">
           <code>{(t as Tokens.Code).text}</code>
         </pre>
       )
@@ -318,7 +318,7 @@ function block(t: Token, ctx: Ctx): ReactNode {
       const body = (i: number, content: ReactNode) =>
         fit[i] ? content : <div className="min-w-48">{content}</div>
       return (
-        <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-border">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-md border border-border">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-surface text-xs font-semibold text-fg-subtle">
               <tr>

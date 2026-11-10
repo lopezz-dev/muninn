@@ -149,7 +149,7 @@ export function Notas() {
       </header>
 
       <div className="glass sticky top-0 z-10 -mx-5 shrink-0 px-5 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-filter-none">
-        <label className="flex h-11 items-center gap-2.5 rounded-lg border border-border bg-surface px-3.5 text-fg-subtle focus-within:border-accent md:h-8 md:rounded-md md:bg-transparent md:px-2.5">
+        <label className="flex h-11 items-center gap-2.5 rounded-full border border-border bg-surface px-3.5 text-fg-subtle focus-within:border-accent md:h-8 md:bg-transparent md:px-2.5">
           <icons.search size={16} aria-hidden="true" />
           <input
             type="search"

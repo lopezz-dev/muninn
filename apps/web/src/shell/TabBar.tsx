@@ -79,9 +79,9 @@ function useCompactOnScroll(resetKey: string) {
 }
 
 /**
- * Barra de pestañas del teléfono (< 768 px), ADR-0054 y ADR-0072. Diseño: lienzo «Dock y cuenta». De una a cuatro
- * pestañas que eliges tú (Ajustes › Barra de abajo) y, aparte, siempre tu avatar: abre la hoja «Tu cuenta» con todo lo
- * demás.
+ * Barra de pestañas del teléfono (< 768 px), ADR-0054 y ADR-0072; el aspecto, de ADR-0087 (lienzo «Muninn — Inversiones»):
+ * una cápsula en la que solo la pestaña activa enseña su nombre, y tu avatar en un círculo aparte. De una a cuatro pestañas
+ * que eliges tú (Ajustes › Barra de abajo); el avatar abre la hoja «Tu cuenta» con todo lo demás.
  */
 export function TabBar({ className }: { className?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -107,36 +107,45 @@ export function TabBar({ className }: { className?: string }) {
         aria-hidden="true"
         className="absolute inset-x-0 bottom-0 h-[calc(110px+env(safe-area-inset-bottom))] bg-linear-to-b from-transparent to-bg to-70%"
       />
-      <div className="relative mx-4 mb-[calc(14px+env(safe-area-inset-bottom))] flex h-[62px] items-stretch gap-2">
+      <div className="relative mx-2.5 mb-[calc(14px+env(safe-area-inset-bottom))] flex h-16 items-stretch gap-1.5">
         <nav
           aria-label={t('shell.dockNav')}
           className={cn(
-            'glass-raised pointer-events-auto flex min-w-0 items-center gap-0.5 overflow-hidden rounded-dock border border-white/[0.09] bg-surface-raised p-[5px] shadow-popover',
+            'glass-raised pointer-events-auto flex min-w-0 items-center justify-evenly gap-0.5 overflow-hidden rounded-full border border-white/[0.09] bg-surface-raised p-1.5 shadow-popover',
             'transition-[flex-basis] duration-[400ms] ease-(--mn-motion-ease-out) motion-reduce:transition-none',
-            shrunk ? 'flex-[0_0_62px]' : 'flex-[1_1_100%]',
+            shrunk ? 'flex-[0_0_64px]' : 'flex-[1_1_100%]',
           )}
         >
           {tabs.map((id, i) => {
             const s = DOCK_TAB[id]
             const isActive = i === active
             const hidden = shrunk && !isActive
+            // Solo la activa enseña su nombre (ADR-0087); las demás, el icono, con el nombre en `aria-label`. En un
+            // teléfono de 360 px con cuatro pestañas no sobra nada: los iconos ceden primero (de 44 a 40 px, con un
+            // factor de encogido mucho mayor) y, solo si aun así no cabe, el nombre de la activa se corta.
             const tabClass = cn(
-              'flex h-full min-w-0 cursor-pointer flex-col items-center justify-center gap-[3px] rounded-lg outline-offset-[-2px] transition-[flex-basis,opacity,background-color,color] duration-300 motion-reduce:transition-none',
-              hidden ? 'pointer-events-none flex-[0_0_0px] opacity-0' : 'flex-[1_1_0px]',
+              'flex h-full cursor-pointer items-center justify-center gap-1.5 rounded-full outline-offset-[-2px] transition-[flex-basis,opacity,background-color,color,padding] duration-300 motion-reduce:transition-none',
+              hidden
+                ? 'pointer-events-none min-w-0 flex-[0_0_0px] opacity-0'
+                : isActive
+                  ? 'min-w-12 flex-[0_1_auto]'
+                  : 'min-w-10 flex-[0_1000_44px]',
               isActive ? 'bg-accent-soft text-accent' : 'text-fg-muted hover:text-fg',
+              isActive && (shrunk ? 'w-full px-0' : 'px-3'),
             )
             const content = (
               <>
-                <Icon name={s.icon} size={22} weight={isActive ? 'bold' : undefined} />
-                <span
-                  className={cn(
-                    'text-2xs leading-none whitespace-nowrap',
-                    isActive ? 'font-semibold' : 'font-medium',
-                    shrunk && 'hidden',
-                  )}
-                >
-                  {s.label}
-                </span>
+                <Icon
+                  name={s.icon}
+                  size={22}
+                  weight={isActive ? 'bold' : undefined}
+                  className="shrink-0"
+                />
+                {isActive && !shrunk ? (
+                  <span aria-hidden="true" className="truncate text-sm leading-none font-semibold">
+                    {s.label}
+                  </span>
+                ) : null}
               </>
             )
             // «Buscar» no lleva a ninguna pantalla: abre el buscador encima de la que estés.
@@ -185,7 +194,7 @@ export function TabBar({ className }: { className?: string }) {
           aria-expanded={sheet.open}
           onClick={() => (sheet.open ? accountSheet.close() : accountSheet.open())}
           className={cn(
-            'glass-raised pointer-events-auto grid size-[62px] shrink-0 cursor-pointer place-items-center rounded-dock border border-white/[0.09] bg-surface-raised shadow-popover outline-offset-2 transition-[scale,box-shadow] duration-150 active:scale-[0.96]',
+            'glass-raised pointer-events-auto grid size-16 shrink-0 cursor-pointer place-items-center rounded-full border border-white/[0.09] bg-surface-raised shadow-popover outline-offset-2 transition-[scale,box-shadow] duration-150 active:scale-[0.96]',
             sheet.open && 'border-accent ring-2 ring-accent/25',
           )}
         >
@@ -193,12 +202,12 @@ export function TabBar({ className }: { className?: string }) {
             <Avatar
               name={auth.account.name}
               src={auth.account.avatarUrl}
-              className="size-9 text-sm"
+              className="size-10 text-sm"
             />
           ) : (
             <span
               aria-hidden="true"
-              className="grid size-9 place-items-center rounded-md bg-border-strong text-fg-subtle"
+              className="grid size-10 place-items-center rounded-full bg-border-strong text-fg-subtle"
             >
               <Icon name="user" size={20} />
             </span>

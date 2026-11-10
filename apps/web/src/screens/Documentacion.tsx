@@ -109,7 +109,7 @@ function Portada() {
     <Page className="gap-7 md:gap-8">
       <header className="flex flex-col gap-5 border-b border-border-subtle pb-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div className="flex items-start gap-4">
-          <span className="hidden size-13 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent md:grid">
+          <span className="hidden size-13 shrink-0 place-items-center rounded-full bg-accent-soft text-accent md:grid">
             <icons.docs size={26} aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-col gap-1.5">

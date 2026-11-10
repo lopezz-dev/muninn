@@ -318,7 +318,7 @@ function AgentCard({
       className="flex flex-[1_1_420px] flex-col gap-3.5 px-[18px] py-4"
     >
       <div className="flex items-center gap-2.5">
-        <span className="grid size-[30px] shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
+        <span className="grid size-[30px] shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
           <Icon name="agent" />
         </span>
         <h2 id="agente-titulo" className="text-md font-semibold">

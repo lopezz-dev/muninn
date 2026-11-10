@@ -164,7 +164,7 @@ function DueField({ task, touch }: Pick<BodyProps, 'task' | 'touch'>) {
           type="button"
           aria-label={t('body.removeDue')}
           onClick={() => set('')}
-          className="grid size-6 cursor-pointer place-items-center rounded-sm text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
+          className="grid size-6 cursor-pointer place-items-center rounded-full text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg"
         >
           <icons.close size={12} />
         </button>
@@ -229,7 +229,7 @@ function LabelsField({ task }: Pick<BodyProps, 'task'>) {
           }
         }}
         onBlur={add}
-        className="h-[22px] w-20 rounded-sm border border-dashed border-border-strong bg-transparent px-2 text-xs text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
+        className="h-[22px] w-20 rounded-full border border-dashed border-border-strong bg-transparent px-2 text-xs text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
       />
     </span>
   )
@@ -390,7 +390,7 @@ function Description({ task }: Pick<BodyProps, 'task'>) {
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="-mr-2 h-7 cursor-pointer rounded-md px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+                className="-mr-2 h-7 cursor-pointer rounded-full px-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
               >
                 {t('body.edit')}
               </button>
@@ -516,7 +516,7 @@ function ActivityLog({ task }: Pick<BodyProps, 'task'>) {
               <span
                 aria-hidden="true"
                 className={cn(
-                  'mt-px grid size-5 shrink-0 place-items-center rounded-sm bg-surface-raised',
+                  'mt-px grid size-5 shrink-0 place-items-center rounded-full bg-surface-raised',
                   a.actor !== 'user' && 'text-accent',
                 )}
               >

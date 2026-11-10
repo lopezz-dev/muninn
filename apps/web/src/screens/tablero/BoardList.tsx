@@ -57,7 +57,7 @@ function TaskRow({ task, progress, today, projectId }: RowProps) {
         }
         touch
         size="lg"
-        className="md:size-4 md:rounded-sm"
+        className="md:size-4 md:rounded-xs"
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <Link

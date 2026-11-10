@@ -48,7 +48,9 @@ export function DocTile({
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
-  const box = { sm: 'size-7 rounded-md', md: 'size-8 rounded-md', lg: 'size-12 rounded-lg' }[size]
+  const box = { sm: 'size-7 rounded-full', md: 'size-8 rounded-full', lg: 'size-12 rounded-full' }[
+    size
+  ]
   const px = { sm: 15, md: 17, lg: 24 }[size]
   return (
     <span className={cn('grid shrink-0 place-items-center', box, tileClass(doc), className)}>
