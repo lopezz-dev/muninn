@@ -1,7 +1,7 @@
 # ADR-0087: Estilo nuevo: barra de abajo en cápsula, radios más grandes por papel, superficies sin borde y cifra protagonista
 
-- **Estado:** Propuesto (la barra la eligió Alex el 10 de noviembre sobre el lienzo; falta aceptar la escala de radios y decidir el
-  alcance; no hay código)
+- **Estado:** Propuesto (la barra y el alcance los decidió Alex el 10 de noviembre sobre el lienzo; se acepta al fusionar
+  [#152](https://github.com/lopezz-dev/muninn/pull/152); no hay código)
 - **Fecha:** 2026-11-10
 - **Área:** ui, web
 - **Reemplazaría a:** los valores de los radios de [ADR-0014](0014-tokens-y-tailwind-v4.md) (los nombres y el mecanismo siguen) y el
@@ -64,8 +64,8 @@ de cifras, a 20 px o menos.
   un módulo desactivado ocultas, el avatar abre la hoja «Tu cuenta», se encoge a la pestaña activa al bajar, el fundido de debajo
   y la corrección del hueco en iOS.
 
-**6. Alcance, en dos pasos** (lo que falta por decidir):
-- **Paso 1, con Inversiones (0.12):** los tokens nuevos, los componentes de `@muninn/ui` (Button, Card, Dialog, Sheet, Menu,
+**6. Alcance: toda la app, en dos pasos** (decisión de Alex del 10 de noviembre):
+- **Paso 1, en la 0.12, antes de la pantalla de Inversiones:** los tokens nuevos, los componentes de `@muninn/ui` (Button, Card, Dialog, Sheet, Menu,
   campos), la barra en cápsula y una pasada por **todas** las pantallas a 390, 820 y 1280 px solo para arreglar lo que el cambio
   de radios rompa. Las pantallas de Inversiones nacen ya con el estilo entero.
 - **Paso 2, con el rediseño responsive (0.14):** rehacer el resto de pantallas con la cifra protagonista, las listas de filas
@@ -79,7 +79,8 @@ de cifras, a 20 px o menos.
   barra (habría que rehacer la hoja «Tu cuenta» y su acceso, ADR-0072) y «añadir» no significa lo mismo en cada pantalla.
 - **Tokens nuevos (`card`, `sheet`) y dejar los de hoy como están:** nada se rompe, pero la app convive con dos escalas durante
   meses y cada pantalla nueva tiene que elegir. Cambiar los valores obliga a repasarlo todo una vez y deja una sola escala.
-- **Que solo Inversiones estrene el estilo:** más rápido, y una app con dos aspectos según la pestaña en la que estés.
+- **Que solo Inversiones estrene el estilo:** más rápido, y una app con dos aspectos según la pestaña en la que estés. Alex
+  eligió toda la app.
 - **Rehacerlo todo en la 0.12:** se come las dos semanas de «Escribir sin conexión». El paso 2 ya tiene su sitio en la 0.14.
 - **Copiar el aspecto de otra app:** se toman patrones comunes (cifra grande, píldoras, listas limpias), no la identidad de nadie.
   Muninn conserva su paleta, su tipografía y su acento.

@@ -364,7 +364,9 @@ del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo 
 - [ ] **Inversiones I** (0.12): divisas y cartera
   - [x] Diseño: ADR-0085 y ADR-0086, aceptados ([#151](https://github.com/lopezz-dev/muninn/pull/151))
   - [ ] Lienzo «Muninn — Inversiones» (teléfono y ordenador): hecho, falta que Alex lo revise
-  - [ ] Estilo nuevo (ADR-0087, propuesto): la barra en cápsula está elegida; falta aceptar los radios y decidir el alcance
+  - [ ] Estilo nuevo en toda la app (ADR-0087, propuesto), paso 1: tokens, componentes de `@muninn/ui`, barra en cápsula y una
+    pasada por todas las pantallas. Va antes de la pantalla de Inversiones. El paso 2 (rehacer el resto de pantallas), con el
+    rediseño responsive
   - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
   - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
   - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests
