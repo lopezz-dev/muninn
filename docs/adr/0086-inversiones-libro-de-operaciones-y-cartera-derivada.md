@@ -1,9 +1,9 @@
 # ADR-0086: Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera
 
-- **Estado:** Propuesto (decisiones D2, D3 y D4 del plan de Inversiones; falta que Alex lo acepte; no hay código)
+- **Estado:** Aceptado (10 de noviembre de 2026, al fusionar [#151](https://github.com/lopezz-dev/muninn/pull/151); aún sin código)
 - **Fecha:** 2026-11-10
 - **Área:** core, db, mcp, web
-- **Reemplazaría a:** la parte de [ADR-0037](0037-modelo-de-datos-de-finanzas.md) sobre lo que vale una cuenta de inversión («el
+- **Reemplaza a:** la parte de [ADR-0037](0037-modelo-de-datos-de-finanzas.md) sobre lo que vale una cuenta de inversión («el
   valor de una inversión que sube o baja de mercado no se refleja sin apuntar algo»). Cuentas, categorías, movimientos y el saldo
   derivado siguen igual
 - **Relacionado:** [ADR-0085](0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md), [ADR-0018](0018-dinero-en-centimos.md),

@@ -1,6 +1,6 @@
 # ADR-0037: Finanzas: cuentas, categorías y movimientos, con el saldo derivado
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado en parte por ADR-0086 (lo que vale una cuenta de inversión); lo demás sigue vigente
 - **Fecha:** 2026-10-21
 - **Área:** core, db
 

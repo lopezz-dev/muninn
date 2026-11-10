@@ -351,16 +351,22 @@ que se cierra añade aquí sus comprobaciones; así se revisa todo de una vez. M
   - [ ] Otros agentes (p. ej. resumen semanal, avisos de tareas atascadas): fuera de esta sesión; el mismo esquema sirve
 
 ## Inversiones (submódulo de Finanzas)
-> **Estado:** en diseño desde el 10 de noviembre (decisión de Alex: adelantarlo de la 0.17 a la 0.12). Dos ADRs **propuestos**, sin
-> código: [ADR-0085](adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md) (divisas) y
-> [ADR-0086](adr/0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) (cartera). Nada empieza hasta que Alex los acepte.
+> **Estado:** en diseño desde el 10 de noviembre (decisión de Alex: adelantarlo de la 0.17 a la 0.12). Dos ADRs **aceptados** ese
+> día, aún sin código: [ADR-0085](adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md) (divisas) y
+> [ADR-0086](adr/0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) (cartera). Diseño:
+> [lienzo «Muninn — Inversiones»](https://claude.ai/artifact/7YFqY6PCJEQ1k6eHCz6cer), en revisión. El lienzo trae un estilo nuevo
+> (barra en cápsula, radios, márgenes) que afecta a toda la app: [ADR-0087](adr/0087-estilo-nuevo-capsula-radios-y-margenes.md),
+> **propuesto**.
 
 Que la cuenta de inversión enseñe lo que vale, como en el bróker, y saber cuánto de una subida o una bajada es del mercado y cuánto
 del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo real.
 
 - [ ] **Inversiones I** (0.12): divisas y cartera
-  - [x] Diseño: ADR-0085 y ADR-0086, propuestos
-  - [ ] Aceptar los ADRs y lienzo «Muninn — Inversiones» (escritorio y móvil)
+  - [x] Diseño: ADR-0085 y ADR-0086, aceptados ([#151](https://github.com/lopezz-dev/muninn/pull/151))
+  - [ ] Lienzo «Muninn — Inversiones» (teléfono y ordenador): hecho, falta que Alex lo revise
+  - [ ] Estilo nuevo en toda la app (ADR-0087, propuesto), paso 1: tokens, componentes de `@muninn/ui`, barra en cápsula y una
+    pasada por todas las pantallas. Va antes de la pantalla de Inversiones. El paso 2 (rehacer el resto de pantallas), con el
+    rediseño responsive
   - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
   - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
   - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests
