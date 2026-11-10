@@ -80,7 +80,7 @@ export function TaskPill({
       {...attributes}
       {...listeners}
       className={cn(
-        'flex min-w-0 items-center gap-1.5 rounded-sm border border-border bg-surface-raised px-1.5 text-xs no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent',
+        'flex min-w-0 items-center gap-1.5 rounded-full border border-border bg-surface-raised px-1.5 text-xs no-underline outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-accent',
         row ? 'h-8 text-sm' : 'h-[22px]',
         done ? 'text-fg-subtle' : overdue ? 'text-danger' : 'text-fg',
         !disabled && 'touch-manipulation',

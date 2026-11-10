@@ -302,7 +302,7 @@ export function CalendarMobile({
                 }
                 onClick={() => choose(iso)}
                 className={cn(
-                  'flex h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg text-sm tabular transition-colors',
+                  'flex h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-full text-sm tabular transition-colors',
                   selected
                     ? isToday
                       ? 'bg-accent font-bold text-accent-fg'
