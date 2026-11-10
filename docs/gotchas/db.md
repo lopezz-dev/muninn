@@ -71,6 +71,36 @@ Realtime. No copies este patrón para nada que escriba un usuario: eso va siempr
 - **Solución:** el core ya lo valida (`m.comments.reply` usa siempre la raíz del hilo); el trigger es la última barrera.
 - **Ref:** [ADR-0079](../adr/0079-comentarios-anclados-en-las-notas.md)
 
+### Triggers de Inversiones (`enforce_invest_trade`, `enforce_invest_price`)
+
+- **Síntoma:** `account … is not an investment account of owner …`, `instrument … does not belong to owner …` o
+  `instrument … is quoted in EUR: fx_rate must be null` al apuntar una operación o un precio.
+- **Causa:** la operación va a una cuenta que no es de tipo `investment` (o de otro dueño), el instrumento es de otro dueño, o lleva
+  tipo de cambio un instrumento que cotiza en euros. El core ya lo valida; el trigger es la última barrera
+  ([ADR-0086](../adr/0086-inversiones-libro-de-operaciones-y-cartera-derivada.md), migración `20261110180000_inversiones`).
+- **Ojo:** la base **no** impide cambiar de tipo una cuenta que ya tiene operaciones (el trigger mira la operación, no la cuenta): eso lo
+  frena el core. Si alguien lo hace por SQL, las operaciones siguen ahí y la cuenta deja de valer su cartera.
+- **Ojo:** `external_id` es único **por cuenta** en las operaciones (`invest_trades_external_uq`, también entre las archivadas: lo que
+  archivas no vuelve con la siguiente carga) y **por dueño** en los instrumentos. Una repetida da `23505`; el store de memoria lanza
+  `DuplicateError` con el mismo código, y el core los reconoce igual con `isDuplicate`.
+- **Ojo:** `exposure` se valida en la base con `invest_exposure_ok` (objeto con claves ISO en mayúsculas, enteros de 1 a 10 000 que suman
+  10 000 como mucho). `{}` es «sin reparto». Las claves ajenas de las operaciones a cuentas e instrumentos no tienen `on delete`, como
+  las de los movimientos (ver «Finanzas: la vista de saldos…»); los precios se van con su instrumento.
+- **Últimos precios:** `invest_latest_prices(owner, instrument_ids, on_or_before, per_instrument)` (`security invoker`, el dueño como
+  parámetro) da los N últimos de cada instrumento en una llamada; no pidas precios instrumento a instrumento.
+
+### Inversiones: tablas nuevas (pasos manuales)
+
+- **Síntoma:** la app o el MCP fallan con `relation "public.invest_instruments" does not exist` o
+  `Could not find the function public.invest_latest_prices`.
+- **Solución:** aplica `supabase/migrations/20261110180000_inversiones.sql` **después** de `20261110120000_fx_rates` (no depende de ella,
+  pero van en ese orden). Lleva RLS por dueño, `require_mfa` y las tres tablas en `supabase_realtime`. Si usas `apply_migration` del MCP
+  de Supabase, alinea la versión (arriba). Hasta la pantalla de Inversiones, la web no se suscribe a estas tablas (`SYNC_TABLES`):
+  se añaden con la pantalla, cuando la migración ya esté aplicada.
+- **Probado:** la migración pasó en PGlite (Postgres 17 en WASM) sobre todas las anteriores, con *stubs* de `auth` y de los roles de
+  Supabase: RLS por dueño, `require_mfa` con `aal1`/`aal2`, los `check`, los triggers, los índices únicos, `invest_latest_prices` y el
+  borrado en cascada de un usuario. No se ha aplicado aún contra el Supabase de verdad.
+
 ### Comentarios de las notas (pasos manuales)
 
 - **Síntoma:** la app o el MCP fallan al comentar con `relation "public.note_comments" does not exist`, o las herramientas

@@ -7,6 +7,9 @@ import type {
   FinanceAccount,
   FinanceCategory,
   FxRate,
+  InvestInstrument,
+  InvestPrice,
+  InvestTrade,
   NewsDigest,
   NewsItem,
   NewsSource,
@@ -27,6 +30,9 @@ import {
   type CategoryStoreQuery,
   type Collection,
   type ColumnStoreQuery,
+  DuplicateError,
+  type InstrumentStoreQuery,
+  type InvestPriceStore,
   type NewRow,
   type NewsItemStoreQuery,
   type NoteCommentStoreQuery,
@@ -36,6 +42,7 @@ import {
   type ProjectStoreQuery,
   type Store,
   type TaskStoreQuery,
+  type TradeStoreQuery,
   type TransactionStoreQuery,
 } from './store'
 
@@ -57,6 +64,10 @@ export interface MemorySnapshot {
   newsSources: NewsSource[]
   newsItems: NewsItem[]
   newsDigests: NewsDigest[]
+  /** Inversiones (ADR-0086); los ficheros de antes no lo traen. */
+  investInstruments?: InvestInstrument[]
+  investTrades?: InvestTrade[]
+  investPrices?: InvestPrice[]
   pushDevices?: PushDevice[]
   /** Claves de los avisos ya enviados. */
   pushLog?: string[]
@@ -205,6 +216,10 @@ export function createMemoryStore(
   const newsSources = toMap(initial.newsSources ?? [])
   const newsItems = toMap(initial.newsItems ?? [])
   const newsDigests = toMap(initial.newsDigests ?? [])
+  // Ni los de antes de Inversiones.
+  const investInstruments = toMap(initial.investInstruments ?? [])
+  const investTrades = toMap(initial.investTrades ?? [])
+  const investPrices = toMap(initial.investPrices ?? [])
   // Ni los de antes de los avisos push.
   const pushDevices = toMap(initial.pushDevices ?? [])
   const pushLog = new Set(initial.pushLog ?? [])
@@ -236,6 +251,9 @@ export function createMemoryStore(
       newsSources: [...newsSources.values()],
       newsItems: [...newsItems.values()],
       newsDigests: [...newsDigests.values()],
+      investInstruments: [...investInstruments.values()],
+      investTrades: [...investTrades.values()],
+      investPrices: [...investPrices.values()],
       pushDevices: [...pushDevices.values()],
       pushLog: [...pushLog],
     })
@@ -323,6 +341,94 @@ export function createMemoryStore(
   })
   const currentSessionId = async () =>
     (await accountState.sessions()).find((s) => s.current)?.id ?? null
+
+  /**
+   * Una colección con un índice único parcial, como en Postgres: `key` da la clave de la fila (o `null` si no entra en el
+   * índice). Una repetida lanza `DuplicateError` (el `23505` de Supabase) y no escribe nada.
+   */
+  function unique<T extends { id: string; createdAt: string; updatedAt: string }, Q>(
+    col: MemoryCollection<T, Q>,
+    key: (row: NewRow<T> | T) => string | null,
+    message: string,
+  ) {
+    const clash = (rows: (NewRow<T> | T)[], ignoreIds: string[]) => {
+      const seen = new Set(
+        [...col.rows.values()]
+          .filter((r) => !ignoreIds.includes(r.id))
+          .map(key)
+          .filter((k): k is string => k !== null),
+      )
+      for (const r of rows) {
+        const k = key(r)
+        if (k === null) continue
+        if (seen.has(k)) throw new DuplicateError(message)
+        seen.add(k)
+      }
+    }
+    return Object.assign(col, {
+      // `async`: una repetida rechaza la promesa, como Supabase, en vez de lanzar al llamar.
+      insert: async (row: NewRow<T>) => {
+        clash([row], [])
+        return MemoryCollection.prototype.insert.call(col, row) as Promise<T>
+      },
+      insertMany: async (rows: NewRow<T>[]) => {
+        clash(rows, [])
+        return MemoryCollection.prototype.insertMany.call(col, rows) as Promise<T[]>
+      },
+      update: async (id: string, patch: Partial<NewRow<T>>) => {
+        const current = col.rows.get(id)
+        if (current) clash([{ ...current, ...patch }], [id])
+        return MemoryCollection.prototype.update.call(col, id, patch) as Promise<T>
+      },
+    })
+  }
+
+  const newest = <T extends { date: string; createdAt: string }>(a: T, b: T) =>
+    a.date !== b.date
+      ? a.date < b.date
+        ? 1
+        : -1
+      : a.createdAt < b.createdAt
+        ? 1
+        : a.createdAt > b.createdAt
+          ? -1
+          : 0
+
+  // Precios (ADR-0086): uno por instrumento y día; el nuevo sustituye al anterior (como el `upsert` de Supabase).
+  const investPriceStore: InvestPriceStore = {
+    async latest(instrumentIds, onOrBefore, perInstrument = 1) {
+      const per = Math.max(1, Math.min(perInstrument, 10))
+      const all = [...investPrices.values()].filter((p) => p.date <= onOrBefore).sort(newest)
+      return instrumentIds.flatMap((id) =>
+        all
+          .filter((p) => p.instrumentId === id)
+          .slice(0, per)
+          .map((p) => structuredClone(p)),
+      )
+    },
+    async list({ instrumentId, from, to }) {
+      return [...investPrices.values()]
+        .filter((p) => p.instrumentId === instrumentId && p.date >= from && p.date <= to)
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+        .map((p) => structuredClone(p))
+    },
+    async upsert(rows) {
+      const ts = now()
+      const saved: InvestPrice[] = []
+      for (const row of rows) {
+        const current = [...investPrices.values()].find(
+          (p) => p.instrumentId === row.instrumentId && p.date === row.date,
+        )
+        const next: InvestPrice = current
+          ? { ...current, ...row, updatedAt: ts }
+          : { ...row, id: crypto.randomUUID(), createdAt: ts, updatedAt: ts }
+        investPrices.set(next.id, next)
+        saved.push(structuredClone(next))
+      }
+      if (rows.length > 0) changed()
+      return saved
+    },
+  }
 
   return {
     snapshot,
@@ -487,6 +593,44 @@ export function createMemoryStore(
       changed,
       now,
     ),
+    investInstruments: unique(
+      new MemoryCollection<InvestInstrument, InstrumentStoreQuery>(
+        'Instrumento',
+        investInstruments,
+        (rows, q) =>
+          rows
+            .filter((i) => q.includeArchived || !i.archivedAt)
+            .filter((i) => !q.externalId || i.externalId === q.externalId)
+            .sort((a, b) => (a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0)),
+        changed,
+        now,
+      ),
+      (i) => (i.externalId ? i.externalId : null),
+      'Ya hay un instrumento con ese id externo',
+    ),
+    investTrades: unique(
+      new MemoryCollection<InvestTrade, TradeStoreQuery>(
+        'Operación',
+        investTrades,
+        (rows, q) =>
+          rows
+            .filter((t) => q.includeArchived || !t.archivedAt)
+            .filter((t) => !q.accountId || t.accountId === q.accountId)
+            .filter((t) => !q.instrumentId || t.instrumentId === q.instrumentId)
+            .filter((t) => !q.kinds || q.kinds.includes(t.kind))
+            .filter((t) => !q.externalId || t.externalId === q.externalId)
+            .filter((t) => !q.from || t.date >= q.from)
+            .filter((t) => !q.to || t.date <= q.to)
+            .sort(newest)
+            .slice(0, q.limit ?? Number.POSITIVE_INFINITY),
+        changed,
+        now,
+      ),
+      // Único por cuenta, también entre las archivadas (como `invest_trades_external_uq`).
+      (t) => (t.externalId ? `${t.accountId}:${t.externalId}` : null),
+      'Ya hay una operación con ese id externo en esta cuenta',
+    ),
+    investPrices: investPriceStore,
     githubOutbox: {
       async enqueue(taskId, kind) {
         outbox.push({

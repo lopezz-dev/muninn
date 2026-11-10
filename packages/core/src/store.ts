@@ -12,6 +12,9 @@ import type {
   FxRate,
   GithubRepoSummary,
   GithubSyncScope,
+  InvestInstrument,
+  InvestPrice,
+  InvestTrade,
   MfaEnrollment,
   MfaFactor,
   NewsDigest,
@@ -30,6 +33,7 @@ import type {
   Task,
   TaskPriority,
   TaskSource,
+  TradeKind,
   Transaction,
   TransactionKind,
   UserSettings,
@@ -69,6 +73,10 @@ export interface Store {
    * Edge Function `fx`. El store de memoria (demo, tests) y el de fichero llevan unos tipos fijos.
    */
   fxRates: FxRateStore
+  /** Inversiones (ADR-0086): instrumentos, operaciones y precios de cierre, del usuario. */
+  investInstruments: Collection<InvestInstrument, InstrumentStoreQuery>
+  investTrades: Collection<InvestTrade, TradeStoreQuery>
+  investPrices: InvestPriceStore
   /** Noticias (ADR-0042). */
   newsSources: Collection<NewsSource, { includeArchived?: boolean }>
   newsItems: NewsItemStore
@@ -112,6 +120,45 @@ export interface Store {
     /** Lanza la sincronización ahora: solo la cola de salida o también la reconciliación de los repos. */
     sync(scope: GithubSyncScope): Promise<unknown>
   }
+}
+
+/** Instrumentos por símbolo. */
+export interface InstrumentStoreQuery {
+  includeArchived?: boolean
+  externalId?: string
+}
+
+/**
+ * Operaciones de la fecha más reciente a la más antigua (y, en el mismo día, la última creada primero), como los
+ * movimientos. Sin `limit`, todas (en Supabase, por páginas).
+ */
+export interface TradeStoreQuery {
+  accountId?: string
+  instrumentId?: string
+  kinds?: TradeKind[]
+  /** Fechas incluidas (`AAAA-MM-DD`). */
+  from?: string
+  to?: string
+  externalId?: string
+  includeArchived?: boolean
+  limit?: number
+}
+
+/** Precios de cierre (ADR-0086): sin archivar ni actividad; uno por instrumento y día. */
+export interface InvestPriceStore {
+  /**
+   * Los últimos `perInstrument` (1 por defecto, 10 como mucho) de cada instrumento hasta `onOrBefore`, del más reciente al
+   * más antiguo. Una sola lectura para todos (en Supabase, la función `invest_latest_prices`).
+   */
+  latest(
+    instrumentIds: string[],
+    onOrBefore: string,
+    perInstrument?: number,
+  ): Promise<InvestPrice[]>
+  /** Los de un instrumento entre dos fechas incluidas, del más antiguo al más reciente. */
+  list(query: { instrumentId: string; from: string; to: string }): Promise<InvestPrice[]>
+  /** Crea o sustituye el de cada instrumento y día; devuelve las filas guardadas. */
+  upsert(rows: NewRow<InvestPrice>[]): Promise<InvestPrice[]>
 }
 
 /** Tipos de cambio, de solo lectura (ADR-0085). */
@@ -335,6 +382,22 @@ export class NotFoundError extends Error {
     this.name = 'NotFoundError'
   }
 }
+
+/**
+ * Una fila repetida en un índice único (`external_id` de una operación o de un instrumento…). Lleva el mismo código que
+ * Postgres (`23505`), así el core la reconoce igual venga del store de memoria o de Supabase (`isDuplicate`).
+ */
+export class DuplicateError extends Error {
+  readonly code = '23505'
+  constructor(message: string) {
+    super(message)
+    this.name = 'DuplicateError'
+  }
+}
+
+/** Si el error es de una fila repetida en un índice único, del store que sea. */
+export const isDuplicate = (err: unknown) =>
+  typeof err === 'object' && err !== null && (err as { code?: unknown }).code === '23505'
 
 /** Compara claves de fractional-indexing: orden binario, no el de la locale. */
 export const byPosition = (a: { position: string }, b: { position: string }) =>

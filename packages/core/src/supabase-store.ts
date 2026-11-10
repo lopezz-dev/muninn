@@ -6,6 +6,7 @@ import type {
   FxRate,
   GithubRepoSummary,
   GithubSyncScope,
+  InvestPrice,
   NewsDigest,
   NewsItem,
   NewsSource,
@@ -25,6 +26,8 @@ import {
   type ColumnStoreQuery,
   type FxRateStore,
   type GithubOutbox,
+  type InstrumentStoreQuery,
+  type InvestPriceStore,
   type NewRow,
   type NewsDigestStore,
   type NewsFetchSummary,
@@ -41,6 +44,7 @@ import {
   type SettingsStore,
   type Store,
   type TaskStoreQuery,
+  type TradeStoreQuery,
   type TransactionStoreQuery,
 } from './store'
 
@@ -436,6 +440,55 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
       return fromRow<NewsDigest>(data)
     },
   }
+  // Precios de cierre (ADR-0086): uno por instrumento y día (`invest_prices_instrument_date_uq`).
+  const investPrices: InvestPriceStore = {
+    async latest(instrumentIds, onOrBefore, perInstrument = 1) {
+      if (instrumentIds.length === 0) return []
+      // Los ids van en el cuerpo de la RPC, no en la URL: no hace falta trocearlos (gotchas/db).
+      const { data, error } = await client.rpc('invest_latest_prices', {
+        owner: ownerId,
+        instrument_ids: instrumentIds,
+        on_or_before: onOrBefore,
+        per_instrument: perInstrument,
+      })
+      if (error) throw error
+      return (data as Row[]).map((r) => priceRow(r))
+    },
+    async list({ instrumentId, from, to }) {
+      const rows: Row[] = []
+      for (let start = 0; ; start += PAGE) {
+        const { data, error } = await client
+          .from('invest_prices')
+          .select('*')
+          .eq('owner_id', ownerId)
+          .eq('instrument_id', instrumentId)
+          .gte('date', from)
+          .lte('date', to)
+          .order('date')
+          .range(start, start + PAGE - 1)
+        if (error) throw error
+        rows.push(...(data as Row[]))
+        if ((data as Row[]).length < PAGE) break
+      }
+      return rows.map((r) => priceRow(r))
+    },
+    async upsert(rows) {
+      const saved: InvestPrice[] = []
+      for (let i = 0; i < rows.length; i += PAGE) {
+        const { data, error } = await client
+          .from('invest_prices')
+          .upsert(
+            rows.slice(i, i + PAGE).map((r) => ({ ...toRow(r), owner_id: ownerId })),
+            { onConflict: 'instrument_id,date' },
+          )
+          .select('*')
+        if (error) throw error
+        saved.push(...(data as Row[]).map((r) => priceRow(r)))
+      }
+      return saved
+    },
+  }
+
   // Tipos de cambio (ADR-0085): tabla compartida, sin `owner_id`; la lee cualquier sesión y solo escribe la función `fx`.
   const fxRates: FxRateStore = {
     async latest(currency, onOrBefore) {
@@ -730,6 +783,33 @@ export function createSupabaseStore(client: Client, ownerId: string): Store {
     newsDigests,
     newsFeeds,
     fxRates,
+    // Inversiones (ADR-0086, migración 20261110180000_inversiones).
+    investInstruments: col('invest_instruments', 'Instrumento', (qb, q: InstrumentStoreQuery) => {
+      if (!q.includeArchived) qb = qb.is('archived_at', null)
+      if (q.externalId) qb = qb.eq('external_id', q.externalId)
+      return qb.order('symbol')
+    }),
+    // Puede pasar de las 1000 filas de PostgREST: sin `limit`, por páginas (como los movimientos).
+    investTrades: col(
+      'invest_trades',
+      'Operación',
+      (qb, q: TradeStoreQuery) => {
+        if (!q.includeArchived) qb = qb.is('archived_at', null)
+        if (q.accountId) qb = qb.eq('account_id', q.accountId)
+        if (q.instrumentId) qb = qb.eq('instrument_id', q.instrumentId)
+        if (q.kinds) qb = qb.in('kind', q.kinds)
+        if (q.externalId) qb = qb.eq('external_id', q.externalId)
+        if (q.from) qb = qb.gte('date', q.from)
+        if (q.to) qb = qb.lte('date', q.to)
+        qb = qb
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .order('id')
+        return q.limit ? qb.limit(q.limit) : qb
+      },
+      true,
+    ),
+    investPrices,
     pushDevices,
     pushLog,
     pushDelivery,
@@ -920,6 +1000,12 @@ export async function pruneNews(client: Client, { itemDays = 30, digestDays = 12
     .lt('date', ago(digestDays).slice(0, 10))
   if (digests.error) throw digests.error
   return { items: items.count ?? 0, digests: digests.count ?? 0 }
+}
+
+/** Una fila de `invest_prices` (sin `owner_id`, como `fromRow`); el precio, número aunque llegue como texto. */
+const priceRow = (r: Row): InvestPrice => {
+  const p = fromRow<InvestPrice>(r)
+  return { ...p, price: Number(p.price) }
 }
 
 const FX_COLUMNS = 'currency, date, rate, source'
