@@ -52,7 +52,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
 - [ADR-0035](0035-repos-de-github-desde-la-funcion.md) — El selector de repos pide la lista a la Edge Function `github`, con la sesión del dueño
-- [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado
+- [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado *(lo que vale una cuenta de inversión: ADR-0086, propuesto)*
 - [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md) — Las suscripciones avisan antes del cobro y el movimiento lo confirma el usuario
 - [ADR-0039](0039-panel-mensual-y-tasa-de-ahorro.md) — Panel mensual calculado en el core, con la tasa de ahorro como lo que no gastas
 - [ADR-0041](0041-asistente-local-con-catalogo-unico.md) — Asistente con modelo local (Ollama) en la app, con un catálogo único de herramientas compartido con el MCP
@@ -77,6 +77,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0081](0081-nombre-del-equipo-y-apps-agrupadas-en-sesiones.md) — La app de escritorio dice el nombre del equipo y las sesiones de cada app conectada van en una fila
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
+- [ADR-0085](0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md) — Divisas: tipos de cambio diarios del BCE en una tabla compartida, y dos divisas por instrumento (cotización y exposición) *(propuesto)*
+- [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) — Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera *(propuesto)*
 
 ### db
 - [ADR-0003](0003-stores-intercambiables-supabase.md) — Stores intercambiables, con Supabase como backend inicial
@@ -89,7 +91,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0029](0029-tiempo-real-y-cache-sin-conexion.md) — Tiempo real por invalidación de caché y caché de solo lectura sin conexión
 - [ADR-0031](0031-sync-github-issues-tareas.md) — Sync GitHub: issues ↔ tareas con webhook y reconciliación en una Edge Function
 - [ADR-0032](0032-columna-para-el-agente.md) — Columna «Para el agente»: etiqueta en la issue, Claude Code GitHub Action y PR que mueve la tarea
-- [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado
+- [ADR-0037](0037-modelo-de-datos-de-finanzas.md) — Finanzas: cuentas, categorías y movimientos, con el saldo derivado *(lo que vale una cuenta de inversión: ADR-0086, propuesto)*
 - [ADR-0038](0038-suscripciones-avisan-y-se-confirman.md) — Las suscripciones avisan antes del cobro y el movimiento lo confirma el usuario
 - [ADR-0040](0040-pwa-instalable-y-web-push.md) — PWA publicada en Vercel y avisos Web Push desde una Edge Function con cron *(hosting aceptado; Web Push, propuesto)*
 - [ADR-0042](0042-noticias-rss-con-descarga-en-servidor.md) — Noticias: fuentes RSS por usuario, descarga en una Edge Function con cron y resumen diario en local
@@ -104,6 +106,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0080](0080-aviso-por-correo-de-dispositivo-nuevo.md) — Aviso por correo al entrar desde un dispositivo sin nombre o nuevo, con un cron y un correo al día como mucho
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
+- [ADR-0085](0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md) — Divisas: tipos de cambio diarios del BCE en una tabla compartida, y dos divisas por instrumento (cotización y exposición) *(propuesto)*
+- [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) — Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera *(propuesto)*
 
 ### mcp
 - [ADR-0009](0009-mcp-stdio-sin-borrados.md) — MCP por stdio, sin borrados definitivos y con resolución por nombre
@@ -116,6 +120,8 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0066](0066-aprobacion-oauth-atada-a-una-sesion.md) — La aprobación con el segundo factor de una app OAuth vale para una autorización y una sola sesión
 - [ADR-0079](0079-comentarios-anclados-en-las-notas.md) — Comentarios en las notas, anclados a una cita del texto, y «Para Claude» como canal hacia el MCP
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
+- [ADR-0085](0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md) — Divisas: tipos de cambio diarios del BCE en una tabla compartida, y dos divisas por instrumento (cotización y exposición) *(propuesto)*
+- [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) — Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera *(propuesto)*
 
 ### ui
 - [ADR-0014](0014-tokens-y-tailwind-v4.md) — Tokens en TypeScript → variables CSS, con Tailwind v4 como capa de utilidades
@@ -197,6 +203,7 @@ Estados: `Propuesto` · `Aceptado` · `Reemplazado por ADR-NNNN` · `Descartado`
 - [ADR-0082](0082-nombre-puesto-a-mano-en-cada-sesion.md) — Nombre puesto a mano en cada sesión, guardado con la sesión y recordado por el navegador
 - [ADR-0083](0083-notas-en-arbol-con-un-espacio-por-proyecto.md) — Notas en árbol (páginas con hijas, carpetas incluidas) y un espacio por proyecto
 - [ADR-0084](0084-pantallas-con-sus-textos-y-precalentado.md) — Cada pantalla se carga con sus textos y las de la navegación se precalientan en segundo plano
+- [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md) — Inversiones: libro de operaciones con la cartera derivada, y la cuenta de inversión vale lo que vale su cartera *(propuesto)*
 
 ### desktop
 - [ADR-0008](0008-tauri-escritorio-pwa-movil.md) — Tauri 2 para escritorio y PWA para móvil
