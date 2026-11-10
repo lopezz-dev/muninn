@@ -1,6 +1,6 @@
 # ADR-0085: Divisas: tipos de cambio diarios del BCE en una tabla compartida, y dos divisas por instrumento (cotización y exposición)
 
-- **Estado:** Propuesto (decisiones D1, D4 y D5 del plan de Inversiones; falta que Alex lo acepte; no hay código)
+- **Estado:** Aceptado (10 de noviembre de 2026, al fusionar [#151](https://github.com/lopezz-dev/muninn/pull/151); aún sin código)
 - **Fecha:** 2026-11-10
 - **Área:** core, db, mcp
 - **Relacionado:** [ADR-0086](0086-inversiones-libro-de-operaciones-y-cartera-derivada.md), [ADR-0018](0018-dinero-en-centimos.md),
