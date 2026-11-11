@@ -375,6 +375,9 @@ del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo 
       fijos en la demo, y `fx_rate` en el catálogo del MCP y el asistente
     - [ ] Aplicar la migración, desplegar `fx` con su cron y redesplegar `mcp`: [gotchas/db](gotchas/db.md#divisas-tipos-del-bce-con-la-edge-function-pasos-manuales)
   - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
+    - [x] Código: migración `20261110180000_inversiones` (tres tablas con RLS, `require_mfa`, Realtime, triggers y `external_id`
+      único por cuenta, más `invest_latest_prices`), zod en `schemas.ts` y las tres tablas en los stores de memoria, fichero y Supabase
+    - [ ] Aplicar la migración: [gotchas/db](gotchas/db.md#inversiones-tablas-nuevas-pasos-manuales)
   - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests
   - [ ] La cuenta de inversión vale su cartera: valor, aportado y ganancia en Resumen y Cuentas
   - [ ] MCP y asistente: herramientas de cartera, y Claude como puente con el conector de IBKR

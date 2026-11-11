@@ -180,6 +180,8 @@ export interface Activity {
     | 'subscription'
     | 'news_source'
     | 'news_digest'
+    | 'instrument'
+    | 'trade'
   entityId: string
   action: string
   actor: ActorKind
@@ -776,6 +778,204 @@ export const fxSeriesQuery = z
 
 export type FxRateQuery = z.input<typeof fxRateQuery>
 export type FxSeriesQuery = z.input<typeof fxSeriesQuery>
+
+// ─── Inversiones (ADR-0086) ─────────────────────────────────────────────────
+
+/** Clase de activo de un instrumento. */
+export const assetClass = z.enum(['etf', 'stock', 'fund', 'bond', 'crypto', 'other'])
+/** Compra, venta o posición que ya tenías al empezar a llevar la cuenta en Muninn. */
+export const tradeKind = z.enum(['buy', 'sell', 'opening'])
+/** De dónde sale un precio de cierre. */
+export const priceSource = z.enum(['manual', 'mcp', 'ibkr'])
+
+export type AssetClass = z.infer<typeof assetClass>
+export type TradeKind = z.infer<typeof tradeKind>
+export type PriceSource = z.infer<typeof priceSource>
+
+/** 100 % en tanto por diez mil (pesos de exposición, ADR-0085). */
+export const EXPOSURE_FULL = 10_000
+/**
+ * Cantidades y precios en millonésimas: como mucho mil millones de unidades (10^15), por debajo de 2^53. Los productos
+ * de dos de ellos se hacen con `BigInt` (ADR-0085).
+ */
+export const MAX_MILLIONTHS = 1_000_000_000_000_000
+
+/** Reparto de lo que lleva dentro un instrumento por divisa, en tanto por diez mil. `{}` = todo en su divisa. */
+export type Exposure = Record<string, number>
+
+export interface InvestInstrument {
+  id: string
+  symbol: string
+  name: string
+  isin: string | null
+  assetClass: AssetClass
+  /** Divisa de cotización (ISO 4217): en la que se compra y se valora. */
+  currency: string
+  exchange: string | null
+  exposure: Exposure
+  /** Cuándo se pusieron los pesos (`AAAA-MM-DD`). */
+  exposureDate: string | null
+  /** El conid de IBKR o el id de quien sincronice; único por dueño. */
+  externalId: string | null
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface InvestTrade {
+  id: string
+  /** Una cuenta de Finanzas de tipo `investment`. */
+  accountId: string
+  instrumentId: string
+  kind: TradeKind
+  /** Fecha local `AAAA-MM-DD`. */
+  date: string
+  /** Participaciones en millonésimas, > 0. */
+  quantity: number
+  /** Importe total sin comisión, en centésimas de la divisa del instrumento, > 0. */
+  amount: number
+  /** Comisión, en centésimas de la divisa del instrumento (0 en una posición inicial). */
+  fee: number
+  /** Tipo aplicado (unidades por 1 EUR, millonésimas) si el instrumento no cotiza en EUR. */
+  fxRate: number | null
+  note: string
+  /** Id de la operación en el bróker; único por cuenta (repetir una carga no duplica). */
+  externalId: string | null
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface InvestPrice {
+  id: string
+  instrumentId: string
+  date: string
+  /** Cierre por participación, en millonésimas de la divisa del instrumento. */
+  price: number
+  source: PriceSource
+  createdAt: string
+  updatedAt: string
+}
+
+const millionths = z.number().int().positive().max(MAX_MILLIONTHS)
+const nonNegativeCents = z.number().int().min(0).max(MAX_CENTS)
+
+/** Pesos por divisa: claves ISO (se pasan a mayúsculas), enteros de 1 a 10 000 que suman 10 000 como mucho. */
+export const exposureInput = z
+  .record(z.string(), z.number().int().min(1).max(EXPOSURE_FULL))
+  .transform((e, ctx) => {
+    const out: Exposure = {}
+    for (const [k, v] of Object.entries(e)) {
+      const code = k.trim().toUpperCase()
+      if (!/^[A-Z]{3}$/.test(code)) {
+        ctx.addIssue({ code: 'custom', message: `«${k}» no es un código de divisa ISO 4217` })
+        return z.NEVER
+      }
+      out[code] = (out[code] ?? 0) + v
+    }
+    const total = Object.values(out).reduce((a, b) => a + b, 0)
+    if (total > EXPOSURE_FULL) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Los pesos suman ${total}: como mucho 10000 (100 %)`,
+      })
+      return z.NEVER
+    }
+    return out
+  })
+
+const symbolText = z.string().trim().min(1).max(24)
+const isinText = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/, 'ISIN no válido (dos letras, nueve caracteres y un dígito)')
+const externalIdText = z.string().trim().min(1).max(64)
+
+export const createInstrumentInput = z.object({
+  symbol: symbolText,
+  name: z.string().trim().min(1).max(120),
+  isin: isinText.nullable().optional(),
+  assetClass,
+  currency: currencyCode,
+  exchange: z.string().trim().min(1).max(24).nullable().optional(),
+  exposure: exposureInput.optional(),
+  exposureDate: isoDate.nullable().optional(),
+  externalId: externalIdText.nullable().optional(),
+})
+
+export const updateInstrumentInput = z.object({
+  symbol: symbolText.optional(),
+  name: z.string().trim().min(1).max(120).optional(),
+  isin: isinText.nullable().optional(),
+  assetClass: assetClass.optional(),
+  currency: currencyCode.optional(),
+  exchange: z.string().trim().min(1).max(24).nullable().optional(),
+  exposure: exposureInput.optional(),
+  exposureDate: isoDate.nullable().optional(),
+  externalId: externalIdText.nullable().optional(),
+})
+
+export const instrumentQuery = z.object({
+  includeArchived: z.boolean().optional(),
+  externalId: z.string().optional(),
+})
+
+export const createTradeInput = z
+  .object({
+    accountId: z.uuid(),
+    instrumentId: z.uuid(),
+    kind: tradeKind,
+    date: isoDate,
+    quantity: millionths,
+    amount: cents,
+    fee: nonNegativeCents.optional(),
+    fxRate: millionths.nullable().optional(),
+    note: z.string().trim().max(2000).optional(),
+    externalId: externalIdText.nullable().optional(),
+  })
+  .refine((t) => t.kind !== 'opening' || !t.fee, {
+    message: 'Una posición inicial no lleva comisión',
+    path: ['fee'],
+  })
+
+export const updateTradeInput = z.object({
+  kind: tradeKind.optional(),
+  date: isoDate.optional(),
+  quantity: millionths.optional(),
+  amount: cents.optional(),
+  fee: nonNegativeCents.optional(),
+  fxRate: millionths.nullable().optional(),
+  note: z.string().trim().max(2000).optional(),
+})
+
+export const tradeQuery = z.object({
+  accountId: z.uuid().optional(),
+  instrumentId: z.uuid().optional(),
+  kinds: z.array(tradeKind).optional(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+  includeArchived: z.boolean().optional(),
+  limit: z.number().int().min(1).max(1000).optional(),
+})
+
+export const priceInput = z.object({
+  instrumentId: z.uuid(),
+  date: isoDate,
+  price: millionths,
+  source: priceSource.optional(),
+})
+
+/** Por lotes (`set_prices`): un precio del mismo instrumento y día sustituye al anterior. */
+export const setPricesInput = z.array(priceInput).min(1).max(500)
+
+export type CreateInstrumentInput = z.input<typeof createInstrumentInput>
+export type UpdateInstrumentInput = z.input<typeof updateInstrumentInput>
+export type InstrumentQuery = z.input<typeof instrumentQuery>
+export type CreateTradeInput = z.input<typeof createTradeInput>
+export type UpdateTradeInput = z.input<typeof updateTradeInput>
+export type TradeQuery = z.input<typeof tradeQuery>
+export type PriceInput = z.input<typeof priceInput>
 
 // ─── Avisos push (ADR-0040) ─────────────────────────────────────────────────
 

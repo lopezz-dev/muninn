@@ -235,6 +235,16 @@
   ±5 % de los del BCE del 10-11-2026, sin fines de semana ni los festivos fijos, nunca del futuro). En un test, pasa los tuyos con
   `createMemoryStore(undefined, { fxRates })` y fija `now`. No van en el snapshot: el fichero del MCP no guarda tipos.
 
+### Inversiones en los stores: el índice único también en memoria
+
+- `investTrades` e `investInstruments` imitan en el store de memoria (y en el de fichero) los índices únicos de `external_id` de Supabase:
+  una repetida rechaza la promesa con `DuplicateError` (código `23505`, el de Postgres) y el lote entero no escribe nada. Comprueba con
+  `isDuplicate(err)`, que vale para los dos stores; no compares el mensaje.
+- `investPrices` no es una colección: no se archiva ni deja actividad. `upsert` sustituye el del mismo instrumento y día, y
+  `latest(ids, fecha, n)` da los `n` últimos de cada uno en una lectura (en Supabase, la RPC `invest_latest_prices`).
+- Los ficheros del MCP de antes de Inversiones no traen estas listas: el store de memoria las crea vacías.
+- **Ref:** [ADR-0086](../adr/0086-inversiones-libro-de-operaciones-y-cartera-derivada.md)
+
 ### Borrar en el store de memoria: la cascada es a mano
 
 - **Síntoma:** en la demo o en los tests, tras eliminar una tarea quedan subtareas huérfanas, notas que apuntan a una tarea que no
