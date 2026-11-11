@@ -20,6 +20,7 @@ supabase/.branches/
 supabase/.temp/
 
 # Core empaquetado para la Edge Function (pnpm --filter @muninn/core build:edge)
+supabase/functions/fx/_core/
 supabase/functions/github/_core/
 supabase/functions/news/_core/
 supabase/functions/push/_core/

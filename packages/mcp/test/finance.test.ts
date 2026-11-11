@@ -152,3 +152,48 @@ describe('MCP · finanzas', () => {
     expect(a.balance).toBe(-2050)
   })
 })
+
+describe('MCP · divisas', () => {
+  const rates = [
+    { currency: 'USD', date: '2026-11-06', rate: 1_140_000, source: 'ecb' as const },
+    { currency: 'USD', date: '2026-11-10', rate: 1_121_400, source: 'ecb' as const },
+  ]
+  async function connectFx() {
+    const now = '2026-11-10T18:00:00Z'
+    const server = createMuninnMcpServer(
+      createMuninn(createMemoryStore(undefined, { fxRates: rates, now: () => now }), {
+        actor: 'mcp',
+        now: () => new Date(now),
+        timeZone: 'UTC',
+      }),
+    )
+    const client = new Client({ name: 'test', version: '0.0.0' })
+    const [a, b] = InMemoryTransport.createLinkedPair()
+    await Promise.all([server.connect(a), client.connect(b)])
+    return async (args: Record<string, unknown>) => {
+      const res = await client.callTool({ name: 'fx_rate', arguments: args })
+      expect(res.isError).toBeFalsy()
+      return JSON.parse((res.content as { text: string }[])[0]?.text ?? '')
+    }
+  }
+
+  it('fx_rate: el del día o el último anterior, en decimal y con su fecha; de solo lectura', async () => {
+    const fx = await connectFx()
+    expect(await fx({ currency: 'usd' })).toMatchObject({
+      currency: 'USD',
+      date: '2026-11-10',
+      unitsPerEuro: '1.1214',
+      eurosPerUnit: '0.891742',
+    })
+    // Domingo: el viernes. Y 100 $ de ese día en euros.
+    expect(await fx({ currency: 'USD', date: '2026-11-08', amount: 100 })).toMatchObject({
+      requestedDate: '2026-11-08',
+      date: '2026-11-06',
+      amount: 100,
+    })
+    expect((await fx({ currency: 'USD', date: '2026-11-08', amount: 100 })).inEuros).toMatch(
+      /^87,72\s€$/,
+    )
+    expect(await fx({ currency: 'TWD' })).toMatchObject({ available: false })
+  })
+})

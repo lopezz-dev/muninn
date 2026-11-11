@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup'
 
 // El core es TS fuente con imports sin extensión, que Deno no resuelve: para las Edge Functions se empaqueta.
-// La misma copia va a `github`, a `news`, a `push` y a `security` (cada función se despliega con su carpeta).
+// La misma copia va a `fx`, a `github`, a `news`, a `push` y a `security` (cada función se despliega con su carpeta).
 const edge = (fn: string) => ({
   entry: { muninn: 'src/edge.ts' },
   outDir: `../../supabase/functions/${fn}/_core`,
@@ -13,4 +13,10 @@ const edge = (fn: string) => ({
   dts: false,
 })
 
-export default defineConfig([edge('github'), edge('news'), edge('push'), edge('security')])
+export default defineConfig([
+  edge('fx'),
+  edge('github'),
+  edge('news'),
+  edge('push'),
+  edge('security'),
+])

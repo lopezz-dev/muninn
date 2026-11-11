@@ -14,7 +14,7 @@
         │
   Supabase: Postgres + Auth + Realtime + Edge Functions + Storage
         ▲            ▲                 ▲
-   webhooks GitHub   agentes (F4)     cron noticias (función `news`, ADR-0042)
+   webhooks GitHub   agentes (F4)     cron noticias (función `news`, ADR-0042) · cron divisas (función `fx`, ADR-0085)
 
   packages/assistant ── catálogo único de herramientas · bucle · proveedores (Ollama, guion) ──► pantalla Asistente (ADR-0041)
          ▲                       └─ app ──► http://localhost:11434 (Ollama, solo en el ordenador)
@@ -33,7 +33,8 @@
 2. **El backend es intercambiable.** Nadie importa Supabase salvo `supabase-store.ts`.
    Migrar a tu servidor = Supabase self-hosted (mismo store) u otro `Store`.
 3. **Multiusuario desde el día uno.** Todas las tablas tienen `owner_id` + RLS. Hoy lo usas tú;
-   mañana se puede vender sin rehacer el esquema.
+   mañana se puede vender sin rehacer el esquema. La única excepción, razonada, es `fx_rates`: tipos de cambio públicos,
+   iguales para todos y de solo lectura ([ADR-0085](adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md)).
 4. **Todo deja rastro.** Cada cambio escribe en `activity` con el actor (`user`, `mcp`, `github`,
    `agent`, `assistant`). De ahí salen los resúmenes ("¿qué he hecho esta semana?") y los insights.
 
@@ -87,6 +88,7 @@ main.tsx ── RouterProvider ── rootRoute (beforeLoad: getAuth → user | 
 | `news_sources` | Fuentes RSS del usuario, con tema y estado de la última descarga ([ADR-0042](adr/0042-noticias-rss-con-descarga-en-servidor.md)). |
 | `news_items` | Artículos descargados por la Edge Function `news`, sin duplicados por `(source_id, guid)`; los no guardados caducan a los 30 días. |
 | `news_digests` | El resumen del día (uno por fecha), generado en el ordenador con el modelo local. |
+| `fx_rates` | Tipos de referencia del BCE (unidades por 1 EUR, en millonésimas) por divisa y día. **Compartida, sin `owner_id`**: la leen los autenticados y solo la escribe la Edge Function `fx` ([ADR-0085](adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md)). |
 | `github_outbox` | Cola de salida hacia GitHub: tareas de una issue que se completaron o reabrieron en Muninn (`kind = 'state'`, [ADR-0031](adr/0031-sync-github-issues-tareas.md)) o que entraron o salieron de la columna del agente (`kind = 'agent'`, ADR-0032). |
 | Storage `project-images` | Logo y portada de cada proyecto (`projects.image_path` y `cover_path` guardan las rutas, [ADR-0056](adr/0056-logo-y-portada-de-proyecto-con-color-del-logo.md)), privados, en `<owner_id>/<project_id>/…` y leída con URL firmadas ([ADR-0055](adr/0055-imagen-de-proyecto-en-storage.md)). |
 

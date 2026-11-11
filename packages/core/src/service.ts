@@ -3,6 +3,7 @@ import { createAccount } from './account'
 import { type DataLocale, defaultColumns, isDataLocale } from './defaults'
 import { ValidationError } from './errors'
 import { createFinance } from './finance'
+import { createFx } from './fx'
 import { DEFAULT_SETTINGS } from './memory-store'
 import { createNews } from './news'
 import { createNoteComments } from './note-comments'
@@ -294,6 +295,8 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
 
   const finance = createFinance({ store, nowIso, today, parse, log, dataLocale })
   const news = createNews({ store, nowIso, today, parse, log })
+  /** Tipos de cambio del BCE (ADR-0085), solo lectura. */
+  const fx = createFx({ store, today, parse })
   const push = createPush({ store, nowIso, today, parse })
   const account = createAccount({ store, parse })
 
@@ -1696,6 +1699,7 @@ export function createMuninn(store: Store, options: MuninnOptions = {}) {
       },
     },
     finance,
+    fx,
     news,
     push,
     account,

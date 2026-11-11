@@ -9,6 +9,7 @@ import type {
   CommentStatus,
   FinanceAccount,
   FinanceCategory,
+  FxRate,
   GithubRepoSummary,
   GithubSyncScope,
   MfaEnrollment,
@@ -63,6 +64,11 @@ export interface Store {
    * movimientos no salen. En Supabase lo suma la vista `finance_account_totals`.
    */
   accountTotals(): Promise<{ accountId: string; net: number }[]>
+  /**
+   * Tipos de cambio del BCE (ADR-0085). Es la única tabla **compartida** (sin dueño): el core solo la lee; la escribe la
+   * Edge Function `fx`. El store de memoria (demo, tests) y el de fichero llevan unos tipos fijos.
+   */
+  fxRates: FxRateStore
   /** Noticias (ADR-0042). */
   newsSources: Collection<NewsSource, { includeArchived?: boolean }>
   newsItems: NewsItemStore
@@ -106,6 +112,14 @@ export interface Store {
     /** Lanza la sincronización ahora: solo la cola de salida o también la reconciliación de los repos. */
     sync(scope: GithubSyncScope): Promise<unknown>
   }
+}
+
+/** Tipos de cambio, de solo lectura (ADR-0085). */
+export interface FxRateStore {
+  /** El de `currency` en `onOrBefore` o, si ese día no hay, el último anterior; `null` si no hay ninguno. */
+  latest(currency: string, onOrBefore: string): Promise<FxRate | null>
+  /** Los de `currency` entre dos fechas incluidas, del más antiguo al más reciente. */
+  list(query: { currency: string; from: string; to: string }): Promise<FxRate[]>
 }
 
 export interface NewsItemStoreQuery {
