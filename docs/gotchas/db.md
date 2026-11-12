@@ -99,7 +99,7 @@ Realtime. No copies este patrón para nada que escriba un usuario: eso va siempr
   se añaden con la pantalla, cuando la migración ya esté aplicada.
 - **Probado:** la migración pasó en PGlite (Postgres 17 en WASM) sobre todas las anteriores, con *stubs* de `auth` y de los roles de
   Supabase: RLS por dueño, `require_mfa` con `aal1`/`aal2`, los `check`, los triggers, los índices únicos, `invest_latest_prices` y el
-  borrado en cascada de un usuario. No se ha aplicado aún contra el Supabase de verdad.
+  borrado en cascada de un usuario. **Aplicada en remoto el 12-11-2026** (las tres tablas, la RPC y Realtime, comprobados).
 
 ### Comentarios de las notas (pasos manuales)
 
@@ -110,7 +110,7 @@ Realtime. No copies este patrón para nada que escriba un usuario: eso va siempr
   función `mcp` (`pnpm --filter @muninn/mcp build:edge` y el `functions deploy` de [gotchas/mcp](mcp.md#mcp-remoto-pasos-manuales)). En
   claude.ai, el conector puede tardar en ver las herramientas nuevas: desconéctalo y vuelve a conectarlo.
 - **Probado:** la migración pasó en PGlite (Postgres 17 en WASM) con *stubs* de `auth` y de las funciones de Supabase: RLS por dueño,
-  `require_mfa`, los triggers, los `check` y el borrado en cascada con la nota. No se ha aplicado aún contra el Supabase de verdad.
+  `require_mfa`, los triggers, los `check` y el borrado en cascada con la nota. Ya está aplicada en remoto (comprobado el 12-11-2026).
 
 ### `or()` de PostgREST y caracteres especiales
 
@@ -128,6 +128,10 @@ Realtime. No copies este patrón para nada que escriba un usuario: eso va siempr
   (`20261019115552_init`), no con el timestamp del nombre del fichero.
 - **Solución:** tras aplicarla, alinea la versión con el fichero:
   `update supabase_migrations.schema_migrations set version = '<timestamp del fichero>' where name = '<nombre>';`
+- **Ojo:** si la pegas en el **SQL Editor**, no queda registrada en absoluto, y `supabase db push` intentaría aplicarla otra vez. Pasa
+  con todas desde la `20261031120000_push_por_sesion` hasta la `20261110180000_inversiones` (aplicadas, sin fila en el historial a
+  12-11-2026). Para registrarlas sin volver a ejecutarlas:
+  `insert into supabase_migrations.schema_migrations (version, name) values ('<timestamp>', '<nombre>');`
 
 ### Funciones RPC que leen datos del usuario: `security invoker` y el dueño como parámetro
 
@@ -361,6 +365,11 @@ Realtime. No copies este patrón para nada que escriba un usuario: eso va siempr
   `relation "public.fx_rates" does not exist`.
 - **Causa:** los tipos los trae la Edge Function `fx` con un cron ([ADR-0085](../adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md));
   ni la tabla ni la función están en remoto hasta hacer estos pasos (subtarea 11 de «Inversiones I»).
+- **Estado (12-11-2026):** pasos 1 a 5 hechos: migración aplicada, `fx` desplegada, histórico cargado (93 984 filas, del 02-01-2015
+  al 11-11-2026) y los dos crons activos. Falta redesplegar `mcp` para que llegue `fx_rate`. Los pasos quedan para un entorno nuevo.
+- **Primera carga sin sacar el secreto:** en vez del `curl`, desde el SQL Editor con el del Vault (es asíncrona; la respuesta, en
+  `net._http_response` con el id que devuelve):
+  `select net.http_post(url := '…/functions/v1/fx/fetch', headers := <las mismas del cron>, body := '{}'::jsonb, timeout_milliseconds := 150000);`
 - **Solución**, en este orden:
   1. **Migración:** aplica `supabase/migrations/20261110120000_fx_rates.sql`. Si usas `apply_migration` del MCP de Supabase, alinea la
      versión (arriba).

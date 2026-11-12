@@ -371,13 +371,15 @@ del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo 
     `text-4xl`, botones y chips en píldora, `Card` sin borde, la barra del teléfono en cápsula y una pasada por las pantallas en
     la demo. El paso 2 (rehacer el resto de pantallas), con el rediseño responsive
   - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
-    - [x] Código: migración `20261110120000_fx_rates`, función `fx` (sin desplegar), `m.fx` (`rate`, `series`, `convert`) con tipos
-      fijos en la demo, y `fx_rate` en el catálogo del MCP y el asistente
-    - [ ] Aplicar la migración, desplegar `fx` con su cron y redesplegar `mcp`: [gotchas/db](gotchas/db.md#divisas-tipos-del-bce-con-la-edge-function-pasos-manuales)
-  - [ ] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
+    - [x] Código: migración `20261110120000_fx_rates`, función `fx`, `m.fx` (`rate`, `series`, `convert`) con tipos
+      fijos en la demo, y `fx_rate` en el catálogo del MCP y el asistente ([#154](https://github.com/lopezz-dev/muninn/pull/154))
+    - [x] Aplicar la migración, desplegar `fx`, cargar el histórico desde 2015 y crear sus dos crons (12-11-2026)
+    - [ ] Redesplegar `mcp` para que llegue `fx_rate`: [gotchas/db](gotchas/db.md#divisas-tipos-del-bce-con-la-edge-function-pasos-manuales)
+  - [x] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
     - [x] Código: migración `20261110180000_inversiones` (tres tablas con RLS, `require_mfa`, Realtime, triggers y `external_id`
       único por cuenta, más `invest_latest_prices`), zod en `schemas.ts` y las tres tablas en los stores de memoria, fichero y Supabase
-    - [ ] Aplicar la migración: [gotchas/db](gotchas/db.md#inversiones-tablas-nuevas-pasos-manuales)
+      ([#155](https://github.com/lopezz-dev/muninn/pull/155))
+    - [x] Aplicar la migración (12-11-2026)
   - [ ] Core: posiciones derivadas, valor, ganancia no realizada y exposición por divisa, con tests
   - [ ] La cuenta de inversión vale su cartera: valor, aportado y ganancia en Resumen y Cuentas
   - [ ] MCP y asistente: herramientas de cartera, y Claude como puente con el conector de IBKR
