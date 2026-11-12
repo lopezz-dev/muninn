@@ -370,11 +370,11 @@ del cambio. Muninn lee y enseña: no envía órdenes ni tiene precios en tiempo 
   - [x] Estilo nuevo en toda la app ([ADR-0087](adr/0087-estilo-nuevo-capsula-radios-y-margenes.md)), paso 1: radios nuevos,
     `text-4xl`, botones y chips en píldora, `Card` sin borde, la barra del teléfono en cápsula y una pasada por las pantallas en
     la demo. El paso 2 (rehacer el resto de pantallas), con el rediseño responsive
-  - [ ] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
+  - [x] Divisas: tabla `fx_rates`, Edge Function `fx` con cron (tipos del BCE) y `m.fx` en el core
     - [x] Código: migración `20261110120000_fx_rates`, función `fx`, `m.fx` (`rate`, `series`, `convert`) con tipos
       fijos en la demo, y `fx_rate` en el catálogo del MCP y el asistente ([#154](https://github.com/lopezz-dev/muninn/pull/154))
     - [x] Aplicar la migración, desplegar `fx`, cargar el histórico desde 2015 y crear sus dos crons (12-11-2026)
-    - [ ] Redesplegar `mcp` para que llegue `fx_rate`: [gotchas/db](gotchas/db.md#divisas-tipos-del-bce-con-la-edge-function-pasos-manuales)
+    - [x] Redesplegar `mcp` para que llegue `fx_rate` (12-11-2026): [gotchas/db](gotchas/db.md#divisas-tipos-del-bce-con-la-edge-function-pasos-manuales)
   - [x] Modelo de cartera: instrumentos, operaciones y precios (migración con RLS y Realtime)
     - [x] Código: migración `20261110180000_inversiones` (tres tablas con RLS, `require_mfa`, Realtime, triggers y `external_id`
       único por cuenta, más `invest_latest_prices`), zod en `schemas.ts` y las tres tablas en los stores de memoria, fichero y Supabase
