@@ -365,8 +365,11 @@ Realtime. No copies este patrón para nada que escriba un usuario: eso va siempr
   `relation "public.fx_rates" does not exist`.
 - **Causa:** los tipos los trae la Edge Function `fx` con un cron ([ADR-0085](../adr/0085-divisas-tipos-del-bce-y-exposicion-por-instrumento.md));
   ni la tabla ni la función están en remoto hasta hacer estos pasos (subtarea 11 de «Inversiones I»).
-- **Estado (12-11-2026):** pasos 1 a 5 hechos: migración aplicada, `fx` desplegada, histórico cargado (93 984 filas, del 02-01-2015
-  al 11-11-2026) y los dos crons activos. Falta redesplegar `mcp` para que llegue `fx_rate`. Los pasos quedan para un entorno nuevo.
+- **Estado (12-11-2026):** todo hecho: migración aplicada, `fx` desplegada, histórico cargado (93 984 filas, del 02-01-2015
+  al 11-11-2026), los dos crons activos y `mcp` redesplegado (versión 8) con `fx_rate`. Los pasos quedan para un entorno nuevo.
+- **Ojo:** tras redesplegar `mcp`, un cliente que ya estaba conectado sigue con la lista de herramientas de antes (y su primera
+  llamada puede dar 400 por la sesión vieja). Para ver `fx_rate`, abre una conversación nueva o desconecta y vuelve a conectar el
+  conector.
 - **Primera carga sin sacar el secreto:** en vez del `curl`, desde el SQL Editor con el del Vault (es asíncrona; la respuesta, en
   `net._http_response` con el id que devuelve):
   `select net.http_post(url := '…/functions/v1/fx/fetch', headers := <las mismas del cron>, body := '{}'::jsonb, timeout_milliseconds := 150000);`
